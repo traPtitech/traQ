@@ -188,7 +188,7 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 	return false, nil
 }
 
-// ServeJSONWithETag Etagを付与してJSONを返します、304を返せるときは304を返します
+// ServeJSONWithETag Etagを付与してJSONを返します。304を返せるときは304を返します。
 func ServeJSONWithETag(c echo.Context, i interface{}) error {
 	j := jsoniter.Config{
 		EscapeHTML:                    false,
@@ -209,12 +209,17 @@ func ServeJSONWithETag(c echo.Context, i interface{}) error {
 		return err
 	}
 
-	md5Res := md5.Sum(b)
+	return ServeWithETag(c, echo.MIMEApplicationJSONCharsetUTF8, b)
+}
+
+// ServeWithETag Etagを付与して返します。304を返せるときは304を返します。
+func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
+	md5Res := md5.Sum(bytes)
 	etag := hex.EncodeToString(md5Res[:])
 	c.Response().Header().Set(consts.HeaderETag, "\""+etag+"\"")
 
 	if done, err := CheckPreconditions(c, time.Time{}); done {
 		return err
 	}
-	return c.JSONBlob(http.StatusOK, b)
+	return c.Blob(http.StatusOK, contentType, bytes)
 }

@@ -2,12 +2,14 @@ package v1
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/motoki317/sc"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -58,98 +60,20 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
-	extension.SetLastModified(c, h.emojiJSONTime)
-	if done, _ := extension.CheckPreconditions(c, h.emojiJSONTime); done {
-		return nil
-	}
-
-	// キャッシュ確認
-	h.emojiJSONCacheLock.RLock()
-	if h.emojiJSONCache.Len() > 0 {
-		defer h.emojiJSONCacheLock.RUnlock()
-		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
-	}
-	h.emojiJSONCacheLock.RUnlock()
-
-	// 生成
-	h.emojiJSONCacheLock.Lock()
-	defer h.emojiJSONCacheLock.Unlock()
-
-	if h.emojiJSONCache.Len() > 0 { // リロード
-		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
-	}
-
-	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
+	emojiJSON, err := h.EmojiCache.json.Get(context.Background(), struct{}{})
+	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	h.emojiJSONTime = time.Now()
-	extension.SetLastModified(c, h.emojiJSONTime)
-	return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
-}
-
-func generateEmojiJSON(repo repository.StampRepository, buf *bytes.Buffer) error {
-	stamps, err := repo.GetAllStamps(repository.StampTypeAll)
-	if err != nil {
-		return err
-	}
-
-	resData := make(map[string][]string)
-	arr := make([]string, len(stamps))
-	for i, stamp := range stamps {
-		arr[i] = stamp.Name
-	}
-	resData["all"] = arr
-
-	buf.Reset()
-	return json.NewEncoder(buf).Encode(resData)
+	return extension.ServeWithETag(c, echo.MIMEApplicationJSONCharsetUTF8, emojiJSON)
 }
 
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
-	extension.SetLastModified(c, h.emojiCSSTime)
-	if done, _ := extension.CheckPreconditions(c, h.emojiCSSTime); done {
-		return nil
-	}
-
-	// キャッシュ確認
-	h.emojiCSSCacheLock.RLock()
-	if h.emojiCSSCache.Len() > 0 {
-		defer h.emojiCSSCacheLock.RUnlock()
-		return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
-	}
-	h.emojiCSSCacheLock.RUnlock()
-
-	// 生成
-	h.emojiCSSCacheLock.Lock()
-	defer h.emojiCSSCacheLock.Unlock()
-
-	if h.emojiCSSCache.Len() > 0 { // リロード
-		return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
-	}
-
-	if err := generateEmojiCSS(h.Repo, &h.emojiCSSCache); err != nil {
+	emojiCSS, err := h.EmojiCache.css.Get(context.Background(), struct{}{})
+	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	h.emojiCSSTime = time.Now()
-	extension.SetLastModified(c, h.emojiCSSTime)
-	return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
-}
-
-func generateEmojiCSS(repo repository.StampRepository, buf *bytes.Buffer) error {
-	stamps, err := repo.GetAllStamps(repository.StampTypeAll)
-	if err != nil {
-		return err
-	}
-
-	buf.Reset()
-	buf.WriteString(".emoji{display:inline-block;text-indent:999%;white-space:nowrap;overflow:hidden;color:rgba(0,0,0,0);background-size:contain}")
-	buf.WriteString(".s16{width:16px;height:16px}")
-	buf.WriteString(".s24{width:24px;height:24px}")
-	buf.WriteString(".s32{width:32px;height:32px}")
-	for _, stamp := range stamps {
-		buf.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
-	}
-	return nil
+	return extension.ServeWithETag(c, "text/css", emojiCSS)
 }
 
 // GetPublicEmojiImage GET /public/emoji/{stampID}
@@ -172,4 +96,64 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
+}
+
+type EmojiCache struct {
+	json *sc.Cache[struct{}, []byte]
+	css  *sc.Cache[struct{}, []byte]
+}
+
+func NewEmojiCache(repo repository.Repository) *EmojiCache {
+	return &EmojiCache{
+		json: sc.NewMust(emojiJSONGenerator(repo), 365*24*time.Hour, 365*24*time.Hour),
+		css:  sc.NewMust(emojiCSSGenerator(repo), 365*24*time.Hour, 365*24*time.Hour),
+	}
+}
+
+// Purge purges cache content.
+func (c *EmojiCache) Purge() {
+	c.json.Purge()
+	c.css.Purge()
+}
+
+func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
+	return func(_ context.Context, _ struct{}) ([]byte, error) {
+		stamps, err := repo.GetAllStamps(repository.StampTypeAll)
+		if err != nil {
+			return nil, err
+		}
+
+		stampNames := make([]string, len(stamps))
+		for i, stamp := range stamps {
+			stampNames[i] = stamp.Name
+		}
+
+		var buf bytes.Buffer
+		err = json.NewEncoder(&buf).Encode(map[string][]string{
+			"all": stampNames,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return buf.Bytes(), err
+	}
+}
+
+func emojiCSSGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
+	return func(_ context.Context, _ struct{}) ([]byte, error) {
+		stamps, err := repo.GetAllStamps(repository.StampTypeAll)
+		if err != nil {
+			return nil, err
+		}
+
+		var buf bytes.Buffer
+		buf.WriteString(".emoji{display:inline-block;text-indent:999%;white-space:nowrap;overflow:hidden;color:rgba(0,0,0,0);background-size:contain}")
+		buf.WriteString(".s16{width:16px;height:16px}")
+		buf.WriteString(".s24{width:24px;height:24px}")
+		buf.WriteString(".s32{width:32px;height:32px}")
+		for _, stamp := range stamps {
+			buf.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
+		}
+		return buf.Bytes(), nil
+	}
 }

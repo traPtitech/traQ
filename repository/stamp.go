@@ -87,7 +87,7 @@ type StampRepository interface {
 	DeleteStamp(id uuid.UUID) (err error)
 	// GetAllStamps 全てのスタンプを取得します
 	//
-	// 成功した場合、スタンプの配列とnilを返します。
+	// 成功した場合、スタンプのIDでソートされた配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetAllStamps(stampType StampType) (stamps []*model.Stamp, err error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します

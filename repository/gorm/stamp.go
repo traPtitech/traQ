@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"errors"
+	"sort"
 	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -26,8 +27,8 @@ type stampRepository struct {
 func makeStampRepository(db *gorm.DB) *stampRepository {
 	// Lazy load
 	r := &stampRepository{}
-	r.stamps = sc.NewMust(r.loadFunc(db), 7*24*time.Hour, 7*24*time.Hour)
-	r.perType = sc.NewMust(r.filterFunc(), 7*24*time.Hour, 7*24*time.Hour)
+	r.stamps = sc.NewMust(r.loadFunc(db), 365*24*time.Hour, 365*24*time.Hour)
+	r.perType = sc.NewMust(r.filterFunc(), 365*24*time.Hour, 365*24*time.Hour)
 	return r
 }
 
@@ -73,10 +74,13 @@ func (r *stampRepository) filterFunc() func(_ context.Context, stampType reposit
 		default:
 			return nil, errors.New("unknown stamp type")
 		}
+
+		sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
 		return arr, nil
 	}
 }
 
+// Purge purges stamp cache.
 func (r *stampRepository) Purge() {
 	r.stamps.Purge()
 	r.perType.Purge()

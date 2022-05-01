@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"sort"
 	"strconv"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -71,9 +70,6 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	sort.Slice(stamps, func(i, j int) bool {
-		return stamps[i].ID.String() < stamps[j].ID.String()
-	})
 	return extension.ServeJSONWithETag(c, stamps)
 }
 
