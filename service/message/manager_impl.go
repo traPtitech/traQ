@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	cacheSize = 200
+	cacheSize = 512
 	cacheTTL  = time.Minute
 )
 
