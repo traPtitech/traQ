@@ -24,8 +24,8 @@ const (
 		twemoji Copyright 2019 Twitter, Inc and other contributors
 		Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
 	*/
-	emojiZipURL  = "https://github.com/twitter/twemoji/archive/v12.1.5.zip"
-	emojiDir     = "twemoji-12.1.5/assets/svg/"
+	emojiZipURL  = "https://github.com/twitter/twemoji/archive/v14.0.2.zip"
+	emojiDir     = "twemoji-14.0.2/assets/svg/"
 	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-toolkit/master/emoji.json"
 )
 
