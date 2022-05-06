@@ -102,6 +102,10 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 		}
 
 		name := strings.Trim(emoji.ShortName, ":")
+		if name == "pi\u00f1ata" { // 英数字以外の文字が含まれているので置き換え
+			name = "pinata"
+		}
+
 		s, err := repo.GetStampByName(name)
 		if err != nil && err != repository.ErrNotFound {
 			return err
@@ -121,7 +125,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 				IsUnicode: true,
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create stamp (name: %s): %w", name, err)
 			}
 
 			logger.Info(fmt.Sprintf("stamp added: %s (%s)", name, s.ID))
