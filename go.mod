@@ -12,7 +12,7 @@ require (
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.0.0
-	github.com/go-gormigrate/gormigrate/v2 v2.0.0
+	github.com/go-gormigrate/gormigrate/v2 v2.0.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v4.2.0+incompatible
