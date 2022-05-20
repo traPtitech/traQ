@@ -4261,6 +4261,9 @@ components:
             read: 読み取りスコープ
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Message:
       title: Message
@@ -7315,3 +7318,4 @@ tags:
     description: OGP API
 security:
   - OAuth2: []
+  - bearerAuth: []
