@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.1
+        uses: stoplightio/spectral-action@v0.8.2
         with:
           file_glob: docs/v3-api.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
