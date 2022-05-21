@@ -161,7 +161,7 @@ var esSetting = m{
 // NewESEngine Elasticsearch検索エンジンを生成します
 func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
-	client, err := elastic.NewClient(elastic.SetURL(config.URL))
+	client, err := elastic.NewClient(elastic.SetURL(config.URL), elastic.SetSniff(false))
 	if err != nil {
 		return nil, fmt.Errorf("failed to init search engine: %w", err)
 	}
