@@ -12,7 +12,7 @@ require (
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.0.0
-	github.com/go-gormigrate/gormigrate/v2 v2.0.1
+	github.com/go-gormigrate/gormigrate/v2 v2.0.2
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v4.2.0+incompatible
@@ -84,7 +84,7 @@ require (
 	github.com/imkira/go-interpol v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
