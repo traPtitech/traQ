@@ -4777,7 +4777,7 @@ components:
       properties:
         stampId:
           type: string
-          format: binary
+          format: uuid
           description: スタンプUUID
         datetime:
           type: string
