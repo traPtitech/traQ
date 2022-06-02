@@ -44,10 +44,10 @@ require (
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/exp v0.0.0-20210715201039-d37aa40e8013
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
-	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
-	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
+	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
+	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
-	google.golang.org/api v0.81.0
+	google.golang.org/api v0.82.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.3.4
 	gorm.io/gorm v1.23.5
@@ -128,7 +128,7 @@ require (
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/genproto v0.0.0-20220527130721-00d5c0f3be58 // indirect
 	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
