@@ -14,7 +14,7 @@ FROM golang:1.18.4-alpine AS dockerize
 ARG DOCKERIZE_VERSION=v0.6.1
 RUN go install github.com/jwilder/dockerize@$DOCKERIZE_VERSION
 
-FROM alpine:3.16.0
+FROM alpine:3.16.1
 WORKDIR /app
 
 RUN apk add --no-cache --update ca-certificates imagemagick && \
