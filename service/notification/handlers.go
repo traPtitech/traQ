@@ -204,6 +204,17 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				continue
 			}
 			uid := m.UserID
+
+			user, err := ns.repo.GetUser(uid, false)
+			if err != nil {
+				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
+				continue
+			}
+			// 凍結ユーザーの除外
+			if !user.IsActive() {
+				continue
+			}
+
 			us, err := ns.repo.GetNotifyCitation(uid)
 			if err != nil {
 				logger.Error("failed to GetNotifyCitation", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
