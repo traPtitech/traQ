@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -187,7 +188,7 @@ func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) e
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
-		if err := tx.Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
 		}
 

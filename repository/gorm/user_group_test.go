@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -248,6 +249,22 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 		assert.True(t, g.IsMember(user.GetID()))
 
 		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+	})
+
+	t.Run("success concurrency", func(t *testing.T) {
+		t.Parallel()
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
+
+		wg := sync.WaitGroup{}
+		for i := 0; i < 3; i++ {
+			wg.Add(1)
+			go func(t *testing.T) {
+				defer wg.Done()
+				assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+			}(t)
+		}
+
+		wg.Wait()
 	})
 }
 
