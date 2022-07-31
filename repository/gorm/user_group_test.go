@@ -251,7 +251,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
 	})
 
-	t.Run("success concurrency", func(t *testing.T) {
+	t.Run("success concurrently", func(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
