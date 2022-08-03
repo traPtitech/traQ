@@ -1,5 +1,7 @@
 module github.com/traPtitech/traQ
 
+go 1.19
+
 require (
 	cloud.google.com/go/profiler v0.3.0
 	firebase.google.com/go v3.13.0+incompatible
@@ -139,5 +141,3 @@ require (
 )
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
-
-go 1.18
