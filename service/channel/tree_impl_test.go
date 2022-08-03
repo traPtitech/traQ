@@ -31,7 +31,9 @@ var (
 	cNotFound = uuid.Must(uuid.FromString("44bf0189-e3d5-4946-92e7-a196a2a94f98"))
 )
 
-/* makeTestChannelTree
+/*
+makeTestChannelTree
+
 a : 6fd36038-dd44-4ac1-bec6-a8a997be6969
 ├ b : 390ef0d6-8db2-46c6-afac-4592cab87973
 │ ├ c : 85f7bdb4-ba6b-4bfa-9115-b9dd8fc4c7d1
