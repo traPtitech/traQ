@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -98,7 +98,7 @@ func (u *githubUserInfo) GetProfileImage() ([]byte, error) {
 		return nil, fmt.Errorf(githubAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf(githubAPIRequestErrorFormat, err)
 	}

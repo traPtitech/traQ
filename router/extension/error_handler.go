@@ -3,7 +3,7 @@ package extension
 import (
 	"net/http"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
@@ -52,7 +52,7 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 			if c.Request().Method == http.MethodHead {
 				e = c.NoContent(code)
 			} else {
-				e = json(c, code, body, jsoniter.ConfigFastest)
+				e = json(c, code, body, jsonIter.ConfigFastest)
 			}
 			if e != nil {
 				logger.Warn("failed to send error response", zap.Error(e), zap.String("requestId", GetRequestID(c)))

@@ -19,19 +19,19 @@ import (
 type ctxKey int
 
 const (
-	repoCtxKey ctxKey = iota
-	cmCtxKey
+	repoctxKey ctxKey = iota
+	cmctxKey
 )
 
 func NewRequestValidateContext(c echo.Context) context.Context {
-	return context.WithValue(context.WithValue(context.Background(), repoCtxKey, c.Get(consts.KeyRepo)), cmCtxKey, c.Get(consts.KeyChannelManager))
+	return context.WithValue(context.WithValue(context.Background(), repoctxKey, c.Get(consts.KeyRepo)), cmctxKey, c.Get(consts.KeyChannelManager))
 }
 
 // IsPublicChannelID 公開チャンネルのUUIDである
 var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid channel id"
 
-	cm, ok := ctx.Value(cmCtxKey).(channel.Manager)
+	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
@@ -65,7 +65,7 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid user id"
 
-	repo, ok := ctx.Value(repoCtxKey).(repository.Repository)
+	repo, ok := ctx.Value(repoctxKey).(repository.Repository)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have repository"))
 	}
@@ -111,7 +111,7 @@ var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interfa
 var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid user id"
 
-	repo, ok := ctx.Value(repoCtxKey).(repository.Repository)
+	repo, ok := ctx.Value(repoctxKey).(repository.Repository)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have repository"))
 	}
@@ -147,7 +147,7 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 var IsNotWebhookUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid user id"
 
-	repo, ok := ctx.Value(repoCtxKey).(repository.Repository)
+	repo, ok := ctx.Value(repoctxKey).(repository.Repository)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have repository"))
 	}

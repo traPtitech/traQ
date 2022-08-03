@@ -252,7 +252,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -275,7 +275,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("client_id", client.ID).
 			WithFormField("client_secret", client.Secret).
 			Expect()
@@ -299,7 +299,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("scope", "read").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
@@ -321,7 +321,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("scope", "read manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
@@ -353,7 +353,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("client_id", client.ID).
 			Expect()
 
@@ -453,7 +453,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("scope", "ああああ").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
@@ -470,7 +470,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
-			WithFormField("password", "testtesttesttest").
+			WithFormField("password", "!test_test@test-").
 			WithFormField("scope", "manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()

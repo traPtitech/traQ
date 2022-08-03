@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -100,7 +100,7 @@ func (u *oidcUserInfo) GetProfileImage() ([]byte, error) {
 		return nil, fmt.Errorf(oidcAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf(oidcAPIRequestErrorFormat, err)
 	}

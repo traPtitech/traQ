@@ -1,4 +1,4 @@
-package testutils
+package testUtils
 
 import (
 	"github.com/traPtitech/traQ/service/rbac"

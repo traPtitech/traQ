@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/gormZap"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -55,7 +55,7 @@ func filePruneCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormZap.New(logger.Named("gorm"))
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -162,7 +162,7 @@ func genMissingThumbnails() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormZap.New(logger.Named("gorm"))
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -354,7 +354,7 @@ func genGroupImages() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormZap.New(logger.Named("gorm"))
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

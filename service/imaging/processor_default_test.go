@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"image"
 	"image/png"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-const testdataFolder = "../../testdata/images/"
+const testDataFolder = "../../testData/images/"
 
 func mustOpen(path string) *os.File {
-	fp, err := os.Open(testdataFolder + path)
+	fp, err := os.Open(testDataFolder + path)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func assertImg(t *testing.T, actualImg image.Image, expectedFilePath string) {
 	actualImgBytes := actualImgBytesBuffer.Bytes()
 
 	fpExpected := mustOpen(expectedFilePath)
-	expectedImgBytes, err := ioutil.ReadAll(fpExpected)
+	expectedImgBytes, err := io.ReadAll(fpExpected)
 	if err != nil {
 		panic(err)
 	}

@@ -32,7 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
-	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/gormZap"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		db.SetMaxOpenConns(20)
-		engine.Logger = gormzap.New(l)
+		engine.Logger = gormZap.New(l)
 		if err := migration.DropAll(engine); err != nil {
 			panic(err)
 		}
@@ -220,7 +220,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }
@@ -231,7 +231,7 @@ func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }

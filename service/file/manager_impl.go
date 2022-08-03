@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image/png"
 	"io"
-	"io/ioutil"
 
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
@@ -32,7 +31,7 @@ func makeSureSeekable(r io.Reader) (io.ReadSeeker, error) {
 		return src, nil
 	}
 	// Seek出来ないと困るので全読み込み
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read whole src stream: %w", err)
 	}

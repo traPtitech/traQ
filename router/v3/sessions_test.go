@@ -147,7 +147,7 @@ func TestHandlers_Login(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
-			WithJSON(&PostLoginRequest{Name: user.GetName(), Password: "testTestTestTest"}).
+			WithJSON(&PostLoginRequest{Name: user.GetName(), Password: "!test_test@test-"}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -451,7 +451,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			DisplayName: "po",
 			Role:        role.User,
 			IconFileID:  uuid.Nil,
-			Password:    "testTestTestTest",
+			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
 		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
@@ -486,7 +486,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			DisplayName: "po",
 			Role:        role.User,
 			IconFileID:  uuid.Nil,
-			Password:    "testTestTestTest",
+			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
 		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
@@ -541,7 +541,7 @@ func TestHandlers_LinkExternalAccount(t *testing.T) {
 			DisplayName: "po",
 			Role:        role.User,
 			IconFileID:  uuid.Nil,
-			Password:    "testTestTestTest",
+			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
 		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
@@ -593,7 +593,7 @@ func TestHandlers_UnlinkExternalAccount(t *testing.T) {
 		DisplayName: "po",
 		Role:        role.User,
 		IconFileID:  uuid.Nil,
-		Password:    "testTestTestTest",
+		Password:    "!test_test@test-",
 	})
 	require.NoError(t, err)
 	err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{

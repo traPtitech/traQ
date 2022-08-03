@@ -95,7 +95,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 		}
 	})
 
-	t.Run("hasno", func(t *testing.T) {
+	t.Run("has no", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -128,7 +128,7 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 		}
 	})
 
-	t.Run("notfound", func(t *testing.T) {
+	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -156,7 +156,7 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 		}
 	})
 
-	t.Run("notfound", func(t *testing.T) {
+	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 

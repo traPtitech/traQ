@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormutil"
+	"github.com/traPtitech/traQ/utils/gormUtil"
 	"github.com/traPtitech/traQ/utils/set"
 )
 
@@ -319,7 +319,7 @@ func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repo
 					}
 				} else {
 					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: false}).Error; err != nil {
-						if gormutil.IsMySQLForeignKeyConstraintFailsError(err) {
+						if gormUtil.IsMySQLForeignKeyConstraintFailsError(err) {
 							continue // 存在しないユーザーは無視
 						}
 						return err
@@ -339,7 +339,7 @@ func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repo
 					}
 				} else {
 					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: true}).Error; err != nil {
-						if gormutil.IsMySQLForeignKeyConstraintFailsError(err) {
+						if gormUtil.IsMySQLForeignKeyConstraintFailsError(err) {
 							continue // 存在しないユーザーは無視
 						}
 						return err
@@ -452,7 +452,7 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID) (*repository.Channe
 		return nil, repository.ErrNilID
 	}
 
-	if ok, err := gormutil.RecordExists(repo.db, &model.Channel{ID: channelID}); err != nil {
+	if ok, err := gormUtil.RecordExists(repo.db, &model.Channel{ID: channelID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, repository.ErrNotFound

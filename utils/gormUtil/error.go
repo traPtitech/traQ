@@ -1,4 +1,4 @@
-package gormutil
+package gormUtil
 
 import (
 	"github.com/go-sql-driver/mysql"
@@ -11,18 +11,18 @@ const (
 
 // IsMySQLDuplicatedRecordErr MySQL重複レコードエラーかどうか
 func IsMySQLDuplicatedRecordErr(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
+	mErr, ok := err.(*mysql.MySQLError)
 	if !ok {
 		return false
 	}
-	return merr.Number == errMySQLDuplicatedRecord
+	return mErr.Number == errMySQLDuplicatedRecord
 }
 
 // IsMySQLForeignKeyConstraintFailsError MySQL外部キー制約エラーかどうか
 func IsMySQLForeignKeyConstraintFailsError(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
+	mErr, ok := err.(*mysql.MySQLError)
 	if !ok {
 		return false
 	}
-	return merr.Number == errMySQLForeignKeyConstraintFails
+	return mErr.Number == errMySQLForeignKeyConstraintFails
 }

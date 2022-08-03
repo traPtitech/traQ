@@ -11,7 +11,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/ioext"
+	"github.com/traPtitech/traQ/utils/ioExt"
 )
 
 // SwiftFileStorage OpenStack Swiftストレージ
@@ -57,7 +57,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (reader ioext.ReadSeekCloser, err error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (reader ioExt.ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
 
 	if !fs.cacheable(fileType) {

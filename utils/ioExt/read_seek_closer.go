@@ -1,4 +1,4 @@
-package ioext
+package ioExt
 
 import "io"
 

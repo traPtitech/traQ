@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	json "github.com/json-iterator/go"
@@ -80,7 +80,7 @@ func (u *traqUserInfo) GetProfileImage() ([]byte, error) {
 		return nil, fmt.Errorf(traQAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf(traQAPIRequestErrorFormat, err)
 	}

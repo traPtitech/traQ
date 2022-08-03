@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 const embURLRegexFragment = `/(files|messages)/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`
@@ -47,7 +47,7 @@ func Parse(m string) *ParseResult {
 			ID   uuid.UUID `json:"id"`
 		}
 
-		if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
+		if err := jsonIter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
 			return s
 		}
 

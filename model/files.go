@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 
-	"github.com/traPtitech/traQ/utils/ioext"
+	"github.com/traPtitech/traQ/utils/ioExt"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -157,8 +157,8 @@ type File interface {
 	GetThumbnails() []FileThumbnail
 	GetThumbnail(thumbnailType ThumbnailType) (bool, FileThumbnail)
 
-	Open() (ioext.ReadSeekCloser, error)
-	OpenThumbnail(thumbnailType ThumbnailType) (ioext.ReadSeekCloser, error)
+	Open() (ioExt.ReadSeekCloser, error)
+	OpenThumbnail(thumbnailType ThumbnailType) (ioExt.ReadSeekCloser, error)
 	GetAlternativeURL() string
 }
 

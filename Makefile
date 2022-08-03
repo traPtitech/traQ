@@ -50,8 +50,8 @@ swagger-lint: ## Lint swagger file
 	@docker run --rm -it -v $$PWD:/tmp stoplight/spectral:$(SPECTRAL_VERSION) lint -r /tmp/.spectral.yml -q /tmp/docs/v3-api.yaml
 
 .PHONY: db-gen-docs
-db-gen-docs: ## Generate db docs in docs/dbschema
-	rm -rf ./docs/dbschema
+db-gen-docs: ## Generate db docs in docs/dbSchema
+	rm -rf ./docs/dbSchema
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
 	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc
 

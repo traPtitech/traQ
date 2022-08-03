@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -116,5 +116,5 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 			UpdatedAt: m.Model.UpdatedAt,
 		}
 	}
-	return jsoniter.ConfigFastest.Marshal(v)
+	return jsonIter.ConfigFastest.Marshal(v)
 }

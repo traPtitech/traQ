@@ -68,7 +68,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
-	nologin := middlewares.NoLogin(h.SessStore, h.Repo)
+	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
@@ -372,9 +372,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
 		if h.Config.AllowSignUp {
-			apiNoAuth.POST("/users", h.CreateUser, nologin)
+			apiNoAuth.POST("/users", h.CreateUser, noLogin)
 		}
-		apiNoAuth.POST("/login", h.Login, nologin)
+		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
 		apiNoAuthPublic := apiNoAuth.Group("/public")

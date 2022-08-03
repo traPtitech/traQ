@@ -3,7 +3,7 @@ package message
 import (
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 // EmbeddedInfo メッセージの埋め込み情報
@@ -18,7 +18,7 @@ func ExtractEmbedding(m string) (res []*EmbeddedInfo, plain string) {
 	res = make([]*EmbeddedInfo, 0)
 	tmp := embJSONRegex.ReplaceAllStringFunc(m, func(s string) string {
 		info := &EmbeddedInfo{}
-		if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
+		if err := jsonIter.ConfigFastest.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
 			return s
 		}
 		res = append(res, info)

@@ -8,13 +8,13 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/gormutil"
+	"github.com/traPtitech/traQ/utils/gormUtil"
 )
 
 func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessagePage int, startFilePage int, skipConvertMessage bool) error {
@@ -85,7 +85,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						Type string    `json:"type"`
 						ID   uuid.UUID `json:"id"`
 					}
-					if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
+					if err := jsonIter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
 						return s
 					}
 					switch info.Type {
@@ -130,7 +130,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						// ファイルマッピング情報保存
 						for _, file := range files {
 							if err := tx.Create(file).Error; err != nil {
-								if gormutil.IsMySQLDuplicatedRecordErr(err) {
+								if gormUtil.IsMySQLDuplicatedRecordErr(err) {
 									continue
 								}
 								return err

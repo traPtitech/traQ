@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension/ctxkey"
+	"github.com/traPtitech/traQ/router/extension/ctxKey"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/session"
 )
@@ -79,7 +79,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 
 			c.Set(consts.KeyUser, user)
 			c.Set(consts.KeyUserID, user.GetID())
-			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), ctxkey.UserID, user.GetID()))) // SSEストリーマーで使う
+			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), ctxKey.UserID, user.GetID()))) // SSEストリーマーで使う
 			return next(c)
 		}
 	}

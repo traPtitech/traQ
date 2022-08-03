@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -53,7 +53,7 @@ func (n *channelNode) MarshalJSON() ([]byte, error) {
 	} else {
 		v["parentId"] = n.parent.id
 	}
-	return jsoniter.ConfigFastest.Marshal(v)
+	return jsonIter.ConfigFastest.Marshal(v)
 }
 
 func (n *channelNode) getChildrenIDs() []uuid.UUID {
@@ -286,7 +286,7 @@ func (ct *treeImpl) regenerateJSON() {
 	for _, node := range ct.nodes {
 		arr = append(arr, node)
 	}
-	b, err := jsoniter.ConfigFastest.Marshal(arr)
+	b, err := jsonIter.ConfigFastest.Marshal(arr)
 	if err != nil {
 		panic(err)
 	}

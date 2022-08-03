@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/model"
@@ -15,7 +15,7 @@ import (
 func BotPingRequest(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	bot := fields["bot"].(*model.Bot)
 
-	buf, err := jsoniter.ConfigFastest.Marshal(payload.MakePing(datetime))
+	buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(datetime))
 	if err != nil {
 		return err
 	}

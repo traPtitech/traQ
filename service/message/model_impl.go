@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -150,5 +150,5 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		ThreadID:  optional.UUID{},
 	}
 	m.RUnlock()
-	return jsoniter.ConfigFastest.Marshal(v)
+	return jsonIter.ConfigFastest.Marshal(v)
 }

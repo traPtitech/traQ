@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 type Time struct {
@@ -33,7 +33,7 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	if err := jsoniter.ConfigFastest.Unmarshal(data, &t.Time); err != nil {
+	if err := jsonIter.ConfigFastest.Unmarshal(data, &t.Time); err != nil {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	if t.Valid {
 		return t.Time.MarshalJSON()
 	}
-	return jsoniter.ConfigFastest.Marshal(nil)
+	return jsonIter.ConfigFastest.Marshal(nil)
 }
 
 func (t *Time) UnmarshalText(text []byte) error {

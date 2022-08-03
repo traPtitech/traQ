@@ -3,7 +3,7 @@ package extension
 import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/repository"
@@ -18,15 +18,15 @@ type Context struct {
 	echo.Context
 }
 
-// JSON encoding/jsonをjsoniter.ConfigCompatibleWithStandardLibraryに置換
+// JSON encoding/jsonをjsonIter.ConfigCompatibleWithStandardLibraryに置換
 func (c *Context) JSON(code int, i interface{}) (err error) {
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
 		return c.Context.JSON(code, i)
 	}
-	return json(c, code, i, jsoniter.ConfigFastest)
+	return json(c, code, i, jsonIter.ConfigFastest)
 }
 
-func json(c echo.Context, code int, i interface{}, cfg jsoniter.API) error {
+func json(c echo.Context, code int, i interface{}, cfg jsonIter.API) error {
 	stream := cfg.BorrowStream(c.Response())
 	defer cfg.ReturnStream(stream)
 

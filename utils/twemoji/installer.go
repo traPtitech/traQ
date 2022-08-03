@@ -4,13 +4,13 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"strings"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -60,7 +60,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 	logger.Info("finished downloading twemoji")
 
 	// 絵文字解凍・インストール
-	zipfile, err := zip.NewReader(twemojiZip, twemojiZip.Size())
+	zipFile, err := zip.NewReader(twemojiZip, twemojiZip.Size())
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 	}
 
 	logger.Info("installing emojis...")
-	for _, file := range zipfile.File {
+	for _, file := range zipFile.File {
 		if file.FileInfo().IsDir() {
 			continue
 		}
@@ -156,7 +156,7 @@ func downloadEmojiZip() (*bytes.Reader, error) {
 	}
 	defer res.Body.Close()
 
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	return bytes.NewReader(b), err
 }
 
@@ -168,7 +168,7 @@ func downloadEmojiMeta() (map[string]*emojiMeta, error) {
 	defer res.Body.Close()
 
 	var temp map[string]*emojiMeta
-	if err := jsoniter.ConfigFastest.NewDecoder(res.Body).Decode(&temp); err != nil {
+	if err := jsonIter.ConfigFastest.NewDecoder(res.Body).Decode(&temp); err != nil {
 		return nil, err
 	}
 

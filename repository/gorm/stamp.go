@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormutil"
+	"github.com/traPtitech/traQ/utils/gormUtil"
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
@@ -124,7 +124,7 @@ func (repo *Repository) CreateStamp(args repository.CreateStampArgs) (s *model.S
 			return repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 		// 名前重複チェック
-		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
+		if exists, err := gormUtil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
 			return err
 		} else if exists {
 			return repository.ErrAlreadyExists
@@ -133,7 +133,7 @@ func (repo *Repository) CreateStamp(args repository.CreateStampArgs) (s *model.S
 		if stamp.FileID == uuid.Nil {
 			return repository.ArgError("fileID", "FileID's file is not found")
 		}
-		if exists, err := gormutil.RecordExists(tx, &model.FileMeta{ID: stamp.FileID}); err != nil {
+		if exists, err := gormUtil.RecordExists(tx, &model.FileMeta{ID: stamp.FileID}); err != nil {
 			return err
 		} else if !exists {
 			return repository.ArgError("fileID", "fileID's file is not found")
@@ -176,7 +176,7 @@ func (repo *Repository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArg
 			}
 
 			// 重複チェック
-			if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: args.Name.String}); err != nil {
+			if exists, err := gormUtil.RecordExists(tx, &model.Stamp{Name: args.Name.String}); err != nil {
 				return err
 			} else if exists {
 				return repository.ErrAlreadyExists
@@ -188,7 +188,7 @@ func (repo *Repository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArg
 			if args.FileID.UUID == uuid.Nil {
 				return repository.ArgError("args.FileID", "FileID's file is not found")
 			}
-			if exists, err := gormutil.RecordExists(tx, &model.FileMeta{ID: args.FileID.UUID}); err != nil {
+			if exists, err := gormUtil.RecordExists(tx, &model.FileMeta{ID: args.FileID.UUID}); err != nil {
 				return err
 			} else if !exists {
 				return repository.ArgError("args.FileID", "FileID's file is not found")
@@ -326,7 +326,7 @@ func (repo *Repository) GetStampStats(stampID uuid.UUID) (*repository.StampStats
 		return nil, repository.ErrNilID
 	}
 
-	if ok, err := gormutil.
+	if ok, err := gormUtil.
 		RecordExists(repo.db, &model.MessageStamp{StampID: stampID}); err != nil {
 		return nil, err
 	} else if !ok {

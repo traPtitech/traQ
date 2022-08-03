@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 type TwitterSyndicationAPIResponse struct {
@@ -81,7 +81,7 @@ func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse
 	}
 
 	data := TwitterSyndicationAPIResponse{}
-	if err = jsoniter.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err = jsonIter.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 	return &data, nil

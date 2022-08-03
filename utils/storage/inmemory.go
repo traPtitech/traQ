@@ -3,11 +3,10 @@ package storage
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"sync"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/ioext"
+	"github.com/traPtitech/traQ/utils/ioExt"
 )
 
 // InMemoryFileStorage インメモリファイルストレージ
@@ -25,7 +24,7 @@ func NewInMemoryFileStorage() *InMemoryFileStorage {
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
 func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) error {
-	b, err := ioutil.ReadAll(src)
+	b, err := io.ReadAll(src)
 	if err != nil {
 		return err
 	}
@@ -36,7 +35,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType s
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioext.ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioExt.ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()

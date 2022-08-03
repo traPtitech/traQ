@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormutil"
+	"github.com/traPtitech/traQ/utils/gormUtil"
 )
 
 // PinMessage implements PinRepository interface.
@@ -27,7 +27,7 @@ func (repo *Repository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, err
 
 		p = model.Pin{ID: uuid.Must(uuid.NewV4()), MessageID: messageID, UserID: userID}
 		if err := tx.Create(&p).Error; err != nil {
-			if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			if gormUtil.IsMySQLDuplicatedRecordErr(err) {
 				return repository.ErrAlreadyExists
 			}
 			return err

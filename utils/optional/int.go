@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"strconv"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 type Int struct {
@@ -33,7 +33,7 @@ func (i *Int) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	if err := jsoniter.ConfigFastest.Unmarshal(data, &i.Int64); err != nil {
+	if err := jsonIter.ConfigFastest.Unmarshal(data, &i.Int64); err != nil {
 		return err
 	}
 
@@ -43,9 +43,9 @@ func (i *Int) UnmarshalJSON(data []byte) error {
 
 func (i Int) MarshalJSON() ([]byte, error) {
 	if i.Valid {
-		return jsoniter.ConfigFastest.Marshal(i.Int64)
+		return jsonIter.ConfigFastest.Marshal(i.Int64)
 	}
-	return jsoniter.ConfigFastest.Marshal(nil)
+	return jsonIter.ConfigFastest.Marshal(nil)
 }
 
 func (i *Int) UnmarshalText(text []byte) error {

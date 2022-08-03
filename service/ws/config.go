@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	json     = jsoniter.ConfigFastest
+	json     = jsonIter.ConfigFastest
 	upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,

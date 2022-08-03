@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -91,7 +91,7 @@ func (u *googleUserInfo) GetProfileImage() ([]byte, error) {
 		return nil, fmt.Errorf(googleAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf(googleAPIRequestErrorFormat, err)
 	}

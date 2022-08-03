@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/router/consts"
 )
 
-func scanETag(s string) (etag string, remain string) {
+func scanETag(s string) (eTag string, remain string) {
 	s = textproto.TrimString(s)
 	start := 0
 	if strings.HasPrefix(s, weakPrefix) {
@@ -32,11 +32,11 @@ func scanETag(s string) (etag string, remain string) {
 	return "", ""
 }
 
-func etagStrongMatch(a, b string) bool {
+func eTagStrongMatch(a, b string) bool {
 	return a == b && a != "" && a[0] == '"'
 }
 
-func etagWeakMatch(a, b string) bool {
+func eTagWeakMatch(a, b string) bool {
 	return strings.TrimPrefix(a, weakPrefix) == strings.TrimPrefix(b, weakPrefix)
 }
 
@@ -67,11 +67,11 @@ func checkIfMatch(c echo.Context) condResult {
 		if im[0] == '*' {
 			return condTrue
 		}
-		etag, remain := scanETag(im)
-		if etag == "" {
+		eTag, remain := scanETag(im)
+		if eTag == "" {
 			break
 		}
-		if etagStrongMatch(etag, c.Response().Header().Get(consts.HeaderETag)) {
+		if eTagStrongMatch(eTag, c.Response().Header().Get(consts.HeaderETag)) {
 			return condTrue
 		}
 		im = remain
@@ -97,11 +97,11 @@ func checkIfNoneMatch(c echo.Context) condResult {
 		if buf[0] == '*' {
 			return condFalse
 		}
-		etag, remain := scanETag(buf)
-		if etag == "" {
+		eTag, remain := scanETag(buf)
+		if eTag == "" {
 			break
 		}
-		if etagWeakMatch(etag, c.Response().Header().Get(consts.HeaderETag)) {
+		if eTagWeakMatch(eTag, c.Response().Header().Get(consts.HeaderETag)) {
 			return condFalse
 		}
 		buf = remain
@@ -190,11 +190,11 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 
 // ServeJSONWithETag Etagを付与してJSONを返します。304を返せるときは304を返します。
 func ServeJSONWithETag(c echo.Context, i interface{}) error {
-	j := jsoniter.Config{
+	j := jsonIter.Config{
 		EscapeHTML:                    false,
 		MarshalFloatWith6Digits:       true,
 		ObjectFieldMustBeSimpleString: true,
-		// ここより上はjsoniter.ConfigFastestと同様
+		// ここより上はjsonIter.ConfigFastestと同様
 		SortMapKeys: true, // 順番が一致しないとEtagが一致しないのでソートを有効にする
 	}.Froze()
 
@@ -215,8 +215,8 @@ func ServeJSONWithETag(c echo.Context, i interface{}) error {
 // ServeWithETag Etagを付与して返します。304を返せるときは304を返します。
 func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 	md5Res := md5.Sum(bytes)
-	etag := hex.EncodeToString(md5Res[:])
-	c.Response().Header().Set(consts.HeaderETag, "\""+etag+"\"")
+	eTag := hex.EncodeToString(md5Res[:])
+	c.Response().Header().Set(consts.HeaderETag, "\""+eTag+"\"")
 
 	if done, err := CheckPreconditions(c, time.Time{}); done {
 		return err

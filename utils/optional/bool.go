@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
 type Bool struct {
@@ -33,7 +33,7 @@ func (b *Bool) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	if err := jsoniter.ConfigFastest.Unmarshal(data, &b.Bool); err != nil {
+	if err := jsonIter.ConfigFastest.Unmarshal(data, &b.Bool); err != nil {
 		return err
 	}
 

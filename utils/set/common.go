@@ -1,5 +1,5 @@
 package set
 
-import jsoniter "github.com/json-iterator/go"
+import jsonIter "github.com/json-iterator/go"
 
-var json = jsoniter.ConfigFastest
+var json = jsonIter.ConfigFastest

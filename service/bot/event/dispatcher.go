@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
 )
@@ -53,7 +53,7 @@ func Multicast(d Dispatcher, ev model.BotEventType, payload interface{}, targets
 }
 
 func makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
-	cfg := jsoniter.ConfigFastest
+	cfg := jsonIter.ConfigFastest
 	stream := cfg.BorrowStream(nil)
 	releaseFunc = func() { cfg.ReturnStream(stream) }
 	stream.WriteVal(payload)

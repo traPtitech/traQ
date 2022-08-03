@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func TestBotPingRequest(t *testing.T) {
 
 		et := time.Now()
 
-		buf, err := jsoniter.ConfigFastest.Marshal(payload.MakePing(et))
+		buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(et))
 		require.NoError(t, err)
 
 		repo.MockBotRepository.EXPECT().ChangeBotState(b.ID, model.BotActive).Return(nil).Times(1)
@@ -57,7 +57,7 @@ func TestBotPingRequest(t *testing.T) {
 
 		et := time.Now()
 
-		buf, err := jsoniter.ConfigFastest.Marshal(payload.MakePing(et))
+		buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(et))
 		require.NoError(t, err)
 
 		repo.MockBotRepository.EXPECT().ChangeBotState(b.ID, model.BotPaused).Return(nil).Times(1)

@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
-	"github.com/traPtitech/traQ/testutils"
+	"github.com/traPtitech/traQ/testUtils"
 	"github.com/traPtitech/traQ/utils/random"
 )
 
@@ -19,7 +19,7 @@ type Repo struct {
 	*mock_repository.MockTagRepository
 	*mock_repository.MockUserRepository
 	*mock_repository.MockBotRepository
-	testutils.EmptyTestRepository
+	testUtils.EmptyTestRepository
 }
 
 func setup(t *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *mock_channel.MockManager, *Repo) {

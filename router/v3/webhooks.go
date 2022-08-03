@@ -5,7 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -173,7 +173,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
 	}
 
-	body, err := ioutil.ReadAll(c.Request().Body)
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/ioext"
+	"github.com/traPtitech/traQ/utils/ioExt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 )
@@ -70,11 +70,11 @@ func (f *fileMetaImpl) GetThumbnail(thumbnailType model.ThumbnailType) (bool, mo
 	return false, model.FileThumbnail{}
 }
 
-func (f *fileMetaImpl) Open() (ioext.ReadSeekCloser, error) {
+func (f *fileMetaImpl) Open() (ioExt.ReadSeekCloser, error) {
 	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
 }
 
-func (f *fileMetaImpl) OpenThumbnail(thumbnailType model.ThumbnailType) (ioext.ReadSeekCloser, error) {
+func (f *fileMetaImpl) OpenThumbnail(thumbnailType model.ThumbnailType) (ioExt.ReadSeekCloser, error) {
 	if ok, _ := f.GetThumbnail(thumbnailType); !ok {
 		return nil, fmt.Errorf("no thumbnail image")
 	}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -60,7 +59,7 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
@@ -111,7 +110,7 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
@@ -174,7 +173,7 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
@@ -192,7 +191,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Times(1)
 		ip.EXPECT().
 			Thumbnail(gomock.Any()).
-			Do(func(src io.ReadSeeker) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Do(func(src io.ReadSeeker) { _, _ = io.Copy(io.Discard, src) }).
 			Return(thumb, nil).
 			Times(1)
 
@@ -240,7 +239,7 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
@@ -258,7 +257,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Times(1)
 		ip.EXPECT().
 			Thumbnail(gomock.Any()).
-			Do(func(src io.ReadSeeker) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Do(func(src io.ReadSeeker) { _, _ = io.Copy(io.Discard, src) }).
 			Return(thumb, nil).
 			Times(1)
 
@@ -306,14 +305,14 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
 			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
@@ -324,7 +323,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Times(1)
 		ip.EXPECT().
 			WaveformMp3(gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(io.Discard, src) }).
 			Return(waveform, nil).
 			Times(1)
 
@@ -370,14 +369,14 @@ func TestManagerImpl_Save(t *testing.T) {
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
 			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
 			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
-				_, _ = io.Copy(ioutil.Discard, src)
+				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
@@ -388,7 +387,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Times(1)
 		ip.EXPECT().
 			WaveformWav(gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(io.Discard, src) }).
 			Return(waveform, nil).
 			Times(1)
 
