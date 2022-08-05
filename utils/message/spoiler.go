@@ -1,7 +1,6 @@
 package message
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -29,6 +28,7 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 		r := msgRunes[i]
 		switch r {
 		case '!':
+			// 連続する!をトークンに変換
 			c := countPrefixRune(msgRunes[i:], '!')
 			if c >= 2 {
 				if i != tokenStartIndex {
@@ -38,10 +38,10 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 				for j := 0; j < c/2; j++ {
 					result = append(result, spoilerToken{tType: spoilerTokenExclamation, body: msgRunes[i : i+2]})
 				}
-				if c%2 == 1 {
-					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[i : i+1]})
-				}
 				i += c - 1
+				if c%2 == 1 { // !が奇数個だった場合最後のものは処理していない
+					i--
+				}
 				tokenStartIndex = i + 1
 			}
 		case '\r', '\n', ' ', '　':
@@ -56,7 +56,6 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 	if msgLen != tokenStartIndex {
 		result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:msgLen]})
 	}
-	fmt.Println(result)
 	return result
 }
 
@@ -96,7 +95,7 @@ func tokensToString(tokens []spoilerToken) string {
 		}
 	}
 
-	fmt.Println(spoilerStartPos, spoilerEndPos)
+	// 個数があっていないときは対応関係を正す
 	if len(spoilerStartPos) > len(spoilerEndPos) {
 		newSpoilerStartPos := make([]int, 0, len(spoilerStartPos))
 		readEndCount := 0
