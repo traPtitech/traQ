@@ -115,12 +115,12 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		path := chTree.GetChannelPath(chID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
-		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())
+		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
 	} else {
 		// DM
 		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
 		fcmPayload.Path = "/users/" + mUser.GetName()
-		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
+		fcmPayload.SetBodyWithEllipsis(parsed.NotificationText())
 	}
 
 	if len(parsed.Attachments) > 0 {

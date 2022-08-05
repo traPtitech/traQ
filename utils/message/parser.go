@@ -30,9 +30,10 @@ type ParseResult struct {
 	Citation      []uuid.UUID
 }
 
-// OneLine PlainTextを１行化したものを返します
-func (pr *ParseResult) OneLine() string {
-	return strings.Replace(pr.PlainText, "\n", " ", -1)
+// NotificationText PlainTextを通知用に処理したものを返します
+func (pr *ParseResult) NotificationText() string {
+	filled := FillSpoiler(pr.PlainText)
+	return strings.Replace(filled, "\n", " ", -1)
 }
 
 // Parse メッセージをパースし、埋め込み情報を抽出します
