@@ -34,6 +34,11 @@ func TestFillSpoiler(t *testing.T) {
 		{Message: "!!あ!!", Filled: "*"},
 		{Message: "!!a\n!!", Filled: "!!a\n!!"},
 		{Message: "!!a\na!!", Filled: "*\n*"},
+		// TODO: コードや数式内を無視する実装はされていない
+		// {Message: "```\n!!a!!\n```", Filled: "```\n!!a!!\n```"},
+		// {Message: "$$\n!!a!!\n$$", Filled: "$$\n!!a!!\n$$"},
+		// {Message: "`!!a!!`", Filled: "`!!a!!`"},
+		// {Message: "$!!a!!$", Filled: "$!!a!!$"},
 	}
 
 	for _, v := range cases {
