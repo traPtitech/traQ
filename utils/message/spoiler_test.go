@@ -15,6 +15,7 @@ func TestFillSpoiler(t *testing.T) {
 	}
 
 	cases := []Case{
+		// **!!**!!や[!!link]()!!みたいなケースは完全なパースが必要になるので対応していない
 		{Message: "", Filled: ""},
 		{Message: "!", Filled: "!"},
 		{Message: "!!", Filled: "!!"},
