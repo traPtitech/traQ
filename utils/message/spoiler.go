@@ -1,126 +1,152 @@
 package message
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type spoilerToken struct {
-	tType string
-	body  string
+	tType spoilerTokenType
+	body  []rune
 }
+
+type spoilerTokenType int
+
+const (
+	spoilerTokenInvalid spoilerTokenType = iota
+	spoilerTokenExclamation
+	spoilerTokenContent
+	spoilerTokenSplit
+)
 
 func tokenizeSpoiler(msg string) []spoilerToken {
+	msgRunes := []rune(msg)
+	msgLen := len(msgRunes)
 	result := []spoilerToken{}
+	tokenStartIndex := 0
 
-	excl := false
-	space := false
-	str := ""
-	for _, r := range msg {
+	for i := 0; i < msgLen; i++ {
+		r := msgRunes[i]
 		switch r {
 		case '!':
-			if excl && space {
-				result = append(result, spoilerToken{tType: "ExclamationS", body: "!!"})
-				excl = false
-				space = false
-				str = ""
-			} else if excl {
-				result = append(result, spoilerToken{tType: "Exclamation", body: "!!"})
-				excl = false
-				str = ""
-			} else {
-				excl = true
-				if str != "" {
-					result = append(result, spoilerToken{tType: "Content", body: str})
-					str = ""
+			c := countPrefixRune(msgRunes[i:], '!')
+			if c >= 2 {
+				if i != tokenStartIndex {
+					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:i]})
 				}
-				str = str + "!"
+
+				for j := 0; j < c/2; j++ {
+					result = append(result, spoilerToken{tType: spoilerTokenExclamation, body: msgRunes[i : i+2]})
+				}
+				if c%2 == 1 {
+					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[i : i+1]})
+				}
+				i += c - 1
+				tokenStartIndex = i + 1
 			}
 		case '\r', '\n', ' ', '　':
-			space = true
-			str = str + string(r)
-			if excl {
-				excl = false
+			if i != tokenStartIndex {
+				result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:i]})
 			}
-		default:
-			space = false
-			str = str + string(r)
-			if excl {
-				excl = false
-			}
+			result = append(result, spoilerToken{tType: spoilerTokenSplit, body: msgRunes[i : i+1]})
+			tokenStartIndex = i + 1
 		}
 	}
-	if str != "" {
-		result = append(result, spoilerToken{tType: "Content", body: str})
-	}
 
+	if msgLen != tokenStartIndex {
+		result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:msgLen]})
+	}
+	fmt.Println(result)
 	return result
 }
 
-func parseSpoiler(tokens []spoilerToken) []spoilerToken {
-	cont := true
-	for cont {
-		state := 0
-		contents := []spoilerToken{}
-		start := -1
-	L:
-		for i := range tokens {
-			switch state {
-			case 0:
-				if tokens[i].tType != "C" {
-					start = i
-					state = 1
-				}
-				break
-			case 1:
-				if tokens[i].tType == "C" {
-					state = 2
-					contents = append(contents, tokens[i])
-				} else {
-					start = i
-					state = 1
-				}
-				break
-			case 2:
-				if tokens[i].tType == "C" {
-					contents = append(contents, tokens[i])
-				} else if tokens[i].tType == "S" {
-					contents = []spoilerToken{}
-					start = i
-					state = 1
-				} else {
-					clength := 0
-					for _, t := range contents {
-						clength += len(t.body)
-					}
-
-					new := make([]spoilerToken, len(tokens))
-					copy(new, tokens)
-					new = append(new[:start], spoilerToken{tType: "C", body: strings.Repeat("*", clength)})
-					new = append(new, tokens[start+len(contents)+2:]...)
-					tokens = new
-
-					contents = []spoilerToken{}
-					state = 0
-					start = -1
-					cont = true
-					break L
-				}
-			}
-			cont = false
-		}
-
-	}
-
-	return tokens
-}
+var emptyRuneSlice = []rune{}
 
 func tokensToString(tokens []spoilerToken) string {
-	result := ""
-	for _, v := range tokens {
-		result += v.body
+	spoilerStartPos := []int{}
+	spoilerEndPos := []int{}
+
+	tokensLen := len(tokens)
+	for i, current := range tokens {
+		var prev spoilerToken
+		var next spoilerToken
+		if i > 0 {
+			prev = tokens[i-1]
+		}
+		if i+1 < tokensLen-1 {
+			next = tokens[i+1]
+		}
+
+		if current.tType == spoilerTokenExclamation {
+			if len(spoilerStartPos) > len(spoilerEndPos) {
+				if prev.tType != spoilerTokenInvalid &&
+					prev.tType != spoilerTokenSplit &&
+					spoilerStartPos[len(spoilerStartPos)-1] != i-1 {
+					// 閉じれたら閉じる
+					spoilerEndPos = append(spoilerEndPos, i)
+				} else if next.tType != spoilerTokenSplit {
+					// 閉じれなくても開けたら開く
+					spoilerStartPos = append(spoilerStartPos, i)
+				}
+			} else {
+				if next.tType != spoilerTokenInvalid && next.tType != spoilerTokenSplit {
+					spoilerStartPos = append(spoilerStartPos, i)
+				}
+			}
+		}
 	}
-	return result
+
+	fmt.Println(spoilerStartPos, spoilerEndPos)
+	if len(spoilerStartPos) > len(spoilerEndPos) {
+		newSpoilerStartPos := make([]int, 0, len(spoilerStartPos))
+		readEndCount := 0
+		spoilerEndPosLen := len(spoilerEndPos)
+		for i := len(spoilerStartPos) - 1; i >= 0 && readEndCount < len(spoilerEndPos); i-- {
+			start := spoilerStartPos[i]
+			end := spoilerEndPos[spoilerEndPosLen-1-readEndCount]
+			if end < start {
+				continue
+			}
+			newSpoilerStartPos = append(newSpoilerStartPos, start)
+			readEndCount++
+		}
+
+		// newSpoilerStartPosの順番を逆転
+		for i := 0; i < len(newSpoilerStartPos)/2; i++ {
+			newSpoilerStartPos[i], newSpoilerStartPos[len(newSpoilerStartPos)-i-1] = newSpoilerStartPos[len(newSpoilerStartPos)-i-1], newSpoilerStartPos[i]
+		}
+		spoilerStartPos = newSpoilerStartPos
+	}
+
+	for i := 0; i < len(spoilerStartPos); i++ {
+		s := spoilerStartPos[i]
+		e := spoilerEndPos[i]
+		tokens[s].body = emptyRuneSlice
+		tokens[e].body = emptyRuneSlice
+		for j := s; j < e; j++ {
+			tokens[j].body = []rune(strings.Repeat("*", len(tokens[j].body)))
+		}
+	}
+
+	result := []rune{}
+	for _, v := range tokens {
+		result = append(result, v.body...)
+	}
+	return string(result)
+}
+
+func countPrefixRune(line []rune, letter rune) int {
+	count := 0
+	for _, ch := range line {
+		if ch != letter {
+			break
+		}
+		count++
+	}
+	return count
 }
 
 // FillSpoiler メッセージのSpoilerをパースし、塗りつぶします
 func FillSpoiler(m string) string {
-	return tokensToString(parseSpoiler(tokenizeSpoiler(m)))
+	return tokensToString(tokenizeSpoiler(m))
 }
