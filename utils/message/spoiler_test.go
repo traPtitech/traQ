@@ -31,6 +31,9 @@ func TestFillSpoiler(t *testing.T) {
 		{Message: "foo !! bar !! baz", Filled: "foo !! bar !! baz"},
 		{Message: "x !!a !!foo!!!!!!!!!!!bar!! b!!", Filled: "x *****!!******"},
 		{Message: "x !!a !!foo!!!!!!!!!!!!bar!! b!!", Filled: "x *****!!!!*****"},
+		{Message: "!!あ!!", Filled: "*"},
+		{Message: "!!a\n!!", Filled: "!!a\n!!"},
+		{Message: "!!a\na!!", Filled: "*\n*"},
 	}
 
 	for _, v := range cases {

@@ -124,6 +124,9 @@ func tokensToString(tokens []spoilerToken) string {
 		tokens[s].body = emptyRuneSlice
 		tokens[e].body = emptyRuneSlice
 		for j := s; j < e; j++ {
+			if tokens[j].tType == spoilerTokenSplit && (tokens[j].body[0] == '\r' || tokens[j].body[0] == '\n') {
+				continue
+			}
 			tokens[j].body = []rune(strings.Repeat("*", len(tokens[j].body)))
 		}
 	}
