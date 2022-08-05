@@ -15,6 +15,13 @@ func TestFillSpoiler(t *testing.T) {
 	}
 
 	cases := []Case{
+		{Message: "", Filled: ""},
+		{Message: "!", Filled: "!"},
+		{Message: "!!", Filled: "!!"},
+		{Message: "!!!", Filled: "!!!"},
+		{Message: "!!!!", Filled: "!!!!"},
+		{Message: "!!!!!", Filled: "!!!!!"},
+		{Message: "!! !!", Filled: "!! !!"},
 		{Message: "!!Mark!!", Filled: "****"},
 		{Message: "x !!!!foo!! bar!!", Filled: "x *******"},
 		{Message: "x !!foo !!bar!!!!", Filled: "x *******"},
