@@ -100,7 +100,7 @@ func tokensToString(tokens []spoilerToken) string {
 		newSpoilerStartPos := make([]int, 0, len(spoilerStartPos))
 		readEndCount := 0
 		spoilerEndPosLen := len(spoilerEndPos)
-		for i := len(spoilerStartPos) - 1; i >= 0 && readEndCount < len(spoilerEndPos); i-- {
+		for i := len(spoilerStartPos) - 1; i >= 0 && readEndCount < spoilerEndPosLen; i-- {
 			start := spoilerStartPos[i]
 			end := spoilerEndPos[spoilerEndPosLen-1-readEndCount]
 			if end < start {
