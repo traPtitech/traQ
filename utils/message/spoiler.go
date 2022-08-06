@@ -22,7 +22,7 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 	msgRunes := []rune(msg)
 	msgLen := len(msgRunes)
 	result := []spoilerToken{}
-	tokenStartIndex := 0
+	contentStartIndex := 0
 
 	for i := 0; i < msgLen; i++ {
 		r := msgRunes[i]
@@ -31,8 +31,8 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 			// 連続する!をトークンに変換
 			c := countPrefixRune(msgRunes[i:], '!')
 			if c >= 2 {
-				if i != tokenStartIndex {
-					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:i]})
+				if i != contentStartIndex {
+					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[contentStartIndex:i]})
 				}
 
 				for j := 0; j < c/2; j++ {
@@ -42,19 +42,19 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 				if c%2 == 1 { // !が奇数個だった場合最後のものは処理していない
 					i--
 				}
-				tokenStartIndex = i + 1
+				contentStartIndex = i + 1
 			}
 		case '\r', '\n', ' ', '　':
-			if i != tokenStartIndex {
-				result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:i]})
+			if i != contentStartIndex {
+				result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[contentStartIndex:i]})
 			}
 			result = append(result, spoilerToken{tType: spoilerTokenSplit, body: msgRunes[i : i+1]})
-			tokenStartIndex = i + 1
+			contentStartIndex = i + 1
 		}
 	}
 
-	if msgLen != tokenStartIndex {
-		result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[tokenStartIndex:msgLen]})
+	if msgLen != contentStartIndex {
+		result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[contentStartIndex:msgLen]})
 	}
 	return result
 }
