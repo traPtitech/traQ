@@ -59,8 +59,6 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 	return result
 }
 
-var emptyRuneSlice = []rune{}
-
 func tokensToString(tokens []spoilerToken) string {
 	spoilerStartPos := []int{}
 	spoilerEndPos := []int{}
@@ -98,16 +96,14 @@ func tokensToString(tokens []spoilerToken) string {
 	// 個数があっていないときは対応関係を正す
 	if len(spoilerStartPos) > len(spoilerEndPos) {
 		newSpoilerStartPos := make([]int, 0, len(spoilerStartPos))
-		readEndCount := 0
-		spoilerEndPosLen := len(spoilerEndPos)
-		for i := len(spoilerStartPos) - 1; i >= 0 && readEndCount < spoilerEndPosLen; i-- {
+		for i, j := len(spoilerStartPos)-1, len(spoilerEndPos)-1; i >= 0 && j >= 0; i-- {
 			start := spoilerStartPos[i]
-			end := spoilerEndPos[spoilerEndPosLen-1-readEndCount]
+			end := spoilerEndPos[j]
 			if end < start {
 				continue
 			}
 			newSpoilerStartPos = append(newSpoilerStartPos, start)
-			readEndCount++
+			j--
 		}
 
 		// newSpoilerStartPosの順番を逆転
@@ -120,9 +116,9 @@ func tokensToString(tokens []spoilerToken) string {
 	for i := 0; i < len(spoilerStartPos); i++ {
 		s := spoilerStartPos[i]
 		e := spoilerEndPos[i]
-		tokens[s].body = emptyRuneSlice
-		tokens[e].body = emptyRuneSlice
-		for j := s; j < e; j++ {
+		tokens[s].body = nil
+		tokens[e].body = nil
+		for j := s + 1; j < e; j++ {
 			if tokens[j].tType == spoilerTokenSplit && (tokens[j].body[0] == '\r' || tokens[j].body[0] == '\n') {
 				continue
 			}
