@@ -72,7 +72,7 @@ func tokensToString(tokens []spoilerToken) string {
 		if i > 0 {
 			prev = tokens[i-1]
 		}
-		if i+1 < tokensLen-1 {
+		if i+1 < tokensLen {
 			next = tokens[i+1]
 		}
 
@@ -83,7 +83,7 @@ func tokensToString(tokens []spoilerToken) string {
 					spoilerStartPos[len(spoilerStartPos)-1] != i-1 {
 					// 閉じれたら閉じる
 					spoilerEndPos = append(spoilerEndPos, i)
-				} else if next.tType != spoilerTokenSplit {
+				} else if next.tType != spoilerTokenInvalid && next.tType != spoilerTokenSplit {
 					// 閉じれなくても開けたら開く
 					spoilerStartPos = append(spoilerStartPos, i)
 				}
