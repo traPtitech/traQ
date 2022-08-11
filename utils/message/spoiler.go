@@ -122,7 +122,7 @@ func tokensToString(tokens []spoilerToken) string {
 			if tokens[j].tType == spoilerTokenSplit && (tokens[j].body[0] == '\r' || tokens[j].body[0] == '\n') {
 				continue
 			}
-			tokens[j].body = []rune(strings.Repeat("*", len(tokens[j].body)))
+			tokens[j].body = []rune(strings.Repeat("█", len(tokens[j].body)))
 		}
 	}
 
