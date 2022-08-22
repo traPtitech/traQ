@@ -6578,7 +6578,6 @@ components:
             $ref: '#/components/schemas/DMChannel'
       required:
         - public
-        - dm
     DMChannel:
       title: DMChannel
       type: object
