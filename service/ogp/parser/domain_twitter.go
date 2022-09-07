@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
+	"github.com/dyatlov/go-opengraph/opengraph/types/image"
 	jsonIter "github.com/json-iterator/go"
 )
 
@@ -45,18 +46,18 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 	}
 	result := DefaultPageMeta{}
 	if len(apiResponse.Photos) > 0 {
-		image := apiResponse.Photos[0]
-		og.Images = []*opengraph.Image{{
-			URL:    image.URL,
-			Width:  uint64(image.Width),
-			Height: uint64(image.Height),
+		photo := apiResponse.Photos[0]
+		og.Images = []*image.Image{{
+			URL:    photo.URL,
+			Width:  uint64(photo.Width),
+			Height: uint64(photo.Height),
 		}}
 	} else if apiResponse.Video.Poster != "" {
-		og.Images = []*opengraph.Image{{
+		og.Images = []*image.Image{{
 			URL: apiResponse.Video.Poster,
 		}}
 	} else if apiResponse.User.ProfileImageURL != "" {
-		og.Images = []*opengraph.Image{{
+		og.Images = []*image.Image{{
 			URL: apiResponse.User.ProfileImageURL,
 		}}
 	}

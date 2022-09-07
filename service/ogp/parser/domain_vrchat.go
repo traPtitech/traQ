@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
+	"github.com/dyatlov/go-opengraph/opengraph/types/image"
 	jsonIter "github.com/json-iterator/go"
 )
 
@@ -37,7 +38,7 @@ func FetchVRChatInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 			Title:       fmt.Sprintf("%s - VRChat", info.Name),
 			Description: info.Description,
 			URL:         url.String(),
-			Images: []*opengraph.Image{{
+			Images: []*image.Image{{
 				URL: info.ThumbnailImageURL,
 			}},
 		}

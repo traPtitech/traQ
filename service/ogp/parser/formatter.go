@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
-
+	"github.com/dyatlov/go-opengraph/opengraph/types/image"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -50,14 +50,20 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 	}
 	result.Videos = make([]model.OgpMedia, len(og.Videos))
 	for i, video := range og.Videos {
-		// Videoは仕様上Imageと同じ構造を持つ
-		result.Videos[i] = toOgpMedia((*opengraph.Image)(video))
+		// Videoは仕様上ImageのFieldを包含している
+		result.Videos[i] = toOgpMedia(&image.Image{
+			URL:       video.URL,
+			SecureURL: video.SecureURL,
+			Type:      video.Type,
+			Width:     video.Width,
+			Height:    video.Height,
+		})
 	}
 
 	return result
 }
 
-func toOgpMedia(image *opengraph.Image) model.OgpMedia {
+func toOgpMedia(image *image.Image) model.OgpMedia {
 	result := model.OgpMedia{
 		URL:       image.URL,
 		SecureURL: optional.NewString("", false),
