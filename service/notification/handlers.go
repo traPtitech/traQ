@@ -600,11 +600,14 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 		sessions = append(sessions, StateSession{State: state, SessionID: session})
 	}
 
-	go ns.ws.WriteMessage("USER_WEBRTC_STATE_CHANGED", map[string]interface{}{
-		"user_id":    ev.Fields["user_id"].(uuid.UUID),
-		"channel_id": ev.Fields["channel_id"].(uuid.UUID),
-		"sessions":   sessions,
-	}, ws.TargetAll())
+	broadcast(ns,
+		"USER_WEBRTC_STATE_CHANGED",
+		map[string]interface{}{
+			"user_id":    ev.Fields["user_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"sessions":   sessions,
+		},
+	)
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
