@@ -358,7 +358,8 @@ func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repo
 		repo.hub.Publish(hub.Message{
 			Name: event.ChannelSubscribersChanged,
 			Fields: hub.Fields{
-				"channel_id": channelID,
+				"channel_id":     channelID,
+				"subscribers_id": append(on, off...),
 			},
 		})
 	}
