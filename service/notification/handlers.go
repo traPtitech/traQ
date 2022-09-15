@@ -416,17 +416,12 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
-	channelViewerMulticast(ns, cid,
+	ns.ws.WriteMessage(
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
 			"id": cid,
 		},
-	)
-	usersMulticast(ns, uids,
-		"CHANNEL_SUBSCRIBERS_CHANGED",
-		map[string]interface{}{
-			"id": cid,
-		},
+		ws.Or(ws.TargetChannelViewers(cid), ws.TargetUsers(uids...)),
 	)
 }
 
@@ -711,8 +706,4 @@ func broadcast(ns *Service, wsEventType string, wsPayload interface{}) {
 
 func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload interface{}) {
 	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
-}
-
-func usersMulticast(ns *Service, userIDs []uuid.UUID, wsEventType string, wsPayload interface{}) {
-	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userIDs...))
 }
