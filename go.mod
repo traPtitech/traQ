@@ -46,10 +46,10 @@ require (
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220907003533-145caa8ea1d0
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69
-	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	google.golang.org/api v0.95.0
+	google.golang.org/api v0.96.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.3.6
 	gorm.io/gorm v1.23.8
