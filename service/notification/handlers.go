@@ -415,11 +415,13 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
-	channelViewerMulticast(ns, cid,
+	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
+	ns.ws.WriteMessage(
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
 			"id": cid,
 		},
+		ws.Or(ws.TargetChannelViewers(cid), ws.TargetUsers(uids...)),
 	)
 }
 
@@ -593,11 +595,14 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 		sessions = append(sessions, StateSession{State: state, SessionID: session})
 	}
 
-	go ns.ws.WriteMessage("USER_WEBRTC_STATE_CHANGED", map[string]interface{}{
-		"user_id":    ev.Fields["user_id"].(uuid.UUID),
-		"channel_id": ev.Fields["channel_id"].(uuid.UUID),
-		"sessions":   sessions,
-	}, ws.TargetAll())
+	broadcast(ns,
+		"USER_WEBRTC_STATE_CHANGED",
+		map[string]interface{}{
+			"user_id":    ev.Fields["user_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"sessions":   sessions,
+		},
+	)
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
