@@ -415,7 +415,7 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
-	broadcast(ns,
+	channelViewerMulticast(ns, cid,
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
 			"id": cid,
