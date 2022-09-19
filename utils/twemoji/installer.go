@@ -44,7 +44,7 @@ var replaceNameMap = map[string]string{
 	// 英数字以外の文字が含まれているので置き換え
 	"pi\u00f1ata": "pinata",
 	// 長すぎるので置き換え
-	"face_with_open_eyes_and_hand_over_mouth": "face_with_open_eyes_hand",
+	"face_with_open_eyes_and_hand_over_mouth":  "face_with_open_eyes_hand",
 	"hand_with_index_finger_and_thumb_crossed": "hand_index_finger_thumb_crossed",
 }
 
