@@ -186,6 +186,7 @@ const (
 	// ChannelSubscribersChanged チャンネルの購読者が変化した
 	// 	Fields:
 	// 		channel_id: uuid.UUID
+	//    subscriber_ids: []uuid.UUID
 	ChannelSubscribersChanged = "channel.subscribers_changed"
 
 	// StampCreated スタンプが作成された
