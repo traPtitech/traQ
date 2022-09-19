@@ -26,7 +26,7 @@ const (
 	*/
 	emojiZipURL  = "https://github.com/twitter/twemoji/archive/v14.0.2.zip"
 	emojiDir     = "twemoji-14.0.2/assets/svg/"
-	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-toolkit/master/emoji.json"
+	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-assets/v7.0.0/emoji.json"
 )
 
 type emojiMeta struct {
