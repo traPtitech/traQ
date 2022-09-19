@@ -40,6 +40,14 @@ type emojiMeta struct {
 	} `json:"code_points"`
 }
 
+var replaceNameMap = map[string]string{
+	// 英数字以外の文字が含まれているので置き換え
+	"pi\u00f1ata": "pinata",
+	// 長すぎるので置き換え
+	"face_with_open_eyes_and_hand_over_mouth": "face_with_open_eyes_hand",
+	"hand_with_index_finger_and_thumb_crossed": "hand_index_finger_thumb_crossed",
+}
+
 func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, update bool) error {
 	logger = logger.Named("twemoji_installer")
 
@@ -102,8 +110,8 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 		}
 
 		name := strings.Trim(emoji.ShortName, ":")
-		if name == "pi\u00f1ata" { // 英数字以外の文字が含まれているので置き換え
-			name = "pinata"
+		if replacedName, ok := replaceNameMap[name]; ok {
+			name = replacedName
 		}
 
 		s, err := repo.GetStampByName(name)
