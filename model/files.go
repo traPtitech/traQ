@@ -3,13 +3,13 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 
-	"github.com/traPtitech/traQ/utils/ioExt"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -157,8 +157,8 @@ type File interface {
 	GetThumbnails() []FileThumbnail
 	GetThumbnail(thumbnailType ThumbnailType) (bool, FileThumbnail)
 
-	Open() (ioExt.ReadSeekCloser, error)
-	OpenThumbnail(thumbnailType ThumbnailType) (ioExt.ReadSeekCloser, error)
+	Open() (io.ReadSeekCloser, error)
+	OpenThumbnail(thumbnailType ThumbnailType) (io.ReadSeekCloser, error)
 	GetAlternativeURL() string
 }
 
