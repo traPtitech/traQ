@@ -8,7 +8,6 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
-
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 )
