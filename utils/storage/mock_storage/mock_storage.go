@@ -10,7 +10,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
-	ioExt "github.com/traPtitech/traQ/utils/ioExt"
 )
 
 // MockFileStorage is a mock of FileStorage interface.
@@ -66,10 +65,10 @@ func (mr *MockFileStorageMockRecorder) GenerateAccessURL(key, fileType interface
 }
 
 // OpenFileByKey mocks base method.
-func (m *MockFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioExt.ReadSeekCloser, error) {
+func (m *MockFileStorage) OpenFileByKey(key string, fileType model.FileType) (io.ReadSeekCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "OpenFileByKey", key, fileType)
-	ret0, _ := ret[0].(ioExt.ReadSeekCloser)
+	ret0, _ := ret[0].(io.ReadSeekCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

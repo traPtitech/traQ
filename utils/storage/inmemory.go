@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/ioExt"
 )
 
 // InMemoryFileStorage インメモリファイルストレージ
@@ -35,7 +34,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType s
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioExt.ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (io.ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()
