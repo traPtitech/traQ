@@ -34,6 +34,7 @@ func (o *s3Object) Close() (err error) {
 	return o.body.Close()
 }
 
+// https://github.com/ncw/swift/blob/master/swift.go#L1668
 func (o *s3Object) Seek(offset int64, whence int) (newPos int64, err error) {
 	o.overSeeked = false
 
