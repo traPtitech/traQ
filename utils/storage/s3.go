@@ -29,7 +29,7 @@ type S3FileStorage struct {
 }
 
 // NewS3FileStorage 引数の情報でS3ストレージを生成します
-func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret, authURL, cacheDir string) (*S3FileStorage, error) {
+func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret, cacheDir string) (*S3FileStorage, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),
 		config.WithEndpointResolverWithOptions(
