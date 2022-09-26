@@ -81,7 +81,23 @@ services:
       - ./dev/bin:/app
     command: go run /app/bot_debugger.go -p 80
 
+  s3:
+    image: minio/minio:latest
+    # 9000-API, 9001-Web
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: AKID
+      MINIO_ROOT_PASSWORD: SECRETPASSWORD
+      MINIO_DOMAIN: s3
+    volumes:
+      - s3:/data
+    command: /opt/bin/minio server /data --console-address :9001
+
+
 volumes:
   app:
   mysql:
   es:
+  s3:
