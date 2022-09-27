@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -26,9 +27,11 @@ func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 			return err
 		}
 
-		t.client = s3.NewFromConfig(cfg)
+		t.client = s3.NewFromConfig(cfg, func(opt *s3.Options) {
+			opt.UsePathStyle = true // virtual host styleだと名前解決ができない(bucket.localhost~~になるため)
+		})
 
-		return nil
+		return minioHealthCheck(resource.GetHostPort("9000/tcp"))
 	}
 }
 
@@ -42,12 +45,7 @@ func (t *s3Tester) setupBucket() error {
 }
 
 func (t *s3Tester) teardown() error {
-	input := s3.DeleteBucketInput{
-		Bucket: aws.String(bucketName),
-	}
-
-	_, err := t.getClient().DeleteBucket(context.Background(), &input)
-	return err
+	return nil
 }
 
 func (t *s3Tester) getClient() *s3.Client {
@@ -72,4 +70,18 @@ func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 	)
 
 	return cfg, err
+}
+
+func minioHealthCheck(host string) error {
+
+	resp, err := http.Get(fmt.Sprintf("http://%s/minio/health/live", host))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("health check failed: %s", resp.Status)
+	}
+
+	return nil
 }
