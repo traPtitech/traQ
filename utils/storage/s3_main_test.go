@@ -2,10 +2,14 @@ package storage
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 )
 
 const bucketName = "test-bucket"
@@ -25,7 +29,30 @@ func TestMain(m *testing.M) {
 
 	var err error
 
-	if err = s3Main.setup(); err != nil {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	// pulls an image, creates a container based on it and runs it
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "minio/minio",
+		Tag:        "latest",
+		Cmd:        []string{"/opt/bin/minio", "server", "/data"},
+		Env: []string{
+			"MINIO_ROOT_USER=AKID",
+			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
+			"MINIO_DOMAIN=s3",
+		},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"9000/tcp": {{HostPort: "9000"}},
+		},
+	})
+	if err != nil {
+		log.Fatalf("Could not start resource: %s", err)
+	}
+
+	if err = pool.Retry(s3Main.setupFunc(resource)); err != nil {
 		fmt.Println("Unable to execute setup:", err)
 		os.Exit(-4)
 	}

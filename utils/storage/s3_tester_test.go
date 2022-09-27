@@ -2,11 +2,13 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/ory/dockertest/v3"
 )
 
 type s3Tester struct {
@@ -17,15 +19,17 @@ func init() {
 	s3Main = &s3Tester{}
 }
 
-func (t *s3Tester) setup() error {
-	cfg, err := s3TestConfig(context.Background())
-	if err != nil {
-		return err
+func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
+	return func() error {
+		cfg, err := s3TestConfig(context.Background(), resource.GetPort("9000/tcp"))
+		if err != nil {
+			return err
+		}
+
+		t.client = s3.NewFromConfig(cfg)
+
+		return nil
 	}
-
-	t.client = s3.NewFromConfig(cfg)
-
-	return nil
 }
 
 func (t *s3Tester) setupBucket() error {
@@ -50,8 +54,8 @@ func (t *s3Tester) getClient() *s3.Client {
 	return t.client
 }
 
-func s3TestConfig(ctx context.Context) (aws.Config, error) {
-	ep := "http://localhost:9000"
+func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
+	ep := fmt.Sprintf("http://localhost:%s", port)
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("ap-northeast-1"),
 		config.WithEndpointResolverWithOptions(
