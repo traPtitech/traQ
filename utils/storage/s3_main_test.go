@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "minio/minio",
 		Tag:        "latest",
-		Cmd:        []string{"/opt/bin/minio", "server", "/data"},
+		Cmd:        []string{"minio", "server", "/data"},
 		Env: []string{
 			"MINIO_ROOT_USER=AKID",
 			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
@@ -47,9 +47,19 @@ func TestMain(m *testing.M) {
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"9000/tcp": {{HostPort: "9000"}},
 		},
+	}, func(config *docker.HostConfig) {
+
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{
+			Name: "no",
+		}
 	})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
+	}
+
+	if err = resource.Expire(60); err != nil {
+		log.Fatalf("Could not set resource expiration: %s", err)
 	}
 
 	if err = pool.Retry(s3Main.setupFunc(resource)); err != nil {
@@ -70,6 +80,10 @@ func TestMain(m *testing.M) {
 	if err = s3Main.teardown(); err != nil {
 		fmt.Println("Unable to execute teardown:", err)
 		os.Exit(-5)
+	}
+
+	if err := pool.Purge(resource); err != nil {
+		log.Fatalf("Could not purge resource: %s", err)
 	}
 
 	os.Exit(code)
