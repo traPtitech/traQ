@@ -212,15 +212,12 @@ func (fs *S3FileStorage) getObject(ctx context.Context, input *s3.GetObjectInput
 		return nil, fmt.Errorf("input is nil")
 	}
 
-	attrin := s3.GetObjectAttributesInput{
+	attrin := s3.HeadObjectInput{
 		Bucket: input.Bucket,
 		Key:    input.Key,
-		ObjectAttributes: []types.ObjectAttributes{
-			types.ObjectAttributesObjectSize,
-		},
 	}
 
-	attrout, err := fs.client.GetObjectAttributes(ctx, &attrin)
+	attrout, err := fs.client.HeadObject(ctx, &attrin)
 
 	if err != nil {
 		return nil, err
@@ -236,7 +233,7 @@ func (fs *S3FileStorage) getObject(ctx context.Context, input *s3.GetObjectInput
 		client:   fs.client,
 		input:    *input,
 		resp:     objout,
-		length:   attrout.ObjectSize,
+		length:   attrout.ContentLength,
 		lengthOk: true,
 		body:     objout.Body,
 	}
