@@ -74,7 +74,7 @@ func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 
 func minioHealthCheck(host string) error {
 
-	resp, err := http.Get(fmt.Sprintf("http://%s/minio/health/live", host))
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%s/minio/health/live", host))
 	if err != nil {
 		return err
 	}
