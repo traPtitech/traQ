@@ -87,6 +87,10 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    networks:
+      default:
+        aliases:
+          - traq.s3 # {bucket}.s3
     environment:
       MINIO_ROOT_USER: AKID
       MINIO_ROOT_PASSWORD: SECRETPASSWORD
