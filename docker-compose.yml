@@ -97,7 +97,7 @@ services:
       MINIO_DOMAIN: s3
     volumes:
       - s3:/data
-    command: /opt/bin/minio server /data --console-address :9001
+    command: minio server /data --console-address :9001
 
 
 volumes:
