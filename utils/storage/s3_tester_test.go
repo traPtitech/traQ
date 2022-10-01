@@ -31,7 +31,7 @@ func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 			opt.UsePathStyle = true // virtual host styleだと名前解決ができない(bucket.localhost~~になるため)
 		})
 
-		return minioHealthCheck(resource.GetHostPort("9000/tcp"))
+		return minioHealthCheck(resource.GetPort("9000/tcp"))
 	}
 }
 

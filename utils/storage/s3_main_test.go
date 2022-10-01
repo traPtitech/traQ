@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 			"MINIO_DOMAIN=s3",
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9000/tcp": {{HostPort: "9000"}},
+			"9000/tcp": {{HostPort: "19000"}},
 		},
 	}, func(config *docker.HostConfig) {
 
