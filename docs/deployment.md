@@ -90,6 +90,7 @@ storage:
   # Storage type.
   #   local: Local storage. (default)
   #   swift: Swift object storage.
+  #   s3: Amazon S3 object storage.
   #   composite: Local and Swift object storage.
   #              User icons, stamps, and thumbnails are stored locally,
   #              other uploaded files are stored in Swift object storage.
@@ -100,7 +101,7 @@ storage:
   local:
     dir: /app/storage
   
-  # Set this if type is "swift" or "composite"
+  # Set this if type is "swift" or "composite" and "composite.remote = swift"
   swift:
     username: username # Username
     apiKey: apiKey # Key for API access
@@ -110,6 +111,19 @@ storage:
     authUrl: authUrl # Authentication URL
     tempUrlKey: tempUrlKey # (optional) Secret key to issue temporary URL for objects
     cacheDir: /app/storagecache # Local directory to cache user icons, stamps, and thumbnails
+  
+  # Set this if type is "s3" or "composite" and "composite.remote = s3"
+  s3:
+    bucket: bucket # Bucket name
+    region: region # Region
+    endpoint: endpoint # (optional) Endpoint URL
+    accessKey: accessKey # Access key
+    secretKey: secretKey # Secret key
+    cacheDir: /app/storagecache # Local directory to cache user icons, stamps, and thumbnails
+  
+  # Set this if type is "composite"
+  composite:
+    remote: s3
 
 # (optional) GCP settings.
 gcp:

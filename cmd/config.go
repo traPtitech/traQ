@@ -123,6 +123,28 @@ type Config struct {
 			// CacheDir キャッシュディレクトリ
 			CacheDir string `mapstructure:"cacheDir" yaml:"cacheDir"`
 		} `mapstructure:"swift" yaml:"swift"`
+
+		// S3 S3設定
+		S3 struct {
+			// Bucket バケット名
+			Bucket string `mapstructure:"bucket" yaml:"bucket"`
+			// Region リージョン
+			Region string `mapstructure:"region" yaml:"region"`
+			// Endpoint エンドポイント
+			Endpoint string `mapstructure:"endpoint" yaml:"endpoint"`
+			// AccessKey アクセスキー
+			AccessKey string `mapstructure:"accessKey" yaml:"accessKey"`
+			// SecretKey シークレットキー
+			SecretKey string `mapstructure:"secretKey" yaml:"secretKey"`
+			// CacheDir キャッシュディレクトリ
+			CacheDir string `mapstructure:"cacheDir" yaml:"cacheDir"`
+		} `mapstructure:"s3" yaml:"s3"`
+
+		// Composite 複合ストレージ設定
+		Composite struct {
+			// Remote リモートストレージ
+			Remote string `mapstructure:"remote" yaml:"remote"`
+		} `mapstructure:"composite" yaml:"composite"`
 	} `mapstructure:"storage" yaml:"storage"`
 
 	// GCP Google Cloud Platform設定
@@ -256,6 +278,13 @@ func init() {
 	viper.SetDefault("storage.swift.authUrl", "")
 	viper.SetDefault("storage.swift.tempUrlKey", "")
 	viper.SetDefault("storage.swift.cacheDir", "")
+	viper.SetDefault("storage.s3.bucket", "")
+	viper.SetDefault("storage.s3.region", "")
+	viper.SetDefault("storage.s3.endpoint", "")
+	viper.SetDefault("storage.s3.accessKey", "")
+	viper.SetDefault("storage.s3.secretKey", "")
+	viper.SetDefault("storage.s3.cacheDir", "")
+	viper.SetDefault("storage.composite.remote", "")
 	viper.SetDefault("gcp.serviceAccount.projectId", "")
 	viper.SetDefault("gcp.serviceAccount.file", "")
 	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
@@ -304,18 +333,47 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 			c.Storage.Swift.TempURLKey,
 			c.Storage.Swift.CacheDir,
 		)
-	case "composite":
-		return storage.NewCompositeFileStorage(
-			c.Storage.Local.Dir,
-			c.Storage.Swift.Container,
-			c.Storage.Swift.UserName,
-			c.Storage.Swift.APIKey,
-			c.Storage.Swift.TenantName,
-			c.Storage.Swift.TenantID,
-			c.Storage.Swift.AuthURL,
-			c.Storage.Swift.TempURLKey,
-			c.Storage.Swift.CacheDir,
+	case "s3":
+		return storage.NewS3FileStorage(
+			c.Storage.S3.Bucket,
+			c.Storage.S3.Region,
+			c.Storage.S3.Endpoint,
+			c.Storage.S3.AccessKey,
+			c.Storage.S3.SecretKey,
+			c.Storage.S3.CacheDir,
 		)
+	case "composite":
+		var s storage.FileStorage
+		var err error
+		switch c.Storage.Composite.Remote {
+		case "swift":
+			s, err = storage.NewSwiftFileStorage(
+				c.Storage.Swift.Container,
+				c.Storage.Swift.UserName,
+				c.Storage.Swift.APIKey,
+				c.Storage.Swift.TenantName,
+				c.Storage.Swift.TenantID,
+				c.Storage.Swift.AuthURL,
+				c.Storage.Swift.TempURLKey,
+				c.Storage.Swift.CacheDir,
+			)
+
+		case "s3":
+			s, err = storage.NewS3FileStorage(
+				c.Storage.S3.Bucket,
+				c.Storage.S3.Region,
+				c.Storage.S3.Endpoint,
+				c.Storage.S3.AccessKey,
+				c.Storage.S3.SecretKey,
+				c.Storage.S3.CacheDir,
+			)
+		default:
+			return nil, fmt.Errorf("unknown remote storage type: %s", c.Storage.Composite.Remote)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return storage.NewCompositeFileStorage(c.Storage.Local.Dir, s)
 	case "memory":
 		return storage.NewInMemoryFileStorage(), nil
 	default:

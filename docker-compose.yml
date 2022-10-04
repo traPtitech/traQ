@@ -9,6 +9,14 @@ services:
       TRAQ_MARIADB_HOST: mysql
       TRAQ_ES_URL: http://es:9200
       TRAQ_PPROF: "true"
+      TRAQ_STORAGE_TYPE: composite
+      TRAQ_STORAGE_S3_BUCKET: traq
+      TRAQ_STORAGE_S3_REGION: ap-northeast-1
+      TRAQ_STORAGE_S3_ENDPOINT: http://s3:9000
+      TRAQ_STORAGE_S3_ACCESSKEY: AKID
+      TRAQ_STORAGE_S3_SECRETKEY: SECRETPASSWORD
+      TRAQ_STORAGE_S3_CACHEDIR: ./storage
+      TRAQ_STORAGE_COMPOSITE_REMOTE: s3
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306 -wait tcp://es:9200
     command: ./traQ serve --dev --skip-init-emojis
     expose:
@@ -81,7 +89,26 @@ services:
       - ./dev/bin:/app
     command: go run /app/bot_debugger.go -p 80
 
+  s3:
+    image: minio/minio:latest
+    # 9000-API, 9001-Web
+    ports:
+      - 9000:9000
+      - 9001:9001
+    networks:
+      default:
+        aliases:
+          - traq.s3 # {bucket}.s3
+    environment:
+      MINIO_ROOT_USER: AKID
+      MINIO_ROOT_PASSWORD: SECRETPASSWORD
+      MINIO_DOMAIN: s3
+    volumes:
+      - s3:/data
+    command: minio server /data --console-address :9001
+
 volumes:
   app:
   mysql:
   es:
+  s3:
