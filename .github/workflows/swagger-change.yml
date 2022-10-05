@@ -51,3 +51,18 @@ jobs:
               workflow_id: 'release.yaml',
               ref: 'master'
             })
+  swift-traq:
+    name: swift-traq
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'traPtitech',
+              repo: 'swift-traq',
+              workflow_id: 'release.yml',
+              ref: 'main'
+            })
