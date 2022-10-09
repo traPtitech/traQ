@@ -1,6 +1,6 @@
 SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
-TEST_DB_PORT := 3002
+TEST_DB_PORT := 3100
 TBLS_VERSION := v1.54.2
 SPECTRAL_VERSION := 6.2.1
 
