@@ -5,9 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/sync/singleflight"
 
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/ctxKey"
@@ -19,8 +17,6 @@ const authScheme = "Bearer"
 
 // UserAuthenticate リクエスト認証ミドルウェア
 func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.MiddlewareFunc {
-	var sfUser singleflight.Group
-
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var uid uuid.UUID
@@ -66,11 +62,10 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 			}
 
 			// ユーザー取得
-			uI, err, _ := sfUser.Do(uid.String(), func() (interface{}, error) { return repo.GetUser(uid, true) })
+			user, err := repo.GetUser(uid, true)
 			if err != nil {
 				return herror.InternalServerError(err)
 			}
-			user := uI.(model.UserInfo)
 
 			// ユーザーアカウント状態を確認
 			if !user.IsActive() {
