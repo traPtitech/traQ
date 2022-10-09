@@ -1,12 +1,14 @@
 package gorm
 
 import (
+	"context"
 	"encoding/hex"
 	"time"
 	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/motoki317/sc"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -19,8 +21,44 @@ import (
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
+var _ repository.UserRepository = (*userRepository)(nil)
+
+type getUserArg struct {
+	id          uuid.UUID
+	withProfile bool
+}
+
+type userRepository struct {
+	db    *gorm.DB
+	hub   *hub.Hub
+	users *sc.Cache[getUserArg, model.UserInfo]
+}
+
+func makeUserRepository(db *gorm.DB, hub *hub.Hub) *userRepository {
+	r := &userRepository{db: db, hub: hub}
+	r.users = sc.NewMust(r.getUser, 1*time.Hour, 1*time.Hour)
+	return r
+}
+
+func (r *userRepository) getUser(_ context.Context, arg getUserArg) (model.UserInfo, error) {
+	tx := r.db
+	if arg.withProfile {
+		tx = tx.Preload("Profile")
+	}
+	var user model.User
+	if err := tx.First(&user, &model.User{ID: arg.id}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return &user, nil
+}
+
+func (r *userRepository) forgetCache(id uuid.UUID) {
+	r.users.Forget(getUserArg{id, false})
+	r.users.Forget(getUserArg{id, true})
+}
+
 // CreateUser implements UserRepository interface.
-func (repo *Repository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
+func (r *userRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
 	uid := uuid.Must(uuid.NewV4())
 	user := &model.User{
 		ID:          uid,
@@ -43,7 +81,7 @@ func (repo *Repository) CreateUser(args repository.CreateUserArgs) (model.UserIn
 		args.ExternalLogin.UserID = uid
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if exist, err := gormUtil.RecordExists(tx, &model.User{Name: user.Name}); err != nil {
 			return err
 		} else if exist {
@@ -64,7 +102,7 @@ func (repo *Repository) CreateUser(args repository.CreateUserArgs) (model.UserIn
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
+	r.hub.Publish(hub.Message{
 		Name: event.UserCreated,
 		Fields: hub.Fields{
 			"user_id": user.ID,
@@ -75,48 +113,46 @@ func (repo *Repository) CreateUser(args repository.CreateUserArgs) (model.UserIn
 }
 
 // GetUser implements UserRepository interface.
-func (repo *Repository) GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error) {
+func (r *userRepository) GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	return getUser(repo.db, withProfile, &model.User{ID: id})
+	return r.users.Get(context.Background(), getUserArg{id, withProfile})
 }
 
 // GetUserByName implements UserRepository interface.
-func (repo *Repository) GetUserByName(name string, withProfile bool) (model.UserInfo, error) {
+func (r *userRepository) GetUserByName(name string, withProfile bool) (model.UserInfo, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
-	return getUser(repo.db, withProfile, &model.User{Name: name})
-}
 
-// GetUserByExternalID implements UserRepository interface.
-func (repo *Repository) GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error) {
-	if len(providerName) == 0 || len(externalID) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	var extUser model.ExternalProviderUser
-	if err := repo.db.First(&extUser, &model.ExternalProviderUser{ProviderName: providerName, ExternalID: externalID}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return getUser(repo.db, withProfile, &model.User{ID: extUser.UserID})
-}
-
-func getUser(tx *gorm.DB, withProfile bool, where ...interface{}) (model.UserInfo, error) {
-	var user model.User
+	tx := r.db
 	if withProfile {
 		tx = tx.Preload("Profile")
 	}
-	if err := tx.First(&user, where...).Error; err != nil {
+	var user model.User
+	if err := tx.First(&user, &model.User{Name: name}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &user, nil
 }
 
+// GetUserByExternalID implements UserRepository interface.
+func (r *userRepository) GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error) {
+	if len(providerName) == 0 || len(externalID) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	var extUser model.ExternalProviderUser
+	if err := r.db.First(&extUser, &model.ExternalProviderUser{ProviderName: providerName, ExternalID: externalID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return r.users.Get(context.Background(), getUserArg{extUser.UserID, withProfile})
+}
+
 // GetUsers implements UserRepository interface.
-func (repo *Repository) GetUsers(query repository.UsersQuery) (users []model.UserInfo, err error) {
+func (r *userRepository) GetUsers(query repository.UsersQuery) (users []model.UserInfo, err error) {
 	arr := make([]*model.User, 0)
-	if err = repo.makeGetUsersTx(query).Find(&arr).Error; err != nil {
+	if err = r.makeGetUsersTx(query).Find(&arr).Error; err != nil {
 		return nil, err
 	}
 
@@ -128,14 +164,14 @@ func (repo *Repository) GetUsers(query repository.UsersQuery) (users []model.Use
 }
 
 // GetUserIDs implements UserRepository interface.
-func (repo *Repository) GetUserIDs(query repository.UsersQuery) (ids []uuid.UUID, err error) {
+func (r *userRepository) GetUserIDs(query repository.UsersQuery) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
-	err = repo.makeGetUsersTx(query).Pluck("users.id", &ids).Error
+	err = r.makeGetUsersTx(query).Pluck("users.id", &ids).Error
 	return ids, err
 }
 
-func (repo *Repository) makeGetUsersTx(query repository.UsersQuery) *gorm.DB {
-	tx := repo.db.Table("users")
+func (r *userRepository) makeGetUsersTx(query repository.UsersQuery) *gorm.DB {
+	tx := r.db.Table("users")
 
 	if query.Name.Valid {
 		tx = tx.Where("users.name = ?", query.Name.V)
@@ -170,15 +206,15 @@ func (repo *Repository) makeGetUsersTx(query repository.UsersQuery) *gorm.DB {
 }
 
 // UserExists implements UserRepository interface.
-func (repo *Repository) UserExists(id uuid.UUID) (bool, error) {
+func (r *userRepository) UserExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
 	}
-	return gormUtil.RecordExists(repo.db, &model.User{ID: id})
+	return gormUtil.RecordExists(r.db, &model.User{ID: id})
 }
 
 // UpdateUser implements UserRepository interface.
-func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs) error {
+func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -186,7 +222,7 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 		changed bool
 		count   int
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var u model.User
 		if err := tx.Preload("Profile").First(&u, model.User{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -261,8 +297,9 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 		return nil // 最終オンライン日時のみの更新の時はUserUpdatedイベントを発生させない
 	}
 	if changed {
+		r.forgetCache(id)
 		if args.IconFileID.Valid && count == 1 {
-			repo.hub.Publish(hub.Message{
+			r.hub.Publish(hub.Message{
 				Name: event.UserIconUpdated,
 				Fields: hub.Fields{
 					"user_id": id,
@@ -270,7 +307,7 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 				},
 			})
 		} else {
-			repo.hub.Publish(hub.Message{
+			r.hub.Publish(hub.Message{
 				Name: event.UserUpdated,
 				Fields: hub.Fields{
 					"user_id": id,
@@ -282,7 +319,7 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 }
 
 // LinkExternalUserAccount implements UserRepository interface.
-func (repo *Repository) LinkExternalUserAccount(userID uuid.UUID, args repository.LinkExternalUserAccountArgs) error {
+func (r *userRepository) LinkExternalUserAccount(userID uuid.UUID, args repository.LinkExternalUserAccountArgs) error {
 	if userID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -293,7 +330,7 @@ func (repo *Repository) LinkExternalUserAccount(userID uuid.UUID, args repositor
 		return repository.ArgError("args.ExternalID", "ExternalID must not be empty")
 	}
 
-	return repo.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
 		if exist, err := gormUtil.RecordExists(tx, &model.User{ID: userID}); err != nil {
 			return err
 		} else if !exist {
@@ -322,21 +359,21 @@ func (repo *Repository) LinkExternalUserAccount(userID uuid.UUID, args repositor
 }
 
 // GetLinkedExternalUserAccounts implements UserRepository interface.
-func (repo *Repository) GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error) {
+func (r *userRepository) GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error) {
 	result := make([]*model.ExternalProviderUser, 0)
 	if userID == uuid.Nil {
 		return result, nil
 	}
-	return result, repo.db.Find(&result, &model.ExternalProviderUser{UserID: userID}).Error
+	return result, r.db.Find(&result, &model.ExternalProviderUser{UserID: userID}).Error
 }
 
 // UnlinkExternalUserAccount implements UserRepository interface.
-func (repo *Repository) UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error {
+func (r *userRepository) UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error {
 	if userID == uuid.Nil || len(providerName) == 0 {
 		return repository.ErrNilID
 	}
 
-	result := repo.db.Delete(model.ExternalProviderUser{}, &model.ExternalProviderUser{UserID: userID, ProviderName: providerName})
+	result := r.db.Delete(model.ExternalProviderUser{}, &model.ExternalProviderUser{UserID: userID, ProviderName: providerName})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -347,18 +384,18 @@ func (repo *Repository) UnlinkExternalUserAccount(userID uuid.UUID, providerName
 }
 
 // GetUserStats implements UserRepository interface
-func (repo *Repository) GetUserStats(userID uuid.UUID) (*repository.UserStats, error) {
+func (r *userRepository) GetUserStats(userID uuid.UUID) (*repository.UserStats, error) {
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 	if ok, err := gormUtil.
-		RecordExists(repo.db, &model.User{ID: userID}); err != nil {
+		RecordExists(r.db, &model.User{ID: userID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, repository.ErrNotFound
 	}
 	var stats repository.UserStats
-	if err := repo.db.
+	if err := r.db.
 		Unscoped().
 		Model(&model.Message{}).
 		Where(&model.Message{UserID: userID}).
@@ -367,7 +404,7 @@ func (repo *Repository) GetUserStats(userID uuid.UUID) (*repository.UserStats, e
 		return nil, err
 	}
 
-	if err := repo.db.
+	if err := r.db.
 		Unscoped().
 		Model(&model.MessageStamp{}).
 		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) AS total").

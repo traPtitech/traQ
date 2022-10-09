@@ -15,6 +15,7 @@ type Repository struct {
 	hub    *hub.Hub
 	logger *zap.Logger
 	repository.StampRepository
+	repository.UserRepository
 }
 
 // NewGormRepository リポジトリ実装を初期化して生成します。
@@ -25,6 +26,7 @@ func NewGormRepository(db *gorm.DB, hub *hub.Hub, logger *zap.Logger, doMigratio
 		hub:             hub,
 		logger:          logger.Named("repository"),
 		StampRepository: makeStampRepository(db, hub),
+		UserRepository:  makeUserRepository(db, hub),
 	}
 	if doMigration {
 		if init, err = migration.Migrate(db); err != nil {
