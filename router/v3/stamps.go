@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/repository"
@@ -105,8 +106,8 @@ func (h *Handlers) GetStamp(c echo.Context) error {
 
 // PatchStampRequest PATCH /stamps/:stampID リクエストボディ
 type PatchStampRequest struct {
-	Name      optional.String `json:"name"`
-	CreatorID optional.UUID   `json:"creatorId"`
+	Name      optional.Of[string]    `json:"name"`
+	CreatorID optional.Of[uuid.UUID] `json:"creatorId"`
 }
 
 func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
@@ -200,7 +201,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 		return err
 	}
 
-	args := repository.UpdateStampArgs{FileID: optional.UUIDFrom(fileID)}
+	args := repository.UpdateStampArgs{FileID: optional.From(fileID)}
 	// 更新
 	if err := h.Repo.UpdateStamp(stamp.ID, args); err != nil {
 		switch {

@@ -149,7 +149,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 			}
 
 			if err := repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
-				FileID: optional.UUIDFrom(meta.GetID()),
+				FileID: optional.From(meta.GetID()),
 			}); err != nil {
 				return err
 			}

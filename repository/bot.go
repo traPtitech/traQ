@@ -12,47 +12,47 @@ import (
 
 // UpdateBotArgs Bot情報更新引数
 type UpdateBotArgs struct {
-	DisplayName     optional.String
-	Description     optional.String
-	Mode            optional.String
-	WebhookURL      optional.String
-	Privileged      optional.Bool
-	CreatorID       optional.UUID
+	DisplayName     optional.Of[string]
+	Description     optional.Of[string]
+	Mode            optional.Of[string]
+	WebhookURL      optional.Of[string]
+	Privileged      optional.Of[bool]
+	CreatorID       optional.Of[uuid.UUID]
 	SubscribeEvents model.BotEventTypes
 }
 
 // BotsQuery Bot情報取得用クエリ
 type BotsQuery struct {
-	IsPrivileged    optional.Bool
-	IsActive        optional.Bool
-	IsCMemberOf     optional.UUID
+	IsPrivileged    optional.Of[bool]
+	IsActive        optional.Of[bool]
+	IsCMemberOf     optional.Of[uuid.UUID]
 	SubscribeEvents model.BotEventTypes
-	Creator         optional.UUID
-	ID              optional.UUID
-	UserID          optional.UUID
+	Creator         optional.Of[uuid.UUID]
+	ID              optional.Of[uuid.UUID]
+	UserID          optional.Of[uuid.UUID]
 }
 
 // Privileged 特権Botである
 func (q BotsQuery) Privileged() BotsQuery {
-	q.IsPrivileged = optional.BoolFrom(true)
+	q.IsPrivileged = optional.From(true)
 	return q
 }
 
 // Active 有効である
 func (q BotsQuery) Active() BotsQuery {
-	q.IsActive = optional.BoolFrom(true)
+	q.IsActive = optional.From(true)
 	return q
 }
 
 // CreatedBy userIDによって作成された
 func (q BotsQuery) CreatedBy(userID uuid.UUID) BotsQuery {
-	q.Creator = optional.UUIDFrom(userID)
+	q.Creator = optional.From(userID)
 	return q
 }
 
 // CMemberOf channelIDに入っている
 func (q BotsQuery) CMemberOf(channelID uuid.UUID) BotsQuery {
-	q.IsCMemberOf = optional.UUIDFrom(channelID)
+	q.IsCMemberOf = optional.From(channelID)
 	return q
 }
 
@@ -71,13 +71,13 @@ func (q BotsQuery) Subscribe(events ...model.BotEventType) BotsQuery {
 
 // BotID 指定したIDのBotである
 func (q BotsQuery) BotID(id uuid.UUID) BotsQuery {
-	q.ID = optional.UUIDFrom(id)
+	q.ID = optional.From(id)
 	return q
 }
 
 // BotUserID 指定したユーザーIDのBotである
 func (q BotsQuery) BotUserID(id uuid.UUID) BotsQuery {
-	q.UserID = optional.UUIDFrom(id)
+	q.UserID = optional.From(id)
 	return q
 }
 

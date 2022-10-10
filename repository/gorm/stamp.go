@@ -170,34 +170,34 @@ func (repo *Repository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArg
 			return convertError(err)
 		}
 
-		if args.Name.Valid && s.Name != args.Name.String {
-			if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+		if args.Name.Valid && s.Name != args.Name.V {
+			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
 				return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 			}
 
 			// 重複チェック
-			if exists, err := gormUtil.RecordExists(tx, &model.Stamp{Name: args.Name.String}); err != nil {
+			if exists, err := gormUtil.RecordExists(tx, &model.Stamp{Name: args.Name.V}); err != nil {
 				return err
 			} else if exists {
 				return repository.ErrAlreadyExists
 			}
-			changes["name"] = args.Name.String
+			changes["name"] = args.Name.V
 		}
 		if args.FileID.Valid {
 			// 存在チェック
-			if args.FileID.UUID == uuid.Nil {
+			if args.FileID.V == uuid.Nil {
 				return repository.ArgError("args.FileID", "FileID's file is not found")
 			}
-			if exists, err := gormUtil.RecordExists(tx, &model.FileMeta{ID: args.FileID.UUID}); err != nil {
+			if exists, err := gormUtil.RecordExists(tx, &model.FileMeta{ID: args.FileID.V}); err != nil {
 				return err
 			} else if !exists {
 				return repository.ArgError("args.FileID", "FileID's file is not found")
 			}
-			changes["file_id"] = args.FileID.UUID
+			changes["file_id"] = args.FileID.V
 		}
 		if args.CreatorID.Valid {
 			// uuid.Nilを許容する
-			changes["creator_id"] = args.CreatorID.UUID
+			changes["creator_id"] = args.CreatorID.V
 		}
 
 		if len(changes) > 0 {

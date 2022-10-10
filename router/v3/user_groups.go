@@ -80,9 +80,9 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
 type PatchUserGroupRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
-	Type        optional.String `json:"type"`
+	Name        optional.Of[string] `json:"name"`
+	Description optional.Of[string] `json:"description"`
+	Type        optional.Of[string] `json:"type"`
 }
 
 func (r PatchUserGroupRequest) Validate() error {
@@ -131,7 +131,7 @@ func (h *Handlers) PutUserGroupIcon(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Icon: optional.UUIDFrom(fileID)}); err != nil {
+	if err := h.Repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Icon: optional.From(fileID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 

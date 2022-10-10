@@ -49,9 +49,9 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 		a := random2.AlphaNumeric(20)
 		if assert.NoError(repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{
-			Name:        optional.StringFrom(a),
-			Description: optional.StringFrom(a),
-			Type:        optional.StringFrom(a),
+			Name:        optional.From(a),
+			Description: optional.From(a),
+			Type:        optional.From(a),
 		})) {
 			g, err := repo.GetUserGroup(g.ID)
 			require.NoError(err)
@@ -80,7 +80,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		mustMakeUserGroup(t, repo, a, user.GetID())
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.EqualError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Name: optional.StringFrom(a)}), repository.ErrAlreadyExists.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Name: optional.From(a)}), repository.ErrAlreadyExists.Error())
 	})
 }
 

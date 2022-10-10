@@ -51,7 +51,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 
 	if !req.PerChannel {
 		query := message.TimelineQuery{
-			Since:          optional.TimeFrom(time.Now().Add(-timelineRange)),
+			Since:          optional.From(time.Now().Add(-timelineRange)),
 			Limit:          req.Limit,
 			ExcludeDMs:     true,
 			DisablePreload: true,
@@ -69,10 +69,10 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 
 	query := repository.ChannelLatestMessagesQuery{
 		Limit: req.Limit,
-		Since: optional.TimeFrom(time.Now().Add(-timelineRange)),
+		Since: optional.From(time.Now().Add(-timelineRange)),
 	}
 	if !req.All {
-		query.SubscribedByUser = optional.UUIDFrom(userID)
+		query.SubscribedByUser = optional.From(userID)
 	}
 	messages, err := h.Repo.GetChannelLatestMessages(query)
 	if err != nil {

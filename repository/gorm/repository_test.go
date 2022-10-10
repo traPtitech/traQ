@@ -20,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 )
 
@@ -228,7 +227,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository) *model.FileMeta
 		},
 	}
 	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
-		{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
+		{UserID: uuid.Nil, Allow: true},
 	})
 	require.NoError(t, err)
 	return meta

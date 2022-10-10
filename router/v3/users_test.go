@@ -42,23 +42,11 @@ func TestHandlers_GetUsers(t *testing.T) {
 	deactivated := env.CreateUser(t, "deactivated")
 	suspended := env.CreateUser(t, "suspended")
 	err := env.Repository.UpdateUser(deactivated.GetID(), repository.UpdateUserArgs{
-		UserState: struct {
-			Valid bool
-			State model.UserAccountStatus
-		}{
-			true,
-			model.UserAccountStatusDeactivated,
-		},
+		UserState: optional.From(model.UserAccountStatusDeactivated),
 	})
 	require.NoError(t, err)
 	err = env.Repository.UpdateUser(suspended.GetID(), repository.UpdateUserArgs{
-		UserState: struct {
-			Valid bool
-			State model.UserAccountStatus
-		}{
-			true,
-			model.UserAccountStatusSuspended,
-		},
+		UserState: optional.From(model.UserAccountStatusSuspended),
 	})
 	require.NoError(t, err)
 
@@ -131,7 +119,7 @@ func TestPostUserRequest_Validate(t *testing.T) {
 
 	type fields struct {
 		Name     string
-		Password optional.String
+		Password optional.Of[string]
 	}
 	tests := []struct {
 		name    string
@@ -140,22 +128,22 @@ func TestPostUserRequest_Validate(t *testing.T) {
 	}{
 		{
 			"empty name",
-			fields{Name: "", Password: optional.StringFrom("totallySecurePassword")},
+			fields{Name: "", Password: optional.From("totallySecurePassword")},
 			true,
 		},
 		{
 			"empty password",
-			fields{Name: "temma", Password: optional.StringFrom("")},
+			fields{Name: "temma", Password: optional.From("")},
 			true,
 		},
 		{
 			"too short password",
-			fields{Name: "temma", Password: optional.StringFrom("password")},
+			fields{Name: "temma", Password: optional.From("password")},
 			true,
 		},
 		{
 			"success",
-			fields{Name: "temma", Password: optional.StringFrom("totallySecurePassword")},
+			fields{Name: "temma", Password: optional.From("totallySecurePassword")},
 			false,
 		},
 	}
@@ -186,7 +174,7 @@ func TestHandlers_CreateUser(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
-			WithJSON(&PostUserRequest{Name: "temma", Password: optional.StringFrom("totallySecurePassword")}).
+			WithJSON(&PostUserRequest{Name: "temma", Password: optional.From("totallySecurePassword")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -196,7 +184,7 @@ func TestHandlers_CreateUser(t *testing.T) {
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PostUserRequest{Name: "temma", Password: optional.StringFrom("password")}).
+			WithJSON(&PostUserRequest{Name: "temma", Password: optional.From("password")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -206,7 +194,7 @@ func TestHandlers_CreateUser(t *testing.T) {
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, userSession).
-			WithJSON(&PostUserRequest{Name: "temma", Password: optional.StringFrom("totallySecurePassword")}).
+			WithJSON(&PostUserRequest{Name: "temma", Password: optional.From("totallySecurePassword")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -216,7 +204,7 @@ func TestHandlers_CreateUser(t *testing.T) {
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PostUserRequest{Name: admin.GetName(), Password: optional.StringFrom("totallySecurePassword")}).
+			WithJSON(&PostUserRequest{Name: admin.GetName(), Password: optional.From("totallySecurePassword")}).
 			Expect().
 			Status(http.StatusConflict)
 	})
@@ -227,7 +215,7 @@ func TestHandlers_CreateUser(t *testing.T) {
 		name := random2.AlphaNumeric(20)
 		obj := e.POST(path).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PostUserRequest{Name: name, Password: optional.StringFrom("totallySecurePassword")}).
+			WithJSON(&PostUserRequest{Name: name, Password: optional.From("totallySecurePassword")}).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -299,7 +287,7 @@ func TestHandlers_EditMe(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path).
-			WithJSON(&PatchMeRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchMeRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -309,7 +297,7 @@ func TestHandlers_EditMe(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchMeRequest{TwitterID: optional.StringFrom("ぽ")}).
+			WithJSON(&PatchMeRequest{TwitterID: optional.From("ぽ")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -319,7 +307,7 @@ func TestHandlers_EditMe(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchMeRequest{HomeChannel: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}).
+			WithJSON(&PatchMeRequest{HomeChannel: optional.From(uuid.Must(uuid.NewV4()))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -330,8 +318,8 @@ func TestHandlers_EditMe(t *testing.T) {
 		e.PATCH(path).
 			WithCookie(session.CookieName, s).
 			WithJSON(&PatchMeRequest{
-				DisplayName: optional.StringFrom("po"),
-				HomeChannel: optional.UUIDFrom(ch.ID),
+				DisplayName: optional.From("po"),
+				HomeChannel: optional.From(ch.ID),
 			}).
 			Expect().
 			Status(http.StatusNoContent)
@@ -340,7 +328,7 @@ func TestHandlers_EditMe(t *testing.T) {
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", profile.GetDisplayName())
 		if assert.True(t, profile.GetHomeChannel().Valid) {
-			assert.EqualValues(t, ch.ID, profile.GetHomeChannel().UUID)
+			assert.EqualValues(t, ch.ID, profile.GetHomeChannel().V)
 		}
 	})
 }
@@ -824,10 +812,10 @@ func TestPatchUserRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		DisplayName optional.String
-		TwitterID   optional.String
-		Role        optional.String
-		State       optional.Int
+		DisplayName optional.Of[string]
+		TwitterID   optional.Of[string]
+		Role        optional.Of[string]
+		State       optional.Of[int]
 	}
 	tests := []struct {
 		name    string
@@ -841,12 +829,12 @@ func TestPatchUserRequest_Validate(t *testing.T) {
 		},
 		{
 			"too long display name",
-			fields{DisplayName: optional.StringFrom(strings.Repeat("a", 100))},
+			fields{DisplayName: optional.From(strings.Repeat("a", 100))},
 			true,
 		},
 		{
 			"success",
-			fields{DisplayName: optional.StringFrom("ぽ")},
+			fields{DisplayName: optional.From("ぽ")},
 			false,
 		},
 	}
@@ -880,7 +868,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
-			WithJSON(&PatchUserRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -890,7 +878,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.StringFrom(strings.Repeat("a", 100))}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From(strings.Repeat("a", 100))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -900,7 +888,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
 			WithCookie(session.CookieName, userSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -910,7 +898,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -920,7 +908,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user2.GetID()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{State: optional.IntFrom(int64(model.UserAccountStatusDeactivated))}).
+			WithJSON(&PatchUserRequest{State: optional.From(int(model.UserAccountStatusDeactivated))}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -934,7 +922,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -987,7 +975,7 @@ func TestPutChannelSubscribeLevelRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Level optional.Int
+		Level optional.Of[int]
 	}
 	tests := []struct {
 		name    string
@@ -996,7 +984,7 @@ func TestPutChannelSubscribeLevelRequest_Validate(t *testing.T) {
 	}{
 		{
 			"invalid level",
-			fields{Level: optional.IntFrom(-1)},
+			fields{Level: optional.From(-1)},
 			true,
 		},
 		{
@@ -1006,7 +994,7 @@ func TestPutChannelSubscribeLevelRequest_Validate(t *testing.T) {
 		},
 		{
 			"success",
-			fields{Level: optional.IntFrom(1)},
+			fields{Level: optional.From(1)},
 			false,
 		},
 	}
@@ -1032,7 +1020,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	forced := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
-	err := env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.BoolFrom(true)})
+	err := env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)})
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 
@@ -1049,7 +1037,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, ch.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.IntFrom(-1)}).
+			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.From(-1)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -1059,7 +1047,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, dm.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.IntFrom(2)}).
+			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.From(2)}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -1069,7 +1057,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, forced.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.IntFrom(2)}).
+			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.From(2)}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -1079,7 +1067,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.IntFrom(2)}).
+			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.From(2)}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -1089,11 +1077,11 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, ch.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.IntFrom(2)}).
+			WithJSON(&PutChannelSubscribeLevelRequest{Level: optional.From(2)}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.UUIDFrom(ch.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
 		require.NoError(t, err)
 		if assert.Len(t, subs, 1) {
 			sub := subs[0]

@@ -103,19 +103,19 @@ func (repo *Repository) UpdateChannel(channelID uuid.UUID, args repository.Updat
 
 		data := map[string]interface{}{"updater_id": args.UpdaterID}
 		if args.Topic.Valid {
-			data["topic"] = args.Topic.String
+			data["topic"] = args.Topic.V
 		}
 		if args.Visibility.Valid {
-			data["is_visible"] = args.Visibility.Bool
+			data["is_visible"] = args.Visibility.V
 		}
 		if args.ForcedNotification.Valid {
-			data["is_forced"] = args.ForcedNotification.Bool
+			data["is_forced"] = args.ForcedNotification.V
 		}
 		if args.Name.Valid {
-			data["name"] = args.Name.String
+			data["name"] = args.Name.V
 		}
 		if args.Parent.Valid {
-			data["parent_id"] = args.Parent.UUID
+			data["parent_id"] = args.Parent.V
 		}
 
 		if err := tx.Model(&ch).Updates(data).Error; err != nil {
@@ -142,7 +142,7 @@ func (repo *Repository) UpdateChannel(channelID uuid.UUID, args repository.Updat
 			Name: event.ChannelTopicUpdated,
 			Fields: hub.Fields{
 				"channel_id": channelID,
-				"topic":      args.Topic.String,
+				"topic":      args.Topic.V,
 				"updater_id": args.UpdaterID,
 			},
 		})
@@ -371,10 +371,10 @@ func (repo *Repository) GetChannelSubscriptions(query repository.ChannelSubscrip
 	tx := repo.db
 
 	if query.UserID.Valid {
-		tx = tx.Where("user_id = ?", query.UserID.UUID)
+		tx = tx.Where("user_id = ?", query.UserID.V)
 	}
 	if query.ChannelID.Valid {
-		tx = tx.Where("channel_id = ?", query.ChannelID.UUID)
+		tx = tx.Where("channel_id = ?", query.ChannelID.V)
 	}
 	switch query.Level {
 	case model.ChannelSubscribeLevelMark:
@@ -407,17 +407,17 @@ func (repo *Repository) GetChannelEvents(query repository.ChannelEventsQuery) (e
 
 	if query.Inclusive {
 		if query.Since.Valid {
-			tx = tx.Where("date_time >= ?", query.Since.Time)
+			tx = tx.Where("date_time >= ?", query.Since.V)
 		}
 		if query.Until.Valid {
-			tx = tx.Where("date_time <= ?", query.Until.Time)
+			tx = tx.Where("date_time <= ?", query.Until.V)
 		}
 	} else {
 		if query.Since.Valid {
-			tx = tx.Where("date_time > ?", query.Since.Time)
+			tx = tx.Where("date_time > ?", query.Since.V)
 		}
 		if query.Until.Valid {
-			tx = tx.Where("date_time < ?", query.Until.Time)
+			tx = tx.Where("date_time < ?", query.Until.V)
 		}
 	}
 

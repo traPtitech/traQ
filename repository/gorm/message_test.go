@@ -159,7 +159,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		t.Parallel()
 
 		messages, more, err := repo.GetMessages(repository.MessagesQuery{
-			Since:          optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Since:          optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:          50,
 			ExcludeDMs:     true,
 			DisablePreload: true,
@@ -177,7 +177,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		t.Parallel()
 
 		messages, more, err := repo.GetMessages(repository.MessagesQuery{
-			Since:          optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Since:          optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:          5,
 			ExcludeDMs:     true,
 			DisablePreload: true,
@@ -195,7 +195,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		t.Parallel()
 
 		messages, more, err := repo.GetMessages(repository.MessagesQuery{
-			Since:                    optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Since:                    optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:                    50,
 			ExcludeDMs:               true,
 			DisablePreload:           true,
@@ -301,7 +301,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessages(repository.ChannelLatestMessagesQuery{SubscribedByUser: optional.UUIDFrom(user.GetID())})
+		arr, err := repo.GetChannelLatestMessages(repository.ChannelLatestMessagesQuery{SubscribedByUser: optional.From(user.GetID())})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID

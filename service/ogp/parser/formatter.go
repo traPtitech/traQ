@@ -6,6 +6,7 @@ import (
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/dyatlov/go-opengraph/opengraph/types/image"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -65,22 +66,20 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 
 func toOgpMedia(image *image.Image) model.OgpMedia {
 	result := model.OgpMedia{
-		URL:       image.URL,
-		SecureURL: optional.NewString("", false),
-		Type:      optional.NewString("", false),
+		URL: image.URL,
 	}
 
 	if len(image.SecureURL) > 0 {
-		result.SecureURL = optional.StringFrom(image.SecureURL)
+		result.SecureURL = optional.From(image.SecureURL)
 	}
 	if len(image.Type) > 0 {
-		result.Type = optional.StringFrom(image.Type)
+		result.Type = optional.From(image.Type)
 	}
 	if image.Width > 0 {
-		result.Width = optional.IntFrom(int64(image.Width))
+		result.Width = optional.From(int(image.Width))
 	}
 	if image.Height > 0 {
-		result.Height = optional.IntFrom(int64(image.Height))
+		result.Height = optional.From(int(image.Height))
 	}
 
 	return result

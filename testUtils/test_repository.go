@@ -165,17 +165,17 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserI
 	repo.UserGroupMembersLock.RLock()
 	for _, u := range repo.Users {
 		if query.Name.Valid {
-			if u.Name != query.Name.String {
+			if u.Name != query.Name.V {
 				continue
 			}
 		}
 		if query.IsBot.Valid {
-			if u.Bot != query.IsBot.Bool {
+			if u.Bot != query.IsBot.V {
 				continue
 			}
 		}
 		if query.IsActive.Valid {
-			if query.IsActive.Bool {
+			if query.IsActive.V {
 				if u.Status != model.UserAccountStatusActive {
 					continue
 				}
@@ -186,13 +186,13 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserI
 			}
 		}
 		if query.IsCMemberOf.Valid {
-			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
+			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.V]
 			if !ok || !arr[u.ID] {
 				continue
 			}
 		}
 		if query.IsGMemberOf.Valid {
-			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.UUID]
+			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.V]
 			if !ok || !arr[u.ID] {
 				continue
 			}
@@ -213,17 +213,17 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 	repo.UserGroupMembersLock.RLock()
 	for _, v := range repo.Users {
 		if query.Name.Valid {
-			if v.Name != query.Name.String {
+			if v.Name != query.Name.V {
 				continue
 			}
 		}
 		if query.IsBot.Valid {
-			if v.Bot != query.IsBot.Bool {
+			if v.Bot != query.IsBot.V {
 				continue
 			}
 		}
 		if query.IsActive.Valid {
-			if query.IsActive.Bool {
+			if query.IsActive.V {
 				if v.Status != model.UserAccountStatusActive {
 					continue
 				}
@@ -234,13 +234,13 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 			}
 		}
 		if query.IsCMemberOf.Valid {
-			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
+			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.V]
 			if !ok || !arr[v.ID] {
 				continue
 			}
 		}
 		if query.IsGMemberOf.Valid {
-			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.UUID]
+			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.V]
 			if !ok || !arr[v.ID] {
 				continue
 			}
@@ -273,32 +273,32 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 	}
 
 	if args.DisplayName.Valid {
-		if utf8.RuneCountInString(args.DisplayName.String) > 64 {
+		if utf8.RuneCountInString(args.DisplayName.V) > 64 {
 			return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
 		}
-		u.DisplayName = args.DisplayName.String
+		u.DisplayName = args.DisplayName.V
 		u.UpdatedAt = time.Now()
 	}
 	if args.Password.Valid {
 		salt := random2.Salt()
-		hashed := utils.HashPassword(args.Password.String, salt)
+		hashed := utils.HashPassword(args.Password.V, salt)
 		u.Salt = hex.EncodeToString(salt)
 		u.Password = hex.EncodeToString(hashed)
 		u.UpdatedAt = time.Now()
 	}
 	if args.TwitterID.Valid {
-		if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
+		if len(args.TwitterID.V) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.V) {
 			return repository.ArgError("args.TwitterID", "invalid TwitterID")
 		}
-		u.Profile.TwitterID = args.TwitterID.String
+		u.Profile.TwitterID = args.TwitterID.V
 		u.Profile.UpdatedAt = time.Now()
 	}
 	if args.Role.Valid {
-		u.Role = args.Role.String
+		u.Role = args.Role.V
 		u.UpdatedAt = time.Now()
 	}
 	if args.IconFileID.Valid {
-		u.Icon = args.IconFileID.UUID
+		u.Icon = args.IconFileID.V
 		u.UpdatedAt = time.Now()
 	}
 	if args.LastOnline.Valid {
@@ -363,26 +363,26 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 	}
 	changed := false
 	if args.Name.Valid {
-		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 30 {
+		if len(args.Name.V) == 0 || utf8.RuneCountInString(args.Name.V) > 30 {
 			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
 		}
 
 		for _, v := range repo.UserGroups {
-			if v.Name == args.Name.String {
+			if v.Name == args.Name.V {
 				return repository.ErrAlreadyExists
 			}
 		}
-		g.Name = args.Name.String
+		g.Name = args.Name.V
 	}
 	if args.Description.Valid {
-		g.Description = args.Description.String
+		g.Description = args.Description.V
 		changed = true
 	}
 	if args.Type.Valid {
-		if utf8.RuneCountInString(args.Type.String) > 30 {
+		if utf8.RuneCountInString(args.Type.V) > 30 {
 			return repository.ArgError("args.Type", "Type must be shorter than 31 characters")
 		}
-		g.Type = args.Type.String
+		g.Type = args.Type.V
 		changed = true
 	}
 
@@ -750,19 +750,19 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	}
 
 	if args.Topic.Valid {
-		ch.Topic = args.Topic.String
+		ch.Topic = args.Topic.V
 	}
 	if args.Visibility.Valid {
-		ch.IsVisible = args.Visibility.Bool
+		ch.IsVisible = args.Visibility.V
 	}
 	if args.ForcedNotification.Valid {
-		ch.IsForced = args.ForcedNotification.Bool
+		ch.IsForced = args.ForcedNotification.V
 	}
 	if args.Name.Valid {
-		ch.Name = args.Name.String
+		ch.Name = args.Name.V
 	}
 	if args.Parent.Valid {
-		ch.ParentID = args.Parent.UUID
+		ch.ParentID = args.Parent.V
 	}
 
 	ch.UpdatedAt = time.Now()
@@ -859,11 +859,11 @@ func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubs
 	result := make([]*model.UserSubscribeChannel, 0)
 
 	for cid, users := range repo.ChannelSubscribes {
-		if query.ChannelID.Valid && cid != query.ChannelID.UUID {
+		if query.ChannelID.Valid && cid != query.ChannelID.V {
 			continue
 		}
 		for uid, level := range users {
-			if query.UserID.Valid && uid != query.UserID.UUID {
+			if query.UserID.Valid && uid != query.UserID.V {
 				continue
 			}
 
@@ -1006,11 +1006,11 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 
 		for start = 0; start < len(tmp); start++ {
 			if query.Inclusive {
-				if !tmp[start].CreatedAt.Before(query.Since.Time) {
+				if !tmp[start].CreatedAt.Before(query.Since.V) {
 					break
 				}
 			} else {
-				if tmp[start].CreatedAt.After(query.Since.Time) {
+				if tmp[start].CreatedAt.After(query.Since.V) {
 					break
 				}
 			}
@@ -1027,11 +1027,11 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 
 		for end = len(tmp) - 1; end >= 0; end-- {
 			if query.Inclusive {
-				if !tmp[end].CreatedAt.After(query.Until.Time) {
+				if !tmp[end].CreatedAt.After(query.Until.V) {
 					break
 				}
 			} else {
-				if tmp[end].CreatedAt.Before(query.Until.Time) {
+				if tmp[end].CreatedAt.Before(query.Until.V) {
 					break
 				}
 			}
@@ -1254,7 +1254,7 @@ func (repo *TestRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.File
 		repo.FilesACL[meta.ID] = acls
 	}
 	for _, entry := range acl {
-		acls[entry.UserID.UUID] = entry.Allow.Bool
+		acls[entry.UserID] = entry.Allow
 	}
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
@@ -1350,29 +1350,29 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 	u := repo.Users[wb.GetBotUserID()]
 
 	if args.Description.Valid {
-		wb.Description = args.Description.String
+		wb.Description = args.Description.V
 		wb.UpdatedAt = time.Now()
 	}
 	if args.ChannelID.Valid {
-		ch, ok := repo.Channels[args.ChannelID.UUID]
+		ch, ok := repo.Channels[args.ChannelID.V]
 		if !ok {
 			return repository.ArgError("args.ChannelID", "the Channel is not found")
 		}
 		if !ch.IsPublic {
 			return repository.ArgError("args.ChannelID", "private channels are not allowed")
 		}
-		wb.ChannelID = args.ChannelID.UUID
+		wb.ChannelID = args.ChannelID.V
 		wb.UpdatedAt = time.Now()
 	}
 	if args.Secret.Valid {
-		wb.Secret = args.Secret.String
+		wb.Secret = args.Secret.V
 		wb.UpdatedAt = time.Now()
 	}
 	if args.Name.Valid {
-		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
+		if len(args.Name.V) == 0 || utf8.RuneCountInString(args.Name.V) > 32 {
 			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 33 characters")
 		}
-		u.DisplayName = args.Name.String
+		u.DisplayName = args.Name.V
 		u.UpdatedAt = time.Now()
 	}
 

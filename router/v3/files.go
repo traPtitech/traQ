@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -21,14 +22,14 @@ import (
 
 // GetFilesRequest GET /files 用リクエストクエリ
 type GetFilesRequest struct {
-	Limit     int           `query:"limit"`
-	Offset    int           `query:"offset"`
-	Since     optional.Time `query:"since"`
-	Until     optional.Time `query:"until"`
-	Inclusive bool          `query:"inclusive"`
-	Order     string        `query:"order"`
-	ChannelID uuid.UUID     `query:"channelId"`
-	Mine      bool          `query:"mine"`
+	Limit     int                    `query:"limit"`
+	Offset    int                    `query:"offset"`
+	Since     optional.Of[time.Time] `query:"since"`
+	Until     optional.Of[time.Time] `query:"until"`
+	Inclusive bool                   `query:"inclusive"`
+	Order     string                 `query:"order"`
+	ChannelID uuid.UUID              `query:"channelId"`
+	Mine      bool                   `query:"mine"`
 }
 
 func (q *GetFilesRequest) Validate() error {
@@ -60,7 +61,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	}
 
 	if req.Mine {
-		q.UploaderID = optional.UUIDFrom(getRequestUserID(c))
+		q.UploaderID = optional.From(getRequestUserID(c))
 	}
 	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
@@ -69,7 +70,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
 		}
-		q.ChannelID = optional.UUIDFrom(req.ChannelID)
+		q.ChannelID = optional.From(req.ChannelID)
 	}
 
 	files, more, err := h.FileManager.List(q)
@@ -99,7 +100,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		FileSize:  uploadedFile.Size,
 		MimeType:  uploadedFile.Header.Get(echo.HeaderContentType),
 		FileType:  model.FileTypeUserFile,
-		CreatorID: optional.UUIDFrom(userID),
+		CreatorID: optional.From(userID),
 		Src:       src,
 	}
 
@@ -127,7 +128,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			args.ACLAllow(v)
 		}
 	}
-	args.ChannelID = optional.UUIDFrom(channelID)
+	args.ChannelID = optional.From(channelID)
 
 	// 保存
 	file, err := h.FileManager.Save(args)
@@ -161,7 +162,7 @@ func (h *Handlers) DeleteFile(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	if f.GetCreatorID().UUID != getRequestUserID(c) { // TODO 管理者権限
+	if f.GetCreatorID().V != getRequestUserID(c) { // TODO 管理者権限
 		return herror.Forbidden()
 	}
 

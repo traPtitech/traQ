@@ -129,26 +129,26 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 	defer m.T.Unlock()
 
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
-	if args.Topic.Valid && ch.Topic != args.Topic.String {
+	if args.Topic.Valid && ch.Topic != args.Topic.V {
 		if ch.IsArchived() {
 			return ErrChannelArchived
 		}
 		eventRecords[model.ChannelEventTopicChanged] = model.ChannelEventDetail{
 			"userId": args.UpdaterID,
 			"before": ch.Topic,
-			"after":  args.Topic.String,
+			"after":  args.Topic.V,
 		}
 	}
-	if args.Visibility.Valid && ch.IsVisible != args.Visibility.Bool {
+	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
 		eventRecords[model.ChannelEventVisibilityChanged] = model.ChannelEventDetail{
 			"userId":     args.UpdaterID,
-			"visibility": args.Visibility.Bool,
+			"visibility": args.Visibility.V,
 		}
 	}
-	if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.Bool {
+	if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
 		eventRecords[model.ChannelEventForcedNotificationChanged] = model.ChannelEventDetail{
 			"userId": args.UpdaterID,
-			"force":  args.ForcedNotification.Bool,
+			"force":  args.ForcedNotification.V,
 		}
 	}
 	if args.Name.Valid || args.Parent.Valid {
@@ -160,12 +160,12 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 			)
 
 			if args.Name.Valid {
-				n = args.Name.String
+				n = args.Name.V
 			} else {
 				n = ch.Name
 			}
 			if args.Parent.Valid {
-				p = args.Parent.UUID
+				p = args.Parent.V
 			} else {
 				p = ch.ParentID
 			}
@@ -177,29 +177,29 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 
 		if args.Name.Valid {
 			// チャンネル名検証
-			if !validator.ChannelRegex.MatchString(args.Name.String) {
+			if !validator.ChannelRegex.MatchString(args.Name.V) {
 				return ErrInvalidChannelName
 			}
 			eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
 				"userId": args.UpdaterID,
 				"before": ch.Name,
-				"after":  args.Name.String,
+				"after":  args.Name.V,
 			}
 		}
 		if args.Parent.Valid {
-			if args.Parent.UUID != pubChannelRootUUID {
+			if args.Parent.V != pubChannelRootUUID {
 				// 親チャンネル検証
-				if !m.T.isChannelPresent(args.Parent.UUID) {
+				if !m.T.isChannelPresent(args.Parent.V) {
 					return ErrInvalidParentChannel
 				}
 
 				// archiveされていないチャンネルを、アーカイブされているチャンネルの傘下に移動はできない
-				if !ch.IsArchived() && m.T.isArchivedChannel(args.Parent.UUID) {
+				if !ch.IsArchived() && m.T.isArchivedChannel(args.Parent.V) {
 					return ErrInvalidParentChannel
 				}
 
 				// 深さを検証
-				ascs := append(m.T.getAscendantIDs(args.Parent.UUID), args.Parent.UUID)
+				ascs := append(m.T.getAscendantIDs(args.Parent.V), args.Parent.V)
 				for _, id := range ascs {
 					if id == ch.ID {
 						return ErrTooDeepChannel // ループ検出
@@ -213,7 +213,7 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 			eventRecords[model.ChannelEventParentChanged] = model.ChannelEventDetail{
 				"userId": args.UpdaterID,
 				"before": ch.ParentID,
-				"after":  args.Parent.UUID,
+				"after":  args.Parent.V,
 			}
 		}
 	}
@@ -300,7 +300,7 @@ func (m *managerImpl) UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error 
 		return ErrInvalidParentChannel // 親チャンネルがアーカイブされている
 	}
 
-	ch, err = m.R.UpdateChannel(id, repository.UpdateChannelArgs{Visibility: optional.BoolFrom(true)})
+	ch, err = m.R.UpdateChannel(id, repository.UpdateChannelArgs{Visibility: optional.From(true)})
 	if err != nil {
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}

@@ -213,17 +213,17 @@ func (repo *Repository) GetMessages(query repository.MessagesQuery) (messages []
 
 	if query.Inclusive {
 		if query.Since.Valid {
-			tx = tx.Where("messages.created_at >= ?", query.Since.Time.Truncate(time.Microsecond))
+			tx = tx.Where("messages.created_at >= ?", query.Since.V.Truncate(time.Microsecond))
 		}
 		if query.Until.Valid {
-			tx = tx.Where("messages.created_at <= ?", query.Until.Time.Truncate(time.Microsecond))
+			tx = tx.Where("messages.created_at <= ?", query.Until.V.Truncate(time.Microsecond))
 		}
 	} else {
 		if query.Since.Valid {
-			tx = tx.Where("messages.created_at > ?", query.Since.Time.Truncate(time.Microsecond))
+			tx = tx.Where("messages.created_at > ?", query.Since.V.Truncate(time.Microsecond))
 		}
 		if query.Until.Valid {
-			tx = tx.Where("messages.created_at < ?", query.Until.Time.Truncate(time.Microsecond))
+			tx = tx.Where("messages.created_at < ?", query.Until.V.Truncate(time.Microsecond))
 		}
 	}
 
@@ -363,7 +363,7 @@ func (repo *Repository) GetChannelLatestMessages(query repository.ChannelLatestM
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {
-		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.UUID))
+		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.V))
 	}
 
 	if query.Limit > 0 {
@@ -371,7 +371,7 @@ func (repo *Repository) GetChannelLatestMessages(query repository.ChannelLatestM
 	}
 
 	if query.Since.Valid {
-		tx = tx.Where("clm.date_time >= ?", query.Since.Time)
+		tx = tx.Where("clm.date_time >= ?", query.Since.V)
 	}
 
 	return messages, tx.Find(&messages).Error

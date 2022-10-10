@@ -52,7 +52,7 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 
 	if q.In.Valid {
 		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
-		ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), q.In.UUID)
+		ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), q.In.V)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

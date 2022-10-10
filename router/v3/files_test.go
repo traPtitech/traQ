@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/go-audio/audio"
@@ -74,8 +75,8 @@ func TestGetFilesRequest_Validate(t *testing.T) {
 	type fields struct {
 		Limit     int
 		Offset    int
-		Since     optional.Time
-		Until     optional.Time
+		Since     optional.Of[time.Time]
+		Until     optional.Of[time.Time]
 		Inclusive bool
 		Order     string
 		ChannelID uuid.UUID

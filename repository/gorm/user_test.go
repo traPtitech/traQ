@@ -92,17 +92,17 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 			q := repository.UsersQuery{}
 			if v.bot == 0 {
-				q.IsBot = optional.BoolFrom(false)
+				q.IsBot = optional.From(false)
 			} else if v.bot == 1 {
-				q.IsBot = optional.BoolFrom(true)
+				q.IsBot = optional.From(true)
 			}
 			if v.active == 0 {
-				q.IsActive = optional.BoolFrom(false)
+				q.IsActive = optional.From(false)
 			} else if v.active == 1 {
-				q.IsActive = optional.BoolFrom(true)
+				q.IsActive = optional.From(true)
 			}
 			if v.g1 == 1 {
-				q.IsGMemberOf = optional.UUIDFrom(g1.ID)
+				q.IsGMemberOf = optional.From(g1.ID)
 			}
 
 			uids, err := repo.GetUserIDs(q)
@@ -181,7 +181,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert := assert.New(t)
 
-			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom(strings.Repeat("a", 65))})
+			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(strings.Repeat("a", 65))})
 			if assert.IsType(&repository.ArgumentError{}, err) {
 				assert.Equal("args.DisplayName", err.(*repository.ArgumentError).FieldName)
 			}
@@ -191,7 +191,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newDN := random2.AlphaNumeric(30)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom(newDN)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(newDN)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newDN, u.GetDisplayName())
@@ -207,7 +207,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert := assert.New(t)
 
-			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.StringFrom("ああああ")})
+			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From("ああああ")})
 			if assert.IsType(&repository.ArgumentError{}, err) {
 				assert.Equal("args.TwitterID", err.(*repository.ArgumentError).FieldName)
 			}
@@ -217,7 +217,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := "aiueo"
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.StringFrom(newTwitter)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
@@ -228,7 +228,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := ""
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.StringFrom(newTwitter)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
@@ -244,7 +244,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{Role: optional.StringFrom("admin")})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{Role: optional.From("admin")})) {
 				u, err := repo.GetUser(user.GetID(), false)
 				require.NoError(err)
 				assert.Equal("admin", u.GetRole())

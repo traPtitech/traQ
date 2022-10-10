@@ -35,12 +35,12 @@ func v17() *gormigrate.Migration {
 }
 
 type v17UserProfile struct {
-	UserID      uuid.UUID     `gorm:"type:char(36);not null;primaryKey"`
-	Bio         string        `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline  optional.Time `gorm:"precision:6"`
-	HomeChannel optional.UUID `gorm:"type:char(36)"` // 追加
-	UpdatedAt   time.Time     `gorm:"precision:6"`
+	UserID      uuid.UUID              `gorm:"type:char(36);not null;primaryKey"`
+	Bio         string                 `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	TwitterID   string                 `gorm:"type:varchar(15);not null;default:''"`
+	LastOnline  optional.Of[time.Time] `gorm:"precision:6"`
+	HomeChannel optional.Of[uuid.UUID] `gorm:"type:char(36)"` // 追加
+	UpdatedAt   time.Time              `gorm:"precision:6"`
 }
 
 func (v17UserProfile) TableName() string {

@@ -4,8 +4,10 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -26,22 +28,22 @@ type Engine interface {
 
 // Query 検索クエリ
 type Query struct {
-	Word           optional.String `query:"word"`           // 検索ワード Simple-Query-String-Syntax
-	After          optional.Time   `query:"after"`          // 以降(投稿日時) 2020-06-20T00:00:00Z
-	Before         optional.Time   `query:"before"`         // 以前(投稿日時)
-	In             optional.UUID   `query:"in"`             // 投稿チャンネル
-	To             optional.UUID   `query:"to"`             // メンション先
-	From           optional.UUID   `query:"from"`           // 投稿者
-	Citation       optional.UUID   `query:"citation"`       // 引用しているメッセージ
-	Bot            optional.Bool   `query:"bot"`            // 投稿者がBotか
-	HasURL         optional.Bool   `query:"hasURL"`         // URLの存在
-	HasAttachments optional.Bool   `query:"hasAttachments"` // 添付ファイル
-	HasImage       optional.Bool   `query:"hasImage"`       // 添付ファイル（画像）
-	HasVideo       optional.Bool   `query:"hasVideo"`       // 添付ファイル（動画）
-	HasAudio       optional.Bool   `query:"hasAudio"`       // 添付ファイル（音声ファイル）
-	Limit          optional.Int    `query:"limit"`          // 取得件数
-	Offset         optional.Int    `query:"offset"`         // 取得Offset
-	Sort           optional.String `query:"sort"`           // 並び順 /[-\+]?key/
+	Word           optional.Of[string]    `query:"word"`           // 検索ワード Simple-Query-String-Syntax
+	After          optional.Of[time.Time] `query:"after"`          // 以降(投稿日時) 2020-06-20T00:00:00Z
+	Before         optional.Of[time.Time] `query:"before"`         // 以前(投稿日時)
+	In             optional.Of[uuid.UUID] `query:"in"`             // 投稿チャンネル
+	To             optional.Of[uuid.UUID] `query:"to"`             // メンション先
+	From           optional.Of[uuid.UUID] `query:"from"`           // 投稿者
+	Citation       optional.Of[uuid.UUID] `query:"citation"`       // 引用しているメッセージ
+	Bot            optional.Of[bool]      `query:"bot"`            // 投稿者がBotか
+	HasURL         optional.Of[bool]      `query:"hasURL"`         // URLの存在
+	HasAttachments optional.Of[bool]      `query:"hasAttachments"` // 添付ファイル
+	HasImage       optional.Of[bool]      `query:"hasImage"`       // 添付ファイル（画像）
+	HasVideo       optional.Of[bool]      `query:"hasVideo"`       // 添付ファイル（動画）
+	HasAudio       optional.Of[bool]      `query:"hasAudio"`       // 添付ファイル（音声ファイル）
+	Limit          optional.Of[int]       `query:"limit"`          // 取得件数
+	Offset         optional.Of[int]       `query:"offset"`         // 取得Offset
+	Sort           optional.Of[string]    `query:"sort"`           // 並び順 /[-\+]?key/
 }
 
 func (q Query) Validate() error {

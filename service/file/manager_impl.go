@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 )
 
@@ -199,8 +198,8 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	var acl []*model.FileACLEntry
 	for uid, allow := range args.ACL {
 		acl = append(acl, &model.FileACLEntry{
-			UserID: optional.UUIDFrom(uid),
-			Allow:  optional.BoolFrom(allow),
+			UserID: uid,
+			Allow:  allow,
 		})
 	}
 

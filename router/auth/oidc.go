@@ -162,16 +162,16 @@ func (p *OIDCProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 
 	// Extract custom claims
 	var claims struct {
-		Sub     string          `json:"sub"`
-		Name    string          `json:"name"`
-		Picture optional.String `json:"picture"`
+		Sub     string              `json:"sub"`
+		Name    string              `json:"name"`
+		Picture optional.Of[string] `json:"picture"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, fmt.Errorf(oidcAPIRequestErrorFormat, errors.New("malformed id_token"))
 	}
 	ui.sub = claims.Sub
 	ui.name = claims.Name
-	ui.picture = claims.Picture.String
+	ui.picture = claims.Picture.V
 
 	return &ui, nil
 }

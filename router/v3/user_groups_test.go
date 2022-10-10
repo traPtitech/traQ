@@ -254,9 +254,9 @@ func TestPatchUserGroupRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        optional.String
-		Description optional.String
-		Type        optional.String
+		Name        optional.Of[string]
+		Description optional.Of[string]
+		Type        optional.Of[string]
 	}
 	tests := []struct {
 		name    string
@@ -270,30 +270,30 @@ func TestPatchUserGroupRequest_Validate(t *testing.T) {
 		},
 		{
 			"empty name",
-			fields{Name: optional.StringFrom("")},
+			fields{Name: optional.From("")},
 			true,
 		},
 		{
 			"too long name",
-			fields{Name: optional.StringFrom(strings.Repeat("a", 50))},
+			fields{Name: optional.From(strings.Repeat("a", 50))},
 			true,
 		},
 		{
 			"invalid name 1",
-			fields{Name: optional.StringFrom("@po")},
+			fields{Name: optional.From("@po")},
 			true,
 		},
 		{
 			"invalid name 2",
-			fields{Name: optional.StringFrom(":po:")},
+			fields{Name: optional.From(":po:")},
 			true,
 		},
 		{
 			"success",
 			fields{
-				Name:        optional.StringFrom("graphics"),
-				Description: optional.StringFrom(""),
-				Type:        optional.StringFrom(""),
+				Name:        optional.From("graphics"),
+				Description: optional.From(""),
+				Type:        optional.From(""),
 			},
 			false,
 		},
@@ -330,7 +330,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, ug.ID).
-			WithJSON(&PatchUserGroupRequest{Name: optional.StringFrom(random2.AlphaNumeric(20))}).
+			WithJSON(&PatchUserGroupRequest{Name: optional.From(random2.AlphaNumeric(20))}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -340,7 +340,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, ug.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchUserGroupRequest{Name: optional.StringFrom("")}).
+			WithJSON(&PatchUserGroupRequest{Name: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -350,7 +350,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, ug2.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchUserGroupRequest{Name: optional.StringFrom(random2.AlphaNumeric(20))}).
+			WithJSON(&PatchUserGroupRequest{Name: optional.From(random2.AlphaNumeric(20))}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -360,7 +360,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, ug.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchUserGroupRequest{Type: optional.StringFrom("grade")}).
+			WithJSON(&PatchUserGroupRequest{Type: optional.From("grade")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -370,7 +370,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, ug.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchUserGroupRequest{Name: optional.StringFrom(conflict.Name)}).
+			WithJSON(&PatchUserGroupRequest{Name: optional.From(conflict.Name)}).
 			Expect().
 			Status(http.StatusConflict)
 	})
@@ -380,7 +380,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, ug.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchUserGroupRequest{Name: optional.StringFrom("testGroup456")}).
+			WithJSON(&PatchUserGroupRequest{Name: optional.From("testGroup456")}).
 			Expect().
 			Status(http.StatusNoContent)
 

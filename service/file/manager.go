@@ -26,8 +26,8 @@ type SaveArgs struct {
 	FileSize  int64
 	MimeType  string
 	FileType  model.FileType
-	CreatorID optional.UUID
-	ChannelID optional.UUID
+	CreatorID optional.Of[uuid.UUID]
+	ChannelID optional.Of[uuid.UUID]
 	ACL       ACL
 	Src       io.Reader
 	Thumbnail image.Image
@@ -50,7 +50,7 @@ func (args *SaveArgs) Validate() error {
 		args.ACLAllow(uuid.Nil)
 	}
 	if args.CreatorID.Valid {
-		args.ACLAllow(args.CreatorID.UUID)
+		args.ACLAllow(args.CreatorID.V)
 	}
 	return vd.ValidateStruct(args,
 		vd.Field(&args.FileName, vd.Required),

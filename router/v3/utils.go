@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -104,12 +105,12 @@ func getParamClipFolder(c echo.Context) *model.ClipFolder {
 }
 
 type MessagesQuery struct {
-	Limit     int           `query:"limit"`
-	Offset    int           `query:"offset"`
-	Since     optional.Time `query:"since"`
-	Until     optional.Time `query:"until"`
-	Inclusive bool          `query:"inclusive"`
-	Order     string        `query:"order"`
+	Limit     int                    `query:"limit"`
+	Offset    int                    `query:"offset"`
+	Since     optional.Of[time.Time] `query:"since"`
+	Until     optional.Of[time.Time] `query:"until"`
+	Inclusive bool                   `query:"inclusive"`
+	Order     string                 `query:"order"`
 }
 
 func (q *MessagesQuery) bind(c echo.Context) error {

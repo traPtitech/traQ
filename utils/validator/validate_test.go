@@ -22,11 +22,11 @@ func TestNotNilUUID(t *testing.T) {
 	})
 	t.Run("ok (uuid.NullUUID)", func(t *testing.T) {
 		t.Parallel()
-		assert.NoError(t, NotNilUUID.Validate(optional.UUIDFrom(uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440000")))))
+		assert.NoError(t, NotNilUUID.Validate(optional.From(uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440000")))))
 	})
 	t.Run("ok (uuid.NullUUID Valid:false)", func(t *testing.T) {
 		t.Parallel()
-		assert.NoError(t, NotNilUUID.Validate(optional.NewUUID(uuid.Nil, false)))
+		assert.NoError(t, NotNilUUID.Validate(optional.Of[uuid.UUID]{}))
 	})
 	t.Run("ok (string)", func(t *testing.T) {
 		t.Parallel()
@@ -46,7 +46,7 @@ func TestNotNilUUID(t *testing.T) {
 	})
 	t.Run("ng (uuid.UUID)", func(t *testing.T) {
 		t.Parallel()
-		assert.Error(t, NotNilUUID.Validate(optional.UUIDFrom(uuid.Nil)))
+		assert.Error(t, NotNilUUID.Validate(optional.From(uuid.Nil)))
 	})
 	t.Run("ng (string)", func(t *testing.T) {
 		t.Parallel()

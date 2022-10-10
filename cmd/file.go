@@ -394,7 +394,7 @@ func genGroupImages() *cobra.Command {
 				if err != nil {
 					logger.Fatal("failed to generate image", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
 				}
-				if err := repo.UpdateUserGroup(group.ID, repository.UpdateUserGroupArgs{Icon: optional.UUIDFrom(iconFileID)}); err != nil {
+				if err := repo.UpdateUserGroup(group.ID, repository.UpdateUserGroupArgs{Icon: optional.From(iconFileID)}); err != nil {
 					logger.Fatal("failed to update user group", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
 				}
 			}

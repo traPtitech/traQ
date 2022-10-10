@@ -149,10 +149,10 @@ type File interface {
 	GetMIMEType() string
 	GetFileSize() int64
 	GetFileType() FileType
-	GetCreatorID() optional.UUID
+	GetCreatorID() optional.Of[uuid.UUID]
 	GetMD5Hash() string
 	IsAnimatedImage() bool
-	GetUploadChannelID() optional.UUID
+	GetUploadChannelID() optional.Of[uuid.UUID]
 	GetCreatedAt() time.Time
 	GetThumbnails() []FileThumbnail
 	GetThumbnail(thumbnailType ThumbnailType) (bool, FileThumbnail)
@@ -164,17 +164,17 @@ type File interface {
 
 // FileMeta DBに格納するファイルの構造体
 type FileMeta struct {
-	ID              uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
-	Name            string         `gorm:"type:text;not null"`
-	Mime            string         `gorm:"type:text;not null"`
-	Size            int64          `gorm:"type:bigint;not null"`
-	CreatorID       optional.UUID  `gorm:"type:char(36);index:idx_files_creator_id_created_at,priority:1"`
-	Hash            string         `gorm:"type:char(32);not null"`
-	Type            FileType       `gorm:"type:varchar(30);not null"`
-	IsAnimatedImage bool           `gorm:"type:boolean;not null;default:false"`
-	ChannelID       optional.UUID  `gorm:"type:char(36);index:idx_files_channel_id_created_at,priority:1"`
-	CreatedAt       time.Time      `gorm:"precision:6;index:idx_files_channel_id_created_at,priority:2;index:idx_files_creator_id_created_at,priority:2"`
-	DeletedAt       gorm.DeletedAt `gorm:"precision:6"`
+	ID              uuid.UUID              `gorm:"type:char(36);not null;primaryKey"`
+	Name            string                 `gorm:"type:text;not null"`
+	Mime            string                 `gorm:"type:text;not null"`
+	Size            int64                  `gorm:"type:bigint;not null"`
+	CreatorID       optional.Of[uuid.UUID] `gorm:"type:char(36);index:idx_files_creator_id_created_at,priority:1"`
+	Hash            string                 `gorm:"type:char(32);not null"`
+	Type            FileType               `gorm:"type:varchar(30);not null"`
+	IsAnimatedImage bool                   `gorm:"type:boolean;not null;default:false"`
+	ChannelID       optional.Of[uuid.UUID] `gorm:"type:char(36);index:idx_files_channel_id_created_at,priority:1"`
+	CreatedAt       time.Time              `gorm:"precision:6;index:idx_files_channel_id_created_at,priority:2;index:idx_files_creator_id_created_at,priority:2"`
+	DeletedAt       gorm.DeletedAt         `gorm:"precision:6"`
 
 	Channel    *Channel        `gorm:"constraint:files_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Creator    *User           `gorm:"constraint:files_creator_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:RESTRICT;foreignKey:CreatorID"`
@@ -201,9 +201,9 @@ func (f FileThumbnail) TableName() string {
 
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体
 type FileACLEntry struct {
-	FileID uuid.UUID     `gorm:"type:char(36);primaryKey;not null"`
-	UserID optional.UUID `gorm:"type:char(36);primaryKey;not null"`
-	Allow  optional.Bool `gorm:"not null"`
+	FileID uuid.UUID `gorm:"type:char(36);primaryKey;not null"`
+	UserID uuid.UUID `gorm:"type:char(36);primaryKey;not null"`
+	Allow  bool      `gorm:"not null"`
 
 	File FileMeta `gorm:"constraint:files_acl_file_id_files_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:FileID"`
 }

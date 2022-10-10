@@ -74,7 +74,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			Name: optional.StringFrom(strings.Repeat("a", 40)),
+			Name: optional.From(strings.Repeat("a", 40)),
 		})
 		assert.Error(t, err)
 	})
@@ -83,7 +83,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			ChannelID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+			ChannelID: optional.From(uuid.Must(uuid.NewV4())),
 		})
 		assert.Error(t, err)
 	})
@@ -92,7 +92,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			CreatorID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+			CreatorID: optional.From(uuid.Must(uuid.NewV4())),
 		})
 		assert.Error(t, err)
 	})
@@ -101,7 +101,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			CreatorID: optional.UUIDFrom(wb.GetBotUserID()),
+			CreatorID: optional.From(wb.GetBotUserID()),
 		})
 		assert.Error(t, err)
 	})
@@ -120,11 +120,11 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			Description: optional.StringFrom("new description"),
-			Name:        optional.StringFrom("new name"),
-			Secret:      optional.StringFrom("new secret"),
-			ChannelID:   optional.UUIDFrom(ch.ID),
-			CreatorID:   optional.UUIDFrom(user.GetID()),
+			Description: optional.From("new description"),
+			Name:        optional.From("new name"),
+			Secret:      optional.From("new secret"),
+			ChannelID:   optional.From(ch.ID),
+			CreatorID:   optional.From(user.GetID()),
 		})
 		if assert.NoError(err) {
 			wb, err := repo.GetWebhook(wb.GetID())

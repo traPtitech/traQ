@@ -43,8 +43,8 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 		if !cm.IsPublicChannel(v) {
 			return errors.New(errMessage)
 		}
-	case optional.UUID:
-		if v.Valid && !cm.IsPublicChannel(v.UUID) {
+	case optional.Of[uuid.UUID]:
+		if v.Valid && !cm.IsPublicChannel(v.V) {
 			return errors.New(errMessage)
 		}
 	case string:
@@ -79,11 +79,11 @@ var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interfa
 		return nil
 	case uuid.UUID:
 		u, err = repo.GetUser(v, false)
-	case optional.UUID:
+	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		u, err = repo.GetUser(v.UUID, false)
+		u, err = repo.GetUser(v.V, false)
 	case string:
 		u, err = repo.GetUser(uuid.FromStringOrNil(v), false)
 	case []byte:
@@ -122,11 +122,11 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 		return nil
 	case uuid.UUID:
 		ok, err = repo.UserExists(v)
-	case optional.UUID:
+	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		ok, err = repo.UserExists(v.UUID)
+		ok, err = repo.UserExists(v.V)
 	case string:
 		ok, err = repo.UserExists(uuid.FromStringOrNil(v))
 	case []byte:
@@ -161,11 +161,11 @@ var IsNotWebhookUserID = vd.WithContext(func(ctx context.Context, value interfac
 		return nil
 	case uuid.UUID:
 		user, err = repo.GetUser(v, false)
-	case optional.UUID:
+	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		user, err = repo.GetUser(v.UUID, false)
+		user, err = repo.GetUser(v.V, false)
 	case string:
 		user, err = repo.GetUser(uuid.FromStringOrNil(v), false)
 	case []byte:

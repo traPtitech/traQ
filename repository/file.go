@@ -2,6 +2,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -10,10 +12,10 @@ import (
 
 // FilesQuery GetFiles用クエリ
 type FilesQuery struct {
-	UploaderID optional.UUID
-	ChannelID  optional.UUID
-	Since      optional.Time
-	Until      optional.Time
+	UploaderID optional.Of[uuid.UUID]
+	ChannelID  optional.Of[uuid.UUID]
+	Since      optional.Of[time.Time]
+	Until      optional.Of[time.Time]
 	Inclusive  bool
 	Limit      int
 	Offset     int

@@ -34,11 +34,11 @@ var NotInternalURL = vd.By(func(value interface{}) error {
 			return nil
 		}
 		s = v
-	case optional.String:
+	case optional.Of[string]:
 		if len(v.ValueOrZero()) == 0 {
 			return nil
 		}
-		s = v.String
+		s = v.V
 	}
 	u, _ := url.Parse(s)
 	if utils.IsPrivateHost(u.Hostname()) {
@@ -56,8 +56,8 @@ var NotNilUUID = vd.By(func(value interface{}) error {
 		if u == uuid.Nil {
 			return errors.New("invalid uuid")
 		}
-	case optional.UUID:
-		if u.Valid && u.UUID == uuid.Nil {
+	case optional.Of[uuid.UUID]:
+		if u.Valid && u.V == uuid.Nil {
 			return errors.New("invalid uuid")
 		}
 	case string:

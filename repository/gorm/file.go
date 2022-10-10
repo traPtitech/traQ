@@ -16,33 +16,33 @@ func (repo *Repository) GetFileMetas(q repository.FilesQuery) (result []*model.F
 		Scopes(filePreloads)
 
 	if q.ChannelID.Valid {
-		if q.ChannelID.UUID == uuid.Nil {
+		if q.ChannelID.V == uuid.Nil {
 			tx = tx.Where("files.channel_id IS NULL")
 		} else {
-			tx = tx.Where("files.channel_id = ?", q.ChannelID.UUID)
+			tx = tx.Where("files.channel_id = ?", q.ChannelID.V)
 		}
 	}
 	if q.UploaderID.Valid {
-		if q.UploaderID.UUID == uuid.Nil {
+		if q.UploaderID.V == uuid.Nil {
 			tx = tx.Where("files.creator_id IS NULL")
 		} else {
-			tx = tx.Where("files.creator_id = ?", q.UploaderID.UUID)
+			tx = tx.Where("files.creator_id = ?", q.UploaderID.V)
 		}
 	}
 
 	if q.Inclusive {
 		if q.Since.Valid {
-			tx = tx.Where("files.created_at >= ?", q.Since.Time)
+			tx = tx.Where("files.created_at >= ?", q.Since.V)
 		}
 		if q.Until.Valid {
-			tx = tx.Where("files.created_at <= ?", q.Until.Time)
+			tx = tx.Where("files.created_at <= ?", q.Until.V)
 		}
 	} else {
 		if q.Since.Valid {
-			tx = tx.Where("files.created_at > ?", q.Since.Time)
+			tx = tx.Where("files.created_at > ?", q.Since.V)
 		}
 		if q.Until.Valid {
-			tx = tx.Where("files.created_at < ?", q.Until.Time)
+			tx = tx.Where("files.created_at < ?", q.Until.V)
 		}
 	}
 

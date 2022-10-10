@@ -9,7 +9,6 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/optional"
 )
 
 func TestGormRepository_SaveFileMeta(t *testing.T) {
@@ -33,7 +32,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 			Type: model.FileTypeUserFile,
 		}
 		acl := []*model.FileACLEntry{
-			{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
+			{UserID: uuid.Nil, Allow: true},
 		}
 
 		err := repo.SaveFileMeta(meta, acl)
@@ -162,7 +161,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
-			{UserID: optional.UUIDFrom(user.GetID()), Allow: optional.BoolFrom(true)},
+			{UserID: user.GetID(), Allow: true},
 		})
 		require.NoError(t, err)
 
@@ -208,8 +207,8 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
-			{UserID: optional.UUIDFrom(user.GetID()), Allow: optional.BoolFrom(true)},
-			{UserID: optional.UUIDFrom(user2.GetID()), Allow: optional.BoolFrom(true)},
+			{UserID: user.GetID(), Allow: true},
+			{UserID: user2.GetID(), Allow: true},
 		})
 		require.NoError(t, err)
 
@@ -264,8 +263,8 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
-			{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
-			{UserID: optional.UUIDFrom(deniedUser.GetID()), Allow: optional.BoolFrom(false)},
+			{UserID: uuid.Nil, Allow: true},
+			{UserID: deniedUser.GetID(), Allow: false},
 		})
 		require.NoError(t, err)
 

@@ -9,10 +9,10 @@ import (
 
 // UpdateUserGroupArgs ユーザーグループ更新引数
 type UpdateUserGroupArgs struct {
-	Name        optional.String
-	Description optional.String
-	Type        optional.String
-	Icon        optional.UUID
+	Name        optional.Of[string]
+	Description optional.Of[string]
+	Type        optional.Of[string]
+	Icon        optional.Of[uuid.UUID]
 }
 
 // UserGroupRepository ユーザーグループリポジトリ

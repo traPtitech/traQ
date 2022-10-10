@@ -343,10 +343,10 @@ func TestPatchClientRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        optional.String
-		Description optional.String
-		CallbackURL optional.String
-		DeveloperID optional.UUID
+		Name        optional.Of[string]
+		Description optional.Of[string]
+		CallbackURL optional.Of[string]
+		DeveloperID optional.Of[uuid.UUID]
 	}
 	tests := []struct {
 		name    string
@@ -360,37 +360,37 @@ func TestPatchClientRequest_Validate(t *testing.T) {
 		},
 		{
 			"empty name",
-			fields{Name: optional.StringFrom("")},
+			fields{Name: optional.From("")},
 			true,
 		},
 		{
 			"too long name",
-			fields{Name: optional.StringFrom(strings.Repeat("a", 100))},
+			fields{Name: optional.From(strings.Repeat("a", 100))},
 			true,
 		},
 		{
 			"empty description",
-			fields{Description: optional.StringFrom("")},
+			fields{Description: optional.From("")},
 			true,
 		},
 		{
 			"empty callback url",
-			fields{CallbackURL: optional.StringFrom("")},
+			fields{CallbackURL: optional.From("")},
 			true,
 		},
 		{
 			"nil developer id",
-			fields{DeveloperID: optional.UUIDFrom(uuid.Nil)},
+			fields{DeveloperID: optional.From(uuid.Nil)},
 			true,
 		},
 		{
 			"invalid developer id",
-			fields{DeveloperID: optional.UUIDFrom(uuid.Nil)},
+			fields{DeveloperID: optional.From(uuid.Nil)},
 			true,
 		},
 		{
 			"success",
-			fields{Name: optional.StringFrom("po")},
+			fields{Name: optional.From("po")},
 			false,
 		},
 	}
@@ -426,7 +426,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, c1.ID).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchClientRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -436,7 +436,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, c1.ID).
 			WithCookie(session.CookieName, user1Session).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom(strings.Repeat("a", 100))}).
+			WithJSON(&PatchClientRequest{Name: optional.From(strings.Repeat("a", 100))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -446,7 +446,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, c2.ID).
 			WithCookie(session.CookieName, user1Session).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchClientRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -456,7 +456,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		e := env.R(t)
 		e.GET(path, random.AlphaNumeric(36)).
 			WithCookie(session.CookieName, user1Session).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchClientRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -466,7 +466,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, c1.ID).
 			WithCookie(session.CookieName, user1Session).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchClientRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -480,7 +480,7 @@ func TestHandlers_EditClient(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, c2.ID).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchClientRequest{Name: optional.StringFrom("po2")}).
+			WithJSON(&PatchClientRequest{Name: optional.From("po2")}).
 			Expect().
 			Status(http.StatusNoContent)
 

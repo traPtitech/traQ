@@ -126,15 +126,15 @@ func (m *message) GetPin() *model.Pin {
 
 func (m *message) MarshalJSON() ([]byte, error) {
 	type obj struct {
-		ID        uuid.UUID            `json:"id"`
-		UserID    uuid.UUID            `json:"userId"`
-		ChannelID uuid.UUID            `json:"channelId"`
-		Content   string               `json:"content"`
-		CreatedAt time.Time            `json:"createdAt"`
-		UpdatedAt time.Time            `json:"updatedAt"`
-		Pinned    bool                 `json:"pinned"`
-		Stamps    []model.MessageStamp `json:"stamps"`
-		ThreadID  optional.UUID        `json:"threadId"` // TODO
+		ID        uuid.UUID              `json:"id"`
+		UserID    uuid.UUID              `json:"userId"`
+		ChannelID uuid.UUID              `json:"channelId"`
+		Content   string                 `json:"content"`
+		CreatedAt time.Time              `json:"createdAt"`
+		UpdatedAt time.Time              `json:"updatedAt"`
+		Pinned    bool                   `json:"pinned"`
+		Stamps    []model.MessageStamp   `json:"stamps"`
+		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
 	}
 	stamps := m.GetStamps()
 	m.RLock()
@@ -147,7 +147,6 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		UpdatedAt: m.Model.UpdatedAt,
 		Pinned:    m.Model.Pin != nil,
 		Stamps:    stamps,
-		ThreadID:  optional.UUID{},
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)

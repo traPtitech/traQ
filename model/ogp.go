@@ -10,11 +10,11 @@ import (
 
 // OgpMedia OGPの画像・映像に関する情報の構造体
 type OgpMedia struct {
-	URL       string          `json:"url"`
-	SecureURL optional.String `json:"secureUrl"`
-	Type      optional.String `json:"type"`
-	Width     optional.Int    `json:"width"`
-	Height    optional.Int    `json:"height"`
+	URL       string              `json:"url"`
+	SecureURL optional.Of[string] `json:"secureUrl"`
+	Type      optional.Of[string] `json:"type"`
+	Width     optional.Of[int]    `json:"width"`
+	Height    optional.Of[int]    `json:"height"`
 }
 
 // Ogp OGP情報の構造体

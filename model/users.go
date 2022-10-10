@@ -74,8 +74,8 @@ type UserInfo interface {
 
 	GetTwitterID() string
 	GetBio() string
-	GetLastOnline() optional.Time
-	GetHomeChannel() optional.UUID
+	GetLastOnline() optional.Of[time.Time]
+	GetHomeChannel() optional.Of[uuid.UUID]
 
 	// IsActive ユーザーが有効かどうか
 	IsActive() bool
@@ -120,12 +120,12 @@ func (user User) Validate() error {
 }
 
 type UserProfile struct {
-	UserID      uuid.UUID     `gorm:"type:char(36);not null;primaryKey"`
-	Bio         string        `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline  optional.Time `gorm:"precision:6"`
-	HomeChannel optional.UUID `gorm:"type:char(36)"`
-	UpdatedAt   time.Time     `gorm:"precision:6"`
+	UserID      uuid.UUID              `gorm:"type:char(36);not null;primaryKey"`
+	Bio         string                 `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	TwitterID   string                 `gorm:"type:varchar(15);not null;default:''"`
+	LastOnline  optional.Of[time.Time] `gorm:"precision:6"`
+	HomeChannel optional.Of[uuid.UUID] `gorm:"type:char(36)"`
+	UpdatedAt   time.Time              `gorm:"precision:6"`
 
 	HomeChan *Channel `gorm:"constraint:user_profiles_home_channel_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:HomeChannel"`
 }
@@ -216,7 +216,7 @@ func (user *User) GetBio() string {
 }
 
 // GetLastOnline implements UserInfo interface
-func (user *User) GetLastOnline() optional.Time {
+func (user *User) GetLastOnline() optional.Of[time.Time] {
 	if user.Profile == nil {
 		panic("unexpected control flow")
 	}
@@ -224,7 +224,7 @@ func (user *User) GetLastOnline() optional.Time {
 }
 
 // GetHomeChannel implements UserInfo interface
-func (user *User) GetHomeChannel() optional.UUID {
+func (user *User) GetHomeChannel() optional.Of[uuid.UUID] {
 	if user.Profile == nil {
 		panic("unexpected control flow")
 	}

@@ -30,8 +30,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
-		ChannelID: optional.UUID{},
+		CreatorID: optional.From(grantedUser.GetID()),
 		ACL:       file2.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})
@@ -162,8 +161,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
-		ChannelID: optional.UUID{},
+		CreatorID: optional.From(grantedUser.GetID()),
 		ACL:       file2.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})

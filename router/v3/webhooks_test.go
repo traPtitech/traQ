@@ -265,7 +265,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, wh.GetID()).
-			WithJSON(&PatchWebhookRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchWebhookRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -275,7 +275,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, wh.GetID()).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchWebhookRequest{Name: optional.StringFrom("")}).
+			WithJSON(&PatchWebhookRequest{Name: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -285,7 +285,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchWebhookRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchWebhookRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -295,7 +295,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, wh.GetID()).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchWebhookRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchWebhookRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusNoContent)
 

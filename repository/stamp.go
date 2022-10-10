@@ -19,9 +19,9 @@ type CreateStampArgs struct {
 
 // UpdateStampArgs スタンプ情報更新引数
 type UpdateStampArgs struct {
-	Name      optional.String
-	FileID    optional.UUID
-	CreatorID optional.UUID
+	Name      optional.Of[string]
+	FileID    optional.Of[uuid.UUID]
+	CreatorID optional.Of[uuid.UUID]
 }
 
 // UserStampHistory スタンプ履歴構造体
