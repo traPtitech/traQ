@@ -61,16 +61,16 @@ func (repo *Repository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUser
 
 		changes := map[string]interface{}{}
 		if args.Name.Valid {
-			changes["name"] = args.Name.String
+			changes["name"] = args.Name.V
 		}
 		if args.Description.Valid {
-			changes["description"] = args.Description.String
+			changes["description"] = args.Description.V
 		}
 		if args.Type.Valid {
-			changes["type"] = args.Type.String
+			changes["type"] = args.Type.V
 		}
 		if args.Icon.Valid {
-			changes["icon"] = args.Icon.UUID
+			changes["icon"] = args.Icon.V
 		}
 
 		if len(changes) == 0 {

@@ -52,7 +52,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "text/plain",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewReader(data),
 		}
 
@@ -64,7 +64,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			DoAndReturn(func(meta *model.FileMeta, acl []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
@@ -102,7 +102,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "image/png",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewReader(data),
 			Thumbnail: thumb,
 		}
@@ -122,7 +122,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			DoAndReturn(func(meta *model.FileMeta, acl []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
@@ -166,7 +166,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "image/png",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewReader(data),
 		}
 
@@ -185,7 +185,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -232,7 +232,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "image/png",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewBuffer(data),
 		}
 
@@ -251,7 +251,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -297,7 +297,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "audio/mp3",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewReader(data),
 		}
 		waveform := bytes.NewBufferString("dummy svg file")
@@ -317,7 +317,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -361,7 +361,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			FileSize:  int64(len(data)),
 			MimeType:  "audio/wav",
 			FileType:  model.FileTypeUserFile,
-			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
 			Src:       bytes.NewReader(data),
 		}
 		waveform := bytes.NewBufferString("dummy svg file")
@@ -381,7 +381,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)

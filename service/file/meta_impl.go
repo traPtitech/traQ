@@ -37,7 +37,7 @@ func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 
-func (f *fileMetaImpl) GetCreatorID() optional.UUID {
+func (f *fileMetaImpl) GetCreatorID() optional.Of[uuid.UUID] {
 	return f.meta.CreatorID
 }
 
@@ -49,7 +49,7 @@ func (f *fileMetaImpl) IsAnimatedImage() bool {
 	return f.meta.IsAnimatedImage
 }
 
-func (f *fileMetaImpl) GetUploadChannelID() optional.UUID {
+func (f *fileMetaImpl) GetUploadChannelID() optional.Of[uuid.UUID] {
 	return f.meta.ChannelID
 }
 

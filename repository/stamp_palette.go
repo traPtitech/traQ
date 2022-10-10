@@ -9,8 +9,8 @@ import (
 
 // UpdateStampPaletteArgs スタンプパレット情報更新引数
 type UpdateStampPaletteArgs struct {
-	Name        optional.String
-	Description optional.String
+	Name        optional.Of[string]
+	Description optional.Of[string]
 	Stamps      model.UUIDs
 }
 

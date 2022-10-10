@@ -49,8 +49,8 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 
 // PostUserRequest POST /users リクエストボディ
 type PostUserRequest struct {
-	Name     string          `json:"name"`
-	Password optional.String `json:"password"`
+	Name     string              `json:"name"`
+	Password optional.Of[string] `json:"password"`
 }
 
 func (r PostUserRequest) Validate() error {
@@ -119,10 +119,10 @@ func (h *Handlers) GetMe(c echo.Context) error {
 
 // PatchMeRequest PATCH /users/me リクエストボディ
 type PatchMeRequest struct {
-	DisplayName optional.String `json:"displayName"`
-	TwitterID   optional.String `json:"twitterId"`
-	Bio         optional.String `json:"bio"`
-	HomeChannel optional.UUID   `json:"homeChannel"`
+	DisplayName optional.Of[string]    `json:"displayName"`
+	TwitterID   optional.Of[string]    `json:"twitterId"`
+	Bio         optional.Of[string]    `json:"bio"`
+	HomeChannel optional.Of[uuid.UUID] `json:"homeChannel"`
 }
 
 func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
@@ -143,9 +143,9 @@ func (h *Handlers) EditMe(c echo.Context) error {
 	}
 
 	if req.HomeChannel.Valid {
-		if req.HomeChannel.UUID != uuid.Nil {
+		if req.HomeChannel.V != uuid.Nil {
 			// チャンネル存在確認
-			if !h.ChannelManager.PublicChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
+			if !h.ChannelManager.PublicChannelTree().IsChannelPresent(req.HomeChannel.V) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}
@@ -345,10 +345,10 @@ func (h *Handlers) GetUser(c echo.Context) error {
 
 // PatchUserRequest PATCH /users/:userID リクエストボディ
 type PatchUserRequest struct {
-	DisplayName optional.String `json:"displayName"`
-	TwitterID   optional.String `json:"twitterId"`
-	Role        optional.String `json:"role"`
-	State       optional.Int    `json:"state"`
+	DisplayName optional.Of[string] `json:"displayName"`
+	TwitterID   optional.Of[string] `json:"twitterId"`
+	Role        optional.Of[string] `json:"role"`
+	State       optional.Of[int]    `json:"state"`
 }
 
 func (r PatchUserRequest) Validate() error {
@@ -375,8 +375,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 		Role:        req.Role,
 	}
 	if req.State.Valid {
-		args.UserState.Valid = true
-		args.UserState.State = model.UserAccountStatus(req.State.Int64)
+		args.UserState = optional.From(model.UserAccountStatus(req.State.V))
 	}
 
 	if err := h.Repo.UpdateUser(userID, args); err != nil {
@@ -408,7 +407,7 @@ func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
 
 // PutChannelSubscribeLevelRequest PUT /users/me/subscriptions/:channelID リクエストボディ
 type PutChannelSubscribeLevelRequest struct {
-	Level optional.Int `json:"level"`
+	Level optional.Of[int] `json:"level"`
 }
 
 func (r PutChannelSubscribeLevelRequest) Validate() error {
@@ -434,7 +433,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.Int64)}, false, getRequestUserID(c)); err != nil {
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.V)}, false, getRequestUserID(c)); err != nil {
 		switch err {
 		case channel.ErrInvalidChannel:
 			return herror.Forbidden("the channel's subscriptions is not configurable")

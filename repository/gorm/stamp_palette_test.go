@@ -84,8 +84,8 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		newDescription := random2.AlphaNumeric(100)
 
 		if assert.NoError(repo.UpdateStampPalette(stampPalette.ID, repository.UpdateStampPaletteArgs{
-			Name:        optional.StringFrom(newName),
-			Description: optional.StringFrom(newDescription),
+			Name:        optional.From(newName),
+			Description: optional.From(newDescription),
 			Stamps:      make([]uuid.UUID, 0),
 		})) {
 			newStampPalette, err := repo.GetStampPalette(stampPalette.ID)

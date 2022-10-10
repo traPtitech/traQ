@@ -42,7 +42,7 @@ func (repo *Repository) CreateClipFolder(userID uuid.UUID, name string, descript
 }
 
 // UpdateClipFolder implements ClipRepository interface.
-func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.String, description optional.String) error {
+func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[string], description optional.Of[string]) error {
 	if folderID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -50,11 +50,11 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Strin
 	changes := map[string]interface{}{}
 
 	if name.Valid {
-		changes["name"] = name.String
+		changes["name"] = name.V
 	}
 
 	if description.Valid {
-		changes["description"] = description.String
+		changes["description"] = description.V
 	}
 
 	var (

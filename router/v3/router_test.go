@@ -355,12 +355,12 @@ func (env *Env) CreateFile(t *testing.T, creatorID, channelID uuid.UUID) model.F
 func (env *Env) CreateFileWithName(t *testing.T, creatorID, channelID uuid.UUID, filename string) model.File {
 	t.Helper()
 
-	var cr, ch optional.UUID
+	var cr, ch optional.Of[uuid.UUID]
 	if creatorID != uuid.Nil {
-		cr = optional.UUIDFrom(creatorID)
+		cr = optional.From(creatorID)
 	}
 	if channelID != uuid.Nil {
-		ch = optional.UUIDFrom(channelID)
+		ch = optional.From(channelID)
 	}
 
 	buf := bytes.NewBufferString("test message")

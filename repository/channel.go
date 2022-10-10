@@ -20,18 +20,18 @@ type ChangeChannelSubscriptionArgs struct {
 // UpdateChannelArgs チャンネル情報更新引数
 type UpdateChannelArgs struct {
 	UpdaterID          uuid.UUID
-	Name               optional.String
-	Topic              optional.String
-	Visibility         optional.Bool
-	ForcedNotification optional.Bool
-	Parent             optional.UUID
+	Name               optional.Of[string]
+	Topic              optional.Of[string]
+	Visibility         optional.Of[bool]
+	ForcedNotification optional.Of[bool]
+	Parent             optional.Of[uuid.UUID]
 }
 
 // ChannelEventsQuery GetChannelEvents用クエリ
 type ChannelEventsQuery struct {
 	Channel   uuid.UUID
-	Since     optional.Time
-	Until     optional.Time
+	Since     optional.Of[time.Time]
+	Until     optional.Of[time.Time]
 	Inclusive bool
 	Limit     int
 	Offset    int
@@ -40,18 +40,18 @@ type ChannelEventsQuery struct {
 
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
-	UserID    optional.UUID
-	ChannelID optional.UUID
+	UserID    optional.Of[uuid.UUID]
+	ChannelID optional.Of[uuid.UUID]
 	Level     model.ChannelSubscribeLevel
 }
 
 func (q ChannelSubscriptionQuery) SetUser(id uuid.UUID) ChannelSubscriptionQuery {
-	q.UserID = optional.UUIDFrom(id)
+	q.UserID = optional.From(id)
 	return q
 }
 
 func (q ChannelSubscriptionQuery) SetChannel(id uuid.UUID) ChannelSubscriptionQuery {
-	q.ChannelID = optional.UUIDFrom(id)
+	q.ChannelID = optional.From(id)
 	return q
 }
 

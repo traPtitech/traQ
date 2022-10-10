@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -14,7 +13,7 @@ func TestUsersQuery_Active(t *testing.T) {
 	t.Parallel()
 
 	assert.EqualValues(t,
-		UsersQuery{IsActive: optional.Bool{NullBool: sql.NullBool{Bool: true, Valid: true}}},
+		UsersQuery{IsActive: optional.From(true)},
 		UsersQuery{}.Active(),
 	)
 }
@@ -23,7 +22,7 @@ func TestUsersQuery_NotBot(t *testing.T) {
 	t.Parallel()
 
 	assert.EqualValues(t,
-		UsersQuery{IsBot: optional.Bool{NullBool: sql.NullBool{Bool: false, Valid: true}}},
+		UsersQuery{IsBot: optional.From(false)},
 		UsersQuery{}.NotBot(),
 	)
 }
@@ -33,7 +32,7 @@ func TestUsersQuery_CMemberOf(t *testing.T) {
 
 	id, _ := uuid.NewV4()
 	assert.EqualValues(t,
-		UsersQuery{IsCMemberOf: optional.UUID{NullUUID: uuid.NullUUID{UUID: id, Valid: true}}},
+		UsersQuery{IsCMemberOf: optional.From(id)},
 		UsersQuery{}.CMemberOf(id),
 	)
 }
@@ -43,7 +42,7 @@ func TestUsersQuery_GMemberOf(t *testing.T) {
 
 	id, _ := uuid.NewV4()
 	assert.EqualValues(t,
-		UsersQuery{IsGMemberOf: optional.UUID{NullUUID: uuid.NullUUID{UUID: id, Valid: true}}},
+		UsersQuery{IsGMemberOf: optional.From(id)},
 		UsersQuery{}.GMemberOf(id),
 	)
 }
@@ -52,7 +51,7 @@ func TestUsersQuery_Composite(t *testing.T) {
 	t.Parallel()
 
 	assert.EqualValues(t,
-		UsersQuery{IsActive: optional.Bool{NullBool: sql.NullBool{Bool: true, Valid: true}}, IsBot: optional.Bool{NullBool: sql.NullBool{Bool: false, Valid: true}}},
+		UsersQuery{IsActive: optional.From(true), IsBot: optional.From(false)},
 		UsersQuery{}.NotBot().Active(),
 	)
 }

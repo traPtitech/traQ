@@ -137,13 +137,13 @@ func (h *Handlers) GetBot(c echo.Context) error {
 
 // PatchBotRequest PATCH /bots/:botID リクエストボディ
 type PatchBotRequest struct {
-	DisplayName     optional.String     `json:"displayName"`
-	Description     optional.String     `json:"description"`
-	Mode            optional.String     `json:"mode"`
-	Endpoint        optional.String     `json:"endpoint"`
-	Privileged      optional.Bool       `json:"privileged"`
-	DeveloperID     optional.UUID       `json:"developerId"`
-	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	DisplayName     optional.Of[string]    `json:"displayName"`
+	Description     optional.Of[string]    `json:"description"`
+	Mode            optional.Of[string]    `json:"mode"`
+	Endpoint        optional.Of[string]    `json:"endpoint"`
+	Privileged      optional.Of[bool]      `json:"privileged"`
+	DeveloperID     optional.Of[uuid.UUID] `json:"developerId"`
+	SubscribeEvents model.BotEventTypes    `json:"subscribeEvents"`
 }
 
 func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
@@ -171,7 +171,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 	}
 
 	willBeHTTPMode := req.Mode.ValueOrZero() == model.BotModeHTTP.String() || !req.Mode.Valid && b.Mode == model.BotModeHTTP
-	willHaveNoEndpoint := b.PostURL == "" && !req.Endpoint.Valid || req.Endpoint.Valid && req.Endpoint.String == ""
+	willHaveNoEndpoint := b.PostURL == "" && !req.Endpoint.Valid || req.Endpoint.Valid && req.Endpoint.V == ""
 	if willBeHTTPMode && willHaveNoEndpoint {
 		return herror.BadRequest("endpoint is required for HTTP mode bots")
 	}

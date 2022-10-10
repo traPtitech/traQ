@@ -70,8 +70,8 @@ func TestUpdateClipFolderRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        optional.String
-		Description optional.String
+		Name        optional.Of[string]
+		Description optional.Of[string]
 	}
 	tests := []struct {
 		name    string
@@ -85,17 +85,17 @@ func TestUpdateClipFolderRequest_Validate(t *testing.T) {
 		},
 		{
 			"empty name",
-			fields{Name: optional.StringFrom("")},
+			fields{Name: optional.From("")},
 			true,
 		},
 		{
 			"too long name",
-			fields{Name: optional.StringFrom(strings.Repeat("a", 100))},
+			fields{Name: optional.From(strings.Repeat("a", 100))},
 			true,
 		},
 		{
 			"success",
-			fields{Name: optional.StringFrom("test")},
+			fields{Name: optional.From("test")},
 			false,
 		},
 	}
@@ -321,8 +321,8 @@ func TestHandlers_EditClipFolder(t *testing.T) {
 	user1Session := env.S(t, user1.GetID())
 
 	req := &UpdateClipFolderRequest{
-		Name:        optional.StringFrom("nya"),
-		Description: optional.StringFrom("foo"),
+		Name:        optional.From("nya"),
+		Description: optional.From("foo"),
 	}
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -339,7 +339,7 @@ func TestHandlers_EditClipFolder(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, cf1.ID.String()).
 			WithCookie(session.CookieName, user1Session).
-			WithJSON(&UpdateClipFolderRequest{Name: optional.StringFrom(strings.Repeat("a", 100))}).
+			WithJSON(&UpdateClipFolderRequest{Name: optional.From(strings.Repeat("a", 100))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

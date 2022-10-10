@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -40,8 +41,8 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 // PostChannelRequest POST /channels リクエストボディ
 type PostChannelRequest struct {
-	Name   string        `json:"name"`
-	Parent optional.UUID `json:"parent"`
+	Name   string                 `json:"name"`
+	Parent optional.Of[uuid.UUID] `json:"parent"`
 }
 
 func (r PostChannelRequest) Validate() error {
@@ -59,7 +60,7 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, req.Parent.UUID, userID)
+	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, req.Parent.V, userID)
 	if err != nil {
 		switch err {
 		case channel.ErrChannelArchived:
@@ -88,10 +89,10 @@ func (h *Handlers) GetChannel(c echo.Context) error {
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
 type PatchChannelRequest struct {
-	Name     optional.String `json:"name"`
-	Archived optional.Bool   `json:"archived"`
-	Force    optional.Bool   `json:"force"`
-	Parent   optional.UUID   `json:"parent"`
+	Name     optional.Of[string]    `json:"name"`
+	Archived optional.Of[bool]      `json:"archived"`
+	Force    optional.Of[bool]      `json:"force"`
+	Parent   optional.Of[uuid.UUID] `json:"parent"`
 }
 
 func (r PatchChannelRequest) Validate() error {
@@ -110,7 +111,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 	}
 
 	if req.Archived.Valid {
-		if req.Archived.Bool {
+		if req.Archived.V {
 			if err := h.ChannelManager.ArchiveChannel(channelID, getRequestUserID(c)); err != nil {
 				switch err {
 				case channel.ErrInvalidChannel:
@@ -198,7 +199,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 
 	if err := h.ChannelManager.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
-		Topic:     optional.StringFrom(req.Topic),
+		Topic:     optional.From(req.Topic),
 	}); err != nil {
 		switch err {
 		case channel.ErrChannelArchived:
@@ -224,12 +225,12 @@ func (h *Handlers) GetChannelPins(c echo.Context) error {
 }
 
 type channelEventsQuery struct {
-	Limit     int           `query:"limit"`
-	Offset    int           `query:"offset"`
-	Since     optional.Time `query:"since"`
-	Until     optional.Time `query:"until"`
-	Inclusive bool          `query:"inclusive"`
-	Order     string        `query:"order"`
+	Limit     int                    `query:"limit"`
+	Offset    int                    `query:"offset"`
+	Since     optional.Of[time.Time] `query:"since"`
+	Until     optional.Of[time.Time] `query:"until"`
+	Inclusive bool                   `query:"inclusive"`
+	Order     string                 `query:"order"`
 }
 
 func (q *channelEventsQuery) Validate() error {

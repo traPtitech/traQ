@@ -213,7 +213,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	var musts []elastic.Query
 
 	if q.Word.Valid {
-		musts = append(musts, elastic.NewSimpleQueryStringQuery(q.Word.String).
+		musts = append(musts, elastic.NewSimpleQueryStringQuery(q.Word.V).
 			Field("text").
 			DefaultOperator("AND"))
 	}
@@ -275,10 +275,10 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	limit, offset := 20, 0
 	if q.Limit.Valid {
-		limit = int(q.Limit.Int64)
+		limit = q.Limit.V
 	}
 	if q.Offset.Valid {
-		offset = int(q.Offset.Int64)
+		offset = q.Offset.V
 	}
 
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提

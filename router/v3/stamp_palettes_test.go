@@ -174,8 +174,8 @@ func TestPatchStampPaletteRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        optional.String
-		Description optional.String
+		Name        optional.Of[string]
+		Description optional.Of[string]
 		Stamps      model.UUIDs
 	}
 	tests := []struct {
@@ -190,19 +190,19 @@ func TestPatchStampPaletteRequest_Validate(t *testing.T) {
 		},
 		{
 			"empty name",
-			fields{Name: optional.StringFrom("")},
+			fields{Name: optional.From("")},
 			true,
 		},
 		{
 			"too long name",
-			fields{Name: optional.StringFrom(strings.Repeat("a", 50))},
+			fields{Name: optional.From(strings.Repeat("a", 50))},
 			true,
 		},
 		{
 			"success",
 			fields{
-				Name:        optional.StringFrom("test"),
-				Description: optional.StringFrom("description"),
+				Name:        optional.From("test"),
+				Description: optional.From("description"),
 				Stamps:      model.UUIDs{uuid.Must(uuid.NewV4())},
 			},
 			false,
@@ -238,7 +238,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, sp.ID).
-			WithJSON(&PatchStampPaletteRequest{Name: optional.StringFrom("test")}).
+			WithJSON(&PatchStampPaletteRequest{Name: optional.From("test")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -248,7 +248,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, sp.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampPaletteRequest{Name: optional.StringFrom(strings.Repeat("a", 50))}).
+			WithJSON(&PatchStampPaletteRequest{Name: optional.From(strings.Repeat("a", 50))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -268,7 +268,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, sp2.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampPaletteRequest{Name: optional.StringFrom("test")}).
+			WithJSON(&PatchStampPaletteRequest{Name: optional.From("test")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -278,7 +278,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampPaletteRequest{Name: optional.StringFrom("test")}).
+			WithJSON(&PatchStampPaletteRequest{Name: optional.From("test")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -288,7 +288,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, sp.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampPaletteRequest{Name: optional.StringFrom("test")}).
+			WithJSON(&PatchStampPaletteRequest{Name: optional.From("test")}).
 			Expect().
 			Status(http.StatusNoContent)
 

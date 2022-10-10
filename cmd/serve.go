@@ -189,7 +189,7 @@ func (s *Server) Start(address string) error {
 		for ev := range sub.Receiver {
 			userID := ev.Fields["user_id"].(uuid.UUID)
 			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
+			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
 		}
 	}()
 	s.SS.StampThrottler.Start()

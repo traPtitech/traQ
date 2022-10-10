@@ -17,8 +17,8 @@ type MessagesQuery struct {
 	Channel uuid.UUID
 	// ChannelsSubscribedByUser 指定したユーザーが購読しているチャンネルのメッセージを指定
 	ChannelsSubscribedByUser uuid.UUID
-	Since                    optional.Time
-	Until                    optional.Time
+	Since                    optional.Of[time.Time]
+	Until                    optional.Of[time.Time]
 	Inclusive                bool
 	Limit                    int
 	Offset                   int
@@ -30,9 +30,9 @@ type MessagesQuery struct {
 // ChannelLatestMessagesQuery GetChannelLatestMessages用クエリ
 type ChannelLatestMessagesQuery struct {
 	// SubscribedByUser 指定したユーザーが購読しているチャンネル
-	SubscribedByUser optional.UUID
+	SubscribedByUser optional.Of[uuid.UUID]
 	Limit            int
-	Since            optional.Time
+	Since            optional.Of[time.Time]
 }
 
 // MessageRepository メッセージリポジトリ

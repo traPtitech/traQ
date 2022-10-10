@@ -8,21 +8,21 @@ import (
 )
 
 type UpdateClientArgs struct {
-	Name         optional.String
-	Description  optional.String
-	Confidential optional.Bool
-	DeveloperID  optional.UUID
-	Secret       optional.String
-	CallbackURL  optional.String
+	Name         optional.Of[string]
+	Description  optional.Of[string]
+	Confidential optional.Of[bool]
+	DeveloperID  optional.Of[uuid.UUID]
+	Secret       optional.Of[string]
+	CallbackURL  optional.Of[string]
 	Scopes       model.AccessScopes
 }
 
 type GetClientsQuery struct {
-	DeveloperID optional.UUID
+	DeveloperID optional.Of[uuid.UUID]
 }
 
 func (q GetClientsQuery) IsDevelopedBy(userID uuid.UUID) GetClientsQuery {
-	q.DeveloperID = optional.UUIDFrom(userID)
+	q.DeveloperID = optional.From(userID)
 	return q
 }
 

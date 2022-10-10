@@ -76,16 +76,16 @@ func (repo *Repository) UpdateStampPalette(id uuid.UUID, args repository.UpdateS
 		}
 
 		if args.Name.Valid {
-			if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
 				return repository.ArgError("args.Name", "Name must be 1-30")
 			}
-			changes["name"] = args.Name.String
+			changes["name"] = args.Name.V
 		}
 		if args.Description.Valid {
-			if err := vd.Validate(args.Description.String, validator.StampPaletteDescriptionRule...); err != nil {
+			if err := vd.Validate(args.Description.V, validator.StampPaletteDescriptionRule...); err != nil {
 				return repository.ArgError("args.Description", "Description must be 0-1000")
 			}
-			changes["description"] = args.Description.String
+			changes["description"] = args.Description.V
 		}
 		if args.Stamps != nil {
 			uuids := args.Stamps.ToUUIDSlice()

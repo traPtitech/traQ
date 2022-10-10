@@ -49,7 +49,7 @@ type Payload struct {
 	Icon  string
 	Path  string
 	Tag   string
-	Image optional.String
+	Image optional.Of[string]
 }
 
 // SetBodyWithEllipsis 100文字を超える場合は...で省略

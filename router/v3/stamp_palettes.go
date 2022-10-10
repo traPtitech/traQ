@@ -70,9 +70,9 @@ func (h *Handlers) CreateStampPalette(c echo.Context) error {
 
 // PatchStampPaletteRequest PATCH /stamp-palettes/:paletteID リクエストボディ
 type PatchStampPaletteRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
-	Stamps      model.UUIDs     `json:"stamps"`
+	Name        optional.Of[string] `json:"name"`
+	Description optional.Of[string] `json:"description"`
+	Stamps      model.UUIDs         `json:"stamps"`
 }
 
 func (r PatchStampPaletteRequest) Validate() error {

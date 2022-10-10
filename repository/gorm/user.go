@@ -138,29 +138,29 @@ func (repo *Repository) makeGetUsersTx(query repository.UsersQuery) *gorm.DB {
 	tx := repo.db.Table("users")
 
 	if query.Name.Valid {
-		tx = tx.Where("users.name = ?", query.Name.String)
+		tx = tx.Where("users.name = ?", query.Name.V)
 	}
 	if query.IsActive.Valid {
-		if query.IsActive.Bool {
+		if query.IsActive.V {
 			tx = tx.Where("users.status = ?", model.UserAccountStatusActive)
 		} else {
 			tx = tx.Where("users.status != ?", model.UserAccountStatusActive)
 		}
 	}
 	if query.IsBot.Valid {
-		tx = tx.Where("users.bot = ?", query.IsBot.Bool)
+		tx = tx.Where("users.bot = ?", query.IsBot.V)
 	}
 	if query.IsSubscriberAtMarkLevelOf.Valid {
-		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.mark = true", query.IsSubscriberAtMarkLevelOf.UUID)
+		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.mark = true", query.IsSubscriberAtMarkLevelOf.V)
 	}
 	if query.IsSubscriberAtNotifyLevelOf.Valid {
-		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.notify = true", query.IsSubscriberAtNotifyLevelOf.UUID)
+		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.notify = true", query.IsSubscriberAtNotifyLevelOf.V)
 	}
 	if query.IsCMemberOf.Valid {
-		tx = tx.Joins("INNER JOIN users_private_channels ON users_private_channels.user_id = users.id AND users_private_channels.channel_id = ?", query.IsCMemberOf.UUID)
+		tx = tx.Joins("INNER JOIN users_private_channels ON users_private_channels.user_id = users.id AND users_private_channels.channel_id = ?", query.IsCMemberOf.V)
 	}
 	if query.IsGMemberOf.Valid {
-		tx = tx.Joins("INNER JOIN user_group_members ON user_group_members.user_id = users.id AND user_group_members.group_id = ?", query.IsGMemberOf.UUID)
+		tx = tx.Joins("INNER JOIN user_group_members ON user_group_members.user_id = users.id AND user_group_members.group_id = ?", query.IsGMemberOf.V)
 	}
 	if query.EnableProfileLoading {
 		tx = tx.Preload("Profile")
@@ -194,24 +194,24 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 
 		changes := map[string]interface{}{}
 		if args.DisplayName.Valid {
-			if utf8.RuneCountInString(args.DisplayName.String) > 64 {
+			if utf8.RuneCountInString(args.DisplayName.V) > 64 {
 				return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
 			}
-			changes["display_name"] = args.DisplayName.String
+			changes["display_name"] = args.DisplayName.V
 		}
 		if args.Role.Valid {
-			changes["role"] = args.Role.String
+			changes["role"] = args.Role.V
 		}
 		if args.UserState.Valid {
-			changes["status"] = args.UserState.State.Int()
+			changes["status"] = args.UserState.V.Int()
 		}
 		if args.IconFileID.Valid {
-			changes["icon"] = args.IconFileID.UUID
+			changes["icon"] = args.IconFileID.V
 		}
 		if args.Password.Valid {
 			salt := random.Salt()
 			changes["salt"] = hex.EncodeToString(salt)
-			changes["password"] = hex.EncodeToString(utils.HashPassword(args.Password.String, salt))
+			changes["password"] = hex.EncodeToString(utils.HashPassword(args.Password.V, salt))
 		}
 		if len(changes) > 0 {
 			if err := tx.Model(&u).Updates(changes).Error; err != nil {
@@ -223,22 +223,22 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 
 		changes = map[string]interface{}{}
 		if args.TwitterID.Valid {
-			if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
+			if len(args.TwitterID.V) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.V) {
 				return repository.ArgError("args.TwitterID", "invalid TwitterID")
 			}
-			changes["twitter_id"] = args.TwitterID.String
+			changes["twitter_id"] = args.TwitterID.V
 		}
 		if args.Bio.Valid {
-			changes["bio"] = args.Bio.String
+			changes["bio"] = args.Bio.V
 		}
 		if args.LastOnline.Valid {
 			changes["last_online"] = args.LastOnline
 		}
 		if args.HomeChannel.Valid {
-			if args.HomeChannel.UUID == uuid.Nil {
-				changes["home_channel"] = optional.UUID{}
+			if args.HomeChannel.V == uuid.Nil {
+				changes["home_channel"] = optional.Of[uuid.UUID]{}
 			} else {
-				changes["home_channel"] = args.HomeChannel.UUID
+				changes["home_channel"] = args.HomeChannel.V
 			}
 		}
 		if len(changes) > 0 {
@@ -266,7 +266,7 @@ func (repo *Repository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs)
 				Name: event.UserIconUpdated,
 				Fields: hub.Fields{
 					"user_id": id,
-					"file_id": args.IconFileID.UUID,
+					"file_id": args.IconFileID.V,
 				},
 			})
 		} else {

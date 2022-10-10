@@ -11,20 +11,20 @@ import (
 )
 
 type Channel struct {
-	ID       uuid.UUID     `json:"id"`
-	Name     string        `json:"name"`
-	ParentID optional.UUID `json:"parentId"`
-	Topic    string        `json:"topic"`
-	Children []uuid.UUID   `json:"children"`
-	Archived bool          `json:"archived"`
-	Force    bool          `json:"force"`
+	ID       uuid.UUID              `json:"id"`
+	Name     string                 `json:"name"`
+	ParentID optional.Of[uuid.UUID] `json:"parentId"`
+	Topic    string                 `json:"topic"`
+	Children []uuid.UUID            `json:"children"`
+	Archived bool                   `json:"archived"`
+	Force    bool                   `json:"force"`
 }
 
 func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	return &Channel{
 		ID:       channel.ID,
 		Name:     channel.Name,
-		ParentID: optional.NewUUID(channel.ParentID, channel.ParentID != uuid.Nil),
+		ParentID: optional.New(channel.ParentID, channel.ParentID != uuid.Nil),
 		Topic:    channel.Topic,
 		Children: childrenID,
 		Archived: channel.IsArchived(),
@@ -108,19 +108,19 @@ func formatUsers(users []model.UserInfo) []User {
 }
 
 type UserDetail struct {
-	ID          uuid.UUID     `json:"id"`
-	State       int           `json:"state"`
-	Bot         bool          `json:"bot"`
-	IconFileID  uuid.UUID     `json:"iconFileId"`
-	DisplayName string        `json:"displayName"`
-	Name        string        `json:"name"`
-	TwitterID   string        `json:"twitterId"`
-	LastOnline  optional.Time `json:"lastOnline"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
-	Tags        []UserTag     `json:"tags"`
-	Groups      []uuid.UUID   `json:"groups"`
-	Bio         string        `json:"bio"`
-	HomeChannel optional.UUID `json:"homeChannel"`
+	ID          uuid.UUID              `json:"id"`
+	State       int                    `json:"state"`
+	Bot         bool                   `json:"bot"`
+	IconFileID  uuid.UUID              `json:"iconFileId"`
+	DisplayName string                 `json:"displayName"`
+	Name        string                 `json:"name"`
+	TwitterID   string                 `json:"twitterId"`
+	LastOnline  optional.Of[time.Time] `json:"lastOnline"`
+	UpdatedAt   time.Time              `json:"updatedAt"`
+	Tags        []UserTag              `json:"tags"`
+	Groups      []uuid.UUID            `json:"groups"`
+	Bio         string                 `json:"bio"`
+	HomeChannel optional.Of[uuid.UUID] `json:"homeChannel"`
 }
 
 func formatUserDetail(user model.UserInfo, uts []model.UserTag, g []uuid.UUID) *UserDetail {
@@ -280,15 +280,15 @@ func formatBotEventLogs(logs []*model.BotEventLog) []*botEventLogResponse {
 }
 
 type Message struct {
-	ID        uuid.UUID            `json:"id"`
-	UserID    uuid.UUID            `json:"userId"`
-	ChannelID uuid.UUID            `json:"channelId"`
-	Content   string               `json:"content"`
-	CreatedAt time.Time            `json:"createdAt"`
-	UpdatedAt time.Time            `json:"updatedAt"`
-	Pinned    bool                 `json:"pinned"`
-	Stamps    []model.MessageStamp `json:"stamps"`
-	ThreadID  optional.UUID        `json:"threadId"` // TODO
+	ID        uuid.UUID              `json:"id"`
+	UserID    uuid.UUID              `json:"userId"`
+	ChannelID uuid.UUID              `json:"channelId"`
+	Content   string                 `json:"content"`
+	CreatedAt time.Time              `json:"createdAt"`
+	UpdatedAt time.Time              `json:"updatedAt"`
+	Pinned    bool                   `json:"pinned"`
+	Stamps    []model.MessageStamp   `json:"stamps"`
+	ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
 }
 
 func formatMessage(m *model.Message) *Message {
@@ -443,17 +443,17 @@ type FileInfoThumbnail struct {
 }
 
 type FileInfo struct {
-	ID              uuid.UUID             `json:"id"`
-	Name            string                `json:"name"`
-	Mime            string                `json:"mime"`
-	Size            int64                 `json:"size"`
-	MD5             string                `json:"md5"`
-	IsAnimatedImage bool                  `json:"isAnimatedImage"`
-	CreatedAt       time.Time             `json:"createdAt"`
-	Thumbnail       *FileInfoOldThumbnail `json:"thumbnail"` // deprecated
-	ChannelID       optional.UUID         `json:"channelId"`
-	UploaderID      optional.UUID         `json:"uploaderId"`
-	Thumbnails      []FileInfoThumbnail   `json:"thumbnails"`
+	ID              uuid.UUID              `json:"id"`
+	Name            string                 `json:"name"`
+	Mime            string                 `json:"mime"`
+	Size            int64                  `json:"size"`
+	MD5             string                 `json:"md5"`
+	IsAnimatedImage bool                   `json:"isAnimatedImage"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	Thumbnail       *FileInfoOldThumbnail  `json:"thumbnail"` // deprecated
+	ChannelID       optional.Of[uuid.UUID] `json:"channelId"`
+	UploaderID      optional.Of[uuid.UUID] `json:"uploaderId"`
+	Thumbnails      []FileInfoThumbnail    `json:"thumbnails"`
 }
 
 func formatFileInfo(meta model.File) *FileInfo {

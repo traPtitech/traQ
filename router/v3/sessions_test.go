@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 )
 
@@ -79,13 +80,7 @@ func TestHandlers_Login(t *testing.T) {
 	})
 	require.NoError(t, err)
 	err = env.Repository.UpdateUser(deactivated.GetID(), repository.UpdateUserArgs{
-		UserState: struct {
-			Valid bool
-			State model.UserAccountStatus
-		}{
-			Valid: true,
-			State: model.UserAccountStatusDeactivated,
-		},
+		UserState: optional.From(model.UserAccountStatusDeactivated),
 	})
 	require.NoError(t, err)
 	suspended, err := env.Repository.CreateUser(repository.CreateUserArgs{
@@ -97,13 +92,7 @@ func TestHandlers_Login(t *testing.T) {
 	})
 	require.NoError(t, err)
 	err = env.Repository.UpdateUser(suspended.GetID(), repository.UpdateUserArgs{
-		UserState: struct {
-			Valid bool
-			State model.UserAccountStatus
-		}{
-			Valid: true,
-			State: model.UserAccountStatusSuspended,
-		},
+		UserState: optional.From(model.UserAccountStatusSuspended),
 	})
 	require.NoError(t, err)
 

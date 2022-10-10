@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
@@ -169,7 +170,7 @@ func TestPostChannelRequest_Validate(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		Name   string
-		Parent optional.UUID
+		Parent optional.Of[uuid.UUID]
 	}
 	tests := []struct {
 		name    string
@@ -262,7 +263,7 @@ func TestHandlers_CreateChannels(t *testing.T) {
 		cname2 := random.AlphaNumeric(20)
 		obj = e.POST(path).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostChannelRequest{Name: cname2, Parent: optional.UUIDFrom(c1)}).
+			WithJSON(&PostChannelRequest{Name: cname2, Parent: optional.From(c1)}).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -326,10 +327,10 @@ func TestHandlers_GetChannel(t *testing.T) {
 func TestPatchChannelRequest_Validate(t *testing.T) {
 	t.Parallel()
 	type fields struct {
-		Name     optional.String
-		Archived optional.Bool
-		Force    optional.Bool
-		Parent   optional.UUID
+		Name     optional.Of[string]
+		Archived optional.Of[bool]
+		Force    optional.Of[bool]
+		Parent   optional.Of[uuid.UUID]
 	}
 	tests := []struct {
 		name    string
@@ -343,26 +344,26 @@ func TestPatchChannelRequest_Validate(t *testing.T) {
 		},
 		{
 			"empty name",
-			fields{Name: optional.StringFrom("")},
+			fields{Name: optional.From("")},
 			true,
 		},
 		{
 			"invalid name",
-			fields{Name: optional.StringFrom("チャンネル")},
+			fields{Name: optional.From("チャンネル")},
 			true,
 		},
 		{
 			"too long name",
-			fields{Name: optional.StringFrom(strings.Repeat("a", 50))},
+			fields{Name: optional.From(strings.Repeat("a", 50))},
 			true,
 		},
 		{
 			"success",
 			fields{
-				Name:     optional.StringFrom("po"),
-				Archived: optional.BoolFrom(true),
-				Force:    optional.BoolFrom(true),
-				Parent:   optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+				Name:     optional.From("po"),
+				Archived: optional.From(true),
+				Force:    optional.From(true),
+				Parent:   optional.From(uuid.Must(uuid.NewV4())),
 			},
 			false,
 		},
@@ -401,7 +402,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, channel.ID).
-			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchChannelRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -411,7 +412,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, channel.ID).
 			WithCookie(session.CookieName, userSession).
-			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("po")}).
+			WithJSON(&PatchChannelRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -421,7 +422,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, channel.ID).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("チャンネル")}).
+			WithJSON(&PatchChannelRequest{Name: optional.From("チャンネル")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -431,7 +432,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4()).String()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("チャンネル")}).
+			WithJSON(&PatchChannelRequest{Name: optional.From("チャンネル")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -441,7 +442,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, unarchived.ID).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchChannelRequest{Archived: optional.BoolFrom(true)}).
+			WithJSON(&PatchChannelRequest{Archived: optional.From(true)}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -455,7 +456,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, archived.ID).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchChannelRequest{Archived: optional.BoolFrom(false)}).
+			WithJSON(&PatchChannelRequest{Archived: optional.From(false)}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -470,7 +471,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 		newName := random.AlphaNumeric(20)
 		e.PATCH(path, channel.ID).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchChannelRequest{Name: optional.StringFrom(newName), Force: optional.BoolFrom(true), Parent: optional.UUIDFrom(parent.ID)}).
+			WithJSON(&PatchChannelRequest{Name: optional.From(newName), Force: optional.From(true), Parent: optional.From(parent.ID)}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -543,7 +544,7 @@ func TestHandlers_GetChannelTopic(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{Topic: optional.StringFrom("this is channel topic")}))
+	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{Topic: optional.From("this is channel topic")}))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -699,8 +700,8 @@ func Test_channelEventsQuery_Validate(t *testing.T) {
 	type fields struct {
 		Limit     int
 		Offset    int
-		Since     optional.Time
-		Until     optional.Time
+		Since     optional.Of[time.Time]
+		Until     optional.Of[time.Time]
 		Inclusive bool
 		Order     string
 	}
@@ -750,7 +751,7 @@ func TestHandlers_GetChannelEvents(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	// TopicChanged
-	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{UpdaterID: user.GetID(), Topic: optional.StringFrom("test topic")}))
+	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{UpdaterID: user.GetID(), Topic: optional.From("test topic")}))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -816,7 +817,7 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.BoolFrom(true)}))
+	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -885,7 +886,7 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.BoolFrom(true)}))
+	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -937,7 +938,7 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.UUIDFrom(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 1) {
@@ -973,7 +974,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.BoolFrom(true)}))
+	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -1037,7 +1038,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.UUIDFrom(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 4) {

@@ -107,21 +107,21 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 
 		changes := map[string]interface{}{}
 		if args.Description.Valid {
-			changes["description"] = args.Description.String
+			changes["description"] = args.Description.V
 		}
 		if args.Privileged.Valid {
-			changes["privileged"] = args.Privileged.Bool
+			changes["privileged"] = args.Privileged.V
 		}
 		if args.Mode.Valid {
-			changes["mode"] = args.Mode.String
+			changes["mode"] = args.Mode.V
 		}
 		if args.WebhookURL.Valid {
-			w := args.WebhookURL.String
+			w := args.WebhookURL.V
 			changes["post_url"] = w
 			changes["state"] = model.BotPaused
 		}
 		if args.CreatorID.Valid {
-			changes["creator_id"] = args.CreatorID.UUID
+			changes["creator_id"] = args.CreatorID.V
 		}
 		if args.SubscribeEvents != nil {
 			changes["subscribe_events"] = args.SubscribeEvents
@@ -135,7 +135,7 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 		}
 
 		if args.DisplayName.Valid {
-			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.String).Error; err != nil {
+			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.V).Error; err != nil {
 				return err
 			}
 			userUpdated = true
@@ -171,26 +171,26 @@ func (repo *Repository) GetBots(query repository.BotsQuery) ([]*model.Bot, error
 	tx := repo.db.Table("bots")
 
 	if query.IsPrivileged.Valid {
-		tx = tx.Where("bots.privileged = ?", query.IsPrivileged.Bool)
+		tx = tx.Where("bots.privileged = ?", query.IsPrivileged.V)
 	}
 	if query.IsActive.Valid {
-		if query.IsActive.Bool {
+		if query.IsActive.V {
 			tx = tx.Where("bots.state = ?", model.BotActive)
 		} else {
 			tx = tx.Where("bots.state != ?", model.BotActive)
 		}
 	}
 	if query.Creator.Valid {
-		tx = tx.Where("bots.creator_id = ?", query.Creator.UUID)
+		tx = tx.Where("bots.creator_id = ?", query.Creator.V)
 	}
 	if query.ID.Valid {
-		tx = tx.Where("bots.id = ?", query.ID.UUID)
+		tx = tx.Where("bots.id = ?", query.ID.V)
 	}
 	if query.UserID.Valid {
-		tx = tx.Where("bots.bot_user_id = ?", query.UserID.UUID)
+		tx = tx.Where("bots.bot_user_id = ?", query.UserID.V)
 	}
 	if query.IsCMemberOf.Valid {
-		tx = tx.Joins("INNER JOIN bot_join_channels ON bot_join_channels.bot_id = bots.id AND bot_join_channels.channel_id = ?", query.IsCMemberOf.UUID)
+		tx = tx.Joins("INNER JOIN bot_join_channels ON bot_join_channels.bot_id = bots.id AND bot_join_channels.channel_id = ?", query.IsCMemberOf.V)
 	}
 	if len(query.SubscribeEvents) == 0 {
 		return bots, tx.Find(&bots).Error

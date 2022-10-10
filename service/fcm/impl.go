@@ -113,7 +113,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 				"unread": strconv.Itoa(unread),
 			}
 			if p.Image.Valid {
-				data["image"] = p.Image.String
+				data["image"] = p.Image.V
 			}
 			apns := &messaging.APNSConfig{
 				Headers: apnsHeaders,
@@ -147,7 +147,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			"icon":  p.Icon,
 		}
 		if p.Image.Valid {
-			data["image"] = p.Image.String
+			data["image"] = p.Image.V
 		}
 		apns := &messaging.APNSConfig{
 			Headers: apnsHeaders,

@@ -93,26 +93,26 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{Name: optional.StringFrom("あ")}))
+		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{Name: optional.From("あ")}))
 	})
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
 		s2 := mustMakeStamp(t, repo, rand, uuid.Nil)
 
-		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{Name: optional.StringFrom(s2.Name)}))
+		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{Name: optional.From(s2.Name)}))
 	})
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Nil)}))
+		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.From(uuid.Nil)}))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}))
+		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.From(uuid.Must(uuid.NewV4()))}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -124,9 +124,9 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
-			Name:      optional.StringFrom(newName),
-			FileID:    optional.UUIDFrom(newFile),
-			CreatorID: optional.UUIDFrom(uuid.Nil),
+			Name:      optional.From(newName),
+			FileID:    optional.From(newFile),
+			CreatorID: optional.From(uuid.Nil),
 		})) {
 			a, err := repo.GetStamp(s.ID)
 			require.NoError(err)

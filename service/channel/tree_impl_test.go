@@ -88,19 +88,19 @@ func TestTreeImpl_move(t *testing.T) {
 	tree := makeTestChannelTree(t)
 
 	// (root)/e/kを(root)/kに移動
-	tree.move(cEK, optional.UUIDFrom(uuid.Nil), optional.String{})
+	tree.move(cEK, optional.From(uuid.Nil), optional.Of[string]{})
 	assert.Len(t, tree.roots, len(original.roots)+1)
 	assert.False(t, tree.isChildPresent("k", cE))
 	assert.True(t, tree.isChildPresent("k", uuid.Nil))
 
 	// (root)/kを(root)/e/f/g/kに移動
-	tree.move(cEK, optional.UUIDFrom(cEFG), optional.String{})
+	tree.move(cEK, optional.From(cEFG), optional.Of[string]{})
 	assert.Len(t, tree.roots, len(original.roots))
 	assert.True(t, tree.isChildPresent("k", cEFG))
 	assert.False(t, tree.isChildPresent("k", uuid.Nil))
 
 	// (root)/e/f/g/kを(root)/kに移動
-	tree.move(cEK, optional.UUIDFrom(uuid.Nil), optional.String{})
+	tree.move(cEK, optional.From(uuid.Nil), optional.Of[string]{})
 	assert.Len(t, tree.roots, len(original.roots)+1)
 	assert.False(t, tree.isChildPresent("k", cEFG))
 	assert.True(t, tree.isChildPresent("k", uuid.Nil))

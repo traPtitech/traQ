@@ -55,21 +55,21 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Nil, optional.String{}, optional.String{}), repository.ErrNilID.Error())
+		assert.EqualError(repo.UpdateClipFolder(uuid.Nil, optional.Of[string]{}, optional.Of[string]{}), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), optional.String{}, optional.String{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.String{}, optional.String{}))
+		assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.Of[string]{}, optional.Of[string]{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		newName := random2.AlphaNumeric(20)
 		newDescription := random2.AlphaNumeric(100)
 
-		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.StringFrom(newName), optional.StringFrom(newDescription))) {
+		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.From(newName), optional.From(newDescription))) {
 			newClipFolder, err := repo.GetClipFolder(clipFolder.ID)
 			require.NoError(err)
 			assert.Equal(newDescription, newClipFolder.Description)

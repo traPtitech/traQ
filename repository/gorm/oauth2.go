@@ -28,7 +28,7 @@ func (repo *Repository) GetClients(query repository.GetClientsQuery) ([]*model.O
 	cs := make([]*model.OAuth2Client, 0)
 	tx := repo.db
 	if query.DeveloperID.Valid {
-		tx = tx.Where("creator_id = ?", query.DeveloperID.UUID)
+		tx = tx.Where("creator_id = ?", query.DeveloperID.V)
 	}
 	return cs, tx.Find(&cs).Error
 }
@@ -51,26 +51,26 @@ func (repo *Repository) UpdateClient(clientID string, args repository.UpdateClie
 
 		changes := map[string]interface{}{}
 		if args.Name.Valid {
-			changes["name"] = args.Name.String
+			changes["name"] = args.Name.V
 		}
 		if args.Description.Valid {
-			changes["description"] = args.Description.String
+			changes["description"] = args.Description.V
 		}
 		if args.Secret.Valid {
-			changes["secret"] = args.Secret.String
+			changes["secret"] = args.Secret.V
 		}
 		if args.Confidential.Valid {
-			changes["confidential"] = args.Confidential.Bool
+			changes["confidential"] = args.Confidential.V
 		}
 		if args.Scopes != nil {
 			changes["scopes"] = args.Scopes
 		}
 		if args.CallbackURL.Valid {
-			changes["redirect_uri"] = args.CallbackURL.String
+			changes["redirect_uri"] = args.CallbackURL.V
 		}
 		if args.DeveloperID.Valid {
 			// 作成者検証
-			user, err := getUser(tx, false, "id = ?", args.DeveloperID.UUID)
+			user, err := getUser(tx, false, "id = ?", args.DeveloperID.V)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.DeveloperID", "the Developer is not found")
@@ -81,7 +81,7 @@ func (repo *Repository) UpdateClient(clientID string, args repository.UpdateClie
 				return repository.ArgError("args.DeveloperID", "invalid User")
 			}
 
-			changes["creator_id"] = args.DeveloperID.UUID
+			changes["creator_id"] = args.DeveloperID.V
 		}
 
 		if len(changes) > 0 {

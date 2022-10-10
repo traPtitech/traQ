@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -22,8 +23,8 @@ type TimelineQuery struct {
 	Channel uuid.UUID
 	// ChannelsSubscribedByUser 指定したユーザーが購読しているチャンネルのメッセージを指定
 	ChannelsSubscribedByUser uuid.UUID
-	Since                    optional.Time
-	Until                    optional.Time
+	Since                    optional.Of[time.Time]
+	Until                    optional.Of[time.Time]
 	Inclusive                bool
 	Limit                    int
 	Offset                   int

@@ -99,12 +99,12 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 
 		changes := map[string]interface{}{}
 		if args.Description.Valid {
-			changes["description"] = args.Description.String
+			changes["description"] = args.Description.V
 		}
 		if args.ChannelID.Valid {
 			// チャンネル検証
 			var ch model.Channel
-			if err := tx.First(&ch, &model.Channel{ID: args.ChannelID.UUID}).Error; err != nil {
+			if err := tx.First(&ch, &model.Channel{ID: args.ChannelID.V}).Error; err != nil {
 				if err == gorm.ErrRecordNotFound {
 					return repository.ArgError("args.ChannelID", "the Channel is not found")
 				}
@@ -114,14 +114,14 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 				return repository.ArgError("args.ChannelID", "private channels are not allowed")
 			}
 
-			changes["channel_id"] = args.ChannelID.UUID
+			changes["channel_id"] = args.ChannelID.V
 		}
 		if args.Secret.Valid {
-			changes["secret"] = args.Secret.String
+			changes["secret"] = args.Secret.V
 		}
 		if args.CreatorID.Valid {
 			// 作成者検証
-			user, err := getUser(tx, false, "id = ?", args.CreatorID.UUID)
+			user, err := getUser(tx, false, "id = ?", args.CreatorID.V)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.CreatorID", "the Creator is not found")
@@ -132,7 +132,7 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 				return repository.ArgError("args.CreatorID", "invalid User")
 			}
 
-			changes["creator_id"] = args.CreatorID.UUID
+			changes["creator_id"] = args.CreatorID.V
 		}
 		if len(changes) > 0 {
 			if err := tx.Model(&model.WebhookBot{ID: id}).Updates(changes).Error; err != nil {
@@ -142,11 +142,11 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 		}
 
 		if args.Name.Valid {
-			if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
+			if len(args.Name.V) == 0 || utf8.RuneCountInString(args.Name.V) > 32 {
 				return repository.ArgError("args.Name", "Name must be non-empty and shorter than 33 characters")
 			}
 
-			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", args.Name.String).Error; err != nil {
+			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", args.Name.V).Error; err != nil {
 				return err
 			}
 			userUpdated = true

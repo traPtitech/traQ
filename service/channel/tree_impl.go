@@ -212,14 +212,14 @@ func (ct *treeImpl) add(ch *model.Channel) {
 	ct.regenerateJSON()
 }
 
-func (ct *treeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional.String) {
+func (ct *treeImpl) move(id uuid.UUID, newParent optional.Of[uuid.UUID], newName optional.Of[string]) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		panic("assert !ok = false")
 	}
 
 	if newName.Valid {
-		n.name = newName.String
+		n.name = newName.V
 	}
 	if newParent.Valid {
 		if n.parent != nil {
@@ -227,11 +227,11 @@ func (ct *treeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional
 		} else {
 			delete(ct.roots, n.id)
 		}
-		if newParent.UUID == uuid.Nil {
+		if newParent.V == uuid.Nil {
 			n.parent = nil
 			ct.roots[n.id] = n
 		} else {
-			p, ok := ct.nodes[newParent.UUID]
+			p, ok := ct.nodes[newParent.V]
 			if !ok {
 				panic("assert !ok = false")
 			}

@@ -355,7 +355,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 			Return(nil, repository.ErrNotFound).
 			AnyTimes()
 
-		err := cm.UpdateChannel(cNotFound, repository.UpdateChannelArgs{Topic: optional.StringFrom("test")})
+		err := cm.UpdateChannel(cNotFound, repository.UpdateChannelArgs{Topic: optional.From("test")})
 		assert.EqualError(t, err, ErrChannelNotFound.Error())
 	})
 
@@ -365,7 +365,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Name: optional.StringFrom("e")})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Name: optional.From("e")})
 		assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 	})
 
@@ -375,7 +375,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Name: optional.StringFrom("あああ")})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Name: optional.From("あああ")})
 		assert.EqualError(t, err, ErrInvalidChannelName.Error())
 	})
 
@@ -385,7 +385,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cNotFound)})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.From(cNotFound)})
 		assert.EqualError(t, err, ErrInvalidParentChannel.Error())
 	})
 
@@ -395,7 +395,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cABBC)})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.From(cABBC)})
 		assert.EqualError(t, err, ErrInvalidParentChannel.Error())
 	})
 
@@ -405,7 +405,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cABCE)})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.From(cABCE)})
 		assert.EqualError(t, err, ErrTooDeepChannel.Error())
 	})
 
@@ -415,7 +415,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cEF)})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.From(cEF)})
 		assert.EqualError(t, err, ErrTooDeepChannel.Error())
 	})
 
@@ -431,7 +431,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 			Return(nil, mockErr).
 			AnyTimes()
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Topic: optional.StringFrom("test")})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Topic: optional.From("test")})
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
 		}
@@ -448,46 +448,46 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID: uuid.Must(uuid.NewV4()),
-					Topic:     optional.StringFrom(""),
+					Topic:     optional.From(""),
 				},
 			},
 			{
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID:  uuid.Must(uuid.NewV4()),
-					Visibility: optional.BoolFrom(true),
+					Visibility: optional.From(true),
 				},
 			},
 			{
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID:          uuid.Must(uuid.NewV4()),
-					ForcedNotification: optional.BoolFrom(true),
+					ForcedNotification: optional.From(true),
 				},
 			},
 			{
 				ID: cABBC,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID: uuid.Must(uuid.NewV4()),
-					Parent:    optional.UUIDFrom(pubChannelRootUUID),
+					Parent:    optional.From(pubChannelRootUUID),
 				},
 			},
 			{
 				ID: cABCE,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID: uuid.Must(uuid.NewV4()),
-					Parent:    optional.UUIDFrom(cABCD),
+					Parent:    optional.From(cABCD),
 				},
 			},
 			{
 				ID: cEFGHI,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID:          uuid.Must(uuid.NewV4()),
-					Name:               optional.StringFrom("test"),
-					Topic:              optional.StringFrom("test"),
-					Visibility:         optional.BoolFrom(false),
-					ForcedNotification: optional.BoolFrom(true),
-					Parent:             optional.UUIDFrom(cE),
+					Name:               optional.From("test"),
+					Topic:              optional.From("test"),
+					Visibility:         optional.From(false),
+					ForcedNotification: optional.From(true),
+					Parent:             optional.From(cE),
 				},
 			},
 		}
@@ -506,58 +506,58 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				new.UpdaterID = args.UpdaterID
 				new.UpdatedAt = time.Now()
 
-				if args.Topic.Valid && ch.Topic != args.Topic.String {
+				if args.Topic.Valid && ch.Topic != args.Topic.V {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
 							"userId": args.UpdaterID,
 							"before": ch.Topic,
-							"after":  args.Topic.String,
+							"after":  args.Topic.V,
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.Topic = args.Topic.String
+					new.Topic = args.Topic.V
 				}
-				if args.Visibility.Valid && ch.IsVisible != args.Visibility.Bool {
+				if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
 							"userId":     args.UpdaterID,
-							"visibility": args.Visibility.Bool,
+							"visibility": args.Visibility.V,
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.IsVisible = args.Visibility.Bool
+					new.IsVisible = args.Visibility.V
 				}
-				if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.Bool {
+				if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
 							"userId": args.UpdaterID,
-							"force":  args.ForcedNotification.Bool,
+							"force":  args.ForcedNotification.V,
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.IsForced = args.ForcedNotification.Bool
+					new.IsForced = args.ForcedNotification.V
 				}
 				if args.Name.Valid {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
 							"userId": args.UpdaterID,
 							"before": ch.Name,
-							"after":  args.Name.String,
+							"after":  args.Name.V,
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.Name = args.Name.String
+					new.Name = args.Name.V
 				}
 				if args.Parent.Valid {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
 							"userId": args.UpdaterID,
 							"before": ch.ParentID,
-							"after":  args.Parent.UUID,
+							"after":  args.Parent.V,
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.ParentID = args.Parent.UUID
+					new.ParentID = args.Parent.V
 				}
 
 				repo.EXPECT().
@@ -807,7 +807,7 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			UpdateChannel(cABB, repository.UpdateChannelArgs{Visibility: optional.BoolFrom(true)}).
+			UpdateChannel(cABB, repository.UpdateChannelArgs{Visibility: optional.From(true)}).
 			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true}, nil).
 			Times(1)
 		repo.EXPECT().

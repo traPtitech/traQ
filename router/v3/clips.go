@@ -33,8 +33,8 @@ func (r PostClipFolderRequest) Validate() error {
 }
 
 type UpdateClipFolderRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
+	Name        optional.Of[string] `json:"name"`
+	Description optional.Of[string] `json:"description"`
 }
 
 func (r UpdateClipFolderRequest) Validate() error {

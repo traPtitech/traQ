@@ -20,31 +20,31 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 	cases := []repository.UpdateChannelArgs{
 		{
 			UpdaterID: user.GetID(),
-			Topic:     optional.StringFrom("test"),
+			Topic:     optional.From("test"),
 		},
 		{
 			UpdaterID: user.GetID(),
-			Topic:     optional.StringFrom(""),
+			Topic:     optional.From(""),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         optional.BoolFrom(true),
-			ForcedNotification: optional.BoolFrom(true),
+			Visibility:         optional.From(true),
+			ForcedNotification: optional.From(true),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         optional.BoolFrom(true),
-			ForcedNotification: optional.BoolFrom(false),
+			Visibility:         optional.From(true),
+			ForcedNotification: optional.From(false),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         optional.BoolFrom(false),
-			ForcedNotification: optional.BoolFrom(true),
+			Visibility:         optional.From(false),
+			ForcedNotification: optional.From(true),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         optional.BoolFrom(false),
-			ForcedNotification: optional.BoolFrom(false),
+			Visibility:         optional.From(false),
+			ForcedNotification: optional.From(false),
 		},
 	}
 

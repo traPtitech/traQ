@@ -379,7 +379,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom("")}).
+			WithJSON(&PatchBotRequest{DisplayName: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -389,7 +389,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom(strings.Repeat("a", 100))}).
+			WithJSON(&PatchBotRequest{DisplayName: optional.From(strings.Repeat("a", 100))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -399,7 +399,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("")}).
+			WithJSON(&PatchBotRequest{Endpoint: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -409,7 +409,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("po")}).
+			WithJSON(&PatchBotRequest{Endpoint: optional.From("po")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -419,7 +419,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("http://localhost:3000")}).
+			WithJSON(&PatchBotRequest{Endpoint: optional.From("http://localhost:3000")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -429,7 +429,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(uuid.Nil)}).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.From(uuid.Nil)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -439,7 +439,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(bot1.ID)}).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.From(bot1.ID)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -449,7 +449,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.From(uuid.Must(uuid.NewV4()))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -471,7 +471,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, wsBotWithoutEndpoint.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Mode: optional.StringFrom("HTTP")}).
+			WithJSON(&PatchBotRequest{Mode: optional.From("HTTP")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -481,7 +481,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot3.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom("po")}).
+			WithJSON(&PatchBotRequest{DisplayName: optional.From("po")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -491,7 +491,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Privileged: optional.BoolFrom(true)}).
+			WithJSON(&PatchBotRequest{Privileged: optional.From(true)}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -501,7 +501,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4()).String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PatchBotRequest{Privileged: optional.BoolFrom(true)}).
+			WithJSON(&PatchBotRequest{Privileged: optional.From(true)}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -512,7 +512,7 @@ func TestHandlers_EditBot(t *testing.T) {
 		e.PATCH(path, wsBotWithEndpoint.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchBotRequest{
-				Endpoint: optional.StringFrom(""),
+				Endpoint: optional.From(""),
 			}).
 			Expect().
 			Status(http.StatusNoContent)
@@ -524,11 +524,11 @@ func TestHandlers_EditBot(t *testing.T) {
 		e.PATCH(path, bot2.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchBotRequest{
-				DisplayName: optional.StringFrom("po"),
-				Description: optional.StringFrom("desc"),
-				Mode:        optional.StringFrom("WebSocket"),
-				Endpoint:    optional.StringFrom("https://example.com"),
-				DeveloperID: optional.UUIDFrom(user2.GetID()),
+				DisplayName: optional.From("po"),
+				Description: optional.From("desc"),
+				Mode:        optional.From("WebSocket"),
+				Endpoint:    optional.From("https://example.com"),
+				DeveloperID: optional.From(user2.GetID()),
 				SubscribeEvents: map[model.BotEventType]struct{}{
 					event.Ping: {},
 				},

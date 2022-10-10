@@ -126,7 +126,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	if len(parsed.Attachments) > 0 {
 		if f, _ := ns.fm.Get(parsed.Attachments[0]); f != nil {
 			if ok, _ := f.GetThumbnail(model.ThumbnailTypeImage); ok {
-				fcmPayload.Image = optional.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
+				fcmPayload.Image = optional.From(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 			}
 		}
 	}

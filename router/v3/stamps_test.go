@@ -190,7 +190,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("test123")}).
+			WithJSON(&PatchStampRequest{Name: optional.From("test123")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -200,7 +200,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("")}).
+			WithJSON(&PatchStampRequest{Name: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -210,7 +210,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{CreatorID: optional.UUIDFrom(uuid.Nil)}).
+			WithJSON(&PatchStampRequest{CreatorID: optional.From(uuid.Nil)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -220,7 +220,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{CreatorID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}).
+			WithJSON(&PatchStampRequest{CreatorID: optional.From(uuid.Must(uuid.NewV4()))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -230,7 +230,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp2.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("test123")}).
+			WithJSON(&PatchStampRequest{Name: optional.From("test123")}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -240,7 +240,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("test123")}).
+			WithJSON(&PatchStampRequest{Name: optional.From("test123")}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -250,7 +250,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("409_conflict")}).
+			WithJSON(&PatchStampRequest{Name: optional.From("409_conflict")}).
 			Expect().
 			Status(http.StatusConflict)
 	})
@@ -260,7 +260,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{Name: optional.StringFrom("test123123"), CreatorID: optional.UUIDFrom(user2.GetID())}).
+			WithJSON(&PatchStampRequest{Name: optional.From("test123123"), CreatorID: optional.From(user2.GetID())}).
 			Expect().
 			Status(http.StatusNoContent)
 

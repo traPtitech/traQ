@@ -116,11 +116,11 @@ func (h *Handlers) GetWebhook(c echo.Context) error {
 
 // PatchWebhookRequest PATCH /webhooks/:webhookID リクエストボディ
 type PatchWebhookRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
-	ChannelID   optional.UUID   `json:"channelId"`
-	Secret      optional.String `json:"secret"`
-	OwnerID     optional.UUID   `json:"ownerId"`
+	Name        optional.Of[string]    `json:"name"`
+	Description optional.Of[string]    `json:"description"`
+	ChannelID   optional.Of[uuid.UUID] `json:"channelId"`
+	Secret      optional.Of[string]    `json:"secret"`
+	OwnerID     optional.Of[uuid.UUID] `json:"ownerId"`
 }
 
 func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {

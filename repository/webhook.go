@@ -9,11 +9,11 @@ import (
 
 // UpdateWebhookArgs Webhook情報更新引数
 type UpdateWebhookArgs struct {
-	Name        optional.String
-	Description optional.String
-	ChannelID   optional.UUID
-	Secret      optional.String
-	CreatorID   optional.UUID
+	Name        optional.Of[string]
+	Description optional.Of[string]
+	ChannelID   optional.Of[uuid.UUID]
+	Secret      optional.Of[string]
+	CreatorID   optional.Of[uuid.UUID]
 }
 
 // WebhookRepository Webhookボットリポジトリ

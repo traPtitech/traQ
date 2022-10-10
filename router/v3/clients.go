@@ -5,6 +5,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/model"
@@ -91,10 +92,10 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClientRequest PATCH /clients/:clientID リクエストボディ
 type PatchClientRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
-	CallbackURL optional.String `json:"callbackUrl"`
-	DeveloperID optional.UUID   `json:"developerId"`
+	Name        optional.Of[string]    `json:"name"`
+	Description optional.Of[string]    `json:"description"`
+	CallbackURL optional.Of[string]    `json:"callbackUrl"`
+	DeveloperID optional.Of[uuid.UUID] `json:"developerId"`
 }
 
 func (r PatchClientRequest) Validate() error {
