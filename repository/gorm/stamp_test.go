@@ -302,11 +302,19 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		ms, err := repo.GetUserStampHistory(user.GetID(), 0)
+		ms, err := repo.GetUserStampHistory(user.GetID(), -1)
 		if assert.NoError(t, err) && assert.Len(t, ms, 3) {
 			assert.Equal(t, ms[0].StampID, stamp2.ID)
 			assert.Equal(t, ms[1].StampID, stamp3.ID)
 			assert.Equal(t, ms[2].StampID, stamp1.ID)
+		}
+	})
+
+	t.Run("Success (Limit 1)", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampHistory(user.GetID(), 1)
+		if assert.NoError(t, err) && assert.Len(t, ms, 1) {
+			assert.Equal(t, ms[0].StampID, stamp2.ID)
 		}
 	})
 }
