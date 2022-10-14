@@ -97,7 +97,7 @@ type StampRepository interface {
 	StampExists(id uuid.UUID) (bool, error)
 	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
 	//
-	// 0を指定した場合、全て取得します。
+	// limitに負の値を指定した場合、全て取得します。
 	// 成功した場合、降順のスタンプ履歴の配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
