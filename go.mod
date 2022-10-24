@@ -8,7 +8,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.17.0
 	github.com/aws/aws-sdk-go-v2/config v1.17.8
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.21
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.22
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.35
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.0
 	github.com/blendle/zapdriver v1.3.1
@@ -76,7 +76,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.8 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.17 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.18 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.24 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.18 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.24 // indirect
@@ -85,9 +85,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.18 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.24 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.0 // indirect
 	github.com/aws/smithy-go v1.13.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
