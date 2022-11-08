@@ -68,7 +68,7 @@ func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	requestURL := fmt.Sprintf("https://syndication.twitter.com/tweet?id=%s", statusID)
+	requestURL := fmt.Sprintf("https://syndication.twitter.com/tweet-result?id=%s", statusID)
 	resp, err := client.Get(requestURL)
 	if err != nil {
 		return nil, ErrNetwork
