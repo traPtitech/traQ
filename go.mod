@@ -29,7 +29,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/guregu/null v4.0.0+incompatible
-	github.com/hajimehoshi/go-mp3 v0.3.3
+	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-contrib v0.13.0
