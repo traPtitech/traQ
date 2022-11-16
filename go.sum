@@ -221,8 +221,8 @@ github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
-github.com/gavv/httpexpect/v2 v2.4.0 h1:YPYAnGRzSfWB663jdCVEAe/5QwfjnXiAHpSwUMWcigo=
-github.com/gavv/httpexpect/v2 v2.4.0/go.mod h1:MvAp9Dft2y+AAJnnU4zOrx6mnqe1TUkPYkNpIhZAUdM=
+github.com/gavv/httpexpect/v2 v2.4.1 h1:U5iZ+ZVok1OdmSmUt3wM4qs0cgbOG8KWiaN0y0WPQbk=
+github.com/gavv/httpexpect/v2 v2.4.1/go.mod h1:qddn0sNk5sM+Uh/AVStNaqNkZPDIadaQvq6vd1AyORI=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-audio/audio v1.0.0 h1:zS9vebldgbQqktK4H0lUqWrG8P0NxCJVqcj7ZpNnwd4=
 github.com/go-audio/audio v1.0.0/go.mod h1:6uAu0+H2lHkwdGsAY+j2wHPNPpPoeg5AaEFh9FlA+Zs=
