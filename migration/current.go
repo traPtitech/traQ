@@ -41,6 +41,7 @@ func Migrations() []*gormigrate.Migration {
 		v28(), // v28 ユーザーグループにアイコンを追加
 		v29(), // BotにModeを追加、WebSocket Modeを追加
 		v30(), // bot_event_logsにresultを追加
+		v31(), // お気に入りスタンプパーミッション削除（削除忘れ）
 	}
 }
 
