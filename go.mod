@@ -56,7 +56,7 @@ require (
 	golang.org/x/net v0.5.0
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/sync v0.1.0
-	google.golang.org/api v0.106.0
+	google.golang.org/api v0.107.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.4.5
 	gorm.io/gorm v1.24.3
