@@ -30,7 +30,7 @@ func stampPaletteEquals(t *testing.T, expect *model.StampPalette, actual *httpex
 		stamps[i] = stamp.String()
 	}
 	// Order DOES matter here
-	actual.Value("stamps").Array().Elements(stamps...)
+	actual.Value("stamps").Array().ConsistsOf(stamps...)
 }
 
 func TestHandlers_GetStampPalettes(t *testing.T) {
