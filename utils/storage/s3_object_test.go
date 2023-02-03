@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/traQ/testData/images"
 )
 
-const testobjkey = "testobj"
+const testObjKey = "testObj"
 
 func TestS3Object(t *testing.T) {
 	setupObject(t)
@@ -36,10 +36,9 @@ func tests3ObjectRead(t *testing.T) {
 		{
 			name: "success",
 			setupFunc: func(t *testing.T) *s3Object {
-
 				input := &s3.GetObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(testobjkey),
+					Key:    aws.String(testObjKey),
 				}
 
 				obj, err := getTestObject(t, input)
@@ -53,6 +52,8 @@ func tests3ObjectRead(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			o := tt.setupFunc(t)
@@ -78,10 +79,9 @@ func tests3ObjectClose(t *testing.T) {
 		{
 			name: "success",
 			setupFunc: func(t *testing.T) *s3Object {
-
 				input := &s3.GetObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(testobjkey),
+					Key:    aws.String(testObjKey),
 				}
 
 				obj, err := getTestObject(t, input)
@@ -91,6 +91,8 @@ func tests3ObjectClose(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			o := tt.setupFunc(t)
@@ -119,7 +121,7 @@ func tests3ObjectSeek(t *testing.T) {
 			setupFunc: func(t *testing.T) *s3Object {
 				input := &s3.GetObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(testobjkey),
+					Key:    aws.String(testObjKey),
 				}
 
 				obj, err := getTestObject(t, input)
@@ -139,7 +141,7 @@ func tests3ObjectSeek(t *testing.T) {
 			setupFunc: func(t *testing.T) *s3Object {
 				input := &s3.GetObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(testobjkey),
+					Key:    aws.String(testObjKey),
 				}
 
 				obj, err := getTestObject(t, input)
@@ -160,7 +162,7 @@ func tests3ObjectSeek(t *testing.T) {
 			setupFunc: func(t *testing.T) *s3Object {
 				input := &s3.GetObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(testobjkey),
+					Key:    aws.String(testObjKey),
 				}
 
 				obj, err := getTestObject(t, input)
@@ -177,6 +179,8 @@ func tests3ObjectSeek(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			o := tt.setupFunc(t)
@@ -203,7 +207,7 @@ func setupObject(t *testing.T) {
 
 	input := &s3.PutObjectInput{
 		Bucket:      aws.String(bucketName),
-		Key:         aws.String(testobjkey),
+		Key:         aws.String(testObjKey),
 		Body:        f,
 		ContentType: aws.String("image/png"),
 	}
@@ -223,20 +227,18 @@ func getTestObject(t *testing.T, input *s3.GetObjectInput) (*s3Object, error) {
 
 	assert.NotNil(t, cli)
 
-	attrin := s3.HeadObjectInput{
+	attrIn := s3.HeadObjectInput{
 		Bucket: input.Bucket,
 		Key:    input.Key,
 	}
 
-	attrout, err := cli.HeadObject(context.Background(), &attrin)
-
+	attrOut, err := cli.HeadObject(context.Background(), &attrIn)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	objout, err := cli.GetObject(context.Background(), input)
-
+	objOut, err := cli.GetObject(context.Background(), input)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -245,10 +247,10 @@ func getTestObject(t *testing.T, input *s3.GetObjectInput) (*s3Object, error) {
 	obj := s3Object{
 		client:   cli,
 		input:    *input,
-		resp:     objout,
-		length:   attrout.ContentLength,
+		resp:     objOut,
+		length:   attrOut.ContentLength,
 		lengthOk: true,
-		body:     objout.Body,
+		body:     objOut.Body,
 	}
 
 	return &obj, nil
