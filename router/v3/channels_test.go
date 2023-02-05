@@ -22,25 +22,25 @@ import (
 
 func messageStampEquals(t *testing.T, expect model.MessageStamp, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("userId").String().Equal(expect.UserID.String())
-	actual.Value("stampId").String().Equal(expect.StampID.String())
-	actual.Value("count").Number().Equal(expect.Count)
+	actual.Value("userId").String().IsEqual(expect.UserID.String())
+	actual.Value("stampId").String().IsEqual(expect.StampID.String())
+	actual.Value("count").Number().IsEqual(expect.Count)
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 }
 
 func messageEquals(t *testing.T, expect message.Message, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.GetID().String())
-	actual.Value("userId").String().Equal(expect.GetUserID().String())
-	actual.Value("channelId").String().Equal(expect.GetChannelID().String())
-	actual.Value("content").String().Equal(expect.GetText())
+	actual.Value("id").String().IsEqual(expect.GetID().String())
+	actual.Value("userId").String().IsEqual(expect.GetUserID().String())
+	actual.Value("channelId").String().IsEqual(expect.GetChannelID().String())
+	actual.Value("content").String().IsEqual(expect.GetText())
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
-	actual.Value("pinned").Boolean().Equal(expect.GetPin() != nil)
+	actual.Value("pinned").Boolean().IsEqual(expect.GetPin() != nil)
 
 	stamps := actual.Value("stamps").Array()
-	stamps.Length().Equal(len(expect.GetStamps()))
+	stamps.Length().IsEqual(len(expect.GetStamps()))
 	for i, ex := range expect.GetStamps() {
 		messageStampEquals(t, ex, stamps.Element(i).Object())
 	}
@@ -48,16 +48,16 @@ func messageEquals(t *testing.T, expect message.Message, actual *httpexpect.Obje
 
 func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
+	actual.Value("id").String().IsEqual(expect.ID.String())
 	if expect.ParentID == uuid.Nil {
 		actual.Value("parentId").Null()
 	} else {
-		actual.Value("parentId").String().Equal(expect.ParentID.String())
+		actual.Value("parentId").String().IsEqual(expect.ParentID.String())
 	}
-	actual.Value("archived").Boolean().Equal(expect.IsArchived())
-	actual.Value("force").Boolean().Equal(expect.IsForced)
-	actual.Value("topic").String().Equal(expect.Topic)
-	actual.Value("name").String().Equal(expect.Name)
+	actual.Value("archived").Boolean().IsEqual(expect.IsArchived())
+	actual.Value("force").Boolean().IsEqual(expect.IsForced)
+	actual.Value("topic").String().IsEqual(expect.Topic)
+	actual.Value("name").String().IsEqual(expect.Name)
 	childIDs := make([]interface{}, 0, len(expect.ChildrenID))
 	for _, childID := range expect.ChildrenID {
 		childIDs = append(childIDs, childID)
@@ -97,7 +97,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().Equal(1)
+		public.Length().IsEqual(1)
 
 		channelEquals(t, channel, public.First().Object())
 	})
@@ -114,14 +114,14 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().Equal(1)
+		public.Length().IsEqual(1)
 		channelEquals(t, channel, public.First().Object())
 
 		dms := obj.Value("dm").Array()
-		dms.Length().Equal(1)
+		dms.Length().IsEqual(1)
 		firstDM := dms.First().Object()
-		firstDM.Value("id").String().Equal(dm.ID.String())
-		firstDM.Value("userId").String().Equal(user2.GetID().String())
+		firstDM.Value("id").String().IsEqual(dm.ID.String())
+		firstDM.Value("userId").String().IsEqual(user2.GetID().String())
 	})
 
 	t.Run("success (include-dm=true, user2)", func(t *testing.T) {
@@ -136,14 +136,14 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().Equal(1)
+		public.Length().IsEqual(1)
 		channelEquals(t, channel, public.First().Object())
 
 		dms := obj.Value("dm").Array()
-		dms.Length().Equal(1)
+		dms.Length().IsEqual(1)
 		firstDM := dms.First().Object()
-		firstDM.Value("id").String().Equal(dm.ID.String())
-		firstDM.Value("userId").String().Equal(user1.GetID().String())
+		firstDM.Value("id").String().IsEqual(dm.ID.String())
+		firstDM.Value("userId").String().IsEqual(user1.GetID().String())
 	})
 
 	t.Run("success (include-dm=true, user3)", func(t *testing.T) {
@@ -158,11 +158,11 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().Equal(1)
+		public.Length().IsEqual(1)
 		channelEquals(t, channel, public.First().Object())
 
 		dms := obj.Value("dm").Array()
-		dms.Length().Equal(0)
+		dms.Length().IsEqual(0)
 	})
 }
 
@@ -253,9 +253,9 @@ func TestHandlers_CreateChannels(t *testing.T) {
 		obj.Value("parentId").Null()
 		obj.Value("archived").Boolean().False()
 		obj.Value("force").Boolean().False()
-		obj.Value("topic").String().Empty()
-		obj.Value("name").String().Equal(cname1)
-		obj.Value("children").Array().Length().Equal(0)
+		obj.Value("topic").String().IsEmpty()
+		obj.Value("name").String().IsEqual(cname1)
+		obj.Value("children").Array().Length().IsEqual(0)
 
 		c1, err := uuid.FromString(obj.Value("id").String().Raw())
 		require.NoError(t, err)
@@ -270,12 +270,12 @@ func TestHandlers_CreateChannels(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("parentId").String().Equal(c1.String())
+		obj.Value("parentId").String().IsEqual(c1.String())
 		obj.Value("archived").Boolean().False()
 		obj.Value("force").Boolean().False()
-		obj.Value("topic").String().Empty()
-		obj.Value("name").String().Equal(cname2)
-		obj.Value("children").Array().Length().Equal(0)
+		obj.Value("topic").String().IsEmpty()
+		obj.Value("name").String().IsEqual(cname2)
+		obj.Value("children").Array().Length().IsEqual(0)
 
 		ch, err := env.CM.GetChannel(c1)
 		require.NoError(t, err)
@@ -521,20 +521,20 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("totalMessageCount").Number().Equal(1)
+		obj.Value("totalMessageCount").Number().IsEqual(1)
 
 		stamps := obj.Value("stamps").Array()
-		stamps.Length().Equal(1)
+		stamps.Length().IsEqual(1)
 		firstStamp := stamps.First().Object()
-		firstStamp.Value("id").String().Equal(stamp.ID.String())
-		firstStamp.Value("count").Number().Equal(1)
-		firstStamp.Value("total").Number().Equal(1)
+		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
+		firstStamp.Value("count").Number().IsEqual(1)
+		firstStamp.Value("total").Number().IsEqual(1)
 
 		users := obj.Value("users").Array()
-		users.Length().Equal(1)
+		users.Length().IsEqual(1)
 		firstUser := users.First().Object()
-		firstUser.Value("id").String().Equal(user.GetID().String())
-		firstUser.Value("messageCount").Number().Equal(1)
+		firstUser.Value("id").String().IsEqual(user.GetID().String())
+		firstUser.Value("messageCount").Number().IsEqual(1)
 	})
 }
 
@@ -574,7 +574,7 @@ func TestHandlers_GetChannelTopic(t *testing.T) {
 			JSON().
 			Object().
 			Value("topic").
-			Equal("this is channel topic")
+			IsEqual("this is channel topic")
 	})
 }
 
@@ -684,10 +684,10 @@ func TestHandlers_GetChannelPins(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("userId").String().Equal(user.GetID().String())
+		first.Value("userId").String().IsEqual(user.GetID().String())
 		first.Value("pinnedAt").String().NotEmpty()
 
 		messageEquals(t, m1, first.Value("message").Object())
@@ -791,16 +791,16 @@ func TestHandlers_GetChannelEvents(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("type").String().Equal("TopicChanged")
+		first.Value("type").String().IsEqual("TopicChanged")
 		first.Value("datetime").String().NotEmpty()
 
 		detail := first.Value("detail").Object()
-		detail.Value("userId").String().Equal(user.GetID().String())
-		detail.Value("before").String().Equal("")
-		detail.Value("after").String().Equal("test topic")
+		detail.Value("userId").String().IsEqual(user.GetID().String())
+		detail.Value("before").String().IsEqual("")
+		detail.Value("after").String().IsEqual("test topic")
 	})
 }
 
@@ -866,8 +866,8 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
-		obj.First().String().Equal(user.GetID().String())
+		obj.Length().IsEqual(1)
+		obj.First().String().IsEqual(user.GetID().String())
 	})
 }
 
@@ -1104,8 +1104,8 @@ func TestHandlers_GetUserDMChannel(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("id").String().Equal(dm.ID.String())
-		obj.Value("userId").String().Equal(user2.GetID().String())
+		obj.Value("id").String().IsEqual(dm.ID.String())
+		obj.Value("userId").String().IsEqual(user2.GetID().String())
 	})
 
 	t.Run("success (creating dm)", func(t *testing.T) {
@@ -1119,6 +1119,6 @@ func TestHandlers_GetUserDMChannel(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty().NotEqual(dm.ID.String())
-		obj.Value("userId").String().Equal(user3.GetID().String())
+		obj.Value("userId").String().IsEqual(user3.GetID().String())
 	})
 }

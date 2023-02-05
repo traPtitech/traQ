@@ -17,9 +17,9 @@ import (
 
 func userTagEquals(t *testing.T, expect model.UserTag, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("tagId").String().Equal(expect.GetTagID().String())
-	actual.Value("tag").String().Equal(expect.GetTag())
-	actual.Value("isLocked").Boolean().Equal(expect.GetIsLocked())
+	actual.Value("tagId").String().IsEqual(expect.GetTagID().String())
+	actual.Value("tag").String().IsEqual(expect.GetTag())
+	actual.Value("isLocked").Boolean().IsEqual(expect.GetIsLocked())
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 }
@@ -63,7 +63,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		userTagEquals(t, ut, obj.First().Object())
 	})
 }
@@ -97,7 +97,7 @@ func TestHandlers_GetMyUserTags(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		userTagEquals(t, ut, obj.First().Object())
 	})
 }
@@ -216,7 +216,7 @@ func TestHandlers_AddUserTag(t *testing.T) {
 			Object()
 
 		obj.Value("tagId").String().NotEmpty()
-		obj.Value("tag").String().Equal("†俺があやせだ†")
+		obj.Value("tag").String().IsEqual("†俺があやせだ†")
 		obj.Value("isLocked").Boolean().False()
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
@@ -275,7 +275,7 @@ func TestHandlers_AddMyUserTag(t *testing.T) {
 			Object()
 
 		obj.Value("tagId").String().NotEmpty()
-		obj.Value("tag").String().Equal("普段からJSとか触ってます")
+		obj.Value("tag").String().IsEqual("普段からJSとか触ってます")
 		obj.Value("isLocked").Boolean().False()
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
@@ -555,8 +555,8 @@ func TestHandlers_GetTag(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("id").String().Equal(ut.GetTagID().String())
-		obj.Value("tag").String().Equal(ut.GetTag())
+		obj.Value("id").String().IsEqual(ut.GetTagID().String())
+		obj.Value("tag").String().IsEqual(ut.GetTag())
 		obj.Value("users").Array().ContainsOnly(user.GetID(), user2.GetID())
 	})
 }

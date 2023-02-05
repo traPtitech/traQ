@@ -19,13 +19,13 @@ import (
 
 func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
-	actual.Value("botUserId").String().Equal(expect.BotUserID.String())
-	actual.Value("description").String().Equal(expect.Description)
-	actual.Value("developerId").String().Equal(expect.CreatorID.String())
-	actual.Value("subscribeEvents").Array().Length().Equal(len(expect.SubscribeEvents.Array()))
-	actual.Value("mode").String().Equal(expect.Mode.String())
-	actual.Value("state").Number().Equal(expect.State)
+	actual.Value("id").String().IsEqual(expect.ID.String())
+	actual.Value("botUserId").String().IsEqual(expect.BotUserID.String())
+	actual.Value("description").String().IsEqual(expect.Description)
+	actual.Value("developerId").String().IsEqual(expect.CreatorID.String())
+	actual.Value("subscribeEvents").Array().Length().IsEqual(len(expect.SubscribeEvents.Array()))
+	actual.Value("mode").String().IsEqual(expect.Mode.String())
+	actual.Value("state").Number().IsEqual(expect.State)
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 }
@@ -59,7 +59,7 @@ func TestHandlers_GetBots(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		botEquals(t, bot1, obj.Element(0).Object())
 	})
@@ -75,7 +75,7 @@ func TestHandlers_GetBots(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 	})
 }
 
@@ -225,18 +225,18 @@ func TestHandlers_CreateBot(t *testing.T) {
 
 		obj.Value("id").String().NotEmpty()
 		obj.Value("botUserId").String().NotEmpty()
-		obj.Value("description").String().Equal("desc")
-		obj.Value("subscribeEvents").Array().Length().Equal(0)
-		obj.Value("mode").String().Equal("HTTP")
-		obj.Value("state").Number().Equal(model.BotInactive)
-		obj.Value("developerId").String().Equal(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
+		obj.Value("subscribeEvents").Array().Length().IsEqual(0)
+		obj.Value("mode").String().IsEqual("HTTP")
+		obj.Value("state").Number().IsEqual(model.BotInactive)
+		obj.Value("developerId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
-		obj.Value("endpoint").String().Equal("https://example.com")
+		obj.Value("endpoint").String().IsEqual("https://example.com")
 		obj.Value("privileged").Boolean().False()
-		obj.Value("channels").Array().Length().Equal(0)
+		obj.Value("channels").Array().Length().IsEqual(0)
 	})
 
 	t.Run("success with WebSocket mode", func(t *testing.T) {
@@ -252,20 +252,19 @@ func TestHandlers_CreateBot(t *testing.T) {
 
 		obj.Value("id").String().NotEmpty()
 		obj.Value("botUserId").String().NotEmpty()
-		obj.Value("description").String().Equal("desc")
-		obj.Value("subscribeEvents").Array().Length().Equal(0)
-		obj.Value("mode").String().Equal("WebSocket")
-		obj.Value("state").Number().Equal(model.BotActive)
-		obj.Value("developerId").String().Equal(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
+		obj.Value("subscribeEvents").Array().Length().IsEqual(0)
+		obj.Value("mode").String().IsEqual("WebSocket")
+		obj.Value("state").Number().IsEqual(model.BotActive)
+		obj.Value("developerId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
-		obj.Value("endpoint").String().Equal("")
+		obj.Value("endpoint").String().IsEqual("")
 		obj.Value("privileged").Boolean().False()
-		obj.Value("channels").Array().Length().Equal(0)
+		obj.Value("channels").Array().Length().IsEqual(0)
 	})
-
 }
 
 func TestHandlers_GetBot(t *testing.T) {
@@ -345,9 +344,9 @@ func TestHandlers_GetBot(t *testing.T) {
 		botEquals(t, bot1, obj)
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
-		obj.Value("endpoint").String().Equal("https://example.com")
+		obj.Value("endpoint").String().IsEqual("https://example.com")
 		obj.Value("privileged").Boolean().False()
-		obj.Value("channels").Array().Length().Equal(0)
+		obj.Value("channels").Array().Length().IsEqual(0)
 	})
 }
 
@@ -736,17 +735,17 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		first.Keys().ContainsOnly(
 			"botId", "requestId", "event", "result", "code", "datetime",
 		)
-		first.Value("botId").String().Equal(log.BotID.String())
-		first.Value("requestId").String().Equal(log.RequestID.String())
-		first.Value("event").String().Equal(log.Event.String())
-		first.Value("result").String().Equal(log.Result)
-		first.Value("code").Number().Equal(log.Code)
+		first.Value("botId").String().IsEqual(log.BotID.String())
+		first.Value("requestId").String().IsEqual(log.RequestID.String())
+		first.Value("event").String().IsEqual(log.Event.String())
+		first.Value("result").String().IsEqual(log.Result)
+		first.Value("code").Number().IsEqual(log.Code)
 		first.Value("datetime").String().NotEmpty()
 	})
 }
@@ -788,11 +787,11 @@ func TestHandlers_GetChannelBots(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.Element(0).Object()
-		first.Value("id").String().Equal(bot.ID.String())
-		first.Value("botUserId").String().Equal(bot.BotUserID.String())
+		first.Value("id").String().IsEqual(bot.ID.String())
+		first.Value("botUserId").String().IsEqual(bot.BotUserID.String())
 	})
 }
 

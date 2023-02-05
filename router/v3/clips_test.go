@@ -18,11 +18,11 @@ import (
 
 func clipFolderEquals(t *testing.T, expect *model.ClipFolder, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
-	actual.Value("name").String().Equal(expect.Name)
+	actual.Value("id").String().IsEqual(expect.ID.String())
+	actual.Value("name").String().IsEqual(expect.Name)
 	actual.Value("createdAt").String().NotEmpty()
-	actual.Value("ownerId").String().Equal(expect.OwnerID.String())
-	actual.Value("description").String().Equal(expect.Description)
+	actual.Value("ownerId").String().IsEqual(expect.OwnerID.String())
+	actual.Value("description").String().IsEqual(expect.Description)
 }
 
 func TestPostClipFolderRequest_Validate(t *testing.T) {
@@ -150,10 +150,10 @@ func TestHandlers_CreateClipFolder(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("name").String().Equal("nya")
+		obj.Value("name").String().IsEqual("nya")
 		obj.Value("createdAt").String().NotEmpty()
-		obj.Value("ownerId").String().Equal(user.GetID().String())
-		obj.Value("description").String().Equal("desc")
+		obj.Value("ownerId").String().IsEqual(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
 
 		id := obj.Value("id").String().Raw()
 
@@ -167,10 +167,10 @@ func TestHandlers_CreateClipFolder(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty().NotEqual(id)
-		obj.Value("name").String().Equal("nya")
+		obj.Value("name").String().IsEqual("nya")
 		obj.Value("createdAt").String().NotEmpty()
-		obj.Value("ownerId").String().Equal(user.GetID().String())
-		obj.Value("description").String().Equal("desc")
+		obj.Value("ownerId").String().IsEqual(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
 	})
 }
 
@@ -203,7 +203,7 @@ func TestHandlers_GetClipFolders(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		clipFolderEquals(t, cf1, obj.First().Object())
 	})
 }
@@ -591,7 +591,7 @@ func TestHandlers_GetClipFolderMessages(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		messageEquals(t, m, first.Value("message").Object())

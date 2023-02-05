@@ -68,7 +68,7 @@ func TestHandlers_GetMySettings(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("id").String().Equal(user.GetID().String())
+		obj.Value("id").String().IsEqual(user.GetID().String())
 		obj.Value("notifyCitation").Boolean().False()
 	})
 }

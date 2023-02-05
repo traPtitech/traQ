@@ -81,7 +81,7 @@ func TestHandlers_PostWebRTCAuthenticate(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("peerId").String().Equal(user.GetID().String())
+		obj.Value("peerId").String().IsEqual(user.GetID().String())
 		obj.Value("ttl").Number()
 		obj.Value("timestamp").Number()
 		obj.Value("authToken").String().NotEmpty()
