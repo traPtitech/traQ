@@ -70,7 +70,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Body().
-			Equal("test message")
+			IsEqual("test message")
 	})
 
 	t.Run("Success with dl param", func(t *testing.T) {
@@ -81,9 +81,9 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			WithQuery("dl", 1).
 			Expect().
 			Status(http.StatusOK)
-		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(file.GetFileName())))
-		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
-		res.Body().Equal("test message")
+		res.Header(echo.HeaderContentDisposition).IsEqual(fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(file.GetFileName())))
+		res.Header(consts.HeaderCacheControl).IsEqual("private, max-age=31536000")
+		res.Body().IsEqual("test message")
 	})
 
 	t.Run("Success with icon file", func(t *testing.T) {
@@ -99,8 +99,8 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			Expect().
 			Status(http.StatusOK)
 		res.ContentType(iconFile.GetMIMEType())
-		res.Header(consts.HeaderCacheFile).Equal("true")
-		res.Header(consts.HeaderFileMetaType).Equal("icon")
+		res.Header(consts.HeaderCacheFile).IsEqual("true")
+		res.Header(consts.HeaderFileMetaType).IsEqual("icon")
 	})
 
 	t.Run("Success With secure file", func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Body().
-			Equal(secureContent)
+			IsEqual(secureContent)
 	})
 }
 
@@ -139,13 +139,13 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("fileId").String().Equal(file.GetID().String())
-		obj.Value("name").String().Equal(file.GetFileName())
-		obj.Value("mime").String().Equal(file.GetMIMEType())
-		obj.Value("size").Number().Equal(file.GetFileSize())
-		obj.Value("md5").String().Equal(file.GetMD5Hash())
+		obj.Value("fileId").String().IsEqual(file.GetID().String())
+		obj.Value("name").String().IsEqual(file.GetFileName())
+		obj.Value("mime").String().IsEqual(file.GetMIMEType())
+		obj.Value("size").Number().IsEqual(file.GetFileSize())
+		obj.Value("md5").String().IsEqual(file.GetMD5Hash())
 		hasThumb, _ := file.GetThumbnail(model.ThumbnailTypeImage)
-		obj.Value("hasThumb").Boolean().Equal(hasThumb)
+		obj.Value("hasThumb").Boolean().IsEqual(hasThumb)
 	})
 }
 
@@ -233,7 +233,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK)
-		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
+		res.Header(consts.HeaderCacheControl).IsEqual("private, max-age=31536000")
 		res.ContentType(consts.MimeImagePNG)
 	})
 
@@ -245,7 +245,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK)
-		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
+		res.Header(consts.HeaderCacheControl).IsEqual("private, max-age=31536000")
 		res.ContentType(consts.MimeImagePNG)
 	})
 }

@@ -26,9 +26,9 @@ func TestHandlers_TokenEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errUnsupportedGrantType)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errUnsupportedGrantType)
 	})
 }
 
@@ -58,12 +58,12 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.NotContainsKey("refresh_token")
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -80,12 +80,12 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.NotContainsKey("refresh_token")
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -102,12 +102,12 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.NotContainsKey("refresh_token")
 		obj.NotContainsKey("scope")
 	})
@@ -122,14 +122,14 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.NotContainsKey("refresh_token")
-		obj.Value("scope").String().Equal("read")
+		obj.Value("scope").String().IsEqual("read")
 	})
 
 	t.Run("Invalid Client (No credentials)", func(t *testing.T) {
@@ -140,9 +140,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Wrong credentials)", func(t *testing.T) {
@@ -154,9 +154,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Unknown client)", func(t *testing.T) {
@@ -168,9 +168,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Not confidential)", func(t *testing.T) {
@@ -192,9 +192,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errUnauthorizedClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errUnauthorizedClient)
 	})
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
@@ -207,9 +207,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
@@ -222,9 +222,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 }
 
@@ -257,12 +257,12 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -281,12 +281,12 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -305,12 +305,12 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 	})
@@ -327,14 +327,14 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("read")
+		obj.Value("scope").String().IsEqual("read")
 	})
 
 	t.Run("Success with not confidential client", func(t *testing.T) {
@@ -358,12 +358,12 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -379,9 +379,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidRequest)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidRequest)
 	})
 
 	t.Run("Invalid Grant (Wrong user credentials)", func(t *testing.T) {
@@ -395,9 +395,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidGrant)
 	})
 
 	t.Run("Invalid Client (No client credentials)", func(t *testing.T) {
@@ -410,9 +410,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Wrong client credentials)", func(t *testing.T) {
@@ -426,9 +426,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Unknown client)", func(t *testing.T) {
@@ -442,9 +442,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
@@ -459,9 +459,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
@@ -476,9 +476,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 }
 
@@ -521,12 +521,12 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -545,14 +545,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("read")
+		obj.Value("scope").String().IsEqual("read")
 
 		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -569,14 +569,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("read")
+		obj.Value("scope").String().IsEqual("read")
 
 		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -593,12 +593,12 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -618,12 +618,12 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -639,9 +639,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidRequest)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidRequest)
 	})
 
 	t.Run("Invalid Grant (Unknown refresh token)", func(t *testing.T) {
@@ -653,9 +653,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidGrant)
 	})
 
 	t.Run("Invalid Client (No client credentials)", func(t *testing.T) {
@@ -668,9 +668,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Client (Wrong client credentials)", func(t *testing.T) {
@@ -684,9 +684,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidClient)
 	})
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
@@ -700,9 +700,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
@@ -716,9 +716,9 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").String().Equal(errInvalidScope)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").String().IsEqual(errInvalidScope)
 	})
 }
 
@@ -768,12 +768,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -793,12 +793,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -819,12 +819,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -858,12 +858,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -897,12 +897,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -933,12 +933,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
@@ -969,12 +969,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusOK)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		obj := res.JSON().Object()
 		obj.Value("access_token").String().NotEmpty()
-		obj.Value("token_type").String().Equal(authScheme)
-		obj.Value("expires_in").Number().Equal(1000)
+		obj.Value("token_type").String().IsEqual(authScheme)
+		obj.Value("expires_in").Number().IsEqual(1000)
 		obj.Value("refresh_token").String().NotEmpty()
 		actual := model.AccessScopes{}
 		actual.FromString(obj.Value("scope").String().Raw())
@@ -994,9 +994,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidRequest)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidRequest)
 	})
 
 	t.Run("Invalid Client (No client)", func(t *testing.T) {
@@ -1010,9 +1010,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1030,9 +1030,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1050,9 +1050,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1069,9 +1069,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 	})
 
 	t.Run("Invalid Grant (expired)", func(t *testing.T) {
@@ -1097,9 +1097,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1128,9 +1128,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidClient)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1148,9 +1148,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1178,9 +1178,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusUnauthorized)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidGrant)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1211,9 +1211,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidRequest)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidRequest)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1232,9 +1232,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
-		res.JSON().Object().Value("error").Equal(errInvalidRequest)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		res.JSON().Object().Value("error").IsEqual(errInvalidRequest)
 
 		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
