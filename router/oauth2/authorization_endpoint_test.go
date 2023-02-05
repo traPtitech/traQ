@@ -75,8 +75,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("state", loc.Query().Get("state"))
@@ -106,8 +106,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("state", loc.Query().Get("state"))
@@ -140,8 +140,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("state", loc.Query().Get("state"))
@@ -176,8 +176,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("state", loc.Query().Get("state"))
@@ -202,8 +202,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Bad Request (no client)", func(t *testing.T) {
@@ -214,8 +214,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Bad Request (unknown client)", func(t *testing.T) {
@@ -226,8 +226,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Bad Request (different redirect uri)", func(t *testing.T) {
@@ -239,8 +239,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Found (invalid pkce method)", func(t *testing.T) {
@@ -254,8 +254,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errInvalidRequest, loc.Query().Get("error"))
@@ -272,8 +272,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errInvalidScope, loc.Query().Get("error"))
@@ -290,8 +290,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errInvalidScope, loc.Query().Get("error"))
@@ -308,8 +308,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errUnsupportedResponseType, loc.Query().Get("error"))
@@ -326,8 +326,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errUnsupportedResponseType, loc.Query().Get("error"))
@@ -347,8 +347,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("/login", loc.Path)
@@ -377,8 +377,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("/login", loc.Path)
@@ -404,8 +404,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithFormField("prompt", "none").
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errLoginRequired, loc.Query().Get("error"))
@@ -423,8 +423,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errConsentRequired, loc.Query().Get("error"))
@@ -442,8 +442,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errInvalidRequest, loc.Query().Get("error"))
@@ -465,8 +465,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
 			Expect()
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errConsentRequired, loc.Query().Get("error"))
@@ -494,8 +494,8 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusForbidden)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 }
 
@@ -550,8 +550,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal("state", loc.Query().Get("state"))
@@ -573,8 +573,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Forbidden (No oauth2ContextSession)", func(t *testing.T) {
@@ -586,8 +586,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusForbidden)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Bad Request (client not found)", func(t *testing.T) {
@@ -599,8 +599,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusBadRequest)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Forbidden (client without redirect uri", func(t *testing.T) {
@@ -621,8 +621,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusForbidden)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 	})
 
 	t.Run("Found (deny)", func(t *testing.T) {
@@ -635,8 +635,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errAccessDenied, loc.Query().Get("error"))
@@ -666,8 +666,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errUnsupportedResponseType, loc.Query().Get("error"))
@@ -697,8 +697,8 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Expect()
 
 		res.Status(http.StatusFound)
-		res.Header("Cache-Control").Equal("no-store")
-		res.Header("Pragma").Equal("no-cache")
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
 			assert.Equal(errAccessDenied, loc.Query().Get("error"))

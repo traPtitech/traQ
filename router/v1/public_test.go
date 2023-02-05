@@ -46,7 +46,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Header(echo.HeaderContentLength).
-			Equal(strconv.FormatInt(meta.GetFileSize(), 10))
+			IsEqual(strconv.FormatInt(meta.GetFileSize(), 10))
 	})
 
 	t.Run("Success With 304", func(t *testing.T) {

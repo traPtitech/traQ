@@ -19,10 +19,10 @@ import (
 
 func oAuth2ClientEquals(t *testing.T, expect *model.OAuth2Client, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID)
-	actual.Value("name").String().Equal(expect.Name)
-	actual.Value("description").String().Equal(expect.Description)
-	actual.Value("developerId").String().Equal(expect.CreatorID.String())
+	actual.Value("id").String().IsEqual(expect.ID)
+	actual.Value("name").String().IsEqual(expect.Name)
+	actual.Value("description").String().IsEqual(expect.Description)
+	actual.Value("developerId").String().IsEqual(expect.CreatorID.String())
 	scopes := make([]interface{}, 0, len(expect.Scopes.StringArray()))
 	for _, scope := range expect.Scopes.StringArray() {
 		scopes = append(scopes, scope)
@@ -59,7 +59,7 @@ func TestHandlers_GetClients(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		oAuth2ClientEquals(t, c1, first)
@@ -76,7 +76,7 @@ func TestHandlers_GetClients(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 
 		first := obj.Element(0).Object()
 		second := obj.Element(1).Object()
@@ -225,13 +225,13 @@ func TestHandlers_CreateClient(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("developerId").String().Equal(user.GetID().String())
-		obj.Value("description").String().Equal("desc")
-		obj.Value("name").String().Equal("test")
+		obj.Value("developerId").String().IsEqual(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
+		obj.Value("name").String().IsEqual("test")
 		scopes := obj.Value("scopes").Array()
-		scopes.Length().Equal(1)
-		scopes.First().String().Equal("read")
-		obj.Value("callbackUrl").String().Equal("https://example.com")
+		scopes.Length().IsEqual(1)
+		scopes.First().String().IsEqual("read")
+		obj.Value("callbackUrl").String().IsEqual("https://example.com")
 		obj.Value("secret").String().NotEmpty()
 
 		c, err := env.Repository.GetClient(obj.Value("id").String().Raw())

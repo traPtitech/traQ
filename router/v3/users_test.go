@@ -22,12 +22,12 @@ import (
 
 func userEquals(t *testing.T, expect model.UserInfo, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.GetID().String())
-	actual.Value("name").String().Equal(expect.GetName())
-	actual.Value("displayName").String().Equal(expect.GetResponseDisplayName())
-	actual.Value("iconFileId").String().Equal(expect.GetIconFileID().String())
-	actual.Value("bot").Boolean().Equal(expect.IsBot())
-	actual.Value("state").Number().Equal(expect.GetState())
+	actual.Value("id").String().IsEqual(expect.GetID().String())
+	actual.Value("name").String().IsEqual(expect.GetName())
+	actual.Value("displayName").String().IsEqual(expect.GetResponseDisplayName())
+	actual.Value("iconFileId").String().IsEqual(expect.GetIconFileID().String())
+	actual.Value("bot").Boolean().IsEqual(expect.IsBot())
+	actual.Value("state").Number().IsEqual(expect.GetState())
 	actual.Value("updatedAt").String().NotEmpty()
 }
 
@@ -82,7 +82,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(4)
+		obj.Length().IsEqual(4)
 	})
 
 	t.Run("success (name=sappi_red)", func(t *testing.T) {
@@ -96,7 +96,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		userEquals(t, user2, obj.First().Object())
 	})
 
@@ -110,7 +110,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 	})
 }
 
@@ -222,17 +222,17 @@ func TestHandlers_CreateUser(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("state").Number().Equal(model.UserAccountStatusActive)
+		obj.Value("state").Number().IsEqual(model.UserAccountStatusActive)
 		obj.Value("bot").Boolean().False()
 		obj.Value("iconFileId").String().NotEmpty()
-		obj.Value("displayName").String().Equal(name)
-		obj.Value("name").String().Equal(name)
-		obj.Value("twitterId").String().Empty()
+		obj.Value("displayName").String().IsEqual(name)
+		obj.Value("name").String().IsEqual(name)
+		obj.Value("twitterId").String().IsEmpty()
 		obj.Value("lastOnline").Null()
 		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("tags").Array().Length().Equal(0)
-		obj.Value("groups").Array().Length().Equal(0)
-		obj.Value("bio").String().Empty()
+		obj.Value("tags").Array().Length().IsEqual(0)
+		obj.Value("groups").Array().Length().IsEqual(0)
+		obj.Value("bio").String().IsEmpty()
 		obj.Value("homeChannel").Null()
 	})
 }
@@ -264,11 +264,11 @@ func TestHandlers_GetMe(t *testing.T) {
 			Object()
 
 		userEquals(t, user, obj)
-		obj.Value("twitterId").String().Empty()
+		obj.Value("twitterId").String().IsEmpty()
 		obj.Value("lastOnline").Null()
-		obj.Value("tags").Array().Length().Equal(0)
-		obj.Value("groups").Array().Length().Equal(0)
-		obj.Value("bio").String().Empty()
+		obj.Value("tags").Array().Length().IsEqual(0)
+		obj.Value("groups").Array().Length().IsEqual(0)
+		obj.Value("bio").String().IsEmpty()
 		obj.Value("homeChannel").Null()
 		obj.Value("permissions").Array()
 	})
@@ -577,10 +577,10 @@ func TestHandlers_GetMyStampHistory(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("stampId").String().Equal(stamp.ID.String())
+		first.Value("stampId").String().IsEqual(stamp.ID.String())
 		first.Value("datetime").String().NotEmpty()
 	})
 }
@@ -799,11 +799,11 @@ func TestHandlers_GetUser(t *testing.T) {
 			Object()
 
 		userEquals(t, user, obj)
-		obj.Value("twitterId").String().Empty()
+		obj.Value("twitterId").String().IsEmpty()
 		obj.Value("lastOnline").Null()
-		obj.Value("tags").Array().Length().Equal(0)
-		obj.Value("groups").Array().Length().Equal(0)
-		obj.Value("bio").String().Empty()
+		obj.Value("tags").Array().Length().IsEqual(0)
+		obj.Value("groups").Array().Length().IsEqual(0)
+		obj.Value("bio").String().IsEmpty()
 		obj.Value("homeChannel").Null()
 	})
 }
@@ -963,11 +963,11 @@ func TestHandlers_GetMyChannelSubscriptions(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("channelId").String().Equal(ch.ID.String())
-		first.Value("level").Number().Equal(model.ChannelSubscribeLevelMarkAndNotify)
+		first.Value("channelId").String().IsEqual(ch.ID.String())
+		first.Value("level").Number().IsEqual(model.ChannelSubscribeLevelMarkAndNotify)
 	})
 }
 
@@ -1132,14 +1132,14 @@ func TestHandlers_GetUserStats(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("totalMessageCount").Number().Equal(1)
+		obj.Value("totalMessageCount").Number().IsEqual(1)
 
 		stamps := obj.Value("stamps").Array()
-		stamps.Length().Equal(1)
+		stamps.Length().IsEqual(1)
 		firstStamp := stamps.First().Object()
-		firstStamp.Value("id").String().Equal(stamp.ID.String())
-		firstStamp.Value("count").Number().Equal(1)
-		firstStamp.Value("total").Number().Equal(2)
+		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
+		firstStamp.Value("count").Number().IsEqual(1)
+		firstStamp.Value("total").Number().IsEqual(2)
 
 		obj.Value("datetime").String().NotEmpty()
 	})

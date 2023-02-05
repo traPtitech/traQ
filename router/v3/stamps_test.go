@@ -17,13 +17,13 @@ import (
 
 func stampEquals(t *testing.T, expect *model.Stamp, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
-	actual.Value("name").String().Equal(expect.Name)
-	actual.Value("creatorId").String().Equal(expect.CreatorID.String())
+	actual.Value("id").String().IsEqual(expect.ID.String())
+	actual.Value("name").String().IsEqual(expect.Name)
+	actual.Value("creatorId").String().IsEqual(expect.CreatorID.String())
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
-	actual.Value("fileId").String().Equal(expect.FileID.String())
-	actual.Value("isUnicode").Boolean().Equal(expect.IsUnicode)
+	actual.Value("fileId").String().IsEqual(expect.FileID.String())
+	actual.Value("isUnicode").Boolean().IsEqual(expect.IsUnicode)
 }
 
 func TestHandlers_GetStamps(t *testing.T) {
@@ -84,7 +84,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.First().Object())
 	})
 
@@ -99,7 +99,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.First().Object())
 	})
 
@@ -114,7 +114,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(0)
+		obj.Length().IsEqual(0)
 	})
 
 	t.Run("success (include-unicode=false)", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.First().Object())
 	})
 }
@@ -353,7 +353,7 @@ func TestHandlers_GetStampStats(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("count").Number().Equal(1)
-		obj.Value("totalCount").Number().Equal(2)
+		obj.Value("count").Number().IsEqual(1)
+		obj.Value("totalCount").Number().IsEqual(2)
 	})
 }

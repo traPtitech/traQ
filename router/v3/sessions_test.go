@@ -150,7 +150,7 @@ func TestHandlers_Login(t *testing.T) {
 			Status(http.StatusNoContent).
 			Cookie(session.CookieName)
 
-		c.Name().Equal(session.CookieName)
+		c.Name().IsEqual(session.CookieName)
 		c.Value().NotEmpty()
 	})
 
@@ -163,10 +163,10 @@ func TestHandlers_Login(t *testing.T) {
 			Expect().
 			Status(http.StatusFound)
 
-		res.Header(echo.HeaderLocation).Equal("https://example.com")
+		res.Header(echo.HeaderLocation).IsEqual("https://example.com")
 
 		c := res.Cookie(session.CookieName)
-		c.Name().Equal(session.CookieName)
+		c.Name().IsEqual(session.CookieName)
 		c.Value().NotEmpty()
 	})
 }
@@ -201,8 +201,8 @@ func TestHandlers_Logout(t *testing.T) {
 			Status(http.StatusNoContent).
 			Cookie(session.CookieName)
 
-		c.Name().Equal(session.CookieName)
-		c.Value().Empty()
+		c.Name().IsEqual(session.CookieName)
+		c.Value().IsEmpty()
 	})
 
 	t.Run("success with redirect", func(t *testing.T) {
@@ -214,11 +214,11 @@ func TestHandlers_Logout(t *testing.T) {
 			Expect().
 			Status(http.StatusFound)
 
-		res.Header(echo.HeaderLocation).Equal("https://example.com")
+		res.Header(echo.HeaderLocation).IsEqual("https://example.com")
 
 		c := res.Cookie(session.CookieName)
-		c.Name().Equal(session.CookieName)
-		c.Value().Empty()
+		c.Name().IsEqual(session.CookieName)
+		c.Value().IsEmpty()
 	})
 
 	t.Run("success with all session revoke", func(t *testing.T) {
@@ -231,8 +231,8 @@ func TestHandlers_Logout(t *testing.T) {
 			Status(http.StatusNoContent).
 			Cookie(session.CookieName)
 
-		c.Name().Equal(session.CookieName)
-		c.Value().Empty()
+		c.Name().IsEqual(session.CookieName)
+		c.Value().IsEmpty()
 
 		sess, err := env.SessStore.GetSessionsByUserID(user3.GetID())
 		require.NoError(t, err)
@@ -266,7 +266,7 @@ func TestHandlers_GetMySessions(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		first.Value("id").String().NotEmpty()
@@ -356,13 +356,13 @@ func TestHandlers_GetMyTokens(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		first.Value("id").String().NotEmpty()
-		first.Value("clientId").String().Equal(client.ID)
-		first.Value("scopes").Array().Length().Equal(1)
-		first.Value("scopes").Array().First().String().Equal("read")
+		first.Value("clientId").String().IsEqual(client.ID)
+		first.Value("scopes").Array().Length().IsEqual(1)
+		first.Value("scopes").Array().First().String().IsEqual("read")
 		first.Value("issuedAt").String().NotEmpty()
 	})
 }
@@ -459,12 +459,12 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("providerName").String().Equal("traq")
+		first.Value("providerName").String().IsEqual("traq")
 		first.Value("linkedAt").String().NotEmpty()
-		first.Value("externalName").String().Equal("sappi_red")
+		first.Value("externalName").String().IsEqual("sappi_red")
 	})
 
 	t.Run("success with external name", func(t *testing.T) {
@@ -496,12 +496,12 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("providerName").String().Equal("traq")
+		first.Value("providerName").String().IsEqual("traq")
 		first.Value("linkedAt").String().NotEmpty()
-		first.Value("externalName").String().Equal("toki")
+		first.Value("externalName").String().IsEqual("toki")
 	})
 }
 
@@ -567,7 +567,7 @@ func TestHandlers_LinkExternalAccount(t *testing.T) {
 			Expect().
 			Status(http.StatusFound).
 			Header(echo.HeaderLocation).
-			Equal("/api/auth/traq?link=1")
+			IsEqual("/api/auth/traq?link=1")
 	})
 }
 

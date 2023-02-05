@@ -23,13 +23,13 @@ import (
 
 func webhookEquals(t *testing.T, expect model.Webhook, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.GetID().String())
-	actual.Value("botUserId").String().Equal(expect.GetBotUserID().String())
-	actual.Value("displayName").String().Equal(expect.GetName())
-	actual.Value("description").String().Equal(expect.GetDescription())
-	actual.Value("secure").Boolean().Equal(len(expect.GetSecret()) > 0)
-	actual.Value("channelId").String().Equal(expect.GetChannelID().String())
-	actual.Value("ownerId").String().Equal(expect.GetCreatorID().String())
+	actual.Value("id").String().IsEqual(expect.GetID().String())
+	actual.Value("botUserId").String().IsEqual(expect.GetBotUserID().String())
+	actual.Value("displayName").String().IsEqual(expect.GetName())
+	actual.Value("description").String().IsEqual(expect.GetDescription())
+	actual.Value("secure").Boolean().IsEqual(len(expect.GetSecret()) > 0)
+	actual.Value("channelId").String().IsEqual(expect.GetChannelID().String())
+	actual.Value("ownerId").String().IsEqual(expect.GetCreatorID().String())
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 }
@@ -68,7 +68,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		webhookEquals(t, wh, obj.First().Object())
 	})
 
@@ -83,7 +83,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		webhookEquals(t, wh, obj.First().Object())
 	})
 
@@ -98,7 +98,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 
 		if obj.First().Object().Value("id").Raw() == wh.GetID().String() {
 			webhookEquals(t, wh, obj.Element(0).Object())
@@ -200,11 +200,11 @@ func TestHandlers_CreateWebhook(t *testing.T) {
 
 		obj.Value("id").String().NotEmpty()
 		obj.Value("botUserId").String().NotEmpty()
-		obj.Value("displayName").String().Equal(req.Name)
-		obj.Value("description").String().Equal(req.Description)
+		obj.Value("displayName").String().IsEqual(req.Name)
+		obj.Value("description").String().IsEqual(req.Description)
 		obj.Value("secure").Boolean().False()
-		obj.Value("channelId").String().Equal(req.ChannelID.String())
-		obj.Value("ownerId").String().Equal(user.GetID().String())
+		obj.Value("channelId").String().IsEqual(req.ChannelID.String())
+		obj.Value("ownerId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 	})
@@ -537,7 +537,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		messageEquals(t, m, obj.First().Object())
 	})
 }

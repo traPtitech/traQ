@@ -84,10 +84,10 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 	timelineMessageEquals := func(t *testing.T, expect message.Message, actual *httpexpect.Object) {
 		t.Helper()
-		actual.Value("id").String().Equal(expect.GetID().String())
-		actual.Value("userId").String().Equal(expect.GetUserID().String())
-		actual.Value("channelId").String().Equal(expect.GetChannelID().String())
-		actual.Value("content").String().Equal(expect.GetText())
+		actual.Value("id").String().IsEqual(expect.GetID().String())
+		actual.Value("userId").String().IsEqual(expect.GetUserID().String())
+		actual.Value("channelId").String().IsEqual(expect.GetChannelID().String())
+		actual.Value("content").String().IsEqual(expect.GetText())
 		actual.Value("createdAt").String().NotEmpty()
 		actual.Value("updatedAt").String().NotEmpty()
 	}
@@ -132,7 +132,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 
 		timelineMessageEquals(t, m3, obj.Element(0).Object())
 		timelineMessageEquals(t, m2, obj.Element(1).Object())
@@ -150,7 +150,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(3)
+		obj.Length().IsEqual(3)
 
 		timelineMessageEquals(t, m3, obj.Element(0).Object())
 		timelineMessageEquals(t, m2, obj.Element(1).Object())
@@ -169,7 +169,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		timelineMessageEquals(t, m2, obj.Element(0).Object())
 	})
@@ -186,7 +186,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 
 		timelineMessageEquals(t, m2, obj.Element(0).Object())
 		timelineMessageEquals(t, m1, obj.Element(1).Object())

@@ -26,15 +26,15 @@ import (
 
 func fileEquals(t *testing.T, expect model.File, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.GetID().String())
-	actual.Value("name").String().Equal(expect.GetFileName())
-	actual.Value("mime").String().Equal(expect.GetMIMEType())
-	actual.Value("size").Number().Equal(expect.GetFileSize())
-	actual.Value("md5").String().Equal(expect.GetMD5Hash())
-	actual.Value("isAnimatedImage").Boolean().Equal(expect.IsAnimatedImage())
-	actual.Value("thumbnails").Array().Length().Equal(len(expect.GetThumbnails()))
-	actual.Value("channelId").Equal(expect.GetUploadChannelID())
-	actual.Value("uploaderId").Equal(expect.GetCreatorID())
+	actual.Value("id").String().IsEqual(expect.GetID().String())
+	actual.Value("name").String().IsEqual(expect.GetFileName())
+	actual.Value("mime").String().IsEqual(expect.GetMIMEType())
+	actual.Value("size").Number().IsEqual(expect.GetFileSize())
+	actual.Value("md5").String().IsEqual(expect.GetMD5Hash())
+	actual.Value("isAnimatedImage").Boolean().IsEqual(expect.IsAnimatedImage())
+	actual.Value("thumbnails").Array().Length().IsEqual(len(expect.GetThumbnails()))
+	actual.Value("channelId").IsEqual(expect.GetUploadChannelID())
+	actual.Value("uploaderId").IsEqual(expect.GetCreatorID())
 }
 
 func genSampleAudio(t *testing.T) *bytes.Reader {
@@ -185,7 +185,7 @@ func TestHandlers_GetFiles(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		fileEquals(t, f1, obj.First().Object())
 	})
 
@@ -200,7 +200,7 @@ func TestHandlers_GetFiles(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		fileEquals(t, f2, obj.First().Object())
 	})
 }
@@ -295,14 +295,14 @@ func TestHandlers_PostFile(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("name").String().Equal("file.txt")
+		obj.Value("name").String().IsEqual("file.txt")
 		obj.Value("mime").String().NotEmpty()
-		obj.Value("size").Number().Equal(9)
-		obj.Value("md5").String().Equal(hexSum)
+		obj.Value("size").Number().IsEqual(9)
+		obj.Value("md5").String().IsEqual(hexSum)
 		obj.Value("isAnimatedImage").Boolean().False()
-		obj.Value("thumbnails").Array().Length().Equal(0)
-		obj.Value("channelId").String().Equal(ch.ID.String())
-		obj.Value("uploaderId").String().Equal(user.GetID().String())
+		obj.Value("thumbnails").Array().Length().IsEqual(0)
+		obj.Value("channelId").String().IsEqual(ch.ID.String())
+		obj.Value("uploaderId").String().IsEqual(user.GetID().String())
 	})
 
 	t.Run("success (dm)", func(t *testing.T) {
@@ -319,14 +319,14 @@ func TestHandlers_PostFile(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("name").String().Equal("file.txt")
+		obj.Value("name").String().IsEqual("file.txt")
 		obj.Value("mime").String().NotEmpty()
-		obj.Value("size").Number().Equal(9)
-		obj.Value("md5").String().Equal(hexSum)
+		obj.Value("size").Number().IsEqual(9)
+		obj.Value("md5").String().IsEqual(hexSum)
 		obj.Value("isAnimatedImage").Boolean().False()
-		obj.Value("thumbnails").Array().Length().Equal(0)
-		obj.Value("channelId").String().Equal(dm1.ID.String())
-		obj.Value("uploaderId").String().Equal(user.GetID().String())
+		obj.Value("thumbnails").Array().Length().IsEqual(0)
+		obj.Value("channelId").String().IsEqual(dm1.ID.String())
+		obj.Value("uploaderId").String().IsEqual(user.GetID().String())
 	})
 }
 
@@ -396,12 +396,12 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("id").String().Equal(iconFileID.String())
+		obj.Value("id").String().IsEqual(iconFileID.String())
 		thumbnails := obj.Value("thumbnails").Array()
-		thumbnails.Length().Equal(1)
+		thumbnails.Length().IsEqual(1)
 		thumbnail := thumbnails.First().Object()
-		thumbnail.Value("type").Equal("image")
-		thumbnail.Value("mime").Equal("image/png")
+		thumbnail.Value("type").IsEqual("image")
+		thumbnail.Value("mime").IsEqual("image/png")
 		thumbnail.Value("width").NotNull().NotEqual(0)
 		thumbnail.Value("height").NotNull().NotEqual(0)
 	})
@@ -427,12 +427,12 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("id").String().Equal(file.GetID().String())
+		obj.Value("id").String().IsEqual(file.GetID().String())
 		thumbnails := obj.Value("thumbnails").Array()
-		thumbnails.Length().Equal(1)
+		thumbnails.Length().IsEqual(1)
 		thumbnail := thumbnails.First().Object()
-		thumbnail.Value("type").Equal("waveform")
-		thumbnail.Value("mime").Equal("image/svg+xml")
+		thumbnail.Value("type").IsEqual("waveform")
+		thumbnail.Value("mime").IsEqual("image/svg+xml")
 		thumbnail.Value("width").NotNull().NotEqual(0)
 		thumbnail.Value("height").NotNull().NotEqual(0)
 	})
@@ -572,7 +572,7 @@ func TestHandlers_GetFile(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Body().
-			Equal("test message")
+			IsEqual("test message")
 	})
 
 	t.Run("success Content-Dispotion escape", func(t *testing.T) {
@@ -584,7 +584,7 @@ func TestHandlers_GetFile(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Header(echo.HeaderContentDisposition).
-			Equal("attachment; filename*=UTF-8''%E3%83%86%E3%82%B9%2C%E3%83%88")
+			IsEqual("attachment; filename*=UTF-8''%E3%83%86%E3%82%B9%2C%E3%83%88")
 	})
 }
 

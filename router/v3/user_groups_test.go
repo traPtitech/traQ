@@ -19,11 +19,11 @@ import (
 
 func userGroupEquals(t *testing.T, expect *model.UserGroup, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
-	actual.Value("name").String().Equal(expect.Name)
-	actual.Value("description").String().Equal(expect.Description)
-	actual.Value("type").String().Equal(expect.Type)
-	actual.Value("icon").String().Equal(expect.Icon.String())
+	actual.Value("id").String().IsEqual(expect.ID.String())
+	actual.Value("name").String().IsEqual(expect.Name)
+	actual.Value("description").String().IsEqual(expect.Description)
+	actual.Value("type").String().IsEqual(expect.Type)
+	actual.Value("icon").String().IsEqual(expect.Icon.String())
 	members := make([]interface{}, len(expect.Members))
 	for i, member := range expect.Members {
 		members[i] = map[string]interface{}{
@@ -74,7 +74,7 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		userGroupEquals(t, ug, obj.First().Object())
 	})
 }
@@ -194,10 +194,10 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("name").String().Equal("testGroup123")
-		obj.Value("description").String().Empty()
-		obj.Value("type").String().Empty()
-		obj.Value("members").Array().Length().Equal(0)
+		obj.Value("name").String().IsEqual("testGroup123")
+		obj.Value("description").String().IsEmpty()
+		obj.Value("type").String().IsEmpty()
+		obj.Value("members").Array().Length().IsEqual(0)
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("admins").Array().ContainsOnly(user.GetID())
@@ -481,11 +481,11 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("id").String().Equal(user.GetID().String())
-		first.Value("role").String().Empty()
+		first.Value("id").String().IsEqual(user.GetID().String())
+		first.Value("role").String().IsEmpty()
 	})
 }
 

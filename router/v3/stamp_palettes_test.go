@@ -18,10 +18,10 @@ import (
 
 func stampPaletteEquals(t *testing.T, expect *model.StampPalette, actual *httpexpect.Object) {
 	t.Helper()
-	actual.Value("id").String().Equal(expect.ID.String())
-	actual.Value("name").String().Equal(expect.Name)
-	actual.Value("description").String().Equal(expect.Description)
-	actual.Value("creatorId").String().Equal(expect.CreatorID.String())
+	actual.Value("id").String().IsEqual(expect.ID.String())
+	actual.Value("name").String().IsEqual(expect.Name)
+	actual.Value("description").String().IsEqual(expect.Description)
+	actual.Value("creatorId").String().IsEqual(expect.CreatorID.String())
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 
@@ -61,7 +61,7 @@ func TestHandlers_GetStampPalettes(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		stampPaletteEquals(t, sp, obj.First().Object())
 	})
 }
@@ -159,14 +159,14 @@ func TestHandlers_CreateStampPalette(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("name").String().Equal("po")
+		obj.Value("name").String().IsEqual("po")
 		stamps := obj.Value("stamps").Array()
-		stamps.Length().Equal(1)
-		stamps.First().String().Equal(stamp.ID.String())
-		obj.Value("creatorId").String().Equal(user.GetID().String())
+		stamps.Length().IsEqual(1)
+		stamps.First().String().IsEqual(stamp.ID.String())
+		obj.Value("creatorId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("description").String().Empty()
+		obj.Value("description").String().IsEmpty()
 	})
 }
 

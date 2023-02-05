@@ -42,11 +42,11 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("channelId").String().Equal(ch.ID.String())
-		first.Value("count").Number().Equal(1)
+		first.Value("channelId").String().IsEqual(ch.ID.String())
+		first.Value("count").Number().IsEqual(1)
 		first.Value("noticeable").Boolean().False()
 		first.Value("since").String().NotEmpty()
 		first.Value("updatedAt").String().NotEmpty()
@@ -517,7 +517,7 @@ func TestHandlers_GetPin(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("userId").String().Equal(user.GetID().String())
+		obj.Value("userId").String().IsEqual(user.GetID().String())
 		obj.Value("pinnedAt").String().NotEmpty()
 	})
 }
@@ -583,7 +583,7 @@ func TestHandlers_CreatePin(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("userId").String().Equal(user.GetID().String())
+		obj.Value("userId").String().IsEqual(user.GetID().String())
 		obj.Value("pinnedAt").String().NotEmpty()
 	})
 }
@@ -699,7 +699,7 @@ func TestHandlers_GetMessageStamps(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
 		messageStampEquals(t, m.GetStamps()[0], first)
@@ -941,10 +941,10 @@ func TestHandlers_GetMessageClips(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 
 		first := obj.First().Object()
-		first.Value("folderId").String().Equal(cf.ID.String())
+		first.Value("folderId").String().IsEqual(cf.ID.String())
 		first.Value("clippedAt").String().NotEmpty()
 	})
 }
@@ -997,7 +997,7 @@ func TestHandlers_GetMessages(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(2)
+		obj.Length().IsEqual(2)
 
 		messageEquals(t, m2, obj.Element(0).Object())
 		messageEquals(t, m, obj.Element(1).Object())
@@ -1071,13 +1071,13 @@ func TestHandlers_PostMessage(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("userId").String().Equal(user.GetID().String())
-		obj.Value("channelId").String().Equal(ch.ID.String())
-		obj.Value("content").String().Equal("Hello, traP")
+		obj.Value("userId").String().IsEqual(user.GetID().String())
+		obj.Value("channelId").String().IsEqual(ch.ID.String())
+		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("pinned").Boolean().False()
-		obj.Value("stamps").Array().Length().Equal(0)
+		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
@@ -1137,7 +1137,7 @@ func TestHandlers_GetDirectMessages(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(1)
+		obj.Length().IsEqual(1)
 		messageEquals(t, m, obj.First().Object())
 	})
 
@@ -1151,7 +1151,7 @@ func TestHandlers_GetDirectMessages(t *testing.T) {
 			JSON().
 			Array()
 
-		obj.Length().Equal(0)
+		obj.Length().IsEqual(0)
 	})
 }
 
@@ -1212,13 +1212,13 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("userId").String().Equal(user.GetID().String())
-		obj.Value("channelId").String().Equal(dm.ID.String())
-		obj.Value("content").String().Equal("Hello, traP")
+		obj.Value("userId").String().IsEqual(user.GetID().String())
+		obj.Value("channelId").String().IsEqual(dm.ID.String())
+		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("pinned").Boolean().False()
-		obj.Value("stamps").Array().Length().Equal(0)
+		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
@@ -1240,13 +1240,13 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("userId").String().Equal(user.GetID().String())
+		obj.Value("userId").String().IsEqual(user.GetID().String())
 		obj.Value("channelId").String().NotEmpty()
-		obj.Value("content").String().Equal("Hello, traP")
+		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("pinned").Boolean().False()
-		obj.Value("stamps").Array().Length().Equal(0)
+		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
