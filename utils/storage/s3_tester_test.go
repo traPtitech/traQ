@@ -66,14 +66,13 @@ func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 				},
 			),
 		),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("AKID", "SECRETPASSWORD", "")),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("ROOT", "PASSWORD", "")),
 	)
 
 	return cfg, err
 }
 
 func minioHealthCheck(host string) error {
-
 	resp, err := http.Get(fmt.Sprintf("http://localhost:%s/minio/health/live", host))
 	if err != nil {
 		return err

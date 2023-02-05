@@ -13,8 +13,8 @@ services:
       TRAQ_STORAGE_S3_BUCKET: traq
       TRAQ_STORAGE_S3_REGION: ap-northeast-1
       TRAQ_STORAGE_S3_ENDPOINT: http://s3:9000
-      TRAQ_STORAGE_S3_ACCESSKEY: AKID
-      TRAQ_STORAGE_S3_SECRETKEY: SECRETPASSWORD
+      TRAQ_STORAGE_S3_ACCESSKEY: ROOT
+      TRAQ_STORAGE_S3_SECRETKEY: PASSWORD
       TRAQ_STORAGE_S3_CACHEDIR: ./storage
       TRAQ_STORAGE_COMPOSITE_REMOTE: s3
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306 -wait tcp://es:9200
@@ -100,8 +100,8 @@ services:
         aliases:
           - traq.s3 # {bucket}.s3
     environment:
-      MINIO_ROOT_USER: AKID
-      MINIO_ROOT_PASSWORD: SECRETPASSWORD
+      MINIO_ROOT_USER: ROOT
+      MINIO_ROOT_PASSWORD: PASSWORD
       MINIO_DOMAIN: s3
     volumes:
       - s3:/data

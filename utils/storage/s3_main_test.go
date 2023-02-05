@@ -14,9 +14,7 @@ import (
 
 const bucketName = "test-bucket"
 
-var (
-	s3Main *s3Tester
-)
+var s3Main *s3Tester
 
 // 参考：https://github.com/volatiletech/sqlboiler/blob/master/templates/test/singleton
 func TestMain(m *testing.M) {
@@ -40,15 +38,14 @@ func TestMain(m *testing.M) {
 		Tag:        "latest",
 		Cmd:        []string{"minio", "server", "/data"},
 		Env: []string{
-			"MINIO_ROOT_USER=AKID",
-			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
+			"MINIO_ROOT_USER=ROOT",
+			"MINIO_ROOT_PASSWORD=PASSWORD",
 			"MINIO_DOMAIN=s3",
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"9000/tcp": {{HostPort: "19000"}},
 		},
 	}, func(config *docker.HostConfig) {
-
 		config.AutoRemove = true
 		config.RestartPolicy = docker.RestartPolicy{
 			Name: "no",
