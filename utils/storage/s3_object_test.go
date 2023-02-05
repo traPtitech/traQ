@@ -182,14 +182,14 @@ func tests3ObjectSeek(t *testing.T) {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			o := tt.setupFunc(t)
+			pos := o.pos
 			gotNewPos, err := o.Seek(tt.args.offset, tt.args.whence)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("s3Object.Seek() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotNewPos != tt.wantNewPos(o.length, o.pos, tt.args.offset) {
+			if gotNewPos != tt.wantNewPos(o.length, pos, tt.args.offset) {
 				t.Errorf("s3Object.Seek() = %v, want %v", gotNewPos, tt.wantNewPos(o.length, o.pos, tt.args.offset))
 			}
 		})
