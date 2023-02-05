@@ -17,11 +17,11 @@ type s3Object struct {
 	lengthOk   bool
 	body       io.ReadCloser
 	pos        int64
-	overSeeked bool
+	overSought bool
 }
 
 func (o *s3Object) Read(p []byte) (n int, err error) {
-	if o.overSeeked {
+	if o.overSought {
 		return 0, io.EOF
 	}
 
@@ -36,7 +36,7 @@ func (o *s3Object) Close() (err error) {
 
 // https://github.com/ncw/swift/blob/master/swift.go#L1668
 func (o *s3Object) Seek(offset int64, whence int) (newPos int64, err error) {
-	o.overSeeked = false
+	o.overSought = false
 
 	switch whence {
 	case io.SeekStart:
@@ -49,7 +49,7 @@ func (o *s3Object) Seek(offset int64, whence int) (newPos int64, err error) {
 		}
 		newPos = o.length + offset
 		if offset >= 0 {
-			o.overSeeked = true
+			o.overSought = true
 			return
 		}
 	default:
