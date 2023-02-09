@@ -47,7 +47,7 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 		first := obj.First().Object()
 		first.Value("channelId").String().IsEqual(ch.ID.String())
 		first.Value("count").Number().IsEqual(1)
-		first.Value("noticeable").Boolean().False()
+		first.Value("noticeable").Boolean().IsFalse()
 		first.Value("since").String().NotEmpty()
 		first.Value("updatedAt").String().NotEmpty()
 	})
@@ -1076,7 +1076,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("pinned").Boolean().False()
+		obj.Value("pinned").Boolean().IsFalse()
 		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
@@ -1217,7 +1217,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("pinned").Boolean().False()
+		obj.Value("pinned").Boolean().IsFalse()
 		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
@@ -1245,7 +1245,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 		obj.Value("content").String().IsEqual("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("pinned").Boolean().False()
+		obj.Value("pinned").Boolean().IsFalse()
 		obj.Value("stamps").Array().Length().IsEqual(0)
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())

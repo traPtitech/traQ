@@ -69,7 +69,7 @@ func TestHandlers_GetMySettings(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().IsEqual(user.GetID().String())
-		obj.Value("notifyCitation").Boolean().False()
+		obj.Value("notifyCitation").Boolean().IsFalse()
 	})
 }
 
@@ -99,6 +99,6 @@ func TestHandlers_GetMyNotifyCitation(t *testing.T) {
 			JSON().
 			Object()
 
-		obj.Value("notifyCitation").Boolean().False()
+		obj.Value("notifyCitation").Boolean().IsFalse()
 	})
 }

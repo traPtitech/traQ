@@ -202,7 +202,7 @@ func TestHandlers_CreateWebhook(t *testing.T) {
 		obj.Value("botUserId").String().NotEmpty()
 		obj.Value("displayName").String().IsEqual(req.Name)
 		obj.Value("description").String().IsEqual(req.Description)
-		obj.Value("secure").Boolean().False()
+		obj.Value("secure").Boolean().IsFalse()
 		obj.Value("channelId").String().IsEqual(req.ChannelID.String())
 		obj.Value("ownerId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()

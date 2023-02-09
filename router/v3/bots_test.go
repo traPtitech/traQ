@@ -235,7 +235,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
 		obj.Value("endpoint").String().IsEqual("https://example.com")
-		obj.Value("privileged").Boolean().False()
+		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
 	})
 
@@ -262,7 +262,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
 		obj.Value("endpoint").String().IsEqual("")
-		obj.Value("privileged").Boolean().False()
+		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
 	})
 }
@@ -345,7 +345,7 @@ func TestHandlers_GetBot(t *testing.T) {
 		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
 		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
 		obj.Value("endpoint").String().IsEqual("https://example.com")
-		obj.Value("privileged").Boolean().False()
+		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
 	})
 }
