@@ -217,7 +217,7 @@ func TestHandlers_AddUserTag(t *testing.T) {
 
 		obj.Value("tagId").String().NotEmpty()
 		obj.Value("tag").String().IsEqual("†俺があやせだ†")
-		obj.Value("isLocked").Boolean().False()
+		obj.Value("isLocked").Boolean().IsFalse()
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 	})
@@ -276,7 +276,7 @@ func TestHandlers_AddMyUserTag(t *testing.T) {
 
 		obj.Value("tagId").String().NotEmpty()
 		obj.Value("tag").String().IsEqual("普段からJSとか触ってます")
-		obj.Value("isLocked").Boolean().False()
+		obj.Value("isLocked").Boolean().IsFalse()
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 	})

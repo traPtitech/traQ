@@ -30,7 +30,7 @@ func TestHandlers_GetVersion(t *testing.T) {
 
 	flags := obj.Value("flags").Object()
 
-	flags.Value("signUpAllowed").Boolean().False()
+	flags.Value("signUpAllowed").Boolean().IsFalse()
 
 	ext := flags.Value("externalLogin").Array()
 	ext.Length().IsEqual(1)

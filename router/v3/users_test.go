@@ -223,17 +223,17 @@ func TestHandlers_CreateUser(t *testing.T) {
 
 		obj.Value("id").String().NotEmpty()
 		obj.Value("state").Number().IsEqual(model.UserAccountStatusActive)
-		obj.Value("bot").Boolean().False()
+		obj.Value("bot").Boolean().IsFalse()
 		obj.Value("iconFileId").String().NotEmpty()
 		obj.Value("displayName").String().IsEqual(name)
 		obj.Value("name").String().IsEqual(name)
 		obj.Value("twitterId").String().IsEmpty()
-		obj.Value("lastOnline").Null()
+		obj.Value("lastOnline").IsNull()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("tags").Array().Length().IsEqual(0)
 		obj.Value("groups").Array().Length().IsEqual(0)
 		obj.Value("bio").String().IsEmpty()
-		obj.Value("homeChannel").Null()
+		obj.Value("homeChannel").IsNull()
 	})
 }
 
@@ -265,11 +265,11 @@ func TestHandlers_GetMe(t *testing.T) {
 
 		userEquals(t, user, obj)
 		obj.Value("twitterId").String().IsEmpty()
-		obj.Value("lastOnline").Null()
+		obj.Value("lastOnline").IsNull()
 		obj.Value("tags").Array().Length().IsEqual(0)
 		obj.Value("groups").Array().Length().IsEqual(0)
 		obj.Value("bio").String().IsEmpty()
-		obj.Value("homeChannel").Null()
+		obj.Value("homeChannel").IsNull()
 		obj.Value("permissions").Array()
 	})
 }
@@ -800,11 +800,11 @@ func TestHandlers_GetUser(t *testing.T) {
 
 		userEquals(t, user, obj)
 		obj.Value("twitterId").String().IsEmpty()
-		obj.Value("lastOnline").Null()
+		obj.Value("lastOnline").IsNull()
 		obj.Value("tags").Array().Length().IsEqual(0)
 		obj.Value("groups").Array().Length().IsEqual(0)
 		obj.Value("bio").String().IsEmpty()
-		obj.Value("homeChannel").Null()
+		obj.Value("homeChannel").IsNull()
 	})
 }
 

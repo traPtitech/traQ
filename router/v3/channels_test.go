@@ -50,7 +50,7 @@ func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Objec
 	t.Helper()
 	actual.Value("id").String().IsEqual(expect.ID.String())
 	if expect.ParentID == uuid.Nil {
-		actual.Value("parentId").Null()
+		actual.Value("parentId").IsNull()
 	} else {
 		actual.Value("parentId").String().IsEqual(expect.ParentID.String())
 	}
@@ -250,9 +250,9 @@ func TestHandlers_CreateChannels(t *testing.T) {
 			Object()
 
 		obj.Value("id").String().NotEmpty()
-		obj.Value("parentId").Null()
-		obj.Value("archived").Boolean().False()
-		obj.Value("force").Boolean().False()
+		obj.Value("parentId").IsNull()
+		obj.Value("archived").Boolean().IsFalse()
+		obj.Value("force").Boolean().IsFalse()
 		obj.Value("topic").String().IsEmpty()
 		obj.Value("name").String().IsEqual(cname1)
 		obj.Value("children").Array().Length().IsEqual(0)
@@ -271,8 +271,8 @@ func TestHandlers_CreateChannels(t *testing.T) {
 
 		obj.Value("id").String().NotEmpty()
 		obj.Value("parentId").String().IsEqual(c1.String())
-		obj.Value("archived").Boolean().False()
-		obj.Value("force").Boolean().False()
+		obj.Value("archived").Boolean().IsFalse()
+		obj.Value("force").Boolean().IsFalse()
 		obj.Value("topic").String().IsEmpty()
 		obj.Value("name").String().IsEqual(cname2)
 		obj.Value("children").Array().Length().IsEqual(0)
