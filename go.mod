@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.12
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.12
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.51
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.30.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.30.3
 	github.com/blendle/zapdriver v1.3.1
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -82,7 +82,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.28 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.22 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.19 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.20 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.22 // indirect
