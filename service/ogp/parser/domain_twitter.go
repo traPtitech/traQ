@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/dyatlov/go-opengraph/opengraph/types/image"
@@ -65,11 +64,13 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 }
 
 func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse, error) {
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
 	requestURL := fmt.Sprintf("https://syndication.twitter.com/tweet-result?id=%s", statusID)
-	resp, err := client.Get(requestURL)
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, ErrNetwork
 	}
