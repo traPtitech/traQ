@@ -622,7 +622,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, channel.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PutChannelTopicRequest{Topic: "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901"}).
+			WithJSON(&PutChannelTopicRequest{Topic: strings.Repeat("a", 501)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -652,14 +652,13 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 
 		e.PUT(path, channel.ID.String()).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PutChannelTopicRequest{Topic: "abcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxy"}).
+			WithJSON(&PutChannelTopicRequest{Topic: strings.Repeat("a", 500)}).
 			Expect().
 			Status(http.StatusNoContent)
 
 		ch, err = env.CM.GetChannel(channel.ID)
 		require.NoError(t, err)
-		assert.EqualValues(t, "abcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxy",
-			ch.Topic)
+		assert.EqualValues(t, strings.Repeat("a", 500), ch.Topic)
 	})
 }
 
