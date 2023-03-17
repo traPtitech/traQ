@@ -7,7 +7,7 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.17.6
-	github.com/aws/aws-sdk-go-v2/config v1.18.17
+	github.com/aws/aws-sdk-go-v2/config v1.18.18
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.17
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.57
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.30.6
