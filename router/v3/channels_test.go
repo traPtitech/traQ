@@ -617,6 +617,16 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
+	t.Run("bad request (over 500 letters)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PutChannelTopicRequest{Topic: strings.Repeat("a", 501)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -639,6 +649,16 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 		ch, err = env.CM.GetChannel(channel.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, "", ch.Topic)
+
+		e.PUT(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PutChannelTopicRequest{Topic: strings.Repeat("a", 500)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ch, err = env.CM.GetChannel(channel.ID)
+		require.NoError(t, err)
+		assert.EqualValues(t, strings.Repeat("a", 500), ch.Topic)
 	})
 }
 

@@ -184,7 +184,7 @@ type PutChannelTopicRequest struct {
 
 func (r PutChannelTopicRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Topic, vd.RuneLength(0, 200)),
+		vd.Field(&r.Topic, vd.RuneLength(0, 500)),
 	)
 }
 
