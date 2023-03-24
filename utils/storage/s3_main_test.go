@@ -3,10 +3,8 @@ package storage
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -22,8 +20,6 @@ func TestMain(m *testing.M) {
 		fmt.Println("no ddbMain tester interface was ready")
 		os.Exit(-1)
 	}
-
-	rand.Seed(time.Now().UnixNano())
 
 	var err error
 
