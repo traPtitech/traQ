@@ -10,11 +10,11 @@ import (
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/testUtils"
+	"github.com/traPtitech/traQ/testutils"
 )
 
 type Repo struct {
-	testUtils.EmptyTestRepository
+	testutils.EmptyTestRepository
 }
 
 func (r *Repo) GetAllUserRoles() ([]*model.UserRole, error) {
