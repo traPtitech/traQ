@@ -32,7 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
-	"github.com/traPtitech/traQ/utils/gormZap"
+	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		db.SetMaxOpenConns(20)
-		engine.Logger = gormZap.New(l)
+		engine.Logger = gormzap.New(l)
 		if err := migration.DropAll(engine); err != nil {
 			panic(err)
 		}

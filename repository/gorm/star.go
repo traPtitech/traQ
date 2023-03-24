@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // AddStar implements StarRepository interface.
@@ -18,7 +18,7 @@ func (repo *Repository) AddStar(userID, channelID uuid.UUID) error {
 	var s model.Star
 	result := repo.db.FirstOrCreate(&s, &model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
-		if !gormUtil.IsMySQLDuplicatedRecordErr(result.Error) {
+		if !gormutil.IsMySQLDuplicatedRecordErr(result.Error) {
 			return result.Error
 		}
 	}

@@ -231,9 +231,8 @@ func (e *esEngine) sync() error {
 		if count == 0 {
 			if more {
 				continue
-			} else {
-				break
 			}
+			break
 		}
 		res, err := bulk.Do(context.Background())
 		if err != nil {
@@ -257,7 +256,6 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		Sort("updatedAt", false).
 		Size(1).
 		Do(context.Background())
-
 	if err != nil {
 		return time.Time{}, err
 	}

@@ -22,7 +22,7 @@ func NewInMemoryFileStorage() *InMemoryFileStorage {
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, _, _ string, _ model.FileType) error {
 	b, err := io.ReadAll(src)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType s
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (io.ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key string, _ model.FileType) (io.ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()
@@ -45,7 +45,7 @@ func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *InMemoryFileStorage) DeleteByKey(key string, fileType model.FileType) error {
+func (fs *InMemoryFileStorage) DeleteByKey(key string, _ model.FileType) error {
 	fs.Lock()
 	defer fs.Unlock()
 	if _, ok := fs.fileMap[key]; !ok {
@@ -56,7 +56,7 @@ func (fs *InMemoryFileStorage) DeleteByKey(key string, fileType model.FileType) 
 }
 
 // GenerateAccessURL "",nilを返します
-func (fs *InMemoryFileStorage) GenerateAccessURL(key string, fileType model.FileType) (string, error) {
+func (fs *InMemoryFileStorage) GenerateAccessURL(_ string, _ model.FileType) (string, error) {
 	return "", nil
 }
 

@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -82,7 +82,7 @@ func (r *userRepository) CreateUser(args repository.CreateUserArgs) (model.UserI
 	}
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if exist, err := gormUtil.RecordExists(tx, &model.User{Name: user.Name}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.User{Name: user.Name}); err != nil {
 			return err
 		} else if exist {
 			return repository.ErrAlreadyExists
@@ -210,7 +210,7 @@ func (r *userRepository) UserExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
 	}
-	return gormUtil.RecordExists(r.db, &model.User{ID: id})
+	return gormutil.RecordExists(r.db, &model.User{ID: id})
 }
 
 // UpdateUser implements UserRepository interface.
@@ -331,19 +331,19 @@ func (r *userRepository) LinkExternalUserAccount(userID uuid.UUID, args reposito
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if exist, err := gormUtil.RecordExists(tx, &model.User{ID: userID}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.User{ID: userID}); err != nil {
 			return err
 		} else if !exist {
 			return repository.ErrNotFound
 		}
 
-		if exist, err := gormUtil.RecordExists(tx, &model.ExternalProviderUser{UserID: userID, ProviderName: args.ProviderName}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.ExternalProviderUser{UserID: userID, ProviderName: args.ProviderName}); err != nil {
 			return err
 		} else if exist {
 			return repository.ErrAlreadyExists
 		}
 
-		if exist, err := gormUtil.RecordExists(tx, &model.ExternalProviderUser{ProviderName: args.ProviderName, ExternalID: args.ExternalID}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.ExternalProviderUser{ProviderName: args.ProviderName, ExternalID: args.ExternalID}); err != nil {
 			return err
 		} else if exist {
 			return repository.ErrAlreadyExists
@@ -388,7 +388,7 @@ func (r *userRepository) GetUserStats(userID uuid.UUID) (*repository.UserStats, 
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
-	if ok, err := gormUtil.
+	if ok, err := gormutil.
 		RecordExists(r.db, &model.User{ID: userID}); err != nil {
 		return nil, err
 	} else if !ok {

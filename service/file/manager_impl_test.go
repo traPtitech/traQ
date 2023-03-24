@@ -26,7 +26,7 @@ import (
 
 var errMock = errors.New("mock error")
 
-func initFM(t *testing.T, repo repository.FileRepository, fs storage.FileStorage, ip imaging.Processor) *managerImpl {
+func initFM(_ *testing.T, repo repository.FileRepository, fs storage.FileStorage, ip imaging.Processor) *managerImpl {
 	return &managerImpl{
 		repo: repo,
 		fs:   fs,

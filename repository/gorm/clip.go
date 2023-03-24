@@ -2,7 +2,7 @@ package gorm
 
 import (
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
@@ -185,7 +185,7 @@ func (repo *Repository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*mo
 		}
 
 		// 名前重複チェック
-		if exists, err := gormUtil.RecordExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
+		if exists, err := gormutil.RecordExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
 			return err
 		} else if exists {
 			return repository.ErrAlreadyExists
@@ -251,7 +251,7 @@ func (repo *Repository) GetClipFolderMessages(folderID uuid.UUID, query reposito
 	messages = make([]*model.ClipFolderMessage, 0)
 
 	// フォルダ存在チェック
-	if exists, err := gormUtil.RecordExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
+	if exists, err := gormutil.RecordExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
 		return nil, false, err
 	} else if !exists {
 		return nil, false, repository.ErrNotFound

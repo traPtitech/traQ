@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // CreateUserGroup implements UserGroupRepository interface.
@@ -25,7 +25,7 @@ func (repo *Repository) CreateUserGroup(name, description, gType string, adminID
 	}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(g).Error
-		if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return repository.ErrAlreadyExists
 		}
 
@@ -79,7 +79,7 @@ func (repo *Repository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUser
 
 		updated = true
 		err := tx.Model(&g).Updates(changes).Error
-		if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return repository.ErrAlreadyExists
 		}
 		return err
@@ -280,7 +280,7 @@ func (repo *Repository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
 		}
 
 		if err := tx.Create(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
-			if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+			if gormutil.IsMySQLDuplicatedRecordErr(err) {
 				return nil
 			}
 			return err

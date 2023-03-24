@@ -150,5 +150,6 @@ func waitSIGINT() {
 	signal.Stop(quit)
 	close(quit)
 	for range quit {
+		continue
 	}
 }

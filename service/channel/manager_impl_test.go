@@ -337,7 +337,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 				}
 			})
 		}
-
 	})
 }
 
@@ -502,9 +501,9 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				ch, err := cm.PublicChannelTree().GetModel(c.ID)
 				require.NoError(t, err)
 				args := c.Args
-				new := *ch
-				new.UpdaterID = args.UpdaterID
-				new.UpdatedAt = time.Now()
+				newChan := *ch
+				newChan.UpdaterID = args.UpdaterID
+				newChan.UpdatedAt = time.Now()
 
 				if args.Topic.Valid && ch.Topic != args.Topic.V {
 					repo.EXPECT().
@@ -515,7 +514,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.Topic = args.Topic.V
+					newChan.Topic = args.Topic.V
 				}
 				if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
 					repo.EXPECT().
@@ -525,7 +524,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.IsVisible = args.Visibility.V
+					newChan.IsVisible = args.Visibility.V
 				}
 				if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
 					repo.EXPECT().
@@ -535,7 +534,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.IsForced = args.ForcedNotification.V
+					newChan.IsForced = args.ForcedNotification.V
 				}
 				if args.Name.Valid {
 					repo.EXPECT().
@@ -546,7 +545,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.Name = args.Name.V
+					newChan.Name = args.Name.V
 				}
 				if args.Parent.Valid {
 					repo.EXPECT().
@@ -557,12 +556,12 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}, gomock.Any()).
 						Return(nil).
 						Times(1)
-					new.ParentID = args.Parent.V
+					newChan.ParentID = args.Parent.V
 				}
 
 				repo.EXPECT().
 					UpdateChannel(c.ID, args).
-					Return(&new, nil).
+					Return(&newChan, nil).
 					Times(1)
 
 				err = cm.UpdateChannel(c.ID, args)
@@ -573,10 +572,10 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 					sort.Slice(v.ChildrenID, func(i, j int) bool {
 						return strings.Compare(v.ChildrenID[i].String(), v.ChildrenID[j].String()) > 0
 					})
-					sort.Slice(new.ChildrenID, func(i, j int) bool {
-						return strings.Compare(new.ChildrenID[i].String(), new.ChildrenID[j].String()) > 0
+					sort.Slice(newChan.ChildrenID, func(i, j int) bool {
+						return strings.Compare(newChan.ChildrenID[i].String(), newChan.ChildrenID[j].String()) > 0
 					})
-					assert.EqualValues(t, &new, v)
+					assert.EqualValues(t, &newChan, v)
 				}
 			})
 		}

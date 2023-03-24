@@ -19,7 +19,7 @@ import (
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
-func NotImplemented(c echo.Context) error {
+func NotImplemented(_ echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented)
 }
 

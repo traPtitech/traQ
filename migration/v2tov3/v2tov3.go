@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessagePage int, startFilePage int, skipConvertMessage bool) error {
@@ -130,7 +130,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						// ファイルマッピング情報保存
 						for _, file := range files {
 							if err := tx.Create(file).Error; err != nil {
-								if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+								if gormutil.IsMySQLDuplicatedRecordErr(err) {
 									continue
 								}
 								return err

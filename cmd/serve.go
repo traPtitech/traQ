@@ -19,7 +19,7 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/gormZap"
+	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
@@ -57,7 +57,7 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.Logger = gormZap.New(logger.Named("gorm"))
+			engine.Logger = gormzap.New(logger.Named("gorm"))
 			db, err := engine.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

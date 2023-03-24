@@ -22,7 +22,7 @@ type Repo struct {
 	testutils.EmptyTestRepository
 }
 
-func setup(t *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *mock_channel.MockManager, *Repo) {
+func setup(_ *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *mock_channel.MockManager, *Repo) {
 	handlerCtx := mock_handler.NewMockContext(ctrl)
 	cm := mock_channel.NewMockManager(ctrl)
 
@@ -47,7 +47,7 @@ func setup(t *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *m
 	return handlerCtx, cm, repo
 }
 
-func registerBot(t *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bot) {
+func registerBot(_ *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bot) {
 	handlerCtx.EXPECT().
 		GetBot(b.ID).
 		Return(b, nil).

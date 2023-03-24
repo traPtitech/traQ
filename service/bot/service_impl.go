@@ -92,7 +92,7 @@ func (p *serviceImpl) start() {
 					return
 				}
 				if err := p.repo.PurgeBotEventLogs(time.Now().Add(-botEventLogPurgeBefore)); err != nil {
-					p.logger.Error("an error occurred while puring old bot event logs", zap.Error(err))
+					p.logger.Error("an error occurred while purging old bot event logs", zap.Error(err))
 				}
 			case <-p.serviceDone:
 				return
@@ -103,7 +103,7 @@ func (p *serviceImpl) start() {
 	p.logger.Info("bot service started")
 }
 
-func (p *serviceImpl) Shutdown(ctx context.Context) error {
+func (p *serviceImpl) Shutdown(_ context.Context) error {
 	p.hub.Unsubscribe(p.sub)
 	p.logPurger.Stop()
 	close(p.serviceDone)

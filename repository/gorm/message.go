@@ -77,31 +77,31 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 	}
 
 	var (
-		old model.Message
-		new model.Message
+		oldMes model.Message
+		newMes model.Message
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&old, &model.Message{ID: messageID}).Error; err != nil {
+		if err := tx.First(&oldMes, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
 
 		// archiving
 		if err := tx.Create(&model.ArchivedMessage{
 			ID:        uuid.Must(uuid.NewV4()),
-			MessageID: old.ID,
-			UserID:    old.UserID,
-			Text:      old.Text,
-			DateTime:  old.UpdatedAt,
+			MessageID: oldMes.ID,
+			UserID:    oldMes.UserID,
+			Text:      oldMes.Text,
+			DateTime:  oldMes.UpdatedAt,
 		}).Error; err != nil {
 			return err
 		}
 
 		// update
-		if err := tx.Model(&old).Update("text", text).Error; err != nil {
+		if err := tx.Model(&oldMes).Update("text", text).Error; err != nil {
 			return err
 		}
 
-		return tx.Where(&model.Message{ID: messageID}).First(&new).Error
+		return tx.Where(&model.Message{ID: messageID}).First(&newMes).Error
 	})
 	if err != nil {
 		return err
@@ -110,8 +110,8 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 		Name: event.MessageUpdated,
 		Fields: hub.Fields{
 			"message_id":  messageID,
-			"old_message": &old,
-			"message":     &new,
+			"old_message": &oldMes,
+			"message":     &newMes,
 		},
 	})
 	return nil
