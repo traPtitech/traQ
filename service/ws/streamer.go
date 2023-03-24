@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/router/extension/ctxKey"
+	"github.com/traPtitech/traQ/router/extension/ctxkey"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 )
@@ -105,7 +105,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := newSession(r.Context().Value(ctxKey.UserID).(uuid.UUID), conn, s)
+	session := newSession(r.Context().Value(ctxkey.UserID).(uuid.UUID), conn, s)
 
 	s.register(session)
 	s.hub.Publish(hub.Message{
