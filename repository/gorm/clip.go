@@ -58,24 +58,24 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 	}
 
 	var (
-		old model.ClipFolder
-		new model.ClipFolder
-		ok  bool
+		oldFolder model.ClipFolder
+		newFolder model.ClipFolder
+		ok        bool
 	)
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
+		if err := tx.First(&oldFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
 
 		// update
 		if len(changes) > 0 {
-			if err := tx.Model(&old).Updates(changes).Error; err != nil {
+			if err := tx.Model(&oldFolder).Updates(changes).Error; err != nil {
 				return err
 			}
 		}
 		ok = true
-		return tx.Where(&model.ClipFolder{ID: folderID}).First(&new).Error
+		return tx.Where(&model.ClipFolder{ID: folderID}).First(&newFolder).Error
 	})
 	if err != nil {
 		return err
@@ -84,10 +84,10 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 		repo.hub.Publish(hub.Message{
 			Name: event.ClipFolderUpdated,
 			Fields: hub.Fields{
-				"user_id":         old.OwnerID,
+				"user_id":         oldFolder.OwnerID,
 				"clip_folder_id":  folderID,
-				"old_clip_folder": &old,
-				"clip_folder":     &new,
+				"old_clip_folder": &oldFolder,
+				"clip_folder":     &newFolder,
 			},
 		})
 	}
