@@ -64,7 +64,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		userTagEquals(t, ut, obj.First().Object())
+		userTagEquals(t, ut, obj.Value(0).Object())
 	})
 }
 
@@ -98,7 +98,7 @@ func TestHandlers_GetMyUserTags(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		userTagEquals(t, ut, obj.First().Object())
+		userTagEquals(t, ut, obj.Value(0).Object())
 	})
 }
 

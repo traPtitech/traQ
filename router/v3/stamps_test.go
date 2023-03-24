@@ -85,7 +85,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		stampEquals(t, stamp, obj.First().Object())
+		stampEquals(t, stamp, obj.Value(0).Object())
 	})
 
 	t.Run("success (type=original)", func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		stampEquals(t, stamp, obj.First().Object())
+		stampEquals(t, stamp, obj.Value(0).Object())
 	})
 
 	t.Run("success (type=unicode)", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		stampEquals(t, stamp, obj.First().Object())
+		stampEquals(t, stamp, obj.Value(0).Object())
 	})
 }
 

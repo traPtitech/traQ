@@ -204,7 +204,7 @@ func TestHandlers_GetClipFolders(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		clipFolderEquals(t, cf1, obj.First().Object())
+		clipFolderEquals(t, cf1, obj.Value(0).Object())
 	})
 }
 
@@ -593,7 +593,7 @@ func TestHandlers_GetClipFolderMessages(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		messageEquals(t, m, first.Value("message").Object())
 		first.Value("clippedAt").String().NotEmpty()
 	})

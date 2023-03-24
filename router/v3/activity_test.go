@@ -134,8 +134,8 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().IsEqual(2)
 
-		timelineMessageEquals(t, m3, obj.Element(0).Object())
-		timelineMessageEquals(t, m2, obj.Element(1).Object())
+		timelineMessageEquals(t, m3, obj.Value(0).Object())
+		timelineMessageEquals(t, m2, obj.Value(1).Object())
 	})
 
 	t.Run("success (all=true, per_channel=false)", func(t *testing.T) {
@@ -152,9 +152,9 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().IsEqual(3)
 
-		timelineMessageEquals(t, m3, obj.Element(0).Object())
-		timelineMessageEquals(t, m2, obj.Element(1).Object())
-		timelineMessageEquals(t, m1, obj.Element(2).Object())
+		timelineMessageEquals(t, m3, obj.Value(0).Object())
+		timelineMessageEquals(t, m2, obj.Value(1).Object())
+		timelineMessageEquals(t, m1, obj.Value(2).Object())
 	})
 
 	t.Run("success (all=false, per_channel=true)", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		timelineMessageEquals(t, m2, obj.Element(0).Object())
+		timelineMessageEquals(t, m2, obj.Value(0).Object())
 	})
 
 	t.Run("success (all=false, per_channel=false)", func(t *testing.T) {
@@ -188,7 +188,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().IsEqual(2)
 
-		timelineMessageEquals(t, m2, obj.Element(0).Object())
-		timelineMessageEquals(t, m1, obj.Element(1).Object())
+		timelineMessageEquals(t, m2, obj.Value(0).Object())
+		timelineMessageEquals(t, m1, obj.Value(1).Object())
 	})
 }

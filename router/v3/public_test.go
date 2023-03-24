@@ -34,7 +34,7 @@ func TestHandlers_GetVersion(t *testing.T) {
 
 	ext := flags.Value("externalLogin").Array()
 	ext.Length().IsEqual(1)
-	ext.First().String().IsEqual("traq")
+	ext.Value(0).String().IsEqual("traq")
 }
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {

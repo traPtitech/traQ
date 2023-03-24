@@ -75,7 +75,7 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		userGroupEquals(t, ug, obj.First().Object())
+		userGroupEquals(t, ug, obj.Value(0).Object())
 	})
 }
 
@@ -483,7 +483,7 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("id").String().IsEqual(user.GetID().String())
 		first.Value("role").String().IsEmpty()
 	})

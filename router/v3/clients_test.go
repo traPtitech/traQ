@@ -61,7 +61,7 @@ func TestHandlers_GetClients(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		oAuth2ClientEquals(t, c1, first)
 	})
 
@@ -78,8 +78,8 @@ func TestHandlers_GetClients(t *testing.T) {
 
 		obj.Length().IsEqual(2)
 
-		first := obj.Element(0).Object()
-		second := obj.Element(1).Object()
+		first := obj.Value(0).Object()
+		second := obj.Value(1).Object()
 
 		if first.Value("id").String().Raw() == c1.ID {
 			oAuth2ClientEquals(t, c1, first)
@@ -230,7 +230,7 @@ func TestHandlers_CreateClient(t *testing.T) {
 		obj.Value("name").String().IsEqual("test")
 		scopes := obj.Value("scopes").Array()
 		scopes.Length().IsEqual(1)
-		scopes.First().String().IsEqual("read")
+		scopes.Value(0).String().IsEqual("read")
 		obj.Value("callbackUrl").String().IsEqual("https://example.com")
 		obj.Value("secret").String().NotEmpty()
 

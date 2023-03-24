@@ -268,7 +268,7 @@ func TestHandlers_GetMySessions(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("id").String().NotEmpty()
 		first.Value("issuedAt").String().NotEmpty()
 	})
@@ -358,11 +358,11 @@ func TestHandlers_GetMyTokens(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("id").String().NotEmpty()
 		first.Value("clientId").String().IsEqual(client.ID)
 		first.Value("scopes").Array().Length().IsEqual(1)
-		first.Value("scopes").Array().First().String().IsEqual("read")
+		first.Value("scopes").Array().Value(0).String().IsEqual("read")
 		first.Value("issuedAt").String().NotEmpty()
 	})
 }
@@ -461,7 +461,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("providerName").String().IsEqual("traq")
 		first.Value("linkedAt").String().NotEmpty()
 		first.Value("externalName").String().IsEqual("sappi_red")
@@ -498,7 +498,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("providerName").String().IsEqual("traq")
 		first.Value("linkedAt").String().NotEmpty()
 		first.Value("externalName").String().IsEqual("toki")
