@@ -41,10 +41,8 @@ func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, _, _ string, _ model.F
 	}
 	defer file.Close()
 
-	if _, err := io.Copy(file, src); err != nil {
-		return err
-	}
-	return nil
+	_, err = io.Copy(file, src)
+	return err
 }
 
 // DeleteByKey ファイルを削除します

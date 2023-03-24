@@ -17,10 +17,7 @@ func v25() *gormigrate.Migration {
 		ID: "25",
 		Migrate: func(db *gorm.DB) error {
 			// FileMetaにIsAnimatedImageを追加
-			if err := db.AutoMigrate(&v25FileMeta{}); err != nil {
-				return err
-			}
-			return nil
+			return db.AutoMigrate(&v25FileMeta{})
 		},
 	}
 }

@@ -145,10 +145,7 @@ func (repo *Repository) DeleteMessage(messageID uuid.UUID) error {
 		if err := tx.Delete(model.Pin{}, &model.Pin{MessageID: messageID}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error
 	})
 	if err != nil {
 		return err

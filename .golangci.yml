@@ -13,8 +13,3 @@ linters:
 linters-settings:
   errcheck:
     exclude: dev/errcheck-exclude.txt
-  revive:
-    enable-all-rules: true
-    rules:
-      - name: if-return
-        disabled: true

@@ -34,10 +34,7 @@ func (repo *Repository) RegisterDevice(userID uuid.UUID, token string) error {
 			UserID: userID,
 		}).Error
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // GetDeviceTokens implements DeviceRepository interface.

@@ -121,10 +121,7 @@ func (repo *Repository) UpdateChannel(channelID uuid.UUID, args repository.Updat
 		if err := tx.Model(&ch).Updates(data).Error; err != nil {
 			return err
 		}
-		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.First(&ch, &model.Channel{ID: channelID}).Error
 	})
 	if err != nil {
 		return nil, err

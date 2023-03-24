@@ -14,10 +14,7 @@ func v21() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "21",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v21OgpCache{}); err != nil {
-				return err
-			}
-			return nil
+			return db.AutoMigrate(&v21OgpCache{})
 		},
 	}
 }

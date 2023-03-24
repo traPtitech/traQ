@@ -31,10 +31,7 @@ func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessa
 	}
 
 	// ファイルのチャンネル紐付け
-	if err := linkFileToChannel(db, logger, dryRun, startFilePage); err != nil {
-		return err
-	}
-	return nil
+	return linkFileToChannel(db, logger, dryRun, startFilePage)
 }
 
 type V2MessageBackup struct {
@@ -138,11 +135,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						}
 
 						// 書き換え (updated_atは更新しない)
-						if err := tx.Unscoped().Model(m).UpdateColumn("text", converted).Error; err != nil {
-							return err
-						}
-
-						return nil
+						return tx.Unscoped().Model(m).UpdateColumn("text", converted).Error
 					})
 					if err != nil {
 						logger.Error(err.Error())

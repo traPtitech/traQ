@@ -15,10 +15,7 @@ func v8() *gormigrate.Migration {
 				return err
 			}
 
-			if err := db.Table(v8UserSubscribeChannel{}.TableName()).Updates(map[string]interface{}{"mark": true, "notify": true}).Error; err != nil {
-				return err
-			}
-			return nil
+			return db.Table(v8UserSubscribeChannel{}.TableName()).Updates(map[string]interface{}{"mark": true, "notify": true}).Error
 		},
 	}
 }

@@ -107,10 +107,7 @@ func (repo *Repository) DeleteFileMeta(fileID uuid.UUID) error {
 	if err := repo.db.Delete(&model.FileMeta{ID: fileID}).Error; err != nil {
 		return err
 	}
-	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error; err != nil {
-		return err
-	}
-	return nil
+	return repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error
 }
 
 // IsFileAccessible implements FileRepository interface.

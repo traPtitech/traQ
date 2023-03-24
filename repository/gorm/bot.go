@@ -65,10 +65,7 @@ func (repo *Repository) CreateBot(name, displayName, description string, iconFil
 		if err := tx.Create(t).Error; err != nil {
 			return err
 		}
-		if err := tx.Create(b).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Create(b).Error
 	})
 	if err != nil {
 		return nil, err
@@ -317,10 +314,7 @@ func (repo *Repository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		if err := tx.Create(t).Error; err != nil {
 			return err
 		}
-		if err := tx.Save(&bot).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Save(&bot).Error
 	})
 	if err != nil {
 		return nil, err
@@ -359,10 +353,7 @@ func (repo *Repository) DeleteBot(id uuid.UUID) error {
 		if err := tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: b.AccessTokenID}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&model.Bot{}, &model.Bot{ID: id}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&model.Bot{}, &model.Bot{ID: id}).Error
 	})
 	if err != nil {
 		return err

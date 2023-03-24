@@ -50,10 +50,7 @@ func v26() *gormigrate.Migration {
 			if err := db.Migrator().DropColumn(v26OldFileMeta{}, "thumbnail_width"); err != nil {
 				return err
 			}
-			if err := db.Migrator().DropColumn(v26OldFileMeta{}, "thumbnail_height"); err != nil {
-				return err
-			}
-			return nil
+			return db.Migrator().DropColumn(v26OldFileMeta{}, "thumbnail_height")
 		},
 	}
 }
