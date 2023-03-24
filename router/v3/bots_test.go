@@ -61,7 +61,7 @@ func TestHandlers_GetBots(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		botEquals(t, bot1, obj.Element(0).Object())
+		botEquals(t, bot1, obj.Value(0).Object())
 	})
 
 	t.Run("success (all=true)", func(t *testing.T) {
@@ -737,7 +737,7 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Keys().ContainsOnly(
 			"botId", "requestId", "event", "result", "code", "datetime",
 		)
@@ -789,7 +789,7 @@ func TestHandlers_GetChannelBots(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.Element(0).Object()
+		first := obj.Value(0).Object()
 		first.Value("id").String().IsEqual(bot.ID.String())
 		first.Value("botUserId").String().IsEqual(bot.BotUserID.String())
 	})

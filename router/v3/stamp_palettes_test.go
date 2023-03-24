@@ -62,7 +62,7 @@ func TestHandlers_GetStampPalettes(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		stampPaletteEquals(t, sp, obj.First().Object())
+		stampPaletteEquals(t, sp, obj.Value(0).Object())
 	})
 }
 
@@ -162,7 +162,7 @@ func TestHandlers_CreateStampPalette(t *testing.T) {
 		obj.Value("name").String().IsEqual("po")
 		stamps := obj.Value("stamps").Array()
 		stamps.Length().IsEqual(1)
-		stamps.First().String().IsEqual(stamp.ID.String())
+		stamps.Value(0).String().IsEqual(stamp.ID.String())
 		obj.Value("creatorId").String().IsEqual(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()

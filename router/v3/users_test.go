@@ -97,7 +97,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		userEquals(t, user2, obj.First().Object())
+		userEquals(t, user2, obj.Value(0).Object())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -579,7 +579,7 @@ func TestHandlers_GetMyStampHistory(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("stampId").String().IsEqual(stamp.ID.String())
 		first.Value("datetime").String().NotEmpty()
 	})
@@ -965,7 +965,7 @@ func TestHandlers_GetMyChannelSubscriptions(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("channelId").String().IsEqual(ch.ID.String())
 		first.Value("level").Number().IsEqual(model.ChannelSubscribeLevelMarkAndNotify)
 	})
@@ -1136,7 +1136,7 @@ func TestHandlers_GetUserStats(t *testing.T) {
 
 		stamps := obj.Value("stamps").Array()
 		stamps.Length().IsEqual(1)
-		firstStamp := stamps.First().Object()
+		firstStamp := stamps.Value(0).Object()
 		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
 		firstStamp.Value("count").Number().IsEqual(1)
 		firstStamp.Value("total").Number().IsEqual(2)

@@ -69,7 +69,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		webhookEquals(t, wh, obj.First().Object())
+		webhookEquals(t, wh, obj.Value(0).Object())
 	})
 
 	t.Run("success (all=false without permission)", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		webhookEquals(t, wh, obj.First().Object())
+		webhookEquals(t, wh, obj.Value(0).Object())
 	})
 
 	t.Run("success (all=true)", func(t *testing.T) {
@@ -100,12 +100,12 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 		obj.Length().IsEqual(2)
 
-		if obj.First().Object().Value("id").Raw() == wh.GetID().String() {
-			webhookEquals(t, wh, obj.Element(0).Object())
-			webhookEquals(t, wh2, obj.Element(1).Object())
+		if obj.Value(0).Object().Value("id").Raw() == wh.GetID().String() {
+			webhookEquals(t, wh, obj.Value(0).Object())
+			webhookEquals(t, wh2, obj.Value(1).Object())
 		} else {
-			webhookEquals(t, wh2, obj.Element(0).Object())
-			webhookEquals(t, wh, obj.Element(1).Object())
+			webhookEquals(t, wh2, obj.Value(0).Object())
+			webhookEquals(t, wh, obj.Value(1).Object())
 		}
 	})
 }
@@ -538,6 +538,6 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		messageEquals(t, m, obj.First().Object())
+		messageEquals(t, m, obj.Value(0).Object())
 	})
 }

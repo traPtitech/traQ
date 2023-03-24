@@ -42,7 +42,7 @@ func messageEquals(t *testing.T, expect message.Message, actual *httpexpect.Obje
 	stamps := actual.Value("stamps").Array()
 	stamps.Length().IsEqual(len(expect.GetStamps()))
 	for i, ex := range expect.GetStamps() {
-		messageStampEquals(t, ex, stamps.Element(i).Object())
+		messageStampEquals(t, ex, stamps.Value(i).Object())
 	}
 }
 
@@ -99,7 +99,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 		public := obj.Value("public").Array()
 		public.Length().IsEqual(1)
 
-		channelEquals(t, channel, public.First().Object())
+		channelEquals(t, channel, public.Value(0).Object())
 	})
 
 	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
@@ -115,11 +115,11 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 		public := obj.Value("public").Array()
 		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.First().Object())
+		channelEquals(t, channel, public.Value(0).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
-		firstDM := dms.First().Object()
+		firstDM := dms.Value(0).Object()
 		firstDM.Value("id").String().IsEqual(dm.ID.String())
 		firstDM.Value("userId").String().IsEqual(user2.GetID().String())
 	})
@@ -137,11 +137,11 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 		public := obj.Value("public").Array()
 		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.First().Object())
+		channelEquals(t, channel, public.Value(0).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
-		firstDM := dms.First().Object()
+		firstDM := dms.Value(0).Object()
 		firstDM.Value("id").String().IsEqual(dm.ID.String())
 		firstDM.Value("userId").String().IsEqual(user1.GetID().String())
 	})
@@ -159,7 +159,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 		public := obj.Value("public").Array()
 		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.First().Object())
+		channelEquals(t, channel, public.Value(0).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
@@ -525,14 +525,14 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 
 		stamps := obj.Value("stamps").Array()
 		stamps.Length().IsEqual(1)
-		firstStamp := stamps.First().Object()
+		firstStamp := stamps.Value(0).Object()
 		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
 		firstStamp.Value("count").Number().IsEqual(1)
 		firstStamp.Value("total").Number().IsEqual(1)
 
 		users := obj.Value("users").Array()
 		users.Length().IsEqual(1)
-		firstUser := users.First().Object()
+		firstUser := users.Value(0).Object()
 		firstUser.Value("id").String().IsEqual(user.GetID().String())
 		firstUser.Value("messageCount").Number().IsEqual(1)
 	})
@@ -706,7 +706,7 @@ func TestHandlers_GetChannelPins(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("userId").String().IsEqual(user.GetID().String())
 		first.Value("pinnedAt").String().NotEmpty()
 
@@ -813,7 +813,7 @@ func TestHandlers_GetChannelEvents(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("type").String().IsEqual("TopicChanged")
 		first.Value("datetime").String().NotEmpty()
 
@@ -887,7 +887,7 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		obj.First().String().IsEqual(user.GetID().String())
+		obj.Value(0).String().IsEqual(user.GetID().String())
 	})
 }
 

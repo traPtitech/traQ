@@ -44,7 +44,7 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("channelId").String().IsEqual(ch.ID.String())
 		first.Value("count").Number().IsEqual(1)
 		first.Value("noticeable").Boolean().IsFalse()
@@ -701,7 +701,7 @@ func TestHandlers_GetMessageStamps(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		messageStampEquals(t, m.GetStamps()[0], first)
 	})
 }
@@ -943,7 +943,7 @@ func TestHandlers_GetMessageClips(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		first := obj.First().Object()
+		first := obj.Value(0).Object()
 		first.Value("folderId").String().IsEqual(cf.ID.String())
 		first.Value("clippedAt").String().NotEmpty()
 	})
@@ -999,8 +999,8 @@ func TestHandlers_GetMessages(t *testing.T) {
 
 		obj.Length().IsEqual(2)
 
-		messageEquals(t, m2, obj.Element(0).Object())
-		messageEquals(t, m, obj.Element(1).Object())
+		messageEquals(t, m2, obj.Value(0).Object())
+		messageEquals(t, m, obj.Value(1).Object())
 	})
 }
 
@@ -1138,7 +1138,7 @@ func TestHandlers_GetDirectMessages(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		messageEquals(t, m, obj.First().Object())
+		messageEquals(t, m, obj.Value(0).Object())
 	})
 
 	t.Run("success (creating dm)", func(t *testing.T) {

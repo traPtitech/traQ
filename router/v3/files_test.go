@@ -186,7 +186,7 @@ func TestHandlers_GetFiles(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		fileEquals(t, f1, obj.First().Object())
+		fileEquals(t, f1, obj.Value(0).Object())
 	})
 
 	t.Run("success (channel)", func(t *testing.T) {
@@ -201,7 +201,7 @@ func TestHandlers_GetFiles(t *testing.T) {
 			Array()
 
 		obj.Length().IsEqual(1)
-		fileEquals(t, f2, obj.First().Object())
+		fileEquals(t, f2, obj.Value(0).Object())
 	})
 }
 
@@ -399,7 +399,7 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 		obj.Value("id").String().IsEqual(iconFileID.String())
 		thumbnails := obj.Value("thumbnails").Array()
 		thumbnails.Length().IsEqual(1)
-		thumbnail := thumbnails.First().Object()
+		thumbnail := thumbnails.Value(0).Object()
 		thumbnail.Value("type").IsEqual("image")
 		thumbnail.Value("mime").IsEqual("image/png")
 		thumbnail.Value("width").NotNull().NotEqual(0)
@@ -430,7 +430,7 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 		obj.Value("id").String().IsEqual(file.GetID().String())
 		thumbnails := obj.Value("thumbnails").Array()
 		thumbnails.Length().IsEqual(1)
-		thumbnail := thumbnails.First().Object()
+		thumbnail := thumbnails.Value(0).Object()
 		thumbnail.Value("type").IsEqual("waveform")
 		thumbnail.Value("mime").IsEqual("image/svg+xml")
 		thumbnail.Value("width").NotNull().NotEqual(0)
