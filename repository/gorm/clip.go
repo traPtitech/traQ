@@ -2,7 +2,7 @@ package gorm
 
 import (
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
@@ -58,24 +58,24 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 	}
 
 	var (
-		old model.ClipFolder
-		new model.ClipFolder
-		ok  bool
+		oldFolder model.ClipFolder
+		newFolder model.ClipFolder
+		ok        bool
 	)
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
+		if err := tx.First(&oldFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
 
 		// update
 		if len(changes) > 0 {
-			if err := tx.Model(&old).Updates(changes).Error; err != nil {
+			if err := tx.Model(&oldFolder).Updates(changes).Error; err != nil {
 				return err
 			}
 		}
 		ok = true
-		return tx.Where(&model.ClipFolder{ID: folderID}).First(&new).Error
+		return tx.Where(&model.ClipFolder{ID: folderID}).First(&newFolder).Error
 	})
 	if err != nil {
 		return err
@@ -84,10 +84,10 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 		repo.hub.Publish(hub.Message{
 			Name: event.ClipFolderUpdated,
 			Fields: hub.Fields{
-				"user_id":         old.OwnerID,
+				"user_id":         oldFolder.OwnerID,
 				"clip_folder_id":  folderID,
-				"old_clip_folder": &old,
-				"clip_folder":     &new,
+				"old_clip_folder": &oldFolder,
+				"clip_folder":     &newFolder,
 			},
 		})
 	}
@@ -108,10 +108,7 @@ func (repo *Repository) DeleteClipFolder(folderID uuid.UUID) error {
 		if err := tx.Delete(&model.ClipFolderMessage{}, &model.ClipFolderMessage{FolderID: folderID}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&model.ClipFolder{ID: folderID}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&model.ClipFolder{ID: folderID}).Error
 	})
 	if err != nil {
 		return err
@@ -146,10 +143,7 @@ func (repo *Repository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) e
 		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
-		if err := tx.Delete(&model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error
 	})
 	if err != nil {
 		return err
@@ -185,7 +179,7 @@ func (repo *Repository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*mo
 		}
 
 		// 名前重複チェック
-		if exists, err := gormUtil.RecordExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
+		if exists, err := gormutil.RecordExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
 			return err
 		} else if exists {
 			return repository.ErrAlreadyExists
@@ -251,7 +245,7 @@ func (repo *Repository) GetClipFolderMessages(folderID uuid.UUID, query reposito
 	messages = make([]*model.ClipFolderMessage, 0)
 
 	// フォルダ存在チェック
-	if exists, err := gormUtil.RecordExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
+	if exists, err := gormutil.RecordExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
 		return nil, false, err
 	} else if !exists {
 		return nil, false, repository.ErrNotFound

@@ -82,7 +82,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (
 		}
 
 		// save cache
-		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666) // ファイルが存在していた場合はエラーにしてremoteを返す
+		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666) // ファイルが存在していた場合はエラーにしてremoteを返す
 		if err != nil {
 			return remote, nil
 		}
@@ -130,7 +130,7 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType stri
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *SwiftFileStorage) DeleteByKey(key string, fileType model.FileType) (err error) {
+func (fs *SwiftFileStorage) DeleteByKey(key string, _ model.FileType) (err error) {
 	err = fs.connection.ObjectDelete(fs.container, key)
 	if err != nil {
 		if err == swift.ObjectNotFound {

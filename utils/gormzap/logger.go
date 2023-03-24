@@ -1,4 +1,4 @@
-package gormZap
+package gormzap
 
 import (
 	"context"

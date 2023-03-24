@@ -189,10 +189,7 @@ func (repo *Repository) DeleteWebhook(id uuid.UUID) error {
 		if err := tx.Delete(&model.WebhookBot{ID: id}).Error; err != nil {
 			return err
 		}
-		if err := tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error
 	})
 	if err != nil {
 		return err

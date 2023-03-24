@@ -15,18 +15,15 @@ func (repo *Repository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool) er
 		return repository.ErrNilID
 	}
 
-	var settings = model.UserSettings{}
+	settings := model.UserSettings{}
 
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
 		if err == repository.ErrNotFound {
-			if err = repo.db.Create(&model.UserSettings{
+			return repo.db.Create(&model.UserSettings{
 				UserID:         userID,
 				NotifyCitation: isEnable,
-			}).Error; err != nil {
-				return err
-			}
-			return nil
+			}).Error
 		}
 		return err
 	}
@@ -46,7 +43,7 @@ func (repo *Repository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 		return defaultNotifyCitation, repository.ErrNilID
 	}
 
-	var settings = model.UserSettings{}
+	settings := model.UserSettings{}
 
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
@@ -64,7 +61,7 @@ func (repo *Repository) GetUserSettings(userID uuid.UUID) (*model.UserSettings, 
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
-	var settings = model.UserSettings{}
+	settings := model.UserSettings{}
 
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)

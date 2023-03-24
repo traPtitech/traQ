@@ -4,14 +4,14 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/traPtitech/traQ/repository/mock_repository"
-	"github.com/traPtitech/traQ/testUtils"
+	"github.com/traPtitech/traQ/testutils"
 )
 
 type Repo struct {
 	*mock_repository.MockChannelRepository
 	*mock_repository.MockMessageRepository
 	*mock_repository.MockPinRepository
-	testUtils.EmptyTestRepository
+	testutils.EmptyTestRepository
 }
 
 func NewMockRepo(ctrl *gomock.Controller) *Repo {

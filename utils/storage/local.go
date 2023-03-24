@@ -24,7 +24,7 @@ func NewLocalFileStorage(dir string) *LocalFileStorage {
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *LocalFileStorage) OpenFileByKey(key string, fileType model.FileType) (io.ReadSeekCloser, error) {
+func (fs *LocalFileStorage) OpenFileByKey(key string, _ model.FileType) (io.ReadSeekCloser, error) {
 	fileName := fs.getFilePath(key)
 	reader, err := os.Open(fileName)
 	if err != nil {
@@ -34,21 +34,19 @@ func (fs *LocalFileStorage) OpenFileByKey(key string, fileType model.FileType) (
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, _, _ string, _ model.FileType) error {
 	file, err := os.Create(fs.getFilePath(key))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	if _, err := io.Copy(file, src); err != nil {
-		return err
-	}
-	return nil
+	_, err = io.Copy(file, src)
+	return err
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *LocalFileStorage) DeleteByKey(key string, fileType model.FileType) error {
+func (fs *LocalFileStorage) DeleteByKey(key string, _ model.FileType) error {
 	fileName := fs.getFilePath(key)
 	if _, err := os.Stat(fileName); err != nil {
 		return ErrFileNotFound
@@ -57,7 +55,7 @@ func (fs *LocalFileStorage) DeleteByKey(key string, fileType model.FileType) err
 }
 
 // GenerateAccessURL "",nilを返します
-func (fs *LocalFileStorage) GenerateAccessURL(key string, fileType model.FileType) (string, error) {
+func (fs *LocalFileStorage) GenerateAccessURL(_ string, _ model.FileType) (string, error) {
 	return "", nil
 }
 

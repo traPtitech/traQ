@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testDataFolder = "../../testData/images/"
+const testdataFolder = "../../testdata/images/"
 
 func mustOpen(path string) *os.File {
-	fp, err := os.Open(testDataFolder + path)
+	fp, err := os.Open(testdataFolder + path)
 	if err != nil {
 		panic(err)
 	}

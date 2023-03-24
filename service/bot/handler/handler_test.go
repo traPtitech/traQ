@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
-	"github.com/traPtitech/traQ/testUtils"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
 )
 
@@ -19,10 +19,10 @@ type Repo struct {
 	*mock_repository.MockTagRepository
 	*mock_repository.MockUserRepository
 	*mock_repository.MockBotRepository
-	testUtils.EmptyTestRepository
+	testutils.EmptyTestRepository
 }
 
-func setup(t *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *mock_channel.MockManager, *Repo) {
+func setup(_ *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *mock_channel.MockManager, *Repo) {
 	handlerCtx := mock_handler.NewMockContext(ctrl)
 	cm := mock_channel.NewMockManager(ctrl)
 
@@ -47,7 +47,7 @@ func setup(t *testing.T, ctrl *gomock.Controller) (*mock_handler.MockContext, *m
 	return handlerCtx, cm, repo
 }
 
-func registerBot(t *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bot) {
+func registerBot(_ *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bot) {
 	handlerCtx.EXPECT().
 		GetBot(b.ID).
 		Return(b, nil).

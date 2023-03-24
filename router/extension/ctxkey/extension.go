@@ -1,4 +1,4 @@
-package ctxKey
+package ctxkey
 
 // ctxKey context.Context用のキータイプ
 type ctxKey int

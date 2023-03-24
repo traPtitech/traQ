@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // GetTagByID implements TagRepository interface.
@@ -52,7 +52,7 @@ func (repo *Repository) AddUserTag(userID, tagID uuid.UUID) error {
 	}
 	// TODO タグの存在確認
 	if err := repo.db.Create(ut).Error; err != nil {
-		if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return repository.ErrAlreadyExists
 		}
 		return err

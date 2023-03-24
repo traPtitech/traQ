@@ -27,11 +27,7 @@ func v6() *gormigrate.Migration {
 				}
 			}
 
-			if err := db.Migrator().DropColumn(&v6OldUserGroup{}, "admin_user_id"); err != nil {
-				return err
-			}
-
-			return nil
+			return db.Migrator().DropColumn(&v6OldUserGroup{}, "admin_user_id")
 		},
 	}
 }

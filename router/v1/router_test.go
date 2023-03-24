@@ -22,7 +22,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/testUtils"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 
@@ -51,10 +51,10 @@ func TestMain(m *testing.M) {
 	}
 	for _, key := range repos {
 		env := &Env{}
-		env.Repository = testUtils.NewTestRepository()
+		env.Repository = testutils.NewTestRepository()
 		env.Hub = hub.New()
 		env.SessStore = session.NewMemorySessionStore()
-		env.RBAC = testUtils.NewTestRBAC()
+		env.RBAC = testutils.NewTestRBAC()
 		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
 		env.MessageManager, _ = message.NewMessageManager(env.Repository, env.ChannelManager, zap.NewNop())
 		env.ImageProcessor = imaging.NewProcessor(imaging.Config{

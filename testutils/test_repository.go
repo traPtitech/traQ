@@ -1,4 +1,4 @@
-package testUtils
+package testutils
 
 import (
 	"encoding/base64"
@@ -725,7 +725,7 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 	return users, nil
 }
 
-func (repo *TestRepository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
+func (repo *TestRepository) CreateChannel(ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
 	ch.ID = uuid.Must(uuid.NewV4())
 	ch.IsPublic = true
 	ch.CreatedAt = time.Now()
@@ -1476,6 +1476,6 @@ func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.W
 	return arr, nil
 }
 
-func (repo *TestRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+func (repo *TestRepository) RecordChannelEvent(_ uuid.UUID, _ model.ChannelEventType, _ model.ChannelEventDetail, _ time.Time) error {
 	return nil
 }

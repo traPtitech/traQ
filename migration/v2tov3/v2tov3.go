@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/gormUtil"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessagePage int, startFilePage int, skipConvertMessage bool) error {
@@ -31,10 +31,7 @@ func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessa
 	}
 
 	// ファイルのチャンネル紐付け
-	if err := linkFileToChannel(db, logger, dryRun, startFilePage); err != nil {
-		return err
-	}
-	return nil
+	return linkFileToChannel(db, logger, dryRun, startFilePage)
 }
 
 type V2MessageBackup struct {
@@ -130,7 +127,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						// ファイルマッピング情報保存
 						for _, file := range files {
 							if err := tx.Create(file).Error; err != nil {
-								if gormUtil.IsMySQLDuplicatedRecordErr(err) {
+								if gormutil.IsMySQLDuplicatedRecordErr(err) {
 									continue
 								}
 								return err
@@ -138,11 +135,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 						}
 
 						// 書き換え (updated_atは更新しない)
-						if err := tx.Unscoped().Model(m).UpdateColumn("text", converted).Error; err != nil {
-							return err
-						}
-
-						return nil
+						return tx.Unscoped().Model(m).UpdateColumn("text", converted).Error
 					})
 					if err != nil {
 						logger.Error(err.Error())

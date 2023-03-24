@@ -19,10 +19,7 @@ func v19() *gormigrate.Migration {
 			if err := db.Migrator().DropColumn(v19OldSessionRecord{}, "last_ip"); err != nil {
 				return err
 			}
-			if err := db.Migrator().DropColumn(v19OldSessionRecord{}, "last_user_agent"); err != nil {
-				return err
-			}
-			return nil
+			return db.Migrator().DropColumn(v19OldSessionRecord{}, "last_user_agent")
 		},
 	}
 }

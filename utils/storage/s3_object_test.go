@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/testData/images"
+	"github.com/traPtitech/traQ/testdata/images"
 )
 
 const testObjKey = "testObj"

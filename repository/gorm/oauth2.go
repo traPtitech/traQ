@@ -105,10 +105,7 @@ func (repo *Repository) DeleteClient(id string) error {
 		if err := tx.Delete(&model.OAuth2Authorize{}, &model.OAuth2Authorize{ClientID: id}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: id}).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: id}).Error
 	})
 	return err
 }

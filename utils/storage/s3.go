@@ -44,7 +44,6 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret, cacheDir stri
 		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(apiKey, apiSecret, "")),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,6 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret, cacheDir stri
 	}
 
 	return m, nil
-
 }
 
 // OpenFileByKey ファイルを取得します
@@ -97,7 +95,7 @@ func (fs *S3FileStorage) OpenFileByKey(key string, fileType model.FileType) (rea
 		}
 
 		// save cache
-		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666) // ファイルが存在していた場合はエラーにしてremoteを返す
+		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666) // ファイルが存在していた場合はエラーにしてremoteを返す
 		if err != nil {
 			return remote, nil
 		}
@@ -155,8 +153,7 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *S3FileStorage) DeleteByKey(key string, fileType model.FileType) (err error) {
-
+func (fs *S3FileStorage) DeleteByKey(key string, _ model.FileType) (err error) {
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(fs.bucket),
 		Key:    aws.String(key),
@@ -212,19 +209,17 @@ func (fs *S3FileStorage) getObject(ctx context.Context, input *s3.GetObjectInput
 		return nil, fmt.Errorf("input is nil")
 	}
 
-	attrin := s3.HeadObjectInput{
+	attrIn := s3.HeadObjectInput{
 		Bucket: input.Bucket,
 		Key:    input.Key,
 	}
 
-	attrout, err := fs.client.HeadObject(ctx, &attrin)
-
+	attrOut, err := fs.client.HeadObject(ctx, &attrIn)
 	if err != nil {
 		return nil, err
 	}
 
-	objout, err := fs.client.GetObject(ctx, input, optFns...)
-
+	objOut, err := fs.client.GetObject(ctx, input, optFns...)
 	if err != nil {
 		return nil, err
 	}
@@ -232,10 +227,10 @@ func (fs *S3FileStorage) getObject(ctx context.Context, input *s3.GetObjectInput
 	obj := s3Object{
 		client:   fs.client,
 		input:    *input,
-		resp:     objout,
-		length:   attrout.ContentLength,
+		resp:     objOut,
+		length:   attrOut.ContentLength,
 		lengthOk: true,
-		body:     objout.Body,
+		body:     objOut.Body,
 	}
 
 	return &obj, nil
