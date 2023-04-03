@@ -321,7 +321,23 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 	if userID == uuid.Nil {
 		return res, nil
 	}
-	return res, repo.db.Raw(`SELECT m.channel_id AS channel_id, COUNT(m.id) AS count, MAX(u.noticeable) AS noticeable, MIN(m.created_at) AS since, MAX(m.created_at) AS updated_at FROM unreads u JOIN messages m on u.message_id = m.id WHERE u.user_id = ? GROUP BY m.channel_id`, userID).Scan(&res).Error
+	return res, repo.db.Raw(`
+        SELECT
+            m.channel_id AS channel_id,
+            COUNT(m.id) AS COUNT,
+            MAX(u.noticeable) AS noticeable,
+            MIN(m.created_at) AS since,
+            MAX(m.created_at) AS updated_at,
+            (SELECT message_id
+             FROM unreads u2
+             JOIN messages m2 ON u2.message_id = m2.id
+             WHERE u2.user_id = ? AND m2.channel_id = m.channel_id
+             ORDER BY m2.created_at ASC
+             LIMIT 1) AS oldest_message_id
+        FROM unreads u
+        JOIN messages m ON u.message_id = m.id
+        WHERE u.user_id = ?
+        GROUP BY m.channel_id`, userID, userID).Scan(&res).Error
 }
 
 // DeleteUnreadsByChannelID implements MessageRepository interface.
