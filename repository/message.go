@@ -131,5 +131,5 @@ type UserUnreadChannel struct {
 	Noticeable      bool      `json:"noticeable"`
 	Since           time.Time `json:"since"`
 	UpdatedAt       time.Time `json:"updatedAt"`
-	OldestMessageId uuid.UUID `json:"oldestMessageId"`
+	OldestMessageID uuid.UUID `json:"oldestMessageId"`
 }
