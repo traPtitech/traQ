@@ -5,7 +5,7 @@ services:
     build: ./
     restart: always
     environment:
-      allowSignUp: true
+      TRAQ_ALLOWSIGNUP: true
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
       TRAQ_ES_URL: http://es:9200
