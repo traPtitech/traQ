@@ -126,9 +126,10 @@ type MessageRepository interface {
 
 // UserUnreadChannel ユーザーの未読チャンネル構造体
 type UserUnreadChannel struct {
-	ChannelID  uuid.UUID `json:"channelId"`
-	Count      int       `json:"count"`
-	Noticeable bool      `json:"noticeable"`
-	Since      time.Time `json:"since"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ChannelID       uuid.UUID `json:"channelId"`
+	Count           int       `json:"count"`
+	Noticeable      bool      `json:"noticeable"`
+	Since           time.Time `json:"since"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	OldestMessageID uuid.UUID `json:"oldestMessageId"`
 }

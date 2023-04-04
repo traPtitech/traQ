@@ -50,6 +50,7 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 		first.Value("noticeable").Boolean().IsFalse()
 		first.Value("since").String().NotEmpty()
 		first.Value("updatedAt").String().NotEmpty()
+		first.Value("oldestMessageId").String().IsEqual(m.GetID().String())
 	})
 }
 
