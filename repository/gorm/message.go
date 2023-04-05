@@ -145,7 +145,26 @@ func (repo *Repository) DeleteMessage(messageID uuid.UUID) error {
 		if err := tx.Delete(model.Pin{}, &model.Pin{MessageID: messageID}).Error; err != nil {
 			return err
 		}
-		return tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error
+		if err := tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error; err != nil {
+			return err
+		}
+
+		var mes []model.Message
+		if err := tx.
+			Where(&model.Message{ChannelID: m.ChannelID}).
+			Order(clause.OrderByColumn{Column: clause.Column{Name: "created_at"}, Desc: true}).
+			Limit(1).
+			Find(&mes).Error; err != nil {
+			return err
+		}
+		if len(mes) != 1 {
+			return nil
+		}
+		return tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&model.ChannelLatestMessage{
+			ChannelID: mes[0].ChannelID,
+			MessageID: mes[0].ID,
+			DateTime:  mes[0].CreatedAt,
+		}).Error
 	})
 	if err != nil {
 		return err
