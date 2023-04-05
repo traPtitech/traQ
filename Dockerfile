@@ -1,4 +1,4 @@
-FROM golang:1.20.2-alpine AS build
+FROM golang:1.20.3-alpine AS build
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
@@ -9,7 +9,7 @@ ARG TRAQ_VERSION=dev
 ARG TRAQ_REVISION=local
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/tmp/go/cache CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
-FROM golang:1.20.2-alpine AS dockerize
+FROM golang:1.20.3-alpine AS dockerize
 
 ARG DOCKERIZE_VERSION=v0.6.1
 RUN go install github.com/jwilder/dockerize@$DOCKERIZE_VERSION
