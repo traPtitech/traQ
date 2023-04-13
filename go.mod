@@ -58,7 +58,7 @@ require (
 	golang.org/x/sync v0.1.0
 	google.golang.org/api v0.118.0
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/mysql v1.4.7
+	gorm.io/driver/mysql v1.5.0
 	gorm.io/gorm v1.25.0
 )
 
