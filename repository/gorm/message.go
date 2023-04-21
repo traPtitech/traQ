@@ -297,7 +297,12 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 		var u model.Unread
 		if err := tx.First(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				return tx.Create(&model.Unread{UserID: userID, MessageID: messageID, Noticeable: noticeable}).Error
+				var m model.Message
+				err := tx.First(&m, &model.Message{ID: messageID}).Error
+				if err != nil {
+					return err
+				}
+				return tx.Create(&model.Unread{UserID: userID, ChannelID: m.ChannelID, MessageID: messageID, Noticeable: noticeable}).Error
 			}
 			return err
 		}
@@ -342,23 +347,21 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 	}
 	return res, repo.db.Raw(`
 		SELECT
-			m.channel_id AS channel_id,
-			COUNT(m.id) AS count,
+			u.channel_id,
+			COUNT(u.message_id) AS count,
 			MAX(u.noticeable) AS noticeable,
-			MIN(m.created_at) AS since,
-			MAX(m.created_at) AS updated_at,
-			(
-				SELECT message_id
-				FROM unreads u2
-				JOIN messages m2 ON u2.message_id = m2.id
-				WHERE u2.user_id = ? AND m2.channel_id = m.channel_id
-				ORDER BY m2.created_at ASC
-				LIMIT 1
-			) AS oldest_message_id
+			MIN(u.created_at) AS since,
+			MAX(u.created_at) AS updated_at,
+			MIN(o.message_id) oldest_message_id
 		FROM unreads u
-		JOIN messages m ON u.message_id = m.id
-		WHERE u.user_id = ?
-		GROUP BY m.channel_id;
+		JOIN (
+			SELECT message_id, created_at AS message_created_at
+			FROM unreads u2
+			WHERE u2.user_id = ?
+			GROUP BY u2.channel_id HAVING u2.created_at = MIN(message_created_at)
+		) o ON u.message_id = o.message_id
+		WHERE user_id = ?
+		GROUP BY channel_id;
 	`, userID, userID).Scan(&res).Error
 }
 
@@ -367,7 +370,7 @@ func (repo *Repository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) er
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID, channelID)
+	result := repo.db.Exec("DELETE unreads FROM unreads WHERE user_id = ? AND channel_id = ?", userID, channelID)
 	if result.Error != nil {
 		return result.Error
 	}
