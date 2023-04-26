@@ -359,6 +359,12 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 					AND channel_id = u.channel_id
 					AND created_at = MIN(u.created_at)
 			) AS oldest_message_id
+		/*
+			2023/04/26時点
+			oldest_message_id 取得部分はサブクエリがN+1で叩かれることになるが、
+			これ以外の方法(2つのクエリに分けて取得など)では大規模なJOINが発生
+			してしまいパフォーマンスが悪くなるため、この方法を使う。
+		*/
 		FROM unreads u
 		WHERE user_id = ?
 		GROUP BY channel_id;
