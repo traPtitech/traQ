@@ -80,8 +80,8 @@ func (u *oidcUserInfo) GetName() string {
 }
 
 func (u *oidcUserInfo) GetDisplayName() string {
-	if s := utf8string.NewString(u.name); s.RuneCount() > 64 {
-		return s.Slice(0, 64)
+	if s := utf8string.NewString(u.name); s.RuneCount() > 32 {
+		return s.Slice(0, 32)
 	}
 	return u.name
 }
