@@ -312,6 +312,30 @@ func TestHandlers_EditMe(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
+	t.Run("too long display name (more than 32 letters)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 33))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success (just 32 letters)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 32))}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		profile, err := env.Repository.GetUser(user.GetID(), true)
+		require.NoError(t, err)
+		assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
