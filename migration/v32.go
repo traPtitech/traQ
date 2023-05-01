@@ -1,0 +1,39 @@
+package migration
+
+import (
+	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+)
+
+func v32() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "32",
+		Migrate: func(db *gorm.DB) error {
+			if err := db.AutoMigrate(&v32User{}); err != nil {
+				return err
+			}
+			return db.Exec("ALTER TABLE `users` ALTER COLUMN `display_name` VARCHAR(32)").Error
+		},
+	}
+}
+
+type v32User struct {
+	ID          uuid.UUID            `gorm:"type:char(36);not null;primaryKey"`
+	Name        string               `gorm:"type:varchar(32);not null;unique"`
+	DisplayName string               `gorm:"type:varchar(32);not null;default:''"`
+	Password    string               `gorm:"type:char(128);not null;default:''"`
+	Salt        string               `gorm:"type:char(128);not null;default:''"`
+	Icon        uuid.UUID            `gorm:"type:char(36);not null"`
+	Status      v32UserAccountStatus `gorm:"type:tinyint;not null;default:0"`
+	Bot         bool                 `gorm:"type:boolean;not null;default:false"`
+	Role        string               `gorm:"type:varchar(30);not null;default:'user'"`
+	CreatedAt   time.Time            `gorm:"precision:6"`
+	UpdatedAt   time.Time            `gorm:"precision:6"`
+}
+
+type (
+	v32UserAccountStatus int
+)

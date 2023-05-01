@@ -42,6 +42,7 @@ func Migrations() []*gormigrate.Migration {
 		v29(), // BotにModeを追加、WebSocket Modeを追加
 		v30(), // bot_event_logsにresultを追加
 		v31(), // お気に入りスタンプパーミッション削除（削除忘れ）
+		v32(), // ユーザーの表示名上限を32文字に
 	}
 }
 
