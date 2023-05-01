@@ -353,7 +353,7 @@ type PatchUserRequest struct {
 
 func (r PatchUserRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 32)),
 		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
 		vd.Field(&r.Role, vd.RuneLength(0, 30)),
 		vd.Field(&r.State, vd.Min(0), vd.Max(2)),

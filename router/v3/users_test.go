@@ -853,7 +853,7 @@ func TestPatchUserRequest_Validate(t *testing.T) {
 		},
 		{
 			"too long display name",
-			fields{DisplayName: optional.From(strings.Repeat("a", 100))},
+			fields{DisplayName: optional.From(strings.Repeat("a", 33))},
 			true,
 		},
 		{
@@ -902,7 +902,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.From(strings.Repeat("a", 100))}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From(strings.Repeat("a", 33))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
