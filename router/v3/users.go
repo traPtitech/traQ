@@ -127,7 +127,7 @@ type PatchMeRequest struct {
 
 func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 32)),
 		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
 		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
 	)
