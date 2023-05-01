@@ -230,8 +230,8 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 
 		changes := map[string]interface{}{}
 		if args.DisplayName.Valid {
-			if utf8.RuneCountInString(args.DisplayName.V) > 64 {
-				return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
+			if utf8.RuneCountInString(args.DisplayName.V) > 32 {
+				return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 32 characters")
 			}
 			changes["display_name"] = args.DisplayName.V
 		}
