@@ -312,6 +312,30 @@ func TestHandlers_EditMe(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
+	t.Run("too long display name (more than 32 letters)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 33))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success (just 32 letters)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 32))}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		profile, err := env.Repository.GetUser(user.GetID(), true)
+		require.NoError(t, err)
+		assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -829,7 +853,7 @@ func TestPatchUserRequest_Validate(t *testing.T) {
 		},
 		{
 			"too long display name",
-			fields{DisplayName: optional.From(strings.Repeat("a", 100))},
+			fields{DisplayName: optional.From(strings.Repeat("a", 33))},
 			true,
 		},
 		{
@@ -878,7 +902,7 @@ func TestHandlers_EditUser(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, user.GetID()).
 			WithCookie(session.CookieName, adminSession).
-			WithJSON(&PatchUserRequest{DisplayName: optional.From(strings.Repeat("a", 100))}).
+			WithJSON(&PatchUserRequest{DisplayName: optional.From(strings.Repeat("a", 33))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

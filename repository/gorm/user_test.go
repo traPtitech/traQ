@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -178,18 +177,9 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 
 		user := mustMakeUser(t, repo, rand)
 
-		t.Run("Failed", func(t *testing.T) {
-			assert := assert.New(t)
-
-			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(strings.Repeat("a", 65))})
-			if assert.IsType(&repository.ArgumentError{}, err) {
-				assert.Equal("args.DisplayName", err.(*repository.ArgumentError).FieldName)
-			}
-		})
-
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
-			newDN := random2.AlphaNumeric(30)
+			newDN := random2.AlphaNumeric(32)
 
 			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(newDN)})) {
 				u, err := repo.GetUser(user.GetID(), true)

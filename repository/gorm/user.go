@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"time"
-	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
@@ -230,9 +229,6 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 
 		changes := map[string]interface{}{}
 		if args.DisplayName.Valid {
-			if utf8.RuneCountInString(args.DisplayName.V) > 64 {
-				return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
-			}
 			changes["display_name"] = args.DisplayName.V
 		}
 		if args.Role.Valid {

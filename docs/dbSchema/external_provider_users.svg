@@ -53,7 +53,7 @@
 <text text-anchor="start" x="345.899" y="-323.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
 <polygon fill="none" stroke="#000000" points="300,-282.5 300,-312.5 483,-312.5 483,-282.5 300,-282.5"/>
 <text text-anchor="start" x="306.7104" y="-293.9" font-family="Arial" font-size="14.00" fill="#000000">display_name </text>
-<text text-anchor="start" x="396.953" y="-293.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(64)]</text>
+<text text-anchor="start" x="396.953" y="-293.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
 <polygon fill="none" stroke="#000000" points="300,-252.5 300,-282.5 483,-282.5 483,-252.5 300,-252.5"/>
 <text text-anchor="start" x="307" y="-263.9" font-family="Arial" font-size="14.00" fill="#000000">password </text>
 <text text-anchor="start" x="370.7882" y="-263.9" font-family="Arial" font-size="14.00" fill="#666666">[char(128)]</text>

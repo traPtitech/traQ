@@ -71,8 +71,8 @@ func (u *googleUserInfo) GetName() string {
 }
 
 func (u *googleUserInfo) GetDisplayName() string {
-	if s := utf8string.NewString(u.displayName); s.RuneCount() > 64 {
-		return s.Slice(0, 64)
+	if s := utf8string.NewString(u.displayName); s.RuneCount() > 32 {
+		return s.Slice(0, 32)
 	}
 	return u.displayName
 }
