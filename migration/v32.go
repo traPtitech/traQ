@@ -15,7 +15,7 @@ func v32() *gormigrate.Migration {
 			if err := db.AutoMigrate(&v32User{}); err != nil {
 				return err
 			}
-			return db.Exec("ALTER TABLE `users` ALTER COLUMN `display_name` VARCHAR(32)").Error
+			return db.Exec("UPDATE `users` SET `display_name` = LEFT(`display_name`, 32) WHERE CHAR_LENGTH(`display_name`) > 32").Error
 		},
 	}
 }
