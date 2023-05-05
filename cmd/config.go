@@ -136,6 +136,8 @@ type Config struct {
 			AccessKey string `mapstructure:"accessKey" yaml:"accessKey"`
 			// SecretKey シークレットキー
 			SecretKey string `mapstructure:"secretKey" yaml:"secretKey"`
+			// ForcePathStyle Virtual-hosted style の代わりに Path-style でアクセスを行う
+			ForcePathStyle bool `mapstructure:"forcePathStyle" yaml:"forcePathStyle"`
 			// CacheDir キャッシュディレクトリ
 			CacheDir string `mapstructure:"cacheDir" yaml:"cacheDir"`
 		} `mapstructure:"s3" yaml:"s3"`
@@ -283,6 +285,7 @@ func init() {
 	viper.SetDefault("storage.s3.endpoint", "")
 	viper.SetDefault("storage.s3.accessKey", "")
 	viper.SetDefault("storage.s3.secretKey", "")
+	viper.SetDefault("storage.s3.forcePathStyle", false)
 	viper.SetDefault("storage.s3.cacheDir", "")
 	viper.SetDefault("storage.composite.remote", "")
 	viper.SetDefault("gcp.serviceAccount.projectId", "")
@@ -340,6 +343,7 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 			c.Storage.S3.Endpoint,
 			c.Storage.S3.AccessKey,
 			c.Storage.S3.SecretKey,
+			c.Storage.S3.ForcePathStyle,
 			c.Storage.S3.CacheDir,
 		)
 	case "composite":
@@ -365,6 +369,7 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 				c.Storage.S3.Endpoint,
 				c.Storage.S3.AccessKey,
 				c.Storage.S3.SecretKey,
+				c.Storage.S3.ForcePathStyle,
 				c.Storage.S3.CacheDir,
 			)
 		default:
