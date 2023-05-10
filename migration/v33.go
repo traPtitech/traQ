@@ -45,7 +45,7 @@ func v33() *gormigrate.Migration {
 				return err
 			}
 			// NOT NULL制約を追加
-			if err := db.Exec("ALTER TABLE unreads ALTER COLUMN channel_id char(36) NOT NULL").Error; err != nil {
+			if err := db.Exec("ALTER TABLE unreads MODIFY COLUMN channel_id char(36) NOT NULL").Error; err != nil {
 				return err
 			}
 
