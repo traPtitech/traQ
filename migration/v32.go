@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ユーザーの表示名上限を32文字に
 func v32() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "32",
@@ -20,6 +21,7 @@ func v32() *gormigrate.Migration {
 	}
 }
 
+// v32User ユーザー構造体
 type v32User struct {
 	ID          uuid.UUID            `gorm:"type:char(36);not null;primaryKey"`
 	Name        string               `gorm:"type:varchar(32);not null;unique"`
@@ -37,3 +39,8 @@ type v32User struct {
 type (
 	v32UserAccountStatus int
 )
+
+// TableName User構造体のテーブル名
+func (*v32User) TableName() string {
+	return "users"
+}
