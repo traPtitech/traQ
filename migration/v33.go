@@ -72,7 +72,7 @@ func v33() *gormigrate.Migration {
 	}
 }
 
-// v33Unread 構造体
+// v33Unread 未読レコード構造体
 type v33Unread struct {
 	UserID     uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID  uuid.UUID `gorm:"type:char(36);primaryKey;default:'00000000-0000-0000-0000-000000000000'"` // setting default for migration
