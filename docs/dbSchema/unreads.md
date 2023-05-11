@@ -10,11 +10,14 @@
 ```sql
 CREATE TABLE `unreads` (
   `user_id` char(36) NOT NULL,
+  `channel_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `noticeable` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime(6) DEFAULT NULL,
-  PRIMARY KEY (`user_id`,`message_id`),
+  PRIMARY KEY (`user_id`,`channel_id`,`message_id`),
+  KEY `unreads_channel_id_channels_id_foreign` (`channel_id`),
   KEY `unreads_message_id_messages_id_foreign` (`message_id`),
+  CONSTRAINT `unreads_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `unreads_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `unreads_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -27,6 +30,7 @@ CREATE TABLE `unreads` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | noticeable | tinyint(1) | 0 | false |  |  | 注目メッセージかどうか |
 | created_at | datetime(6) | NULL | true |  |  | 未読日時 |
@@ -35,7 +39,8 @@ CREATE TABLE `unreads` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| PRIMARY | PRIMARY KEY | PRIMARY KEY (user_id, message_id) |
+| PRIMARY | PRIMARY KEY | PRIMARY KEY (user_id, channel_id, message_id) |
+| unreads_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
 | unreads_message_id_messages_id_foreign | FOREIGN KEY | FOREIGN KEY (message_id) REFERENCES messages (id) |
 | unreads_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
 
@@ -43,8 +48,9 @@ CREATE TABLE `unreads` (
 
 | Name | Definition |
 | ---- | ---------- |
+| unreads_channel_id_channels_id_foreign | KEY unreads_channel_id_channels_id_foreign (channel_id) USING BTREE |
 | unreads_message_id_messages_id_foreign | KEY unreads_message_id_messages_id_foreign (message_id) USING BTREE |
-| PRIMARY | PRIMARY KEY (user_id, message_id) USING BTREE |
+| PRIMARY | PRIMARY KEY (user_id, channel_id, message_id) USING BTREE |
 
 ## Relations
 
