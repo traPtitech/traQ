@@ -51,9 +51,8 @@ swagger-lint: ## Lint swagger file
 
 .PHONY: db-gen-docs
 db-gen-docs: ## Generate db docs in docs/dbSchema
-	rm -rf ./docs/dbSchema
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc --rm-dist
 
 .PHONY: db-diff-docs
 db-diff-docs: ## List diff of db docs
