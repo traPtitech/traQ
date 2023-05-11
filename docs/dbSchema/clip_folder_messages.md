@@ -46,7 +46,34 @@ CREATE TABLE `clip_folder_messages` (
 
 ## Relations
 
-![er](clip_folder_messages.svg)
+```mermaid
+erDiagram
+
+"clip_folder_messages" }o--|| "clip_folders" : "FOREIGN KEY (folder_id) REFERENCES clip_folders (id)"
+"clip_folder_messages" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+
+"clip_folder_messages" {
+  char_36_ folder_id PK
+  char_36_ message_id PK
+  datetime_6_ created_at
+}
+"clip_folders" {
+  char_36_ id PK
+  varchar_30_ name
+  text description
+  char_36_ owner_id FK
+  datetime_6_ created_at
+}
+"messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text text
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

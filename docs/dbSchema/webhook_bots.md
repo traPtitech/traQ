@@ -65,7 +65,52 @@ CREATE TABLE `webhook_bots` (
 
 ## Relations
 
-![er](webhook_bots.svg)
+```mermaid
+erDiagram
+
+"webhook_bots" |o--|| "users" : "FOREIGN KEY (bot_user_id) REFERENCES users (id)"
+"webhook_bots" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"webhook_bots" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
+
+"webhook_bots" {
+  char_36_ id PK
+  char_36_ bot_user_id FK
+  text description
+  text secret
+  char_36_ channel_id FK
+  char_36_ creator_id FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

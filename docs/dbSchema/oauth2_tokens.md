@@ -62,7 +62,24 @@ CREATE TABLE `oauth2_tokens` (
 
 ## Relations
 
-![er](oauth2_tokens.svg)
+```mermaid
+erDiagram
+
+
+"oauth2_tokens" {
+  char_36_ id PK
+  char_36_ client_id
+  char_36_ user_id
+  text redirect_uri
+  varchar_36_ access_token
+  varchar_36_ refresh_token
+  tinyint_1_ refresh_enabled
+  text scopes
+  bigint_20_ expires_in
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

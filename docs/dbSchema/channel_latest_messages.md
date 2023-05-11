@@ -42,7 +42,16 @@ CREATE TABLE `channel_latest_messages` (
 
 ## Relations
 
-![er](channel_latest_messages.svg)
+```mermaid
+erDiagram
+
+
+"channel_latest_messages" {
+  char_36_ channel_id PK
+  char_36_ message_id
+  datetime_6_ date_time
+}
+```
 
 ---
 

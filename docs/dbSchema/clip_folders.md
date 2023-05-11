@@ -48,7 +48,38 @@ CREATE TABLE `clip_folders` (
 
 ## Relations
 
-![er](clip_folders.svg)
+```mermaid
+erDiagram
+
+"clip_folder_messages" }o--|| "clip_folders" : "FOREIGN KEY (folder_id) REFERENCES clip_folders (id)"
+"clip_folders" }o--|| "users" : "FOREIGN KEY (owner_id) REFERENCES users (id)"
+
+"clip_folders" {
+  char_36_ id PK
+  varchar_30_ name
+  text description
+  char_36_ owner_id FK
+  datetime_6_ created_at
+}
+"clip_folder_messages" {
+  char_36_ folder_id PK
+  char_36_ message_id PK
+  datetime_6_ created_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

@@ -46,7 +46,18 @@ CREATE TABLE `archived_messages` (
 
 ## Relations
 
-![er](archived_messages.svg)
+```mermaid
+erDiagram
+
+
+"archived_messages" {
+  char_36_ id PK
+  char_36_ message_id
+  char_36_ user_id
+  text text
+  datetime_6_ date_time
+}
+```
 
 ---
 

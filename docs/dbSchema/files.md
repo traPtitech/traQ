@@ -64,7 +64,89 @@ CREATE TABLE `files` (
 
 ## Relations
 
-![er](files.svg)
+```mermaid
+erDiagram
+
+"files_acl" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
+"files_thumbnails" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
+"stamps" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
+"user_groups" }o--o| "files" : "FOREIGN KEY (icon) REFERENCES files (id)"
+"users" }o--|| "files" : "Additional Relation"
+"files" }o--o| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
+"files" }o--o| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+
+"files" {
+  char_36_ id PK
+  text name
+  text mime
+  bigint_20_ size
+  char_36_ creator_id FK
+  char_32_ hash
+  varchar_30_ type
+  tinyint_1_ is_animated_image
+  char_36_ channel_id FK
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+"files_acl" {
+  char_36_ file_id PK
+  char_36_ user_id PK
+  tinyint_1_ allow
+}
+"files_thumbnails" {
+  char_36_ file_id PK
+  varchar_30_ type PK
+  text mime
+  bigint_20_ width
+  bigint_20_ height
+}
+"stamps" {
+  char_36_ id PK
+  varchar_32_ name
+  char_36_ creator_id
+  char_36_ file_id FK
+  tinyint_1_ is_unicode
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"user_groups" {
+  char_36_ id PK
+  varchar_30_ name
+  text description
+  varchar_30_ type
+  char_36_ icon FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

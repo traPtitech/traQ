@@ -60,7 +60,54 @@ CREATE TABLE `messages_stamps` (
 
 ## Relations
 
-![er](messages_stamps.svg)
+```mermaid
+erDiagram
+
+"messages_stamps" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"messages_stamps" }o--|| "stamps" : "FOREIGN KEY (stamp_id) REFERENCES stamps (id)"
+"messages_stamps" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+
+"messages_stamps" {
+  char_36_ message_id PK
+  char_36_ stamp_id PK
+  char_36_ user_id PK
+  bigint_20_ count
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text text
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"stamps" {
+  char_36_ id PK
+  varchar_32_ name
+  char_36_ creator_id
+  char_36_ file_id FK
+  tinyint_1_ is_unicode
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

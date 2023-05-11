@@ -45,7 +45,25 @@ CREATE TABLE `tags` (
 
 ## Relations
 
-![er](tags.svg)
+```mermaid
+erDiagram
+
+"users_tags" }o--|| "tags" : "FOREIGN KEY (tag_id) REFERENCES tags (id)"
+
+"tags" {
+  char_36_ id PK
+  varchar_30_ name
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"users_tags" {
+  char_36_ user_id PK
+  char_36_ tag_id PK
+  tinyint_1_ is_locked
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

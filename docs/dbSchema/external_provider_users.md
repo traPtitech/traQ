@@ -51,7 +51,33 @@ CREATE TABLE `external_provider_users` (
 
 ## Relations
 
-![er](external_provider_users.svg)
+```mermaid
+erDiagram
+
+"external_provider_users" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+
+"external_provider_users" {
+  char_36_ user_id PK
+  varchar_30_ provider_name PK
+  varchar_100_ external_id
+  text extra
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

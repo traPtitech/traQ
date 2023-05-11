@@ -42,7 +42,30 @@ CREATE TABLE `files_acl` (
 
 ## Relations
 
-![er](files_acl.svg)
+```mermaid
+erDiagram
+
+"files_acl" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
+
+"files_acl" {
+  char_36_ file_id PK
+  char_36_ user_id PK
+  tinyint_1_ allow
+}
+"files" {
+  char_36_ id PK
+  text name
+  text mime
+  bigint_20_ size
+  char_36_ creator_id FK
+  char_32_ hash
+  varchar_30_ type
+  tinyint_1_ is_animated_image
+  char_36_ channel_id FK
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

@@ -36,7 +36,14 @@ CREATE TABLE `migrations` (
 
 ## Relations
 
-![er](migrations.svg)
+```mermaid
+erDiagram
+
+
+"migrations" {
+  varchar_190_ id PK
+}
+```
 
 ---
 

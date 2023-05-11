@@ -51,7 +51,46 @@ CREATE TABLE `dm_channel_mappings` (
 
 ## Relations
 
-![er](dm_channel_mappings.svg)
+```mermaid
+erDiagram
+
+"dm_channel_mappings" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"dm_channel_mappings" }o--|| "users" : "FOREIGN KEY (user1) REFERENCES users (id)"
+"dm_channel_mappings" }o--|| "users" : "FOREIGN KEY (user2) REFERENCES users (id)"
+
+"dm_channel_mappings" {
+  char_36_ channel_id PK
+  char_36_ user1 FK
+  char_36_ user2 FK
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

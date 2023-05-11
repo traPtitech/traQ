@@ -55,7 +55,45 @@ CREATE TABLE `user_groups` (
 
 ## Relations
 
-![er](user_groups.svg)
+```mermaid
+erDiagram
+
+"user_group_admins" }o--|| "user_groups" : "FOREIGN KEY (group_id) REFERENCES user_groups (id)"
+"user_group_members" }o--|| "user_groups" : "FOREIGN KEY (group_id) REFERENCES user_groups (id)"
+"user_groups" }o--o| "files" : "FOREIGN KEY (icon) REFERENCES files (id)"
+
+"user_groups" {
+  char_36_ id PK
+  varchar_30_ name
+  text description
+  varchar_30_ type
+  char_36_ icon FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"user_group_admins" {
+  char_36_ group_id PK
+  char_36_ user_id PK
+}
+"user_group_members" {
+  char_36_ group_id PK
+  char_36_ user_id PK
+  varchar_100_ role
+}
+"files" {
+  char_36_ id PK
+  text name
+  text mime
+  bigint_20_ size
+  char_36_ creator_id FK
+  char_32_ hash
+  varchar_30_ type
+  tinyint_1_ is_animated_image
+  char_36_ channel_id FK
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 
