@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,10 +16,10 @@ import (
 )
 
 const (
-	esRequiredVersion = "7.10.2"
-	esIndexPrefix     = "traq_"
-	esMessageIndex    = "message"
-	esDateFormat      = "2006-01-02T15:04:05.000000000Z"
+	esRequiredVersionPrefix = "7."
+	esIndexPrefix           = "traq_"
+	esMessageIndex          = "message"
+	esDateFormat            = "2006-01-02T15:04:05.000000000Z"
 )
 
 func getIndexName(index string) string {
@@ -171,8 +172,9 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch es version: %w", err)
 	}
-	if esRequiredVersion != version {
-		return nil, fmt.Errorf("failed to init search engine: version mismatch (%s)", version)
+	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
+	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
+		return nil, fmt.Errorf("failed to init search engine: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
 	}
 
 	// index確認
