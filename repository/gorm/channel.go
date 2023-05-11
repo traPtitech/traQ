@@ -169,8 +169,7 @@ func (repo *Repository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, erro
 				changed = append(changed, &ch)
 			}
 		}
-		// アーカイブされたチャンネルの未読は削除
-		return tx.Delete(&model.Unread{}, "channel_id IN (?)", ids).Error
+		return nil
 	})
 	if err != nil {
 		return nil, err
