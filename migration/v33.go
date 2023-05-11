@@ -6,14 +6,22 @@ import (
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/model"
 	"gorm.io/gorm"
 )
 
-// v33 未読テーブルにチャンネルIDカラムを追加、インデックス類の更新
+// v33 未読テーブルにチャンネルIDカラムを追加 / インデックス類の更新 / 不要なレコードの削除
 func v33() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "33",
 		Migrate: func(db *gorm.DB) error {
+			// 凍結ユーザー / Botユーザーの未読を削除
+			if err := db.Delete(&model.Unread{}, "user_id IN (?)",
+				db.Model(&model.User{}).Where("status = ?", model.UserAccountStatusDeactivated).Or("bot = ?", true).Select("id"),
+			).Error; err != nil {
+				return err
+			}
+
 			// 更新のためindexを削除
 			if err := db.Exec("ALTER TABLE unreads DROP CONSTRAINT IF EXISTS unreads_user_id_users_id_foreign").Error; err != nil {
 				return err
@@ -41,7 +49,8 @@ func v33() *gormigrate.Migration {
 			if err := db.Exec("UPDATE unreads SET channel_id = (SELECT channel_id FROM messages WHERE messages.id = unreads.message_id)").Error; err != nil {
 				return err
 			}
-			if err := db.Exec("DELETE FROM unreads WHERE channel_id IS NULL").Error; err != nil {
+			// 削除されたメッセージの未読を削除
+			if err := db.Delete(&model.Unread{}, "channel_id IS NULL").Error; err != nil {
 				return err
 			}
 			// NOT NULL制約を追加
@@ -67,7 +76,10 @@ func v33() *gormigrate.Migration {
 				}
 			}
 
-			return nil
+			// アーカイブ済みのチャンネルの未読を削除
+			return db.Delete(&model.Unread{}, "channel_id IN (?)",
+				db.Model(&model.Channel{}).Where("is_visible = ?", false).Select("id"),
+			).Error
 		},
 	}
 }
