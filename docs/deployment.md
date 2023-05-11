@@ -397,7 +397,7 @@ services:
       - db:/var/lib/mysql
 
   es:
-    image: ghcr.io/traptitech/es-with-sudachi:7.10.2-2.1.1-SNAPSHOT
+    image: ghcr.io/traptitech/es-with-sudachi:7.17.9-3.0.1
     container_name: traq-es
     restart: always
     environment:
