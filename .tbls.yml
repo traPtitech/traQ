@@ -118,6 +118,7 @@ comments:
     tableComment: メッセージ未読テーブル
     columnComments:
       user_id: ユーザーUUID
+      channel_id: チャンネルUUID
       message_id: メッセージUUID
       noticeable: 注目メッセージかどうか
       created_at: 未読日時
