@@ -172,6 +172,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch es version: %w", err)
 	}
+	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
 	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
 		return nil, fmt.Errorf("failed to init search engine: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
 	}
