@@ -16,14 +16,10 @@ func v33() *gormigrate.Migration {
 		ID: "33",
 		Migrate: func(db *gorm.DB) error {
 			// 凍結ユーザー / Botユーザーの未読を削除
-			var userIDs []uuid.UUID
-			if err := db.Where("status = ?", model.UserAccountStatusDeactivated).Or("bot = ?", true).Select("id").Find(&userIDs).Error; err != nil {
+			if err := db.Delete(&model.Unread{}, "user_id IN (?)",
+				db.Model(&model.User{}).Where("status = ?", model.UserAccountStatusDeactivated).Or("bot = ?", true).Select("id"),
+			).Error; err != nil {
 				return err
-			}
-			if len(userIDs) > 0 {
-				if err := db.Delete(&model.Unread{}, "user_id IN ?", userIDs).Error; err != nil {
-					return err
-				}
 			}
 
 			// 更新のためindexを削除
@@ -81,17 +77,9 @@ func v33() *gormigrate.Migration {
 			}
 
 			// アーカイブ済みのチャンネルの未読を削除
-			var chanIDs []uuid.UUID
-			if err := db.Model(&model.Channel{}).Where("is_visible = ?", true).Select("id").Find(&chanIDs).Error; err != nil {
-				return err
-			}
-			if len(chanIDs) > 0 {
-				if err := db.Delete(&model.Unread{}, "channel_id IN ?", chanIDs).Error; err != nil {
-					return err
-				}
-			}
-
-			return nil
+			return db.Delete(&model.Unread{}, "channel_id IN (?)",
+				db.Model(&model.Channel{}).Where("is_visible = ?", false).Select("id"),
+			).Error
 		},
 	}
 }
