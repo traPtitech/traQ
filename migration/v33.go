@@ -46,10 +46,12 @@ func v33() *gormigrate.Migration {
 				return err
 			}
 			// 実際のチャンネルIDに更新
-			if err := db.Exec("UPDATE unreads SET channel_id = (SELECT channel_id FROM messages WHERE messages.id = unreads.message_id)").Error; err != nil {
+			if err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v33Unread{}).Updates(map[string]any{
+				"channel_id": db.Model(&model.Message{}).Where("messages.id = unreads.message_id").Select("channel_id"),
+			}).Error; err != nil {
 				return err
 			}
-			// 削除されたメッセージの未読を削除
+			// // 削除されたメッセージの未読を削除
 			if err := db.Delete(&model.Unread{}, "channel_id IS NULL").Error; err != nil {
 				return err
 			}
@@ -84,7 +86,7 @@ func v33() *gormigrate.Migration {
 // v33Unread 未読レコード構造体
 type v33Unread struct {
 	UserID     uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
-	ChannelID  uuid.UUID `gorm:"type:char(36);primaryKey;default:'00000000-0000-0000-0000-000000000000'"` // setting default for migration
+	ChannelID  uuid.UUID `gorm:"type:char(36);primaryKey;"` // setting NULLABLE for migration
 	MessageID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Noticeable bool      `gorm:"type:boolean;not null;default:false"`
 	CreatedAt  time.Time `gorm:"precision:6"`

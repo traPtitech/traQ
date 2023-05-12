@@ -376,7 +376,7 @@ func (repo *Repository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) er
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Exec("DELETE unreads FROM unreads WHERE user_id = ? AND channel_id = ?", userID, channelID)
+	result := repo.db.Where("user_id = ?", userID).Where("channel_id = ?", channelID).Delete(&model.Unread{})
 	if result.Error != nil {
 		return result.Error
 	}
