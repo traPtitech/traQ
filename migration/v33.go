@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
 	"gorm.io/gorm"
 )
 
@@ -16,8 +15,8 @@ func v33() *gormigrate.Migration {
 		ID: "33",
 		Migrate: func(db *gorm.DB) error {
 			// 凍結ユーザー / Botユーザーの未読を削除
-			if err := db.Delete(&model.Unread{}, "user_id IN (?)",
-				db.Model(&model.User{}).Where("status = ?", model.UserAccountStatusDeactivated).Or("bot = ?", true).Select("id"),
+			if err := db.Delete(&v33Unread{}, "user_id IN (?)",
+				db.Table("users").Where("status = ?", v33UserAccountStatusDeactivated).Or("bot = ?", true).Select("id"),
 			).Error; err != nil {
 				return err
 			}
@@ -47,12 +46,12 @@ func v33() *gormigrate.Migration {
 			}
 			// 実際のチャンネルIDに更新
 			if err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v33Unread{}).Updates(map[string]any{
-				"channel_id": db.Model(&model.Message{}).Where("messages.id = unreads.message_id").Select("channel_id"),
+				"channel_id": db.Table("messages").Where("messages.id = unreads.message_id").Select("channel_id"),
 			}).Error; err != nil {
 				return err
 			}
 			// // 削除されたメッセージの未読を削除
-			if err := db.Delete(&model.Unread{}, "channel_id IS NULL").Error; err != nil {
+			if err := db.Delete(&v33Unread{}, "channel_id IS NULL").Error; err != nil {
 				return err
 			}
 			// NOT NULL制約を追加
@@ -82,6 +81,9 @@ func v33() *gormigrate.Migration {
 		},
 	}
 }
+
+// v33UserAccountStatusDeactivated 凍結状態
+const v33UserAccountStatusDeactivated = 0
 
 // v33Unread 未読レコード構造体
 type v33Unread struct {
