@@ -40,10 +40,6 @@ func v33() *gormigrate.Migration {
 				return err
 			}
 
-			// デフォルト値の削除
-			if err := db.Exec("ALTER TABLE unreads ALTER COLUMN channel_id DROP DEFAULT").Error; err != nil {
-				return err
-			}
 			// 実際のチャンネルIDに更新
 			if err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v33Unread{}).Updates(map[string]any{
 				"channel_id": db.Table("messages").Where("messages.id = unreads.message_id").Select("channel_id"),
