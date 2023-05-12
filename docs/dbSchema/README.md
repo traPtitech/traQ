@@ -33,7 +33,7 @@
 | [stamp_palettes](stamp_palettes.md) | 7 | スタンプパレットテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
-| [unreads](unreads.md) | 4 | メッセージ未読テーブル | BASE TABLE |
+| [unreads](unreads.md) | 5 | メッセージ未読テーブル | BASE TABLE |
 | [users](users.md) | 11 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
 | [users_subscribe_channels](users_subscribe_channels.md) | 4 | チャンネル購読者テーブル | BASE TABLE |

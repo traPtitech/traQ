@@ -43,11 +43,13 @@ func (m *ChannelLatestMessage) TableName() string {
 // Unread 未読レコード
 type Unread struct {
 	UserID     uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	MessageID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Noticeable bool      `gorm:"type:boolean;not null;default:false"`
 	CreatedAt  time.Time `gorm:"precision:6"`
 
 	User    User    `gorm:"constraint:unreads_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:unreads_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Message Message `gorm:"constraint:unreads_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 

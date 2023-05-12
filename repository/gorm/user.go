@@ -218,8 +218,9 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 		return repository.ErrNilID
 	}
 	var (
-		changed bool
-		count   int
+		deactivate bool
+		changed    bool
+		count      int
 	)
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var u model.User
@@ -236,6 +237,9 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 		}
 		if args.UserState.Valid {
 			changes["status"] = args.UserState.V.Int()
+			if args.UserState.V.Int() == model.UserAccountStatusDeactivated.Int() {
+				deactivate = true
+			}
 		}
 		if args.IconFileID.Valid {
 			changes["icon"] = args.IconFileID.V
@@ -279,6 +283,12 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 			}
 			changed = true
 			count += len(changes)
+		}
+		// 凍結の際は未読を削除
+		if deactivate {
+			if err := tx.Delete(&model.Unread{}, "user_id = ?", id).Error; err != nil {
+				return err
+			}
 		}
 		return nil
 	})
