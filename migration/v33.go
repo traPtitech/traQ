@@ -76,10 +76,7 @@ func v33() *gormigrate.Migration {
 				}
 			}
 
-			// アーカイブ済みのチャンネルの未読を削除
-			return db.Delete(&model.Unread{}, "channel_id IN (?)",
-				db.Model(&model.Channel{}).Where("is_visible = ?", false).Select("id"),
-			).Error
+			return nil
 		},
 	}
 }
