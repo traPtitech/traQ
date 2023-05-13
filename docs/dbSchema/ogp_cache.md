@@ -48,7 +48,19 @@ CREATE TABLE `ogp_cache` (
 
 ## Relations
 
-![er](ogp_cache.svg)
+```mermaid
+erDiagram
+
+
+"ogp_cache" {
+  bigint_20_ id PK
+  text url
+  char_40_ url_hash
+  tinyint_1_ valid
+  text content
+  datetime_6_ expires_at
+}
+```
 
 ---
 

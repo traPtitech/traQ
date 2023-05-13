@@ -52,7 +52,48 @@ CREATE TABLE `user_profiles` (
 
 ## Relations
 
-![er](user_profiles.svg)
+```mermaid
+erDiagram
+
+"user_profiles" |o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"user_profiles" }o--o| "channels" : "FOREIGN KEY (home_channel) REFERENCES channels (id)"
+
+"user_profiles" {
+  char_36_ user_id PK
+  text bio
+  varchar_15_ twitter_id
+  datetime_6_ last_online
+  char_36_ home_channel FK
+  datetime_6_ updated_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

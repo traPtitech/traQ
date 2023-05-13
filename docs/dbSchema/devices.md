@@ -44,7 +44,30 @@ CREATE TABLE `devices` (
 
 ## Relations
 
-![er](devices.svg)
+```mermaid
+erDiagram
+
+"devices" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+
+"devices" {
+  varchar_190_ token PK
+  char_36_ user_id FK
+  datetime_6_ created_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

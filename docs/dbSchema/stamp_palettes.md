@@ -52,7 +52,34 @@ CREATE TABLE `stamp_palettes` (
 
 ## Relations
 
-![er](stamp_palettes.svg)
+```mermaid
+erDiagram
+
+"stamp_palettes" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
+
+"stamp_palettes" {
+  char_36_ id PK
+  varchar_30_ name
+  text description
+  text stamps
+  char_36_ creator_id FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

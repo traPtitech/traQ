@@ -49,7 +49,18 @@ CREATE TABLE `r_sessions` (
 
 ## Relations
 
-![er](r_sessions.svg)
+```mermaid
+erDiagram
+
+
+"r_sessions" {
+  varchar_50_ token PK
+  char_36_ reference_id
+  varchar_36_ user_id
+  longblob data
+  datetime_6_ created
+}
+```
 
 ---
 

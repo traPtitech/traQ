@@ -1,6 +1,6 @@
 docPath: docs/dbSchema
 er:
-  format: svg
+  format: mermaid
 
 lint:
   requireTableComment:

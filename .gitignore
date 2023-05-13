@@ -10,4 +10,5 @@ traQ
 traQ.exe
 .tool-versions
 
+docs/dbSchema/schema.json
 /*.sql

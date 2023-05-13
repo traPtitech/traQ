@@ -44,7 +44,22 @@ CREATE TABLE `user_role_inheritances` (
 
 ## Relations
 
-![er](user_role_inheritances.svg)
+```mermaid
+erDiagram
+
+"user_role_inheritances" }o--|| "user_roles" : "FOREIGN KEY (role) REFERENCES user_roles (name)"
+"user_role_inheritances" }o--|| "user_roles" : "FOREIGN KEY (sub_role) REFERENCES user_roles (name)"
+
+"user_role_inheritances" {
+  varchar_30_ role PK
+  varchar_30_ sub_role PK
+}
+"user_roles" {
+  varchar_30_ name PK
+  tinyint_1_ oauth2_scope
+  tinyint_1_ system
+}
+```
 
 ---
 

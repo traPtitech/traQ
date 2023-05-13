@@ -63,7 +63,124 @@ CREATE TABLE `channels` (
 
 ## Relations
 
-![er](channels.svg)
+```mermaid
+erDiagram
+
+"channel_events" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"dm_channel_mappings" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"files" }o--o| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"users_private_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"user_profiles" }o--o| "channels" : "FOREIGN KEY (home_channel) REFERENCES channels (id)"
+"webhook_bots" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"channels" }o--|| "channels" : "Additional Relation"
+"channels" }o--|| "users" : "Additional Relation"
+
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"channel_events" {
+  char_36_ event_id PK
+  char_36_ channel_id FK
+  varchar_30_ event_type
+  text detail
+  datetime_6_ date_time
+}
+"dm_channel_mappings" {
+  char_36_ channel_id PK
+  char_36_ user1 FK
+  char_36_ user2 FK
+}
+"files" {
+  char_36_ id PK
+  text name
+  text mime
+  bigint_20_ size
+  char_36_ creator_id FK
+  char_32_ hash
+  varchar_30_ type
+  tinyint_1_ is_animated_image
+  char_36_ channel_id FK
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+"messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text text
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"stars" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+}
+"unreads" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  char_36_ message_id PK
+  tinyint_1_ noticeable
+  datetime_6_ created_at
+}
+"users_private_channels" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+}
+"users_subscribe_channels" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  tinyint_1_ mark
+  tinyint_1_ notify
+}
+"user_profiles" {
+  char_36_ user_id PK
+  text bio
+  varchar_15_ twitter_id
+  datetime_6_ last_online
+  char_36_ home_channel FK
+  datetime_6_ updated_at
+}
+"webhook_bots" {
+  char_36_ id PK
+  char_36_ bot_user_id FK
+  text description
+  text secret
+  char_36_ channel_id FK
+  char_36_ creator_id FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

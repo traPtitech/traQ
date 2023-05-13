@@ -56,7 +56,24 @@ CREATE TABLE `oauth2_authorizes` (
 
 ## Relations
 
-![er](oauth2_authorizes.svg)
+```mermaid
+erDiagram
+
+
+"oauth2_authorizes" {
+  varchar_36_ code PK
+  char_36_ client_id
+  char_36_ user_id
+  bigint_20_ expires_in
+  text redirect_uri
+  text scopes
+  text original_scopes
+  varchar_128_ code_challenge
+  text code_challenge_method
+  text nonce
+  datetime_6_ created_at
+}
+```
 
 ---
 

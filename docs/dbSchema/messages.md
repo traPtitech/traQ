@@ -17,10 +17,10 @@ CREATE TABLE `messages` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_messages_deleted_at_updated_at` (`deleted_at`,`updated_at`),
   KEY `idx_messages_channel_id_deleted_at_created_at` (`channel_id`,`deleted_at`,`created_at`),
   KEY `idx_messages_created_at` (`created_at`),
   KEY `idx_messages_deleted_at_created_at` (`deleted_at`,`created_at`),
-  KEY `idx_messages_deleted_at_updated_at` (`deleted_at`,`updated_at`),
   KEY `messages_user_id_users_id_foreign` (`user_id`),
   CONSTRAINT `messages_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messages_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -62,7 +62,79 @@ CREATE TABLE `messages` (
 
 ## Relations
 
-![er](messages.svg)
+```mermaid
+erDiagram
+
+"clip_folder_messages" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"messages_stamps" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"pins" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"unreads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+
+"messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text text
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"clip_folder_messages" {
+  char_36_ folder_id PK
+  char_36_ message_id PK
+  datetime_6_ created_at
+}
+"messages_stamps" {
+  char_36_ message_id PK
+  char_36_ stamp_id PK
+  char_36_ user_id PK
+  bigint_20_ count
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"pins" {
+  char_36_ id PK
+  char_36_ message_id FK
+  char_36_ user_id FK
+  datetime_6_ created_at
+}
+"unreads" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  char_36_ message_id PK
+  tinyint_1_ noticeable
+  datetime_6_ created_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

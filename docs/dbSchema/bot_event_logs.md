@@ -54,7 +54,22 @@ CREATE TABLE `bot_event_logs` (
 
 ## Relations
 
-![er](bot_event_logs.svg)
+```mermaid
+erDiagram
+
+
+"bot_event_logs" {
+  char_36_ request_id PK
+  char_36_ bot_id
+  varchar_30_ event
+  text body
+  char_2_ result
+  text error
+  bigint_20_ code
+  bigint_20_ latency
+  datetime_6_ date_time
+}
+```
 
 ---
 

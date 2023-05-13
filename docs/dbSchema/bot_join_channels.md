@@ -38,7 +38,15 @@ CREATE TABLE `bot_join_channels` (
 
 ## Relations
 
-![er](bot_join_channels.svg)
+```mermaid
+erDiagram
+
+
+"bot_join_channels" {
+  char_36_ channel_id PK
+  char_36_ bot_id PK
+}
+```
 
 ---
 

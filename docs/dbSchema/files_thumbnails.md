@@ -46,7 +46,32 @@ CREATE TABLE `files_thumbnails` (
 
 ## Relations
 
-![er](files_thumbnails.svg)
+```mermaid
+erDiagram
+
+"files_thumbnails" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
+
+"files_thumbnails" {
+  char_36_ file_id PK
+  varchar_30_ type PK
+  text mime
+  bigint_20_ width
+  bigint_20_ height
+}
+"files" {
+  char_36_ id PK
+  text name
+  text mime
+  bigint_20_ size
+  char_36_ creator_id FK
+  char_32_ hash
+  varchar_30_ type
+  tinyint_1_ is_animated_image
+  char_36_ channel_id FK
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

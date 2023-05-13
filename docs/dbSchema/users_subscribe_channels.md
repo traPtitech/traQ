@@ -48,7 +48,46 @@ CREATE TABLE `users_subscribe_channels` (
 
 ## Relations
 
-![er](users_subscribe_channels.svg)
+```mermaid
+erDiagram
+
+"users_subscribe_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+
+"users_subscribe_channels" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  tinyint_1_ mark
+  tinyint_1_ notify
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"channels" {
+  char_36_ id PK
+  varchar_20_ name
+  char_36_ parent_id
+  text topic
+  tinyint_1_ is_forced
+  tinyint_1_ is_public
+  tinyint_1_ is_visible
+  char_36_ creator_id
+  char_36_ updater_id
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

@@ -51,7 +51,41 @@ CREATE TABLE `pins` (
 
 ## Relations
 
-![er](pins.svg)
+```mermaid
+erDiagram
+
+"pins" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"pins" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+
+"pins" {
+  char_36_ id PK
+  char_36_ message_id FK
+  char_36_ user_id FK
+  datetime_6_ created_at
+}
+"messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text text
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

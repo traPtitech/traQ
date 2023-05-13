@@ -51,7 +51,19 @@ CREATE TABLE `message_reports` (
 
 ## Relations
 
-![er](message_reports.svg)
+```mermaid
+erDiagram
+
+
+"message_reports" {
+  char_36_ id PK
+  char_36_ message_id
+  char_36_ reporter
+  text reason
+  datetime_6_ created_at
+  datetime_6_ deleted_at
+}
+```
 
 ---
 

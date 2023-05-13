@@ -76,7 +76,43 @@ CREATE TABLE `bots` (
 
 ## Relations
 
-![er](bots.svg)
+```mermaid
+erDiagram
+
+"bots" |o--|| "users" : "FOREIGN KEY (bot_user_id) REFERENCES users (id)"
+"bots" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
+
+"bots" {
+  char_36_ id PK
+  char_36_ bot_user_id FK
+  text description
+  varchar_30_ verification_token
+  char_36_ access_token_id
+  text post_url
+  text subscribe_events
+  tinyint_1_ privileged
+  varchar_30_ mode
+  tinyint_4_ state
+  varchar_30_ bot_code
+  char_36_ creator_id FK
+  datetime_6_ created_at
+  datetime_6_ updated_at
+  datetime_6_ deleted_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 

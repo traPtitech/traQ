@@ -52,7 +52,39 @@ CREATE TABLE `users_tags` (
 
 ## Relations
 
-![er](users_tags.svg)
+```mermaid
+erDiagram
+
+"users_tags" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"users_tags" }o--|| "tags" : "FOREIGN KEY (tag_id) REFERENCES tags (id)"
+
+"users_tags" {
+  char_36_ user_id PK
+  char_36_ tag_id PK
+  tinyint_1_ is_locked
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"users" {
+  char_36_ id PK
+  varchar_32_ name
+  varchar_32_ display_name
+  char_128_ password
+  char_128_ salt
+  char_36_ icon
+  tinyint_4_ status
+  tinyint_1_ bot
+  varchar_30_ role
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+"tags" {
+  char_36_ id PK
+  varchar_30_ name
+  datetime_6_ created_at
+  datetime_6_ updated_at
+}
+```
 
 ---
 
