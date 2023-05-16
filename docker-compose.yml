@@ -18,16 +18,17 @@ services:
       TRAQ_STORAGE_S3_SECRETKEY: PASSWORD
       TRAQ_STORAGE_S3_CACHEDIR: ./storage
       TRAQ_STORAGE_COMPOSITE_REMOTE: s3
-    entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306 -wait tcp://es:9200
-    command: ./traQ serve --dev --skip-init-emojis
+    entrypoint: ./traQ serve --dev --skip-init-emojis
     expose:
       - "80"
       - "6060"
     ports:
       - "6060:6060"
     depends_on:
-      - mysql
-      - es
+      mysql:
+        condition: service_healthy
+      es:
+        condition: service_healthy
     volumes:
       - app:/app/storage
 
@@ -58,6 +59,11 @@ services:
       - "3002:3306"
     volumes:
       - mysql:/var/lib/mysql
+    healthcheck:
+      test: mysql --user=root --password=password --execute "SHOW DATABASES;"
+      interval: 1s
+      timeout: 10s
+      retries: 60
 
   es:
     image: ghcr.io/traptitech/es-with-sudachi:7.17.9-3.0.1
@@ -71,6 +77,11 @@ services:
       - ./dev/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
       - ./dev/es_jvm.options:/usr/share/elasticsearch/config/jvm.options.d/es_jvm.options
       - es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 60
 
   adminer:
     image: adminer:4.7.5
