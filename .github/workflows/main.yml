@@ -88,9 +88,10 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: traQ
-      - name: Lint
-        run: |
-          source <(curl https://raw.githubusercontent.com/k1LoW/tbls/main/use)
+      - uses: k1low/setup-tbls@v1
+        with:
+          version: v1.65.3
+      - run: |
           chmod +x ./traQ
           ./traQ migrate --reset
           tbls lint
