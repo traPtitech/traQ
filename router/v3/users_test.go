@@ -322,38 +322,40 @@ func TestHandlers_EditMe(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("success (just 32 letters)", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.PATCH(path).
-			WithCookie(session.CookieName, s).
-			WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 32))}).
-			Expect().
-			Status(http.StatusNoContent)
-
-		profile, err := env.Repository.GetUser(user.GetID(), true)
-		require.NoError(t, err)
-		assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
-	})
-
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		e := env.R(t)
-		e.PATCH(path).
-			WithCookie(session.CookieName, s).
-			WithJSON(&PatchMeRequest{
-				DisplayName: optional.From("po"),
-				HomeChannel: optional.From(ch.ID),
-			}).
-			Expect().
-			Status(http.StatusNoContent)
 
-		profile, err := env.Repository.GetUser(user.GetID(), true)
-		require.NoError(t, err)
-		assert.EqualValues(t, "po", profile.GetDisplayName())
-		if assert.True(t, profile.GetHomeChannel().Valid) {
-			assert.EqualValues(t, ch.ID, profile.GetHomeChannel().V)
-		}
+		t.Run("success (just 32 letters)", func(t *testing.T) {
+			e := env.R(t)
+			e.PATCH(path).
+				WithCookie(session.CookieName, s).
+				WithJSON(&PatchMeRequest{DisplayName: optional.From(strings.Repeat("a", 32))}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			profile, err := env.Repository.GetUser(user.GetID(), true)
+			require.NoError(t, err)
+			assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
+		})
+
+		t.Run("success (shorter name)", func(t *testing.T) {
+			e := env.R(t)
+			e.PATCH(path).
+				WithCookie(session.CookieName, s).
+				WithJSON(&PatchMeRequest{
+					DisplayName: optional.From("po"),
+					HomeChannel: optional.From(ch.ID),
+				}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			profile, err := env.Repository.GetUser(user.GetID(), true)
+			require.NoError(t, err)
+			assert.EqualValues(t, "po", profile.GetDisplayName())
+			if assert.True(t, profile.GetHomeChannel().Valid) {
+				assert.EqualValues(t, ch.ID, profile.GetHomeChannel().V)
+			}
+		})
 	})
 }
 
