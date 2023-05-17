@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// v43 未読テーブルのcreated_atカラムをmessagesを元に更新
+// v43 未読テーブルのcreated_atカラムをメッセージテーブルを元に更新
 func v34() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "34",
 		Migrate: func(db *gorm.DB) error {
-			// 実際のチャンネルIDに更新
+			// 未読テーブルのcreated_atを該当メッセージのcreated_atに更新
 			return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v34Unread{}).Updates(map[string]any{
 				"created_at": db.Table("messages").Where("messages.id = unreads.message_id").Select("created_at"),
 			}).Error
