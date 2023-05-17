@@ -46,7 +46,7 @@ func v33() *gormigrate.Migration {
 			}).Error; err != nil {
 				return err
 			}
-			// // 削除されたメッセージの未読を削除
+			// 削除されたメッセージの未読を削除
 			if err := db.Delete(&v33Unread{}, "channel_id IS NULL").Error; err != nil {
 				return err
 			}
