@@ -220,6 +220,9 @@ func TestRepositoryImpl_SetMessageUnread(t *testing.T) {
 	assert.Error(repo.SetMessageUnread(user.GetID(), uuid.Nil, true))
 	if assert.NoError(repo.SetMessageUnread(user.GetID(), m.ID, true)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user.GetID()})))
+		var messageCreatedAt time.Time
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user.GetID()}).Select("message_created_at").Row().Scan(&messageCreatedAt))
+		assert.Equal(true, m.CreatedAt.Equal(messageCreatedAt))
 	}
 	assert.NoError(repo.SetMessageUnread(user.GetID(), m.ID, true))
 }
