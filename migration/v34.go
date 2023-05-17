@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// v43 未読テーブルのcreated_atカラムをメッセージテーブルを元に更新 / カラム名を変更
+// v34 未読テーブルのcreated_atカラムをメッセージテーブルを元に更新 / カラム名を変更
 func v34() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "34",
