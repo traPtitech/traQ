@@ -263,6 +263,8 @@ func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
 		unreads, err := repo.GetUserUnreadChannels(user.GetID())
 		assert.NoError(err)
 		assert.Len(unreads, 1)
