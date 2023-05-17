@@ -243,6 +243,39 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 	}
 }
 
+func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
+	t.Parallel()
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+
+	messages := make([]*model.Message, 10)
+	for i := 0; i < 10; i++ {
+		m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		mustMakeMessageUnread(t, repo, user.GetID(), m.ID)
+		messages[i] = m
+	}
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		unreads, err := repo.GetUserUnreadChannels(uuid.Nil)
+		assert.NoError(err)
+		assert.Len(unreads, 0)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		unreads, err := repo.GetUserUnreadChannels(user.GetID())
+		assert.NoError(err)
+		assert.Len(unreads, 1)
+
+		unread := unreads[0]
+		assert.Equal(channel.ID, unread.ChannelID)
+		assert.Equal(10, unread.Count)
+		assert.Equal(true, messages[0].CreatedAt.Equal(unread.Since))
+		assert.Equal(true, messages[9].CreatedAt.Equal(unread.UpdatedAt))
+		assert.Equal(messages[0].ID, unread.OldestMessageID)
+	})
+}
+
 func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
