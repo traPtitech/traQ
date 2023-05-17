@@ -13,6 +13,7 @@ import (
 
 // MessagesQuery GetMessages用クエリ
 type MessagesQuery struct {
+	IDIn    optional.Of[[]uuid.UUID]
 	User    uuid.UUID
 	Channel uuid.UUID
 	// ChannelsSubscribedByUser 指定したユーザーが購読しているチャンネルのメッセージを指定

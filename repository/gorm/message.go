@@ -217,6 +217,9 @@ func (repo *Repository) GetMessages(query repository.MessagesQuery) (messages []
 		tx = tx.Joins("USE INDEX (`idx_messages_deleted_at_created_at`) INNER JOIN channels ON messages.channel_id = channels.id")
 	}
 
+	if query.IDIn.Valid {
+		tx = tx.Where("messages.id IN ?", query.IDIn.V)
+	}
 	if query.Channel != uuid.Nil {
 		tx = tx.Where("messages.channel_id = ?", query.Channel)
 	}

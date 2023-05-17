@@ -142,7 +142,8 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		mustMakeMessage(t, repo, user.GetID(), ch1.ID)
 	}
 	m6 := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
-	m7 := mustMakeMessage(t, repo, user.GetID(), ch2.ID)
+	latestCh1Msg := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
+	latestCh2Msg := mustMakeMessage(t, repo, user.GetID(), ch2.ID)
 
 	messageEquals := func(t *testing.T, expected, actual *model.Message) {
 		t.Helper()
@@ -155,6 +156,20 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		assert.NotEmpty(t, actual.UpdatedAt)
 	}
 
+	t.Run("id in", func(t *testing.T) {
+		t.Parallel()
+
+		messages, more, err := repo.GetMessages(repository.MessagesQuery{
+			IDIn: optional.From([]uuid.UUID{m6.ID, latestCh1Msg.ID}),
+		})
+
+		if assert.NoError(t, err) {
+			assert.False(t, more)
+			assert.EqualValues(t, 2, len(messages))
+			messageEquals(t, latestCh1Msg, messages[0])
+			messageEquals(t, m6, messages[1])
+		}
+	})
 	t.Run("activity all", func(t *testing.T) {
 		t.Parallel()
 
@@ -167,9 +182,9 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 
 		if assert.NoError(t, err) {
 			assert.False(t, more)
-			assert.EqualValues(t, 7, len(messages))
-			messageEquals(t, m7, messages[0])
-			messageEquals(t, m6, messages[1])
+			assert.EqualValues(t, 8, len(messages))
+			messageEquals(t, latestCh2Msg, messages[0])
+			messageEquals(t, latestCh1Msg, messages[1])
 		}
 	})
 
@@ -186,8 +201,8 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.True(t, more)
 			assert.EqualValues(t, 5, len(messages))
-			messageEquals(t, m7, messages[0])
-			messageEquals(t, m6, messages[1])
+			messageEquals(t, latestCh2Msg, messages[0])
+			messageEquals(t, latestCh1Msg, messages[1])
 		}
 	})
 
@@ -204,8 +219,8 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 
 		if assert.NoError(t, err) {
 			assert.False(t, more)
-			assert.EqualValues(t, 6, len(messages))
-			messageEquals(t, m6, messages[0])
+			assert.EqualValues(t, 7, len(messages))
+			messageEquals(t, latestCh1Msg, messages[0])
 		}
 	})
 }
