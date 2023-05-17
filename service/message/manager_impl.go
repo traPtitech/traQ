@@ -13,6 +13,8 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 const (
@@ -60,6 +62,17 @@ func (m *manager) get(id uuid.UUID) (*message, error) {
 
 	// メモリキャッシュから取得。キャッシュに無い場合はキャッシュの replaceFn で自動取得し、キャッシュに追加
 	return m.cache.Get(context.Background(), id)
+}
+
+func (m *manager) GetIn(ids []uuid.UUID) ([]Message, error) {
+	messages, _, err := m.R.GetMessages(repository.MessagesQuery{IDIn: optional.From(ids)})
+	if err != nil {
+		return nil, err
+	}
+	ret := utils.Map(messages, func(m *model.Message) Message {
+		return &message{Model: m}
+	})
+	return ret, nil
 }
 
 func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
