@@ -19,9 +19,14 @@ func v34() *gormigrate.Migration {
 			}
 
 			// 未読テーブルのmessage_created_atを該当メッセージのcreated_atに更新
-			return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v34Unread{}).Updates(map[string]any{
+			if err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&v34Unread{}).Updates(map[string]any{
 				"message_created_at": db.Table("messages").Where("messages.id = unreads.message_id").Select("created_at"),
-			}).Error
+			}).Error; err != nil {
+				return err
+			}
+
+			// 削除されたメッセージの未読を削除
+			return db.Delete(&v34Unread{}, "message_created_at IS NULL").Error
 		},
 	}
 }
