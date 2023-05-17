@@ -16,7 +16,7 @@ func Migrations() []*gormigrate.Migration {
 		v3(),  // チャンネルイベント履歴
 		v4(),  // Webhook, Bot外部キー
 		v5(),  // Mute, 旧Clip削除
-		v6(),  // v6 ユーザーグループ拡張
+		v6(),  // ユーザーグループ拡張
 		v7(),  // ファイルメタ拡張
 		v8(),  // チャンネル購読拡張
 		v9(),  // ユーザーテーブル拡張
@@ -38,12 +38,13 @@ func Migrations() []*gormigrate.Migration {
 		v25(), // FileMetaにIsAnimatedImageを追加
 		v26(), // FileMetaからThumbnail情報を分離
 		v27(), // Gorm v2移行: FKの追加、FKのリネーム、一部フィールドのデータ型変更、idx_messages_channel_idの削除
-		v28(), // v28 ユーザーグループにアイコンを追加
+		v28(), // ユーザーグループにアイコンを追加
 		v29(), // BotにModeを追加、WebSocket Modeを追加
 		v30(), // bot_event_logsにresultを追加
 		v31(), // お気に入りスタンプパーミッション削除（削除忘れ）
 		v32(), // ユーザーの表示名上限を32文字に
 		v33(), // 未読テーブルにチャンネルIDカラムを追加 / インデックス類の更新 / 不要なレコードの削除
+		v34(), // 未読テーブルのcreated_atカラムをメッセージテーブルを元に更新 / カラム名を変更
 	}
 }
 
