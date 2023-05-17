@@ -302,7 +302,14 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 				if err != nil {
 					return err
 				}
-				return tx.Create(&model.Unread{UserID: userID, ChannelID: m.ChannelID, MessageID: messageID, Noticeable: noticeable}).Error
+
+				return tx.Create(&model.Unread{
+					UserID:     userID,
+					ChannelID:  m.ChannelID,
+					MessageID:  messageID,
+					Noticeable: noticeable,
+					CreatedAt:  m.CreatedAt,
+				}).Error
 			}
 			return err
 		}
