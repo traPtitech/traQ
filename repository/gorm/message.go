@@ -304,11 +304,11 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 				}
 
 				return tx.Create(&model.Unread{
-					UserID:     userID,
-					ChannelID:  m.ChannelID,
-					MessageID:  messageID,
-					Noticeable: noticeable,
-					CreatedAt:  m.CreatedAt,
+					UserID:           userID,
+					ChannelID:        m.ChannelID,
+					MessageID:        messageID,
+					Noticeable:       noticeable,
+					MessageCreatedAt: m.CreatedAt,
 				}).Error
 			}
 			return err
@@ -357,14 +357,14 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 			channel_id,
 			COUNT(message_id) AS count,
 			MAX(noticeable) AS noticeable,
-			MIN(created_at) AS since,
-			MAX(created_at) AS updated_at,
+			MIN(message_created_at) AS since,
+			MAX(message_created_at) AS updated_at,
 			(
 				SELECT message_id
 				FROM unreads
-				WHERE user_id = u.user_id
+				WHERE user_id = MIN(u.user_id)
 					AND channel_id = u.channel_id
-					AND created_at = MIN(u.created_at)
+					AND message_created_at = MIN(u.message_created_at)
 			) AS oldest_message_id
 		/*
 			2023/04/26時点
