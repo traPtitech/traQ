@@ -3,11 +3,10 @@ package router
 import (
 	"net/http"
 
-	"github.com/labstack/echo-contrib/prometheus"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -18,8 +17,8 @@ import (
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/oauth2"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/router/v1"
-	"github.com/traPtitech/traQ/router/v3"
+	v1 "github.com/traPtitech/traQ/router/v1"
+	v3 "github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/channel"
 )
@@ -36,7 +35,7 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 	r := newRouter(hub, db, repo, ss, logger.Named("router"), config)
 
 	api := r.e.Group("/api")
-	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	api.GET("/metrics", echoprometheus.NewHandler())
 	api.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })
 	r.v1.Setup(api)
 	r.v3.Setup(api)
@@ -100,8 +99,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature, consts.HeaderChannelID},
 		MaxAge:        3600,
 	}))
-	p := prometheus.NewPrometheus("echo", nil)
-	p.Use(e)
+	e.Use(echoprometheus.NewMiddleware("echo"))
 
 	return e
 }
