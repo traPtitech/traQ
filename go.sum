@@ -197,8 +197,8 @@ github.com/go-audio/wav v1.1.0/go.mod h1:mpe9qfwbScEbkd8uybLuIpTgHyrISw/OTuvjUW2
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
-github.com/go-gormigrate/gormigrate/v2 v2.0.3 h1:yx4u7OPDZ9e4zpD2ZTLc36T7h6wq/7UvkuJDdtCf9uk=
-github.com/go-gormigrate/gormigrate/v2 v2.0.3/go.mod h1:PVBC5iGv9iC4ia7ZNJblkHye5jUN/Q/UaNcRb+1EY2c=
+github.com/go-gormigrate/gormigrate/v2 v2.1.0 h1:4/1xr9CjOox714EJWbxkF00lrNmbWJToSZzhykKKcKY=
+github.com/go-gormigrate/gormigrate/v2 v2.1.0/go.mod h1:gpA97koYGyjqaiLDTmLE5W7nyYTmI26AYIf2a/earuo=
 github.com/go-ozzo/ozzo-validation/v4 v4.3.0 h1:byhDUpfEwjsVQb1vBunvIjh2BHQ9ead57VkAEY4V+Es=
 github.com/go-ozzo/ozzo-validation/v4 v4.3.0/go.mod h1:2NKgrcHl3z6cJs+3Oo940FPRiTzuqKbvfrL2RxCj6Ew=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
