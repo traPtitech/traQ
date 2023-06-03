@@ -505,7 +505,11 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				newChan.UpdaterID = args.UpdaterID
 				newChan.UpdatedAt = time.Now()
 
-				if args.Topic.Valid && ch.Topic != args.Topic.V {
+				// トピックが同じだった場合、トピックの引数自体を無効化
+				if ch.Topic == args.Topic.V {
+					args.Topic = optional.New("", false)
+				}
+				if args.Topic.Valid {
 					repo.EXPECT().
 						RecordChannelEvent(c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
 							"userId": args.UpdaterID,
