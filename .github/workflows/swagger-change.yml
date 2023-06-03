@@ -24,7 +24,7 @@ jobs:
       - name: Install spectral
         run: npm install --location=global @stoplight/spectral-cli
       - name: Run spectral
-        run: spectral lint docs/v3-openapi.yaml --ruleset .spectral.yaml
+        run: spectral lint docs/v3-openapi.yaml --ruleset .spectral.yml --verbose
   node-traq:
     name: node-traq
     if: github.event_name != 'pull_request'
