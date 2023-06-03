@@ -44,6 +44,16 @@ const testHTMLOgpTagInBody = `
 </html>
 `
 
+const testHTMLWithEscapedContents = `
+<html>
+	<head>
+		<meta property="og:type" content="website" />
+		<meta property="og:description" content="4種類のコースにて&amp;quot;現場で働くクリエイター&amp;quot;による講義を開催します。">
+	</head>
+	<body></body>
+</html>
+`
+
 func TestParseDoc(t *testing.T) {
 	t.Parallel()
 	t.Run("correct OGP", func(t *testing.T) {
@@ -74,6 +84,14 @@ func TestParseDoc(t *testing.T) {
 
 		assert.Equal(t, "article", og.Type)
 		assert.Equal(t, "TITLE", meta.Title)
+	})
+	t.Run("HTML with escaped contents", func(t *testing.T) {
+		t.Parallel()
+		doc, _ := html.Parse(strings.NewReader(testHTMLWithEscapedContents))
+		og, _ := parseDoc(doc)
+
+		assert.Equal(t, "website", og.Type)
+		assert.Equal(t, "4種類のコースにて\"現場で働くクリエイター\"による講義を開催します。", og.Description)
 	})
 }
 
