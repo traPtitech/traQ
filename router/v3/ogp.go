@@ -36,3 +36,18 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, res)
 }
+
+// DeleteOgpCache DELETE /ogp/cache?url={url}
+func (h *Handlers) DeleteOgpCache(c echo.Context) error {
+	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
+	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
+		return herror.BadRequest("invalid url")
+	}
+
+	err := h.OGP.DeleteCache(u)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

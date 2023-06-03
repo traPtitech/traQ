@@ -120,7 +120,6 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 		return fetchResult{}, err
 	}
 	og, meta, err := parser.ParseMetaForURL(u)
-
 	if err != nil {
 		switch err {
 		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
@@ -144,4 +143,10 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	}
 
 	return fetchResult{content, cache.ExpiresAt}, nil
+}
+
+func (s *ServiceImpl) DeleteCache(url *url.URL) error {
+	s.inMemCache.Forget(url.String())
+
+	return s.repo.DeleteOgpCache(url.String())
 }
