@@ -125,11 +125,16 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 		return ErrChannelNotFound
 	}
 
+	// トピックが同じだった場合、トピックの引数自体を無効化
+	if ch.Topic == args.Topic.V {
+		args.Topic = optional.New("", false)
+	}
+
 	m.T.Lock()
 	defer m.T.Unlock()
 
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
-	if args.Topic.Valid && ch.Topic != args.Topic.V {
+	if args.Topic.Valid {
 		if ch.IsArchived() {
 			return ErrChannelArchived
 		}
