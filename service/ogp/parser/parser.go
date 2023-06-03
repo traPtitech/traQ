@@ -110,7 +110,7 @@ func parseMetaTags(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.No
 		if c.Type == html.ElementNode && c.Data == "meta" {
 			m := make(map[string]string)
 			for _, a := range c.Attr {
-				m[a.Key] = a.Val
+				m[a.Key] = html.UnescapeString(a.Val)
 			}
 			og.ProcessMeta(m)
 			meta.processMeta(m)
