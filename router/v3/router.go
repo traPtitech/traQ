@@ -364,8 +364,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
+		apiOgp := api.Group("/ogp", blockBot)
+		{
+			apiOgp.GET("", h.GetOgp)
+			apiOgp.DELETE("/cache", h.DeleteOgpCache)
+		}
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
-		api.GET("/ogp", h.GetOgp, blockBot)
 	}
 
 	apiNoAuth := e.Group("/v3")
