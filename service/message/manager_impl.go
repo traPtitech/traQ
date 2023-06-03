@@ -287,8 +287,8 @@ func (m *manager) AddStamps(id, stampID, userID uuid.UUID, n int) (*model.Messag
 		return nil, fmt.Errorf("failed to AddStampToMessage: %w", err)
 	}
 
-	// キャッシュ更新
-	msg.UpdateStamp(ms)
+	// キャッシュ削除
+	m.cache.Forget(id)
 
 	return ms, nil
 }
@@ -310,8 +310,8 @@ func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
 		return fmt.Errorf("failed to RemoveStampFromMessage: %w", err)
 	}
 
-	// キャッシュ更新
-	msg.RemoveStamp(stampID, userID)
+	// キャッシュ削除
+	m.cache.Forget(id)
 
 	return nil
 }
