@@ -4188,10 +4188,10 @@ paths:
                 $ref: '#/components/schemas/Ogp'
         '400':
           description: 指定したURLが不正です。
-        '404':
-          description: 指定したURLに対するOGP情報が見つかりませんでした。
       operationId: getOgp
-      description: OGP情報を取得します。
+      description: |
+        指定されたURLのOGP情報を取得します。
+        指定されたURLに対するOGP情報が見つからなかった場合、typeがemptyに設定された空のOGP情報を返します。
       parameters:
         - schema:
             type: string
