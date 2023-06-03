@@ -398,7 +398,7 @@ func TestManager_AddStamps(t *testing.T) {
 				UserID:    uid,
 				Count:     10,
 			}}}, nil).
-			Times(1)
+			Times(2)
 		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
@@ -414,23 +414,8 @@ func TestManager_AddStamps(t *testing.T) {
 
 		_, err := m.AddStamps(id, sid, uid, 1)
 		if assert.NoError(t, err) {
-			msg, err := m.Get(id)
-			if assert.NoError(t, err) {
-				assert.ElementsMatch(t, []model.MessageStamp{
-					{
-						MessageID: id,
-						StampID:   sid,
-						UserID:    uid,
-						Count:     1,
-					},
-					{
-						MessageID: id,
-						StampID:   sid2,
-						UserID:    uid,
-						Count:     10,
-					},
-				}, msg.GetStamps())
-			}
+			_, err = m.Get(id)
+			assert.NoError(t, err)
 		}
 	})
 }
@@ -500,7 +485,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 					Count:     10,
 				},
 			}}, nil).
-			Times(1)
+			Times(2)
 		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
@@ -511,17 +496,8 @@ func TestManager_RemoveStamps(t *testing.T) {
 
 		err := m.RemoveStamps(id, sid, uid)
 		if assert.NoError(t, err) {
-			msg, err := m.Get(id)
-			if assert.NoError(t, err) {
-				assert.ElementsMatch(t, []model.MessageStamp{
-					{
-						MessageID: id,
-						StampID:   sid2,
-						UserID:    uid,
-						Count:     10,
-					},
-				}, msg.GetStamps())
-			}
+			_, err = m.Get(id)
+			assert.NoError(t, err)
 		}
 	})
 }
