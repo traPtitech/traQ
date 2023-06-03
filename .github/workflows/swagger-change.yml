@@ -6,21 +6,25 @@ on:
       - 'master'
     paths:
       - 'docs/v3-api.yaml'
+      - '.github/workflows/swagger-change.yml'
   pull_request:
     paths:
       - 'docs/v3-api.yaml'
+      - '.github/workflows/swagger-change.yml'
 
 jobs:
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.10
-        with:
-          file_glob: docs/v3-api.yaml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+      - name: Install spectral
+        run: npm install --location=global @stoplight/spectral-cli
+      - name: Run spectral
+        run: spectral lint docs/v3-openapi.yaml --ruleset .spectral.yml --verbose
   node-traq:
     name: node-traq
     if: github.event_name != 'pull_request'
