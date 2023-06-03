@@ -4199,6 +4199,25 @@ paths:
           required: true
           name: url
           description: OGPを取得したいURL
+  /ogp/cache:
+    delete:
+      summary: OGP情報のキャッシュを削除
+      tags:
+        - ogp
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: 指定したURLが不正です。
+      operationId: deleteOgpCache
+      description: 指定されたURLのOGP情報のキャッシュを削除します。
+      parameters:
+        - schema:
+            type: string
+          in: query
+          required: true
+          name: url
+          description: OGPのキャッシュを削除したいURL
   /users/me/settings:
     get:
       summary: ユーザー設定を取得
