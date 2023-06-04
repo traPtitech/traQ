@@ -120,7 +120,6 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 		return fetchResult{}, err
 	}
 	og, meta, err := parser.ParseMetaForURL(u)
-
 	if err != nil {
 		switch err {
 		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
@@ -144,4 +143,15 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	}
 
 	return fetchResult{content, cache.ExpiresAt}, nil
+}
+
+func (s *ServiceImpl) DeleteCache(url *url.URL) error {
+	err := s.repo.DeleteOgpCache(url.String())
+	// キャッシュが見つからなかった場合でも、削除されてはいるので正常とみなす
+	if err != nil && err != repository.ErrNotFound {
+		return err
+	}
+
+	s.inMemCache.Forget(url.String())
+	return nil
 }

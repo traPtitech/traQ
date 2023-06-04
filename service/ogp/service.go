@@ -22,4 +22,7 @@ type Service interface {
 	//
 	// 内部エラーが発生した場合、nil, 0, err を返します。
 	GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error)
+
+	// DeleteCache 指定したURLのキャッシュを削除します。
+	DeleteCache(url *url.URL) error
 }
