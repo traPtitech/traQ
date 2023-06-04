@@ -146,7 +146,12 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 }
 
 func (s *ServiceImpl) DeleteCache(url *url.URL) error {
-	s.inMemCache.Forget(url.String())
+	err := s.repo.DeleteOgpCache(url.String())
+	// キャッシュが見つからなかった場合でも、削除されてはいるので正常とみなす
+	if err != nil && err != repository.ErrNotFound {
+		return err
+	}
 
-	return s.repo.DeleteOgpCache(url.String())
+	s.inMemCache.Forget(url.String())
+	return nil
 }
