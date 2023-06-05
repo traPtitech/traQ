@@ -70,3 +70,18 @@ jobs:
               workflow_id: 'release.yml',
               ref: 'main'
             })
+  rust-traq:
+    name: rust-traq
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'traPtitech',
+              repo: 'rust-traq',
+              workflow_id: 'regenerate.yml',
+              ref: 'main'
+            })
