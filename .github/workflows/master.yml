@@ -57,6 +57,7 @@ jobs:
         uses: crazy-max/ghaction-container-scan@v2
         with:
           image: ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          annotations: true
   deploy-staging:
     name: Deploy staging
     runs-on: ubuntu-latest
