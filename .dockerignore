@@ -16,7 +16,7 @@
 codecov.yml
 config.example.yml
 config.yml
-docker-compose.yml
+compose.yaml
 Dockerfile
 LICENSE
 Makefile
