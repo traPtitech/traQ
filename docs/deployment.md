@@ -296,7 +296,7 @@ Minimal configuration (with ES, no FCM, and no Skyway)
 })()
 ```
 
-For more information, see [the type definition](https://github.com/traPtitech/traQ_S-UI/blob/master/src/types/config/index.d.ts).
+For more information, see [the type definition](https://github.com/traPtitech/traQ_S-UI/blob/master/src/types/config.d.ts).
 
 Also you can override these files.
 - [`/img/icons`](https://github.com/traPtitech/traQ_S-UI/tree/master/public/img/icons): favicon, PWA icons etc...
