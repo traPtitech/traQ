@@ -101,6 +101,9 @@ require (
 	github.com/docker/docker v20.10.24+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
+	github.com/elastic/go-elasticsearch/v7 v7.17.10 // indirect
+	github.com/elastic/go-elasticsearch/v8 v8.8.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect

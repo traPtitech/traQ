@@ -452,7 +452,7 @@ func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCreden
 
 func provideESEngineConfig(c *Config) search.ESEngineConfig {
 	return search.ESEngineConfig{
-		URL: c.ES.URL,
+		URL: []string{c.ES.URL},
 	}
 }
 

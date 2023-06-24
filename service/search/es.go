@@ -1,11 +1,15 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gofrs/uuid"
 	"github.com/olivere/elastic/v7"
 	"go.uber.org/zap"
@@ -29,12 +33,12 @@ func getIndexName(index string) string {
 // ESEngineConfig Elasticsearch検索エンジン設定
 type ESEngineConfig struct {
 	// URL ESのURL
-	URL string
+	URL []string
 }
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client *elastic.Client
+	client *elasticsearch.Client
 	mm     message.Manager
 	cm     channel.Manager
 	repo   repository.Repository
@@ -71,6 +75,11 @@ type esMessageDocUpdate struct {
 	HasImage       bool        `json:"hasImage"`
 	HasVideo       bool        `json:"hasVideo"`
 	HasAudio       bool        `json:"hasAudio"`
+}
+
+type esCreateIndexBody struct {
+	Mappings m `json:"mappings"`
+	Settings m `json:"settings"`
 }
 
 type m map[string]interface{}
@@ -161,16 +170,32 @@ var esSetting = m{
 
 // NewESEngine Elasticsearch検索エンジンを生成します
 func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
-	// es接続
-	client, err := elastic.NewClient(elastic.SetURL(config.URL), elastic.SetSniff(false))
+	// esクライアント作成
+	client, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses: config.URL,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to init search engine: %w", err)
 	}
 
 	// esバージョン確認
-	version, err := client.ElasticsearchVersion(config.URL)
+	infoRes, err := client.Info()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch es version: %w", err)
+		return nil, fmt.Errorf("failed to get search engine info: %w", err)
+	}
+	if infoRes.IsError() {
+		return nil, fmt.Errorf("failed to get search engine info: %s", infoRes.String())
+	}
+	defer infoRes.Body.Close()
+
+	var r map[string]interface{}
+	if err := json.NewDecoder(infoRes.Body).Decode(&r); err != nil {
+		return nil, fmt.Errorf("failed to decode search engine info: %w", err)
+	}
+
+	version, ok := r["version"].(map[string]interface{})["number"].(string)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert version value '%v' to string", r["version"].(map[string]interface{})["number"])
 	}
 	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
 	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
@@ -178,19 +203,32 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	}
 
 	// index確認
-	if exists, err := client.IndexExists(getIndexName(esMessageIndex)).Do(context.Background()); err != nil {
+	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
+	if err != nil || existsRes.IsError() {
 		return nil, fmt.Errorf("failed to init search engine: %w", err)
-	} else if !exists {
-		// index作成
-		r1, err := client.CreateIndex(getIndexName(esMessageIndex)).BodyJson(m{
-			"mappings": esMapping,
-			"settings": esSetting,
-		}).Do(context.Background())
+	}
+	if existsRes.StatusCode == http.StatusNotFound {
+		body, err := json.Marshal(esCreateIndexBody{
+			Mappings: esMapping,
+			Settings: esSetting,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to init search engine: %w", err)
 		}
-		if !r1.Acknowledged {
-			return nil, fmt.Errorf("failed to init search engine: index not acknowledged")
+		createIndexRes, err := client.Index(getIndexName(esMessageIndex), bytes.NewBuffer(body), client.Index.WithContext(context.Background()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to init search engine: %w", err)
+		}
+		defer createIndexRes.Body.Close()
+		if err := json.NewDecoder(createIndexRes.Body).Decode(&r); err != nil {
+			return nil, fmt.Errorf("failed to decode create index response: %w", err)
+		}
+		acknowledged, ok := r["acknowledged"].(bool)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert es index acknowledged value: %v", createIndexRes.String())
+		}
+		if !acknowledged {
+			return nil, fmt.Errorf("failed to create index")
 		}
 	}
 
@@ -285,6 +323,8 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
+
+
 
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
