@@ -63,18 +63,24 @@ type Sort struct {
 }
 
 // GetSortKey ソートに使うキーの情報を抽出します
-func (q Query) GetSortKey() Sort {
+func (q Query) GetSortKey() string {
 	if !q.Sort.Valid {
-		return Sort{Key: createdAtSortKey, Desc: true}
+		return createdAtSortKey + ":" + descSortKey
 	}
 	match := allowedSortKeysRegExp.FindStringSubmatch(q.Sort.ValueOrZero())
 	if match[2] == "" {
-		return Sort{Key: createdAtSortKey, Desc: true}
+		return createdAtSortKey + ":" + descSortKey
 	}
 	if match[1] == "-" {
-		return Sort{Key: match[2], Desc: !shouldUseDescendingAsDefault(match[2])}
+		if shouldUseDescendingAsDefault(match[2]) {
+			return match[2] + ":" + ascSortKey
+		}
+		return match[2] + ":" + descSortKey
 	}
-	return Sort{Key: match[2], Desc: shouldUseDescendingAsDefault(match[2])}
+	if shouldUseDescendingAsDefault(match[2]) {
+		return match[2] + ":" + descSortKey
+	}
+	return match[2] + ":" + ascSortKey
 }
 
 // Result 検索結果インターフェイス
@@ -87,6 +93,8 @@ type Result interface {
 
 const createdAtSortKey = "createdAt" // 作成日時の新しい順
 const updatedAtSortKey = "updatedAt" // 更新日時の新しい順
+const ascSortKey = "asc"             //昇順
+const descSortKey = "desc"           //降順
 
 var allowedSortKeys = []string{createdAtSortKey, updatedAtSortKey}
 var allowedSortKeysRegExp = regexp.MustCompile("([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")")

@@ -17,6 +17,39 @@ type esResult struct {
 	messages  []message.Message
 }
 
+func (e *esEngine) parseResBody(resBody m) (Result, error) {
+	totalHits := resBody["hits"].(m)["total"].(m)["value"].(int64)
+	hits := resBody["hits"].(m)["hits"].([]map[string]any)
+
+	r := &esResult{
+		totalHits: totalHits,
+		messages:  make([]message.Message, 0, len(hits)),
+	}
+
+	messageIDs := utils.Map(hits, func(hit map[string]any) uuid.UUID {
+		return uuid.Must(uuid.FromString(hit["_id"].(string)))
+	})
+
+	messages, err := e.mm.GetIn(messageIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	messagesMap := lo.SliceToMap(messages, func(m message.Message) (uuid.UUID, message.Message) {
+		return m.GetID(), m
+	})
+	// sort result
+	for _, id := range messageIDs {
+		msg, ok := messagesMap[id]
+		if !ok {
+			return nil, fmt.Errorf("message %v not found", id)
+		}
+		r.messages = append(r.messages, msg)
+	}
+
+	return r, nil
+}
+
 func (e *esEngine) bindESResult(sr *elastic.SearchResult) (Result, error) {
 	r := &esResult{
 		totalHits: sr.TotalHits(),
