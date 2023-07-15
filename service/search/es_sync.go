@@ -270,22 +270,39 @@ func (e *esEngine) sync() error {
 
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
 func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
-	sr, err := e.client.Search().
-		Index(getIndexName(esMessageIndex)).
-		Sort("updatedAt", false).
-		Size(1).
-		Do(context.Background())
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithSort("updatedAt:desc"),
+		e.client.Search.WithSize(1))
+	// sr, err := e.client.Search().
+	// 	Index(getIndexName(esMessageIndex)).
+	// 	Sort("updatedAt", false).
+	// 	Size(1).
+	// 	Do(context.Background())
 	if err != nil {
 		return time.Time{}, err
 	}
-	if len(sr.Hits.Hits) == 0 {
+
+	var body []byte
+	_, err = sr.Body.Read(body)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	var res m
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	result, err := e.parseResBody(res)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if len(result.Hits()) == 0 {
 		return time.Time{}, nil
 	}
 
-	var m esMessageDoc
-	hit := sr.Hits.Hits[0]
-	if err := json.Unmarshal(hit.Source, &m); err != nil {
-		return time.Time{}, err
-	}
-	return m.UpdatedAt, nil
+	return result.Hits()[0].GetUpdatedAt(), nil
 }
