@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v7"
@@ -37,12 +38,14 @@ type ESEngineConfig struct {
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client *elasticsearch.Client
-	mm     message.Manager
-	cm     channel.Manager
-	repo   repository.Repository
-	l      *zap.Logger
-	done   chan<- struct{}
+	client  *elasticsearch.Client
+	mm      message.Manager
+	cm      channel.Manager
+	repo    repository.Repository
+	l       *zap.Logger
+	done    chan<- struct{}
+	running bool
+	mu      sync.Mutex
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
@@ -233,12 +236,14 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 	done := make(chan struct{})
 	engine := &esEngine{
-		client: client,
-		mm:     mm,
-		cm:     cm,
-		repo:   repo,
-		l:      logger.Named("search"),
-		done:   done,
+		client:  client,
+		mm:      mm,
+		cm:      cm,
+		repo:    repo,
+		l:       logger.Named("search"),
+		done:    done,
+		running: true,
+		mu:      sync.Mutex{},
 	}
 
 	go engine.syncLoop(done)
@@ -403,11 +408,15 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 }
 
 func (e *esEngine) Available() bool {
-	return e.client.IsRunning()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.running
 }
 
 func (e *esEngine) Close() error {
-	e.client.Stop()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.running = false
 	e.done <- struct{}{}
 	return nil
 }
