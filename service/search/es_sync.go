@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
 
-	// "github.com/olivere/elastic/v7"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -274,11 +273,6 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithSort("updatedAt:desc"),
 		e.client.Search.WithSize(1))
-	// sr, err := e.client.Search().
-	// 	Index(getIndexName(esMessageIndex)).
-	// 	Sort("updatedAt", false).
-	// 	Size(1).
-	// 	Do(context.Background())
 	if err != nil {
 		return time.Time{}, err
 	}
