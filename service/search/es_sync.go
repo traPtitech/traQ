@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -148,6 +149,7 @@ func (e *esEngine) sync() error {
 
 	lastSynced, err := e.lastInsertedUpdated()
 	if err != nil {
+		e.l.Debug("last insert updated")
 		return err
 	}
 
@@ -156,6 +158,8 @@ func (e *esEngine) sync() error {
 	for {
 		messages, more, err := e.repo.GetUpdatedMessagesAfter(lastInsert, syncMessageBulk)
 		if err != nil {
+			e.l.Debug("get updated messages after")
+
 			return err
 		}
 		if len(messages) == 0 {
@@ -169,6 +173,8 @@ func (e *esEngine) sync() error {
 			// 新規メッセージが2ページ以上の時のみデータが入ったキャッシュを作成
 			userCache, err = e.newUserCache()
 			if err != nil {
+				e.l.Debug("user cache")
+
 				return err
 			}
 		}
@@ -181,6 +187,8 @@ func (e *esEngine) sync() error {
 			if v.CreatedAt.After(lastSynced) {
 				doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
 				if err != nil {
+					e.l.Debug("convert message created")
+
 					return err
 				}
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
@@ -196,6 +204,9 @@ func (e *esEngine) sync() error {
 				})
 			}
 			if err != nil {
+
+				e.l.Debug("add")
+
 				return err
 			}
 		}
@@ -270,6 +281,7 @@ func (e *esEngine) sync() error {
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
 func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 	sr, err := e.client.Search(
+		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithSort("updatedAt:desc"),
 		e.client.Search.WithSize(1))
@@ -277,19 +289,21 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	var body []byte
-	_, err = sr.Body.Read(body)
+	body, err := io.ReadAll(sr.Body)
+	defer sr.Body.Close()
+
 	if err != nil {
 		return time.Time{}, err
 	}
 
 	var res m
+
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	result, err := e.parseResBody(res)
+	result, err := e.parseResultBody(res)
 	if err != nil {
 		return time.Time{}, err
 	}
