@@ -149,7 +149,6 @@ func (e *esEngine) sync() error {
 
 	lastSynced, err := e.lastInsertedUpdated()
 	if err != nil {
-		e.l.Debug("last insert updated")
 		return err
 	}
 
@@ -158,8 +157,6 @@ func (e *esEngine) sync() error {
 	for {
 		messages, more, err := e.repo.GetUpdatedMessagesAfter(lastInsert, syncMessageBulk)
 		if err != nil {
-			e.l.Debug("get updated messages after")
-
 			return err
 		}
 		if len(messages) == 0 {
@@ -173,8 +170,6 @@ func (e *esEngine) sync() error {
 			// 新規メッセージが2ページ以上の時のみデータが入ったキャッシュを作成
 			userCache, err = e.newUserCache()
 			if err != nil {
-				e.l.Debug("user cache")
-
 				return err
 			}
 		}
@@ -187,8 +182,6 @@ func (e *esEngine) sync() error {
 			if v.CreatedAt.After(lastSynced) {
 				doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
 				if err != nil {
-					e.l.Debug("convert message created")
-
 					return err
 				}
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
@@ -196,18 +189,19 @@ func (e *esEngine) sync() error {
 					DocumentID: v.ID.String(),
 					Body:       esutil.NewJSONReader(doc),
 				})
+				if err != nil {
+					return err
+				}
 			} else {
+				doc := e.convertMessageUpdated(v, message.Parse(v.Text))
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 					Action:     "update",
 					DocumentID: v.ID.String(),
-					Body:       esutil.NewJSONReader(e.convertMessageUpdated(v, message.Parse(v.Text))),
+					Body:       esutil.NewJSONReader(map[string]any{"doc": doc}),
 				})
-			}
-			if err != nil {
-
-				e.l.Debug("add")
-
-				return err
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -216,8 +210,8 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, last insert %v",
-			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, lastInsert))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
 
 		if !more {
 			break
@@ -268,7 +262,8 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, last delete %v", bulkIndexer.Stats().NumDeleted, lastDelete))
+		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, failed %v message(s),  last delete %v",
+			bulkIndexer.Stats().NumDeleted, bulkIndexer.Stats().NumFailed, lastDelete))
 
 		if !more {
 			break
@@ -296,21 +291,18 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	var res m
+	var res esSearchResponse
 
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	result, err := e.parseResultBody(res)
-	if err != nil {
-		return time.Time{}, err
-	}
+	lastUpdatedDoc := res.Hits.Hits
 
-	if len(result.Hits()) == 0 {
+	if len(lastUpdatedDoc) == 0 {
 		return time.Time{}, nil
 	}
 
-	return result.Hits()[0].GetUpdatedAt(), nil
+	return lastUpdatedDoc[0].Source.doc.UpdatedAt, nil
 }

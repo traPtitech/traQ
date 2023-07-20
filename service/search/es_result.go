@@ -16,6 +16,34 @@ type esResult struct {
 	messages  []message.Message
 }
 
+type esSearchResponse struct {
+	Shards struct {
+		Failed     int64 `json:"failed"`
+		Skipped    int64 `json:"skipped"`
+		Successful int64 `json:"successful"`
+		Total      int64 `json:"total"`
+	} `json:"_shards"`
+	Hits struct {
+		Hits []struct {
+			ID     string      `json:"_id"`
+			Index  string      `json:"_index"`
+			Score  interface{} `json:"_score"`
+			Source struct {
+				doc esMessageDoc
+			} `json:"_source"`
+			Type string  `json:"_type"`
+			Sort []int64 `json:"sort"`
+		} `json:"hits"`
+		MaxScore interface{} `json:"max_score"`
+		Total    struct {
+			Relation string `json:"relation"`
+			Value    int64  `json:"value"`
+		} `json:"total"`
+	} `json:"hits"`
+	TimedOut bool  `json:"timed_out"`
+	Took     int64 `json:"took"`
+}
+
 func (e *esEngine) parseResultBody(resBody m) (Result, error) {
 	totalHits := resBody["hits"].(map[string]interface{})["total"].(map[string]interface{})["value"].(float64)
 	hits := resBody["hits"].(map[string]interface{})["hits"].([]any)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -256,14 +257,21 @@ type searchQuery m
 type searchBody struct {
 	Query *struct {
 		Bool *struct {
-			Musts []searchQuery `json:"musts,omitempty"`
+			Musts []searchQuery `json:"must,omitempty"`
 		} `json:"bool,omitempty"`
 	} `json:"query,omitempty"`
 }
 
 func NewSearchBody(sq []searchQuery) searchBody {
-	sb := searchBody{}
-	sb.Query.Bool.Musts = sq
+	sb := searchBody{
+		Query: &struct {
+			Bool *struct {
+				Musts []searchQuery `json:"must,omitempty"`
+			} `json:"bool,omitempty"`
+		}{Bool: &struct {
+			Musts []searchQuery `json:"must,omitempty"`
+		}{Musts: sq}},
+	}
 	return sb
 }
 
@@ -312,7 +320,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 			Gt: q.After.ValueOrZero().Format(esDateFormat),
 		}}})
 	case !q.After.Valid && q.Before.Valid:
-		musts = append(musts, searchQuery{"rage": rangeQuery{"createdAt": rangeParameters{
+		musts = append(musts, searchQuery{"range": rangeQuery{"createdAt": rangeParameters{
 			Lt: q.Before.ValueOrZero().Format(esDateFormat),
 		}}})
 	}
@@ -383,28 +391,26 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		e.client.Search.WithFrom(offset),
 		e.client.Search.WithContext(context.Background()),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 	if sr.IsError() {
 		return nil, fmt.Errorf("failed to get search result")
 	}
-	var searchResultBody []byte
-	_, err = sr.Body.Read(searchResultBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get search result body")
-	}
+	searchResultBody, err := io.ReadAll(sr.Body)
 	defer sr.Body.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	var res m
 	err = json.Unmarshal(searchResultBody, &res)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response body")
+		return nil, err
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res["hits"]))
-	return e.parseResBody(res)
+	return e.parseResultBody(res)
 }
 
 func (e *esEngine) Available() bool {
