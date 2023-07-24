@@ -11,6 +11,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/go-querystring/query"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -52,16 +53,17 @@ func (r authorizeRequest) Validate() error {
 }
 
 type responseType struct {
-	Code  bool
-	Token bool
-	None  bool
+	Code    bool
+	Token   bool
+	IDToken bool
+	None    bool
 }
 
 func (t responseType) valid() bool {
 	if t.None {
-		return !t.Code && !t.Token
+		return !t.Code && !t.Token && !t.IDToken
 	}
-	return t.Code || t.Token
+	return t.Code || t.Token || t.IDToken
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
@@ -102,7 +104,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	// PKCE確認
 	if len(req.CodeChallengeMethod) > 0 {
-		if req.CodeChallengeMethod != "plain" && req.CodeChallengeMethod != "S256" {
+		if !lo.Contains(supportedCodeChallengeMethods, req.CodeChallengeMethod) {
 			q.Set("error", errInvalidRequest)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
@@ -132,13 +134,15 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	// ResponseType確認
-	types := responseType{false, false, false}
+	var types responseType
 	for _, v := range strings.Fields(req.ResponseType) {
 		switch v {
 		case "code":
 			types.Code = true
 		case "token":
 			types.Token = true
+		case "id_token":
+			types.IDToken = true
 		case "none":
 			types.None = true
 		default:

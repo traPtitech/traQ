@@ -54,6 +54,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		provideServerOriginString,
 		provideFirebaseCredentialsFilePathString,
 		provideImageProcessorConfig,
+		provideOIDCService,
 		provideRouterConfig,
 		provideESEngineConfig,
 		wire.Struct(new(service.Services), "*"),

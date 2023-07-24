@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
+	oidc2 "github.com/traPtitech/traQ/service/oidc"
 	"github.com/traPtitech/traQ/service/rbac"
 )
 
@@ -38,15 +39,31 @@ const (
 	authorizationCodeExp = 60 * 5
 )
 
+var (
+	supportedResponseTypes = []string{"code"}
+	supportedResponseModes = []string{"query"}
+	supportedScopes        = model.SupportedAccessScopes()
+	supportedGrantTypes    = []string{
+		grantTypeAuthorizationCode,
+		grantTypePassword,
+		grantTypeClientCredentials,
+		grantTypeRefreshToken,
+	}
+	supportedCodeChallengeMethods = []string{"plain", "S256"}
+)
+
 type Handler struct {
 	RBAC      rbac.RBAC
 	Repo      repository.Repository
 	Logger    *zap.Logger
 	SessStore session.Store
+	OIDC      *oidc2.Service
 	Config
 }
 
 type Config struct {
+	// Origin サーバーオリジン (e.g. https://q.trap.jp)
+	Origin string
 	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
@@ -59,6 +76,7 @@ func (h *Handler) Setup(e *echo.Group) {
 	e.POST("/authorize", h.AuthorizationEndpointHandler)
 	e.POST("/token", h.TokenEndpointHandler)
 	e.POST("/revoke", h.RevokeTokenEndpointHandler)
+	e.GET("/oidc/discovery", h.OIDCDiscovery)
 }
 
 // splitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
