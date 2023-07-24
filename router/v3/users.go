@@ -117,6 +117,15 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	})
 }
 
+// GetMeOIDC GET /users/me/oidc
+func (h *Handlers) GetMeOIDC(c echo.Context) error {
+	userInfo, err := h.OIDC.GetUserInfo(getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, userInfo)
+}
+
 // PatchMeRequest PATCH /users/me リクエストボディ
 type PatchMeRequest struct {
 	DisplayName optional.Of[string]    `json:"displayName"`

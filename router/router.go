@@ -34,6 +34,10 @@ type Router struct {
 func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *echo.Echo {
 	r := newRouter(hub, db, repo, ss, logger.Named("router"), config)
 
+	r.e.GET("/.well-known/openid-configuration", func(c echo.Context) error {
+		return c.Redirect(http.StatusFound, "/api/v3/oauth2/oidc/discovery")
+	})
+
 	api := r.e.Group("/api")
 	api.GET("/metrics", echoprometheus.NewHandler())
 	api.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })

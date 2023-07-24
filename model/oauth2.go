@@ -11,6 +11,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/utils/validator"
@@ -27,6 +28,11 @@ type AccessScope string
 
 // AccessScopes AccessScopeのセット
 type AccessScopes map[AccessScope]struct{}
+
+// SupportedAccessScopes 対応するスコープ一覧を返します
+func SupportedAccessScopes() []string {
+	return []string{"read", "write", "manage_bot", "openid", "profile"}
+}
 
 // Value database/sql/driver.Valuer 実装
 func (arr AccessScopes) Value() (driver.Value, error) {
@@ -112,7 +118,8 @@ func (arr AccessScopes) StringArray() (r []string) {
 // Validate github.com/go-ozzo/ozzo-validation.Validatable 実装
 func (arr AccessScopes) Validate() error {
 	// TODO カスタムスコープに対応
-	return vd.Validate(arr.StringArray(), vd.Each(vd.Required, vd.In("read", "write", "manage_bot")))
+	scopes := lo.Map(SupportedAccessScopes(), func(s string, _ int) any { return s })
+	return vd.Validate(arr.StringArray(), vd.Each(vd.Required, vd.In(scopes...)))
 }
 
 // OAuth2Authorize OAuth2 認可データの構造体
@@ -226,9 +233,13 @@ func (t *OAuth2Token) GetAvailableScopes(request AccessScopes) (result AccessSco
 	return
 }
 
+func (t *OAuth2Token) Deadline() time.Time {
+	return t.CreatedAt.Add(time.Duration(t.ExpiresIn) * time.Second)
+}
+
 // IsExpired 有効期限が切れているかどうか
 func (t *OAuth2Token) IsExpired() bool {
-	return t.CreatedAt.Add(time.Duration(t.ExpiresIn) * time.Second).Before(time.Now())
+	return t.Deadline().Before(time.Now())
 }
 
 // IsRefreshEnabled リフレッシュトークンが有効かどうか
