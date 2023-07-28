@@ -39,6 +39,8 @@ const (
 	TagRemoved model.BotEventType = "TAG_REMOVED"
 	// UserGroupCreated グループ作成イベント
 	UserGroupCreated model.BotEventType = "USER_GROUP_CREATED"
+	// UserGroupUpdated グループ更新イベント
+	UserGroupUpdated model.BotEventType = "USER_GROUP_UPDATED"
 	// UserGroupDeleted グループ削除イベント
 	UserGroupDeleted model.BotEventType = "USER_GROUP_DELETED"
 )
