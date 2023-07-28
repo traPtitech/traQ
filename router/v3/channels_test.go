@@ -831,9 +831,12 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
-		user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
+		user.GetID():  model.ChannelSubscribeLevelMarkAndNotify,
+		user2.GetID(): model.ChannelSubscribeLevelNone,
+		user3.GetID(): model.ChannelSubscribeLevelMark,
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
@@ -898,9 +901,12 @@ func TestHandlers_GetChannelAudiences(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
-		user.GetID(): model.ChannelSubscribeLevelMark,
+		user.GetID():  model.ChannelSubscribeLevelMark,
+		user2.GetID(): model.ChannelSubscribeLevelNone,
+		user3.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
