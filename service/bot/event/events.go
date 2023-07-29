@@ -35,6 +35,8 @@ const (
 	StampCreated model.BotEventType = "STAMP_CREATED"
 	// TagAdded タグ追加イベント
 	TagAdded model.BotEventType = "TAG_ADDED"
+	// TagUpdated タグ編集イベント
+	TagUpdated model.BotEventType = "TAG_UPDATED"
 	// TagRemoved タグ削除イベント
 	TagRemoved model.BotEventType = "TAG_REMOVED"
 )
