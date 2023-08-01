@@ -45,6 +45,8 @@ const (
 	UserGroupDeleted model.BotEventType = "USER_GROUP_DELETED"
 	// UserGroupMemberAdded グループメンバー追加イベント
 	UserGroupMemberAdded model.BotEventType = "USER_GROUP_MEMBER_ADDED"
+	// UserGroupMemberUpdated グループメンバー更新イベント
+	UserGroupMemberUpdated model.BotEventType = "USER_GROUP_MEMBER_UPDATED"
 )
 
 var Types model.BotEventTypes
@@ -74,6 +76,7 @@ func init() {
 		UserGroupUpdated,
 		UserGroupDeleted,
 		UserGroupMemberAdded,
+		UserGroupMemberUpdated,
 	} {
 		Types[t] = struct{}{}
 	}
