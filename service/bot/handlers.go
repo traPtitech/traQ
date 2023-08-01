@@ -30,4 +30,5 @@ var eventHandlerSet = map[string]eventHandler{
 	intevent.UserGroupDeleted:       handler.UserGroupDeleted,
 	intevent.UserGroupMemberAdded:   handler.UserGroupMemberAdded,
 	intevent.UserGroupMemberUpdated: handler.UserGroupMemberUpdated,
+	intevent.UserGroupMemberRemoved: handler.UserGroupMemberRemoved,
 }
