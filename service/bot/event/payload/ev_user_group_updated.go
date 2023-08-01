@@ -3,18 +3,18 @@ package payload
 import (
 	"time"
 
-	"github.com/traPtitech/traQ/model"
+	"github.com/gofrs/uuid"
 )
 
 // UserGroupUpdated USER_GROUP_UPDATEDイベントペイロード
 type UserGroupUpdated struct {
 	Base
-	Group model.UserGroup `json:"group"`
+	GroupID uuid.UUID `json:"groupId"`
 }
 
-func MakeUserGroupUpdated(eventTime time.Time, group model.UserGroup) *UserGroupUpdated {
+func MakeUserGroupUpdated(eventTime time.Time, groupID uuid.UUID) *UserGroupUpdated {
 	return &UserGroupUpdated{
-		Base:  MakeBase(eventTime),
-		Group: group,
+		Base:    MakeBase(eventTime),
+		GroupID: groupID,
 	}
 }

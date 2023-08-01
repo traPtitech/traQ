@@ -48,10 +48,9 @@ func TestUserGroupUpdated(t *testing.T) {
 		group.Members = append(group.Members, &model.UserGroupMember{GroupID: group.ID, UserID: user.ID})
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group), []*model.Bot{b})
+		expectMulticast(handlerCtx, event.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group.ID), []*model.Bot{b})
 		assert.NoError(t, UserGroupUpdated(handlerCtx, et, intevent.UserGroupUpdated, hub.Fields{
 			"group_id": group.ID,
-			"group":    group,
 		}))
 	})
 }
