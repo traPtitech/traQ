@@ -273,7 +273,7 @@ type searchBody struct {
 	} `json:"query,omitempty"`
 }
 
-func NewSearchBody(sq []searchQuery) searchBody {
+func newSearchBody(sq []searchQuery) searchBody {
 	sb := searchBody{
 		Query: &struct {
 			Bool *struct {
@@ -389,7 +389,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
-	b, err := json.Marshal(NewSearchBody(musts))
+	b, err := json.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
 	}
