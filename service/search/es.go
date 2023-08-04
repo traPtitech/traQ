@@ -232,7 +232,10 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		}
 
 		var r m
-		json.Unmarshal(resBody, &r)
+		err = json.Unmarshal(resBody, &r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
+		}
 
 		acknowledged, ok := r["acknowledged"].(bool)
 		if !ok {
