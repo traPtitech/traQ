@@ -207,25 +207,33 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 	// index確認
 	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
-	if err != nil || existsRes.IsError() {
-		return nil, fmt.Errorf("failed to init search engine: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check index exists: %w", err)
+	}
+	if existsRes.IsError() && existsRes.StatusCode != http.StatusNotFound {
+		return nil, fmt.Errorf("failed to check index exists: %s", existsRes.String())
 	}
 	if existsRes.StatusCode == http.StatusNotFound {
-		body, err := json.Marshal(esCreateIndexBody{
+		reqBody, err := json.Marshal(esCreateIndexBody{
 			Mappings: esMapping,
 			Settings: esSetting,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to init search engine: %w", err)
 		}
-		createIndexRes, err := client.Index(getIndexName(esMessageIndex), bytes.NewBuffer(body), client.Index.WithContext(context.Background()))
+		createIndexRes, err := client.Index(getIndexName(esMessageIndex), bytes.NewBuffer(reqBody), client.Index.WithContext(context.Background()))
 		if err != nil {
 			return nil, fmt.Errorf("failed to init search engine: %w", err)
 		}
+		resBody, err := io.ReadAll(createIndexRes.Body)
 		defer createIndexRes.Body.Close()
-		if err := json.NewDecoder(createIndexRes.Body).Decode(&r); err != nil {
-			return nil, fmt.Errorf("failed to decode create index response: %w", err)
+		if err != nil {
+			return nil, err
 		}
+
+		var r m
+		json.Unmarshal(resBody, &r)
+
 		acknowledged, ok := r["acknowledged"].(bool)
 		if !ok {
 			return nil, fmt.Errorf("failed to convert es index acknowledged value: %v", createIndexRes.String())
