@@ -406,7 +406,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if sr.IsError() {
 		return nil, fmt.Errorf("failed to get search result")
 	}
-	
+
 	searchResultBody, err := io.ReadAll(sr.Body)
 	if err != nil {
 		return nil, err
