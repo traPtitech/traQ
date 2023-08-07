@@ -411,13 +411,13 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	var res m
+	var res esSearchResponse
 	err = json.Unmarshal(searchResultBody, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	e.l.Debug("search result", zap.Reflect("hits", res["hits"]))
+	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
 	return e.parseResultBody(res)
 }
 

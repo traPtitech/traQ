@@ -24,15 +24,8 @@ type esSearchResponse struct {
 		Total      int64 `json:"total"`
 	} `json:"_shards"`
 	Hits struct {
-		Hits []struct {
-			ID     string       `json:"_id"`
-			Index  string       `json:"_index"`
-			Score  interface{}  `json:"_score"`
-			Source esMessageDoc `json:"_source"`
-			Type   string       `json:"_type"`
-			Sort   []int64      `json:"sort"`
-		} `json:"hits"`
-		MaxScore interface{} `json:"max_score"`
+		Hits     []esSearchHit `json:"hits"`
+		MaxScore interface{}   `json:"max_score"`
 		Total    struct {
 			Relation string `json:"relation"`
 			Value    int64  `json:"value"`
@@ -42,17 +35,26 @@ type esSearchResponse struct {
 	Took     int64 `json:"took"`
 }
 
-func (e *esEngine) parseResultBody(resBody m) (Result, error) {
-	totalHits := resBody["hits"].(map[string]interface{})["total"].(map[string]interface{})["value"].(float64)
-	hits := resBody["hits"].(map[string]interface{})["hits"].([]any)
+type esSearchHit struct {
+	ID     string       `json:"_id"`
+	Index  string       `json:"_index"`
+	Score  interface{}  `json:"_score"`
+	Source esMessageDoc `json:"_source"`
+	Type   string       `json:"_type"`
+	Sort   []int64      `json:"sort"`
+}
+
+func (e *esEngine) parseResultBody(resBody esSearchResponse) (Result, error) {
+	totalHits := resBody.Hits.Total.Value
+	hits := resBody.Hits.Hits
 
 	r := &esResult{
 		totalHits: int64(totalHits),
 		messages:  make([]message.Message, 0, len(hits)),
 	}
 
-	messageIDs := utils.Map(hits, func(hit any) uuid.UUID {
-		return uuid.Must(uuid.FromString(hit.(map[string]any)["_id"].(string)))
+	messageIDs := utils.Map(hits, func(hit esSearchHit) uuid.UUID {
+		return uuid.Must(uuid.FromString(hit.ID))
 	})
 
 	messages, err := e.mm.GetIn(messageIDs)
