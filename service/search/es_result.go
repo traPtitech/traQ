@@ -25,14 +25,12 @@ type esSearchResponse struct {
 	} `json:"_shards"`
 	Hits struct {
 		Hits []struct {
-			ID     string      `json:"_id"`
-			Index  string      `json:"_index"`
-			Score  interface{} `json:"_score"`
-			Source struct {
-				doc esMessageDoc
-			} `json:"_source"`
-			Type string  `json:"_type"`
-			Sort []int64 `json:"sort"`
+			ID     string       `json:"_id"`
+			Index  string       `json:"_index"`
+			Score  interface{}  `json:"_score"`
+			Source esMessageDoc `json:"_source"`
+			Type   string       `json:"_type"`
+			Sort   []int64      `json:"sort"`
 		} `json:"hits"`
 		MaxScore interface{} `json:"max_score"`
 		Total    struct {

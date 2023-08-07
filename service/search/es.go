@@ -3,13 +3,14 @@ package search
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	json "github.com/json-iterator/go"
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gofrs/uuid"
@@ -178,22 +179,27 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		Addresses: config.URL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to init search engine: %w", err)
+		return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
 	}
 
 	// esバージョン確認
 	infoRes, err := client.Info()
+	defer infoRes.Body.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get search engine info: %w", err)
+		return nil, fmt.Errorf("failed to get Elasticsearch info: %w", err)
 	}
 	if infoRes.IsError() {
-		return nil, fmt.Errorf("failed to get search engine info: %s", infoRes.String())
+		return nil, fmt.Errorf("failed to get Elasticsearch info: %s", infoRes.String())
 	}
-	defer infoRes.Body.Close()
 
 	var r map[string]interface{}
-	if err := json.NewDecoder(infoRes.Body).Decode(&r); err != nil {
-		return nil, fmt.Errorf("failed to decode search engine info: %w", err)
+	infoResBody, err := io.ReadAll(infoRes.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read Elasticsearch info: %w", err)
+	}
+	err = json.Unmarshal(infoResBody, &r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal Elasticsearch info: %w", err)
 	}
 
 	version, ok := r["version"].(map[string]interface{})["number"].(string)
@@ -202,47 +208,38 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	}
 	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
 	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
-		return nil, fmt.Errorf("failed to init search engine: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
+		return nil, fmt.Errorf("failed to init Elasticsearch: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
 	}
 
 	// index確認
 	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
+	defer existsRes.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check index exists: %w", err)
 	}
 	if existsRes.IsError() && existsRes.StatusCode != http.StatusNotFound {
 		return nil, fmt.Errorf("failed to check index exists: %s", existsRes.String())
 	}
+	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
 		reqBody, err := json.Marshal(esCreateIndexBody{
 			Mappings: esMapping,
 			Settings: esSetting,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to init search engine: %w", err)
+			return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
 		}
-		createIndexRes, err := client.Index(getIndexName(esMessageIndex), bytes.NewBuffer(reqBody), client.Index.WithContext(context.Background()))
-		if err != nil {
-			return nil, fmt.Errorf("failed to init search engine: %w", err)
-		}
-		resBody, err := io.ReadAll(createIndexRes.Body)
+
+		createIndexRes, err := client.Indices.Create(
+			getIndexName(esMessageIndex),
+			client.Indices.Create.WithBody(bytes.NewBuffer(reqBody)),
+			client.Indices.Create.WithContext(context.Background()))
 		defer createIndexRes.Body.Close()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create Elasticsearch index: %w", err)
 		}
-
-		var r m
-		err = json.Unmarshal(resBody, &r)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
-		}
-
-		acknowledged, ok := r["acknowledged"].(bool)
-		if !ok {
-			return nil, fmt.Errorf("failed to convert es index acknowledged value: %v", createIndexRes.String())
-		}
-		if !acknowledged {
-			return nil, fmt.Errorf("failed to create index")
+		if createIndexRes.IsError() || createIndexRes.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to create Elasticsearch index: StatusCode: %v, ResponseBody: %v", createIndexRes.StatusCode, createIndexRes.Body)
 		}
 	}
 
@@ -402,18 +399,18 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		e.client.Search.WithFrom(offset),
 		e.client.Search.WithContext(context.Background()),
 	)
+	defer sr.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	if sr.IsError() {
 		return nil, fmt.Errorf("failed to get search result")
 	}
+	
 	searchResultBody, err := io.ReadAll(sr.Body)
-	defer sr.Body.Close()
 	if err != nil {
 		return nil, err
 	}
-
 	var res m
 	err = json.Unmarshal(searchResultBody, &res)
 	if err != nil {

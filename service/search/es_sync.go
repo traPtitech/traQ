@@ -184,10 +184,11 @@ func (e *esEngine) sync() error {
 				if err != nil {
 					return err
 				}
+
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 					Action:     "index",
 					DocumentID: v.ID.String(),
-					Body:       esutil.NewJSONReader(doc),
+					Body:       esutil.NewJSONReader(*doc),
 				})
 				if err != nil {
 					return err
@@ -304,5 +305,5 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	return lastUpdatedDoc[0].Source.doc.UpdatedAt, nil
+	return lastUpdatedDoc[0].Source.UpdatedAt, nil
 }
