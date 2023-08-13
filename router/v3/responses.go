@@ -623,3 +623,38 @@ func formatStampPalettes(cfs []*model.StampPalette) []*StampPalette {
 	sort.Slice(res, func(i, j int) bool { return res[i].ID.String() < res[j].ID.String() })
 	return res
 }
+
+type StampInfo struct {
+	ID         uuid.UUID             `json:"id"`
+	Name       string                `json:"name"`
+	CreatorID  uuid.UUID             `json:"creatorId"`
+	FileID     uuid.UUID             `json:"fileId"`
+	IsUnicode  bool                  `json:"isUnicode"`
+	CreatedAt  time.Time             `json:"createdAt"`
+	UpdatedAt  time.Time             `json:"updatedAt"`
+	DeletedAt  time.Time             `json:"-"`
+	Thumbnails []model.FileThumbnail `json:"thumbnails"`
+}
+
+func formatStampInfo(stamp *model.Stamp, thumb []model.FileThumbnail) *StampInfo {
+	si := &StampInfo{
+		ID:         stamp.ID,
+		Name:       stamp.Name,
+		CreatorID:  stamp.CreatorID,
+		FileID:     stamp.FileID,
+		IsUnicode:  stamp.IsUnicode,
+		CreatedAt:  stamp.CreatedAt,
+		UpdatedAt:  stamp.UpdatedAt,
+		DeletedAt:  stamp.DeletedAt.Time,
+		Thumbnails: thumb,
+	}
+	return si
+}
+
+func formatStampInfos(stamps []*model.Stamp, thumbs [][]model.FileThumbnail) []*StampInfo {
+	result := make([]*StampInfo, len(stamps))
+	for i, stamp := range stamps {
+		result[i] = formatStampInfo(stamp, thumbs[i])
+	}
+	return result
+}
