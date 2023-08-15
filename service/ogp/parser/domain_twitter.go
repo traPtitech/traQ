@@ -28,6 +28,9 @@ type TwitterSyndicationAPIResponse struct {
 	} `json:"video"`
 }
 
+// Do Not Use: Twitter APIが使えなくなってしまったため、この関数は使えない
+//
+//	いつかAPIが復活したとき使えるようにとっておく
 func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	splitPath := strings.Split(url.Path, "/")
 	if len(splitPath) < 4 || splitPath[2] != "status" {
