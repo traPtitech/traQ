@@ -88,3 +88,15 @@ func MakeUser(user model.UserInfo) User {
 	}
 	return payload
 }
+
+type GroupMember struct {
+	GroupID uuid.UUID `json:"groupId"`
+	UserID  uuid.UUID `json:"userId"`
+}
+
+func MakeGroupMember(groupID, userID uuid.UUID) GroupMember {
+	return GroupMember{
+		GroupID: groupID,
+		UserID:  userID,
+	}
+}
