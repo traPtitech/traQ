@@ -8,6 +8,9 @@ import (
 )
 
 func Test_fetchTwitterSyndicationAPI(t *testing.T) {
+	// Twitter APIが使えなくなってしまったため、関数が使えないためスキップ
+	t.SkipNow()
+
 	tests := []struct {
 		name     string
 		statusID string
