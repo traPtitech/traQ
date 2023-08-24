@@ -10,16 +10,12 @@ import (
 // UserGroupDeleted USER_GROUP_DELETEDイベントペイロード
 type UserGroupDeleted struct {
 	Base
-	Group struct {
-		ID uuid.UUID `json:"id"`
-	} `json:"group"`
+	GroupID uuid.UUID `json:"groupId"`
 }
 
 func MakeUserGroupDeleted(eventTime time.Time, group model.UserGroup) *UserGroupDeleted {
 	return &UserGroupDeleted{
-		Base: MakeBase(eventTime),
-		Group: struct {
-			ID uuid.UUID `json:"id"`
-		}{ID: group.ID},
+		Base:    MakeBase(eventTime),
+		GroupID: group.ID,
 	}
 }
