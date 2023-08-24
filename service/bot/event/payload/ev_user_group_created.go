@@ -9,12 +9,12 @@ import (
 // UserGroupCreated USER_GROUP_CREATEDイベントペイロード
 type UserGroupCreated struct {
 	Base
-	Group model.UserGroup `json:"group"`
+	Group UserGroup `json:"group"`
 }
 
 func MakeUserGroupCreated(eventTime time.Time, group model.UserGroup) *UserGroupCreated {
 	return &UserGroupCreated{
 		Base:  MakeBase(eventTime),
-		Group: group,
+		Group: MakeUserGroup(group),
 	}
 }
