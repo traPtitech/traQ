@@ -88,3 +88,75 @@ func MakeUser(user model.UserInfo) User {
 	}
 	return payload
 }
+
+type GroupMember struct {
+	GroupID uuid.UUID `json:"groupId"`
+	UserID  uuid.UUID `json:"userId"`
+}
+
+func MakeGroupMember(groupID, userID uuid.UUID) GroupMember {
+	return GroupMember{
+		GroupID: groupID,
+		UserID:  userID,
+	}
+}
+
+type UserGroupAdmin GroupMember
+
+func MakeUserGroupAdmin(groupID, userID uuid.UUID) UserGroupAdmin {
+	return UserGroupAdmin{
+		GroupID: groupID,
+		UserID:  userID,
+	}
+}
+
+type UserGroupMember struct {
+	GroupMember
+	Role string `json:"role"`
+}
+
+func MakeUserGroupMember(groupID, userID uuid.UUID, role string) UserGroupMember {
+	return UserGroupMember{
+		GroupMember: GroupMember{
+			GroupID: groupID,
+			UserID:  userID,
+		},
+		Role: role,
+	}
+}
+
+type UserGroup struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Type        string             `json:"type"`
+	Icon        uuid.UUID          `json:"icon"`
+	Admins      []*UserGroupAdmin  `json:"admins"`
+	Members     []*UserGroupMember `json:"members"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+}
+
+func MakeUserGroup(group model.UserGroup) UserGroup {
+	admins := make([]*UserGroupAdmin, len(group.Admins))
+	for i, admin := range group.Admins {
+		a := MakeUserGroupAdmin(admin.GroupID, admin.UserID)
+		admins[i] = &a
+	}
+	members := make([]*UserGroupMember, len(group.Members))
+	for i, member := range group.Members {
+		m := MakeUserGroupMember(member.GroupID, member.UserID, member.Role)
+		members[i] = &m
+	}
+	return UserGroup{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		Type:        group.Type,
+		Icon:        group.Icon,
+		Admins:      admins,
+		Members:     members,
+		CreatedAt:   group.CreatedAt,
+		UpdatedAt:   group.UpdatedAt,
+	}
+}

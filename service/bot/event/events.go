@@ -37,6 +37,22 @@ const (
 	TagAdded model.BotEventType = "TAG_ADDED"
 	// TagRemoved タグ削除イベント
 	TagRemoved model.BotEventType = "TAG_REMOVED"
+	// UserGroupCreated グループ作成イベント
+	UserGroupCreated model.BotEventType = "USER_GROUP_CREATED"
+	// UserGroupUpdated グループ更新イベント
+	UserGroupUpdated model.BotEventType = "USER_GROUP_UPDATED"
+	// UserGroupDeleted グループ削除イベント
+	UserGroupDeleted model.BotEventType = "USER_GROUP_DELETED"
+	// UserGroupMemberAdded グループメンバー追加イベント
+	UserGroupMemberAdded model.BotEventType = "USER_GROUP_MEMBER_ADDED"
+	// UserGroupMemberUpdated グループメンバー更新イベント
+	UserGroupMemberUpdated model.BotEventType = "USER_GROUP_MEMBER_UPDATED"
+	// UserGroupMemberRemoved グループメンバー削除イベント
+	UserGroupMemberRemoved model.BotEventType = "USER_GROUP_MEMBER_REMOVED"
+	// UserGroupAdminAdded グループ管理者追加イベント
+	UserGroupAdminAdded model.BotEventType = "USER_GROUP_ADMIN_ADDED"
+	// UserGroupAdminRemoved グループ管理者削除イベント
+	UserGroupAdminRemoved model.BotEventType = "USER_GROUP_ADMIN_REMOVED"
 )
 
 var Types model.BotEventTypes
@@ -62,6 +78,14 @@ func init() {
 		StampCreated,
 		TagAdded,
 		TagRemoved,
+		UserGroupCreated,
+		UserGroupUpdated,
+		UserGroupDeleted,
+		UserGroupMemberAdded,
+		UserGroupMemberUpdated,
+		UserGroupMemberRemoved,
+		UserGroupAdminAdded,
+		UserGroupAdminRemoved,
 	} {
 		Types[t] = struct{}{}
 	}
