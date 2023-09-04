@@ -40,7 +40,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrNetwork
 	}
 
-	req.Header.Add("user-agent", `bot`)
+	req.Header.Add("user-agent", "traq-ogp-bot; contact: github.com/traPtitech/traQ")
 
 	resp, err := client.Do(req)
 	if err != nil {
