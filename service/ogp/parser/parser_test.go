@@ -1,9 +1,12 @@
 package parser
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/html"
 )
@@ -121,4 +124,40 @@ func TestExtractTitleFromNode(t *testing.T) {
 
 		assert.Equal(t, "", result)
 	})
+}
+
+func TestFetchTwitterOGP(t *testing.T) {
+	tests := []struct {
+		name    string
+		url     string
+		want    func(t *testing.T, res *opengraph.OpenGraph)
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "success",
+			url:  "https://twitter.com/traPtitech/status/1690533645923287040",
+			want: func(t *testing.T, res *opengraph.OpenGraph) {
+				assert.Equal(t, "設営完了しました！\n西え-33aにてお待ちしています！\n#C102", res.Description)
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "not found",
+			url:  "https://twitter.com/traPtitech/status/1690533645923287041",
+			want: func(t *testing.T, res *opengraph.OpenGraph) {
+				assert.Equal(t, "", res.Description)
+			},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, _ := url.Parse(tt.url)
+			got, _, err := ParseMetaForURL(u)
+			if !tt.wantErr(t, err, fmt.Sprintf("ParseMetaForURL(%v)", tt.url)) {
+				return
+			}
+			tt.want(t, got)
+		})
+	}
 }
