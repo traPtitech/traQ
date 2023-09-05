@@ -14,7 +14,7 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set TRAQ_VERSION env
         run: echo "TRAQ_VERSION=master-SNAPSHOT" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [image]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Pull docker image
         run: docker pull ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Container image scan
