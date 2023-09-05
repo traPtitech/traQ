@@ -150,8 +150,11 @@ func TestFetchTwitterOGP(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 	}
+	t.Parallel()
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			u, _ := url.Parse(tt.url)
 			got, _, err := ParseMetaForURL(u)
 			if !tt.wantErr(t, err, fmt.Sprintf("ParseMetaForURL(%v)", tt.url)) {
