@@ -127,6 +127,7 @@ func TestExtractTitleFromNode(t *testing.T) {
 }
 
 func TestFetchTwitterOGP(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		url     string
@@ -150,7 +151,6 @@ func TestFetchTwitterOGP(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 	}
-	t.Parallel()
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
