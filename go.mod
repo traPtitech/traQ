@@ -1,6 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.21.0
+go 1.21.1
 
 require (
 	cloud.google.com/go/profiler v0.3.1
@@ -188,3 +188,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
+
+replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
