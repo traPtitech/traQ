@@ -54,7 +54,7 @@ jobs:
       - name: Pull docker image
         run: docker pull ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Container image scan
-        uses: crazy-max/ghaction-container-scan@v2
+        uses: crazy-max/ghaction-container-scan@v3
         with:
           image: ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           annotations: true
