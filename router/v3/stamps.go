@@ -71,7 +71,12 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return extension.ServeJSONWithETag(c, stamps)
+	stampsWithThumb, err := h.Repo.StampThumbnailExists(stamps)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return extension.ServeJSONWithETag(c, stampsWithThumb)
 }
 
 // CreateStamp POST /stamps
