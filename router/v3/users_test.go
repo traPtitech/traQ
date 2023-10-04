@@ -509,7 +509,7 @@ func TestHandlers_GetMyQRCode(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
-			ContentType("image/png")
+			HasContentType("image/png")
 	})
 
 	t.Run("success (text/plain)", func(t *testing.T) {
@@ -520,7 +520,7 @@ func TestHandlers_GetMyQRCode(t *testing.T) {
 			WithQuery("token", true).
 			Expect().
 			Status(http.StatusOK).
-			ContentType("text/plain")
+			HasContentType("text/plain")
 	})
 }
 

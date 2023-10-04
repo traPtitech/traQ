@@ -149,7 +149,7 @@ func TestHandlers_GetWebhookIcon(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
-			ContentType("image/png")
+			HasContentType("image/png")
 	})
 }
 
