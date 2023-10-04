@@ -56,5 +56,5 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	e.GET(path, user.GetName()).
 		Expect().
 		Status(http.StatusOK).
-		ContentType("image/png")
+		HasContentType("image/png")
 }
