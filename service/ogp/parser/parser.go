@@ -34,7 +34,15 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	resp, err := client.Get(url.String())
+
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return nil, nil, ErrNetwork
+	}
+
+	req.Header.Add("user-agent", userAgent)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, nil, ErrNetwork
 	}

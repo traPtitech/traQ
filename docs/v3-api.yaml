@@ -4874,7 +4874,7 @@ components:
         twitterId:
           type: string
           description: Twitter ID
-          pattern: '^[a-zA-Z0-9_]{1,15}$'
+          pattern: '^[a-zA-Z0-9_]{0,15}$'
         lastOnline:
           type: string
           description: 最終オンライン日時

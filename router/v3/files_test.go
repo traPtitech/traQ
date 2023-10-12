@@ -509,7 +509,7 @@ func TestHandlers_GetThumbnailImage(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
-			ContentType("image/png")
+			HasContentType("image/png")
 	})
 
 	t.Run("success (type=waveform)", func(t *testing.T) {
@@ -520,7 +520,7 @@ func TestHandlers_GetThumbnailImage(t *testing.T) {
 			WithQuery("type", "waveform").
 			Expect().
 			Status(http.StatusOK).
-			ContentType("image/svg+xml")
+			HasContentType("image/svg+xml")
 	})
 }
 

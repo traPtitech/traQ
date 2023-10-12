@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.20.5-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.21.3-alpine AS build
 WORKDIR /go/src/github.com/traPtitech/traQ
 
 COPY ./go.* ./
@@ -19,7 +19,7 @@ ENV GOARCH=$TARGETARCH
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/tmp/go/cache \
   go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
-FROM alpine:3.18.2
+FROM alpine:3.18.4
 WORKDIR /app
 
 RUN apk add --no-cache --update ca-certificates imagemagick && \

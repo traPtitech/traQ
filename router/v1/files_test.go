@@ -98,7 +98,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK)
-		res.ContentType(iconFile.GetMIMEType())
+		res.HasContentType(iconFile.GetMIMEType())
 		res.Header(consts.HeaderCacheFile).IsEqual("true")
 		res.Header(consts.HeaderFileMetaType).IsEqual("icon")
 	})
@@ -234,7 +234,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 			Expect().
 			Status(http.StatusOK)
 		res.Header(consts.HeaderCacheControl).IsEqual("private, max-age=31536000")
-		res.ContentType(consts.MimeImagePNG)
+		res.HasContentType(consts.MimeImagePNG)
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -246,6 +246,6 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 			Expect().
 			Status(http.StatusOK)
 		res.Header(consts.HeaderCacheControl).IsEqual("private, max-age=31536000")
-		res.ContentType(consts.MimeImagePNG)
+		res.HasContentType(consts.MimeImagePNG)
 	})
 }

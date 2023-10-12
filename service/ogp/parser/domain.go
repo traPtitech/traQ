@@ -12,13 +12,14 @@ var client = http.Client{
 	Timeout: 5 * time.Second,
 }
 
-const userAgent = "traq-ogp-fetcher; contact: github.com/traPtitech/traQ"
+// X(Twitter)のOGPを取得するのにuserAgentの中にbotという文字列が入っている必要がある
+const userAgent = "traq-ogp-fetcher-bot; contact: github.com/traPtitech/traQ"
 
 func FetchSpecialDomainInfo(url *url.URL) (og *opengraph.OpenGraph, meta *DefaultPageMeta, isSpecialDomain bool, err error) {
 	switch url.Host {
-	case "twitter.com":
-		og, meta, err = FetchTwitterInfo(url)
-		return og, meta, true, err
+	// case "twitter.com":
+	// 	og, meta, err = FetchTwitterInfo(url)
+	// 	return og, meta, true, err
 	case "vrchat.com":
 		og, meta, err = FetchVRChatInfo(url)
 		return og, meta, true, err
