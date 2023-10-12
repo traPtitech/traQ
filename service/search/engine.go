@@ -91,13 +91,17 @@ type Result interface {
 	Hits() []message.Message
 }
 
-const createdAtSortKey = "createdAt" // 作成日時の新しい順
-const updatedAtSortKey = "updatedAt" // 更新日時の新しい順
-const ascSortKey = "asc"             //昇順
-const descSortKey = "desc"           //降順
+const (
+	createdAtSortKey = "createdAt" // 作成日時の新しい順
+	updatedAtSortKey = "updatedAt" // 更新日時の新しい順
+	ascSortKey       = "asc"       // 昇順
+	descSortKey      = "desc"      // 降順
+)
 
-var allowedSortKeys = []string{createdAtSortKey, updatedAtSortKey}
-var allowedSortKeysRegExp = regexp.MustCompile("([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")")
+var (
+	allowedSortKeys       = []string{createdAtSortKey, updatedAtSortKey}
+	allowedSortKeysRegExp = regexp.MustCompile("([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")")
+)
 
 // `-`のつかないソートキーを指定した時、対応する値の降順にするか
 func shouldUseDescendingAsDefault(key string) bool {
