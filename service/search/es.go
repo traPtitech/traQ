@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	json "github.com/json-iterator/go"
@@ -40,14 +38,12 @@ type ESEngineConfig struct {
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client  *elasticsearch.Client
-	mm      message.Manager
-	cm      channel.Manager
-	repo    repository.Repository
-	l       *zap.Logger
-	done    chan<- struct{}
-	running bool
-	mu      sync.Mutex
+	client *elasticsearch.Client
+	mm     message.Manager
+	cm     channel.Manager
+	repo   repository.Repository
+	l      *zap.Logger
+	done   chan<- struct{}
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
@@ -86,7 +82,7 @@ type esCreateIndexBody struct {
 	Settings m `json:"settings"`
 }
 
-type m map[string]interface{}
+type m map[string]any
 
 // esMapping Elasticsearchに入るメッセージの情報
 // esMessageDoc と同じにする
@@ -184,42 +180,39 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 	// esバージョン確認
 	infoRes, err := client.Info()
-	defer infoRes.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Elasticsearch info: %w", err)
 	}
 	if infoRes.IsError() {
 		return nil, fmt.Errorf("failed to get Elasticsearch info: %s", infoRes.String())
 	}
+	defer infoRes.Body.Close()
 
-	var r map[string]interface{}
-	infoResBody, err := io.ReadAll(infoRes.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Elasticsearch info: %w", err)
+	var r struct {
+		Version struct {
+			Number string `json:"number"`
+		} `json:"version"`
 	}
-	err = json.Unmarshal(infoResBody, &r)
+	err = json.NewDecoder(infoRes.Body).Decode(&r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Elasticsearch info: %w", err)
 	}
 
-	version, ok := r["version"].(map[string]interface{})["number"].(string)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert version value '%v' to string", r["version"].(map[string]interface{})["number"])
+	if !strings.HasPrefix(r.Version.Number, esRequiredVersionPrefix) {
+		return nil, fmt.Errorf("failed to init Elasticsearch: unsupported version (%s). expected major version %s", r.Version.Number, esRequiredVersionPrefix)
 	}
-	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
-	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
-		return nil, fmt.Errorf("failed to init Elasticsearch: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
-	}
+	logger.Info(fmt.Sprintf("Using elasticsearch version %s", r.Version.Number))
 
 	// index確認
 	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
-	defer existsRes.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("failed to check index exists: %w", err)
 	}
 	if existsRes.IsError() && existsRes.StatusCode != http.StatusNotFound {
 		return nil, fmt.Errorf("failed to check index exists: %s", existsRes.String())
 	}
+	defer existsRes.Body.Close()
+
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
 		reqBody, err := json.Marshal(esCreateIndexBody{
@@ -234,25 +227,23 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 			getIndexName(esMessageIndex),
 			client.Indices.Create.WithBody(bytes.NewBuffer(reqBody)),
 			client.Indices.Create.WithContext(context.Background()))
-		defer createIndexRes.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Elasticsearch index: %w", err)
 		}
 		if createIndexRes.IsError() || createIndexRes.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("failed to create Elasticsearch index: StatusCode: %v, ResponseBody: %v", createIndexRes.StatusCode, createIndexRes.Body)
 		}
+		defer createIndexRes.Body.Close()
 	}
 
 	done := make(chan struct{})
 	engine := &esEngine{
-		client:  client,
-		mm:      mm,
-		cm:      cm,
-		repo:    repo,
-		l:       logger.Named("search"),
-		done:    done,
-		running: true,
-		mu:      sync.Mutex{},
+		client: client,
+		mm:     mm,
+		cm:     cm,
+		repo:   repo,
+		l:      logger.Named("search"),
+		done:   done,
 	}
 
 	go engine.syncLoop(done)
@@ -397,40 +388,31 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		e.client.Search.WithSort(sort),
 		e.client.Search.WithSize(limit),
 		e.client.Search.WithFrom(offset),
-		e.client.Search.WithContext(context.Background()),
 	)
-	defer sr.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	if sr.IsError() {
 		return nil, fmt.Errorf("failed to get search result")
 	}
+	defer sr.Body.Close()
 
-	searchResultBody, err := io.ReadAll(sr.Body)
-	if err != nil {
-		return nil, err
-	}
 	var res esSearchResponse
-	err = json.Unmarshal(searchResultBody, &res)
+	err = json.NewDecoder(sr.Body).Decode(&res)
 	if err != nil {
 		return nil, err
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultBody(res)
+	return e.parseResultFromResponse(res)
 }
 
 func (e *esEngine) Available() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.running
+	//このクライアントにはライフサイクルが無いので、常にtrueを返す。
+	return true
 }
 
 func (e *esEngine) Close() error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.running = false
 	e.done <- struct{}{}
 	return nil
 }

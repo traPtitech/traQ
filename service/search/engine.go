@@ -56,12 +56,6 @@ func (q Query) Validate() error {
 	)
 }
 
-// Sort ソート情報
-type Sort struct {
-	Key  string // 何によってソートするか
-	Desc bool   // 降順にするか
-}
-
 // GetSortKey ソートに使うキーの情報を抽出します
 func (q Query) GetSortKey() string {
 	if !q.Sort.Valid {

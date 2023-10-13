@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
-
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -277,24 +275,16 @@ func (e *esEngine) sync() error {
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
 func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 	sr, err := e.client.Search(
-		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithSort("updatedAt:desc"),
 		e.client.Search.WithSize(1))
 	if err != nil {
 		return time.Time{}, err
 	}
-
-	body, err := io.ReadAll(sr.Body)
 	defer sr.Body.Close()
 
-	if err != nil {
-		return time.Time{}, err
-	}
-
 	var res esSearchResponse
-
-	err = json.Unmarshal(body, &res)
+	err = json.NewDecoder(sr.Body).Decode(&res)
 	if err != nil {
 		return time.Time{}, err
 	}

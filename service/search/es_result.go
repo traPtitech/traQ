@@ -25,7 +25,7 @@ type esSearchResponse struct {
 	} `json:"_shards"`
 	Hits struct {
 		Hits     []esSearchHit `json:"hits"`
-		MaxScore interface{}   `json:"max_score"`
+		MaxScore any           `json:"max_score"`
 		Total    struct {
 			Relation string `json:"relation"`
 			Value    int64  `json:"value"`
@@ -38,18 +38,18 @@ type esSearchResponse struct {
 type esSearchHit struct {
 	ID     string       `json:"_id"`
 	Index  string       `json:"_index"`
-	Score  interface{}  `json:"_score"`
+	Score  any          `json:"_score"`
 	Source esMessageDoc `json:"_source"`
 	Type   string       `json:"_type"`
 	Sort   []int64      `json:"sort"`
 }
 
-func (e *esEngine) parseResultBody(resBody esSearchResponse) (Result, error) {
-	totalHits := resBody.Hits.Total.Value
-	hits := resBody.Hits.Hits
+func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, error) {
+	totalHits := searchRes.Hits.Total.Value
+	hits := searchRes.Hits.Hits
 
 	r := &esResult{
-		totalHits: int64(totalHits),
+		totalHits: totalHits,
 		messages:  make([]message.Message, 0, len(hits)),
 	}
 
