@@ -33,7 +33,7 @@ func getIndexName(index string) string {
 // ESEngineConfig Elasticsearch検索エンジン設定
 type ESEngineConfig struct {
 	// URL ESのURL
-	URL []string
+	URL string
 }
 
 // esEngine search.Engine 実装
@@ -172,7 +172,7 @@ var esSetting = m{
 func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// esクライアント作成
 	client, err := elasticsearch.NewClient(elasticsearch.Config{
-		Addresses: config.URL,
+		Addresses: []string{config.URL},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
