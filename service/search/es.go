@@ -1,13 +1,17 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
+	json "github.com/json-iterator/go"
+
+	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/gofrs/uuid"
-	"github.com/olivere/elastic/v7"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -34,7 +38,7 @@ type ESEngineConfig struct {
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client *elastic.Client
+	client *elasticsearch.Client
 	mm     message.Manager
 	cm     channel.Manager
 	repo   repository.Repository
@@ -73,7 +77,12 @@ type esMessageDocUpdate struct {
 	HasAudio       bool        `json:"hasAudio"`
 }
 
-type m map[string]interface{}
+type esCreateIndexBody struct {
+	Mappings m `json:"mappings"`
+	Settings m `json:"settings"`
+}
+
+type m map[string]any
 
 // esMapping Elasticsearchに入るメッセージの情報
 // esMessageDoc と同じにする
@@ -161,37 +170,70 @@ var esSetting = m{
 
 // NewESEngine Elasticsearch検索エンジンを生成します
 func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
-	// es接続
-	client, err := elastic.NewClient(elastic.SetURL(config.URL), elastic.SetSniff(false))
+	// esクライアント作成
+	client, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses: []string{config.URL},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to init search engine: %w", err)
+		return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
 	}
 
 	// esバージョン確認
-	version, err := client.ElasticsearchVersion(config.URL)
+	infoRes, err := client.Info()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch es version: %w", err)
+		return nil, fmt.Errorf("failed to get Elasticsearch info: %w", err)
 	}
-	logger.Info(fmt.Sprintf("Using elasticsearch version %s", version))
-	if !strings.HasPrefix(version, esRequiredVersionPrefix) {
-		return nil, fmt.Errorf("failed to init search engine: unsupported version (%s). expected major version %s", version, esRequiredVersionPrefix)
+	if infoRes.IsError() {
+		return nil, fmt.Errorf("failed to get Elasticsearch info: %s", infoRes.String())
+	}
+	defer infoRes.Body.Close()
+
+	var r struct {
+		Version struct {
+			Number string `json:"number"`
+		} `json:"version"`
+	}
+	err = json.NewDecoder(infoRes.Body).Decode(&r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal Elasticsearch info: %w", err)
 	}
 
+	if !strings.HasPrefix(r.Version.Number, esRequiredVersionPrefix) {
+		return nil, fmt.Errorf("failed to init Elasticsearch: unsupported version (%s). expected major version %s", r.Version.Number, esRequiredVersionPrefix)
+	}
+	logger.Info(fmt.Sprintf("Using elasticsearch version %s", r.Version.Number))
+
 	// index確認
-	if exists, err := client.IndexExists(getIndexName(esMessageIndex)).Do(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to init search engine: %w", err)
-	} else if !exists {
-		// index作成
-		r1, err := client.CreateIndex(getIndexName(esMessageIndex)).BodyJson(m{
-			"mappings": esMapping,
-			"settings": esSetting,
-		}).Do(context.Background())
+	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
+	if err != nil {
+		return nil, fmt.Errorf("failed to check index exists: %w", err)
+	}
+	if existsRes.IsError() && existsRes.StatusCode != http.StatusNotFound {
+		return nil, fmt.Errorf("failed to check index exists: %s", existsRes.String())
+	}
+	defer existsRes.Body.Close()
+
+	// indexが存在しなかったら作成
+	if existsRes.StatusCode == http.StatusNotFound {
+		reqBody, err := json.Marshal(esCreateIndexBody{
+			Mappings: esMapping,
+			Settings: esSetting,
+		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to init search engine: %w", err)
+			return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
 		}
-		if !r1.Acknowledged {
-			return nil, fmt.Errorf("failed to init search engine: index not acknowledged")
+
+		createIndexRes, err := client.Indices.Create(
+			getIndexName(esMessageIndex),
+			client.Indices.Create.WithBody(bytes.NewBuffer(reqBody)),
+			client.Indices.Create.WithContext(context.Background()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Elasticsearch index: %w", err)
 		}
+		if createIndexRes.IsError() || createIndexRes.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to create Elasticsearch index: StatusCode: %v, ResponseBody: %v", createIndexRes.StatusCode, createIndexRes.Body)
+		}
+		defer createIndexRes.Body.Close()
 	}
 
 	done := make(chan struct{})
@@ -209,70 +251,119 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	return engine, nil
 }
 
+type searchQuery m
+
+type searchBody struct {
+	Query *struct {
+		Bool *struct {
+			Musts []searchQuery `json:"must,omitempty"`
+		} `json:"bool,omitempty"`
+	} `json:"query,omitempty"`
+}
+
+func newSearchBody(sq []searchQuery) searchBody {
+	sb := searchBody{
+		Query: &struct {
+			Bool *struct {
+				Musts []searchQuery `json:"must,omitempty"`
+			} `json:"bool,omitempty"`
+		}{Bool: &struct {
+			Musts []searchQuery `json:"must,omitempty"`
+		}{Musts: sq}},
+	}
+	return sb
+}
+
+type simpleQueryString struct {
+	Query           string   `json:"query"`
+	Fields          []string `json:"fields"`
+	DefaultOperator string   `json:"default_operator"`
+}
+
+type rangeQuery map[string]rangeParameters
+
+type rangeParameters struct {
+	Lt string `json:"lt,omitempty"`
+	Gt string `json:"gt,omitempty"`
+}
+
+type termQuery map[string]termQueryParameter
+
+type termQueryParameter struct {
+	Value any `json:"value,omitempty"`
+}
+
 func (e *esEngine) Do(q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
-	var musts []elastic.Query
+	var musts []searchQuery
 
 	if q.Word.Valid {
-		musts = append(musts, elastic.NewSimpleQueryStringQuery(q.Word.V).
-			Field("text").
-			DefaultOperator("AND"))
+		body := simpleQueryString{
+			Query:           q.Word.V,
+			Fields:          []string{"text"},
+			DefaultOperator: "AND",
+		}
+
+		musts = append(musts, searchQuery{"simple_query_string": body})
 	}
 
 	switch {
 	case q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("createdAt").
-			Gt(q.After.ValueOrZero().Format(esDateFormat)).
-			Lt(q.Before.ValueOrZero().Format(esDateFormat)))
+		musts = append(musts, searchQuery{"range": rangeQuery{"createdAt": rangeParameters{
+			Gt: q.After.ValueOrZero().Format(esDateFormat),
+			Lt: q.Before.ValueOrZero().Format(esDateFormat),
+		}}})
 	case q.After.Valid && !q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("createdAt").
-			Gt(q.After.ValueOrZero().Format(esDateFormat)))
+		musts = append(musts, searchQuery{"range": rangeQuery{"createdAt": rangeParameters{
+			Gt: q.After.ValueOrZero().Format(esDateFormat),
+		}}})
 	case !q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("createdAt").
-			Lt(q.Before.ValueOrZero().Format(esDateFormat)))
+		musts = append(musts, searchQuery{"range": rangeQuery{"createdAt": rangeParameters{
+			Lt: q.Before.ValueOrZero().Format(esDateFormat),
+		}}})
 	}
 
 	// チャンネル指定があるときはそのチャンネルを検索
 	// そうでないときはPublicチャンネルを検索
 	if q.In.Valid {
-		musts = append(musts, elastic.NewTermQuery("channelId", q.In))
+		musts = append(musts, searchQuery{"term": termQuery{"channelId": termQueryParameter{Value: q.In}}})
 	} else {
-		musts = append(musts, elastic.NewTermQuery("isPublic", true))
+		musts = append(musts, searchQuery{"term": termQuery{"isPublic": termQueryParameter{Value: true}}})
 	}
 
 	if q.To.Valid {
-		musts = append(musts, elastic.NewTermQuery("to", q.To))
+		musts = append(musts, searchQuery{"term": termQuery{"to": termQueryParameter{Value: q.To}}})
 	}
 
 	if q.From.Valid {
-		musts = append(musts, elastic.NewTermQuery("userId", q.From))
+		musts = append(musts, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: q.From}}})
 	}
 
 	if q.Citation.Valid {
-		musts = append(musts, elastic.NewTermQuery("citation", q.Citation))
+		musts = append(musts, searchQuery{"term": termQuery{"citation": termQueryParameter{Value: q.Citation}}})
 	}
 
 	if q.Bot.Valid {
-		musts = append(musts, elastic.NewTermQuery("bot", q.Bot))
+		musts = append(musts, searchQuery{"term": termQuery{"bot": termQueryParameter{Value: q.Bot}}})
 	}
 
 	if q.HasURL.Valid {
-		musts = append(musts, elastic.NewTermQuery("hasURL", q.HasURL))
+		musts = append(musts, searchQuery{"term": termQuery{"hasURL": termQueryParameter{Value: q.HasURL}}})
 	}
 
 	if q.HasAttachments.Valid {
-		musts = append(musts, elastic.NewTermQuery("hasAttachments", q.HasAttachments))
+		musts = append(musts, searchQuery{"term": termQuery{"hasAttachments": termQueryParameter{Value: q.HasAttachments}}})
 	}
 
 	if q.HasImage.Valid {
-		musts = append(musts, elastic.NewTermQuery("hasImage", q.HasImage))
+		musts = append(musts, searchQuery{"term": termQuery{"hasImage": termQueryParameter{Value: q.HasImage}}})
 	}
 	if q.HasVideo.Valid {
-		musts = append(musts, elastic.NewTermQuery("hasVideo", q.HasVideo))
+		musts = append(musts, searchQuery{"term": termQuery{"hasVideo": termQueryParameter{Value: q.HasVideo}}})
 	}
 	if q.HasAudio.Valid {
-		musts = append(musts, elastic.NewTermQuery("hasAudio", q.HasAudio))
+		musts = append(musts, searchQuery{"term": termQuery{"hasAudio": termQueryParameter{Value: q.HasAudio}}})
 	}
 
 	limit, offset := 20, 0
@@ -286,27 +377,42 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
-	sr, err := e.client.Search().
-		Index(getIndexName(esMessageIndex)).
-		Query(elastic.NewBoolQuery().Must(musts...)).
-		Sort(sort.Key, !sort.Desc).
-		Size(limit).
-		From(offset).
-		Do(context.Background())
+	b, err := json.Marshal(newSearchBody(musts))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal search query: %w", err)
+	}
+
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithBody(bytes.NewBuffer(b)),
+		e.client.Search.WithSort(sort),
+		e.client.Search.WithSize(limit),
+		e.client.Search.WithFrom(offset),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if sr.IsError() {
+		return nil, fmt.Errorf("failed to get search result")
+	}
+	defer sr.Body.Close()
+
+	var res esSearchResponse
+	err = json.NewDecoder(sr.Body).Decode(&res)
 	if err != nil {
 		return nil, err
 	}
 
-	e.l.Debug("search result", zap.Reflect("hits", sr.Hits))
-	return e.bindESResult(sr)
+	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
+	return e.parseResultFromResponse(res)
 }
 
 func (e *esEngine) Available() bool {
-	return e.client.IsRunning()
+	//このクライアントにはライフサイクルが無いので、常にtrueを返す。
+	return true
 }
 
 func (e *esEngine) Close() error {
-	e.client.Stop()
 	e.done <- struct{}{}
 	return nil
 }

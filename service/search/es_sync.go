@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/elastic/go-elasticsearch/v7/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
-	"github.com/olivere/elastic/v7"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -171,31 +171,46 @@ func (e *esEngine) sync() error {
 				return err
 			}
 		}
+		bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+			Client: e.client,
+			Index:  getIndexName(esMessageIndex),
+		})
 
-		bulk := e.client.Bulk().Index(getIndexName(esMessageIndex))
 		for _, v := range messages {
-			var bulkReq elastic.BulkableRequest
 			if v.CreatedAt.After(lastSynced) {
 				doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
 				if err != nil {
 					return err
 				}
-				bulkReq = elastic.NewBulkIndexRequest().
-					Id(v.ID.String()).
-					Doc(doc)
+
+				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+					Action:     "index",
+					DocumentID: v.ID.String(),
+					Body:       esutil.NewJSONReader(*doc),
+				})
+				if err != nil {
+					return err
+				}
 			} else {
-				bulkReq = elastic.NewBulkUpdateRequest().
-					Id(v.ID.String()).
-					Doc(e.convertMessageUpdated(v, message.Parse(v.Text)))
+				doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+					Action:     "update",
+					DocumentID: v.ID.String(),
+					Body:       esutil.NewJSONReader(map[string]any{"doc": doc}),
+				})
+				if err != nil {
+					return err
+				}
 			}
-			bulk.Add(bulkReq)
 		}
-		res, err := bulk.Do(context.Background())
+
+		err = bulkIndexer.Close(context.Background())
 		if err != nil {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, last insert %v", len(res.Indexed()), len(res.Updated()), lastInsert))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
 
 		if !more {
 			break
@@ -216,17 +231,24 @@ func (e *esEngine) sync() error {
 		}
 		lastDelete = messages[len(messages)-1].DeletedAt.Time
 
-		bulk := e.client.Bulk().Index(getIndexName(esMessageIndex))
+		bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+			Client: e.client,
+			Index:  getIndexName(esMessageIndex),
+		})
+
 		count := 0
 		for _, v := range messages {
 			if v.CreatedAt.After(lastSynced) {
 				continue
 			}
 			count++
-			bulk.Add(
-				elastic.NewBulkDeleteRequest().
-					Id(v.ID.String()),
-			)
+			err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+				Action:     "delete",
+				DocumentID: v.ID.String(),
+			})
+			if err != nil {
+				return err
+			}
 		}
 		if count == 0 {
 			if more {
@@ -234,12 +256,13 @@ func (e *esEngine) sync() error {
 			}
 			break
 		}
-		res, err := bulk.Do(context.Background())
+		err = bulkIndexer.Close(context.Background())
 		if err != nil {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, last delete %v", len(res.Deleted()), lastDelete))
+		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, failed %v message(s),  last delete %v",
+			bulkIndexer.Stats().NumDeleted, bulkIndexer.Stats().NumFailed, lastDelete))
 
 		if !more {
 			break
@@ -251,22 +274,26 @@ func (e *esEngine) sync() error {
 
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
 func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
-	sr, err := e.client.Search().
-		Index(getIndexName(esMessageIndex)).
-		Sort("updatedAt", false).
-		Size(1).
-		Do(context.Background())
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithSort("updatedAt:desc"),
+		e.client.Search.WithSize(1))
 	if err != nil {
 		return time.Time{}, err
 	}
-	if len(sr.Hits.Hits) == 0 {
+	defer sr.Body.Close()
+
+	var res esSearchResponse
+	err = json.NewDecoder(sr.Body).Decode(&res)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	lastUpdatedDoc := res.Hits.Hits
+
+	if len(lastUpdatedDoc) == 0 {
 		return time.Time{}, nil
 	}
 
-	var m esMessageDoc
-	hit := sr.Hits.Hits[0]
-	if err := json.Unmarshal(hit.Source, &m); err != nil {
-		return time.Time{}, err
-	}
-	return m.UpdatedAt, nil
+	return lastUpdatedDoc[0].Source.UpdatedAt, nil
 }
