@@ -38,7 +38,7 @@ func makeStampRepository(db *gorm.DB, hub *hub.Hub) *stampRepository {
 
 func (r *stampRepository) loadStamps(_ context.Context, _ struct{}) (map[uuid.UUID]*model.Stamp, error) {
 	var stamps []*model.Stamp
-	if err := r.db.Find(&stamps).Error; err != nil {
+	if err := r.db.Preload("Aliases").Find(&stamps).Error; err != nil {
 		return nil, err
 	}
 	stampsMap := make(map[uuid.UUID]*model.Stamp, len(stamps))
@@ -94,6 +94,35 @@ func (r *stampRepository) getStamp(id uuid.UUID) (s *model.Stamp, ok bool, err e
 	return
 }
 
+func (r *stampRepository) getStampByName(name string) (s *model.Stamp, ok bool, err error) {
+	var alias model.StampAlias
+	// エラーがない場合はaliasが存在する
+	if err := r.db.First(&alias, &model.StampAlias{Name: name}).Error; err == nil {
+		return r.getStamp(alias.StampID)
+	}
+	// エラーがRecordNotFound以外の場合はエラーを返す
+	if err != gorm.ErrRecordNotFound {
+		return nil, false, err
+	}
+
+	var stamp model.Stamp
+	if err := r.db.Preload("Aliases").First(&stamp, &model.Stamp{Name: name}).Error; err != nil {
+		return nil, false, err
+	}
+	return &stamp, true, nil
+}
+
+func stampNameExists(tx *gorm.DB, name string) (exists bool, err error) {
+	var stampExists, aliasExists bool
+	if stampExists, err = gormutil.RecordExists(tx, &model.Stamp{Name: name}); err != nil {
+		return false, err
+	}
+	if aliasExists, err = gormutil.RecordExists(tx, &model.StampAlias{Name: name}); err != nil {
+		return false, err
+	}
+	return stampExists || aliasExists, nil
+}
+
 func (r *stampRepository) allStampsExist(ids []uuid.UUID) (ok bool, err error) {
 	stamps, err := r.stamps.Get(context.Background(), struct{}{})
 	if err != nil {
@@ -123,7 +152,7 @@ func (r *stampRepository) CreateStamp(args repository.CreateStampArgs) (s *model
 			return repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 		// 名前重複チェック
-		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
+		if exists, err := stampNameExists(tx, stamp.Name); err != nil {
 			return err
 		} else if exists {
 			return repository.ErrAlreadyExists
@@ -175,7 +204,7 @@ func (r *stampRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStampA
 			}
 
 			// 重複チェック
-			if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: args.Name.V}); err != nil {
+			if exists, err := stampNameExists(tx, args.Name.V); err != nil {
 				return err
 			} else if exists {
 				return repository.ErrAlreadyExists
@@ -240,9 +269,12 @@ func (r *stampRepository) GetStampByName(name string) (s *model.Stamp, err error
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
-	s = &model.Stamp{}
-	if err := r.db.First(s, &model.Stamp{Name: name}).Error; err != nil {
+	s, ok, err := r.getStampByName(name)
+	if err != nil {
 		return nil, convertError(err)
+	}
+	if !ok {
+		return nil, repository.ErrNotFound
 	}
 	return s, nil
 }
@@ -342,4 +374,39 @@ func (r *stampRepository) GetStampStats(stampID uuid.UUID) (*repository.StampSta
 		return nil, err
 	}
 	return &stats, nil
+}
+
+func (r *stampRepository) CreateStampAlias(args repository.CreateStampAliasArgs) (*model.StampAlias, error) {
+	alias := &model.StampAlias{
+		ID:        uuid.Must(uuid.NewV4()),
+		StampID:   args.StampID,
+		Name:      args.Name,
+		CreatorID: args.CreatorID,
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		// スタンプの存在チェック
+		if exists, err := gormutil.RecordExists(tx, &model.Stamp{ID: alias.StampID}); err != nil {
+			return err
+		} else if !exists {
+			return repository.ErrNotFound
+		}
+
+		// 名前チェック
+		if err := vd.Validate(alias.Name, validator.StampNameRuleRequired...); err != nil {
+			return repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+		}
+		if exists, err := stampNameExists(tx, args.Name); err != nil {
+			return err
+		} else if exists {
+			return repository.ErrAlreadyExists
+		}
+
+		return tx.Create(&alias).Error
+	})
+	if err != nil {
+		return alias, err
+	}
+
+	return alias, nil
 }
