@@ -162,6 +162,47 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+type PostStampAliasRequest struct {
+	Name string `json:"alias"`
+}
+
+func (r PostStampAliasRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
+		vd.Field(&r.Name, append(validator.StampNameRule, validator.RequiredIfValid)...),
+	)
+}
+
+// CreateStampAlias POST /stamps/:stampID/aliases
+func (h *Handlers) CreateStampAlias(c echo.Context) error {
+	var req PostStampAliasRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	userID := getRequestUserID(c)
+	stampID := getParamStamp(c).ID
+
+	// スタンプエイリアス作成
+	_, err := h.Repo.CreateStampAlias(repository.CreateStampAliasArgs{
+		Name:      req.Name,
+		StampID:   stampID,
+		CreatorID: userID,
+	})
+	if err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrNotFound:
+			return herror.NotFound("stamp not found")
+		case err == repository.ErrAlreadyExists:
+			return herror.Conflict("this name has already been used")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 // GetStampImage GET /stamps/:stampID/image
 func (h *Handlers) GetStampImage(c echo.Context) error {
 	stamp := getParamStamp(c)
