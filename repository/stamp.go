@@ -24,6 +24,12 @@ type UpdateStampArgs struct {
 	CreatorID optional.Of[uuid.UUID]
 }
 
+type CreateStampAliasArgs struct {
+	Name      string
+	StampID   uuid.UUID
+	CreatorID uuid.UUID
+}
+
 // UserStampHistory スタンプ履歴構造体
 type UserStampHistory struct {
 	StampID  uuid.UUID `json:"stampId"`
@@ -114,4 +120,12 @@ type StampRepository interface {
 	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
 	GetStampStats(stampID uuid.UUID) (*StampStats, error)
+	// CreateStampAlias スタンプのエイリアスを作成します
+	//
+	// 成功した場合、エイリアスとnilを返します。
+	// 引数に問題がある場合、ArgumentErrorを返します。
+	// スタンプが存在しない場合、ErrNotFoundを返します。
+	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
+	// DBによるエラーを返すことがあります。
+	CreateStampAlias(args CreateStampAliasArgs) (*model.StampAlias, error)
 }
