@@ -244,6 +244,16 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	return s
 }
 
+func mustMakeStampAlias(t *testing.T, repo repository.Repository, stampID uuid.UUID, name string, userID uuid.UUID) *model.StampAlias {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	sa, err := repo.CreateStampAlias(repository.CreateStampAliasArgs{StampID: stampID, Name: name, CreatorID: userID})
+	require.NoError(t, err)
+	return sa
+}
+
 func mustAddMessageStamp(t *testing.T, repo repository.Repository, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
 	_, err := repo.AddStampToMessage(messageID, stampID, userID, 1)

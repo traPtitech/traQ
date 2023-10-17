@@ -67,6 +67,7 @@ func AllTables() []interface{} {
 		&model.MessageReport{},
 		&model.WebhookBot{},
 		&model.Stamp{},
+		&model.StampAlias{},
 		&model.UsersTag{},
 		&model.Unread{},
 		&model.Star{},

@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -167,6 +169,32 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 			assert.Equal(a.CreatorID, s.CreatorID)
 		}
 	})
+
+	t.Run("success (with aliases)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		a := mustMakeStamp(t, repo, rand, uuid.Nil)
+		aliases := []model.StampAlias{
+			*mustMakeStampAlias(t, repo, a.ID, rand, uuid.Nil),
+			*mustMakeStampAlias(t, repo, a.ID, rand, uuid.Nil),
+		}
+
+		sort := func(s []model.StampAlias) []model.StampAlias {
+			slices.SortFunc(s, func(a, b model.StampAlias) int {
+				return strings.Compare(a.Name, b.Name)
+			})
+			return s
+		}
+
+		s, err := repo.GetStamp(a.ID)
+		if assert.NoError(err) {
+			assert.Equal(a.ID, s.ID)
+			assert.Equal(a.Name, s.Name)
+			assert.Equal(a.FileID, s.FileID)
+			assert.Equal(a.CreatorID, s.CreatorID)
+			assert.Equal(sort(aliases), sort(s.Aliases))
+		}
+	})
 }
 
 func TestRepositoryImpl_DeleteStamp(t *testing.T) {
@@ -316,6 +344,40 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 		if assert.NoError(t, err) && assert.Len(t, ms, 1) {
 			assert.Equal(t, ms[0].StampID, stamp2.ID)
 		}
+	})
+}
+
+func TestRepositoryImpl_CreateStampAlias(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common2)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
+
+	t.Run("stamp not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStampAlias(repository.CreateStampAliasArgs{Name: random2.AlphaNumeric(20), StampID: uuid.Must(uuid.NewV4()), CreatorID: uuid.Nil})
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("invalid name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStampAlias(repository.CreateStampAliasArgs{Name: "あ", StampID: s.ID, CreatorID: uuid.Nil})
+		assert.Error(t, err)
+	})
+
+	t.Run("duplicate name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStampAlias(repository.CreateStampAliasArgs{Name: s.Name, StampID: s.ID, CreatorID: uuid.Nil})
+		assert.Error(t, err)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStampAlias(repository.CreateStampAliasArgs{Name: random2.AlphaNumeric(20), StampID: s.ID, CreatorID: uuid.Nil})
+		assert.NoError(t, err)
 	})
 }
 
