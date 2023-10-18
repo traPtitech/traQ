@@ -86,6 +86,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.Value(0).Object())
+		obj.Value(0).Object().Value("HasThumbnail").Boolean().IsEqual(false)
 	})
 
 	t.Run("success (type=original)", func(t *testing.T) {
@@ -101,6 +102,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.Value(0).Object())
+		obj.Value(0).Object().Value("HasThumbnail").Boolean().IsEqual(false)
 	})
 
 	t.Run("success (type=unicode)", func(t *testing.T) {
@@ -130,6 +132,7 @@ func TestHandlers_GetStamps(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 		stampEquals(t, stamp, obj.Value(0).Object())
+		obj.Value(0).Object().Value("HasThumbnail").Boolean().IsEqual(false)
 	})
 }
 

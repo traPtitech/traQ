@@ -364,3 +364,24 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 	})
 
 }
+
+
+func TestRepositoryImpl_StampThumbnailExists(t *testing.T) {
+	t.Parallel()
+	repo, assert, _ := setup(t, ex1)
+
+	n := 10
+	for i := 0; i < 10; i++ {
+		mustMakeStamp(t, repo, rand, uuid.Nil)
+	}
+
+	arr, err := repo.GetAllStamps(repository.StampTypeAll)
+	if assert.NoError(err) {
+		assert.Len(arr, n)
+	}
+
+	arrWithThumb, err := repo.StampThumbnailExists(arr)
+	if assert.NoError(err) {
+		assert.Len(arrWithThumb, n)
+	}
+}
