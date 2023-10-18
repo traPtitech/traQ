@@ -202,11 +202,14 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 	repo, assert, _ := setup(t, ex1)
 
 	n := 10
-	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, rand, uuid.Nil)
+	arr, err := repo.GetAllStamps(repository.StampTypeAll)
+	if len(arr) == 0 {
+		for i := 0; i < 10; i++ {
+			mustMakeStamp(t, repo, rand, uuid.Nil)
+		}
+		arr, err = repo.GetAllStamps(repository.StampTypeAll)
 	}
 
-	arr, err := repo.GetAllStamps(repository.StampTypeAll)
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 	}
@@ -370,11 +373,15 @@ func TestRepositoryImpl_StampThumbnailExists(t *testing.T) {
 	repo, assert, _ := setup(t, ex1)
 
 	n := 10
-	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, rand, uuid.Nil)
-	}
 
 	arr, err := repo.GetAllStamps(repository.StampTypeAll)
+	if len(arr) == 0 {
+		for i := 0; i < 10; i++ {
+			mustMakeStamp(t, repo, rand, uuid.Nil)
+		}
+		arr, err = repo.GetAllStamps(repository.StampTypeAll)
+	}
+
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 	}
