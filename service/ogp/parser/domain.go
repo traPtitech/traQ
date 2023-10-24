@@ -13,7 +13,8 @@ var client = http.Client{
 }
 
 // X(Twitter)のOGPを取得するのにuserAgentの中にbotという文字列が入っている必要がある
-const userAgent = "traq-ogp-fetcher-bot; contact: github.com/traPtitech/traQ"
+// Spotifyの新しいOGPを取得するのにuserAgentの中にcurl-botという文字列が入っている必要がある
+const userAgent = "traq-ogp-fetcher-curl-bot; contact: github.com/traPtitech/traQ"
 
 func FetchSpecialDomainInfo(url *url.URL) (og *opengraph.OpenGraph, meta *DefaultPageMeta, isSpecialDomain bool, err error) {
 	switch url.Host {
