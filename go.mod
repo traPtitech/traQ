@@ -7,9 +7,9 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.21.2
-	github.com/aws/aws-sdk-go-v2/config v1.19.0
+	github.com/aws/aws-sdk-go-v2/config v1.19.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.43
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.91
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.92
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2
 	github.com/blendle/zapdriver v1.3.1
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
