@@ -1,4 +1,4 @@
-# traQ - traP Internal Messenger Application
+# traQ - traP Internal Messenger Application 💬📲
 
 [![GitHub release](https://img.shields.io/github/release/traPtitech/traQ.svg)](https://GitHub.com/traPtitech/traQ/releases/)
 ![CI](https://github.com/traPtitech/traQ/workflows/CI/badge.svg)
@@ -14,15 +14,15 @@ traQ allows ease communication among team members by organizing contexts into tr
 
 ![traQ](https://user-images.githubusercontent.com/49056869/115141831-5a376980-a079-11eb-93c1-7016bc2097d0.png)
 
-## Deployment
+## Deployment 🌐
 
 If you want to deploy your own instance of traQ, then follow the instructions in [deployment.md](./docs/deployment.md).
 
-## Development
+## Development 🧑‍💻
 
 If you want to contribute to traQ, then follow the instructions in [development.md](./docs/development.md).
 
-## License
+## License 🪪
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
 
 This application uses [twemoji](https://twemoji.twitter.com)'s SVG images as Unicode emoji stamps.
