@@ -12,6 +12,12 @@ func v35() *gormigrate.Migration {
 		Migrate: func(db *gorm.DB) error {
 			roles := []v35UserRole{
 				{
+					Name:        "openid",
+					Oauth2Scope: true,
+					System:      true,
+					Permissions: []v35RolePermission{},
+				},
+				{
 					Name:        "profile",
 					Oauth2Scope: true,
 					System:      true,
