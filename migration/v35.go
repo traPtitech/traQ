@@ -10,18 +10,37 @@ func v35() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "35",
 		Migrate: func(db *gorm.DB) error {
-			v := v35UserRole{
-				Name:        "profile",
-				Oauth2Scope: true,
-				System:      true,
-				Permissions: []v35RolePermission{
-					{
-						Role:       "profile",
-						Permission: "get_me",
+			roles := []v35UserRole{
+				{
+					Name:        "profile",
+					Oauth2Scope: true,
+					System:      true,
+					Permissions: []v35RolePermission{
+						{
+							Role:       "profile",
+							Permission: "get_me",
+						},
+					},
+				},
+				{
+					Name:        "email",
+					Oauth2Scope: true,
+					System:      true,
+					Permissions: []v35RolePermission{
+						{
+							Role:       "profile",
+							Permission: "get_me",
+						},
 					},
 				},
 			}
-			return db.Create(v).Error
+			for _, role := range roles {
+				err := db.Create(&role).Error
+				if err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 	}
 }

@@ -44,6 +44,8 @@ func (s *Service) GetUserInfo(userID uuid.UUID) (map[string]any, error) {
 	return map[string]any{
 		// OIDC standard claims
 		"name":               user.GetName(),
+		"email":              user.GetName() + "+dummy@example.com",
+		"email_verified":     false,
 		"preferred_username": user.GetName(),
 		"picture":            s.origin + "/api/v3/public/icon/" + user.GetName(),
 		"updated_at":         user.GetUpdatedAt(),
