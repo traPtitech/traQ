@@ -46,7 +46,7 @@ require (
 	github.com/samber/lo v1.38.1
 	github.com/sapphi-red/midec v0.5.2
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
