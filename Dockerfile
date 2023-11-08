@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.21.3-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.21.4-alpine AS build
 WORKDIR /go/src/github.com/traPtitech/traQ
 
 COPY ./go.* ./
