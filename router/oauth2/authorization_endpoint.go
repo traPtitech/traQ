@@ -245,7 +245,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	switch {
-	case types.Code && !types.Token: // "code" 現状はcodeしかサポートしない
+	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		if se == nil {
 			// 未ログインの場合はログインしてから再度叩かせる
 			current := c.Request().URL
@@ -353,7 +353,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	switch {
-	case reqAuth.Types.Code && !reqAuth.Types.Token: // "code" 現状はcodeしかサポートしない
+	case reqAuth.Types.Code && !reqAuth.Types.Token && !reqAuth.Types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		data := &model.OAuth2Authorize{
 			Code:                random.SecureAlphaNumeric(36),
 			ClientID:            reqAuth.ClientID,
