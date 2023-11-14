@@ -68,8 +68,11 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 	return jwt2.Sign(claims)
 }
 
-func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, allowRefreshToken bool) (*tokenResponse, error) {
-	token, err := h.Repo.IssueToken(client, userID, client.RedirectURI, scopes, h.AccessTokenExp, h.IsRefreshEnabled)
+func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool) (*tokenResponse, error) {
+	isOIDC := scopes.Contains("openid")
+	// OIDCの場合は、Refresh TokenのScopeの管理（主にoffline_access周り）が面倒なので、一律で発行しないことにする
+	refresh := h.IsRefreshEnabled && grantTypeRefreshAllowed && !isOIDC
+	token, err := h.Repo.IssueToken(client, userID, client.RedirectURI, scopes, h.AccessTokenExp, refresh)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +84,7 @@ func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scope
 	if len(originalScopes) != len(token.Scopes) {
 		res.Scope = token.Scopes.String()
 	}
-	if allowRefreshToken && token.IsRefreshEnabled() {
+	if token.IsRefreshEnabled() {
 		res.RefreshToken = token.RefreshToken
 	}
 	if scopes.Contains("openid") {
