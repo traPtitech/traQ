@@ -81,7 +81,7 @@ func serveCommand() *cobra.Command {
 			}
 			logger.Info("repository was set up")
 
-			// JWT
+			// JWT for QRCode and OIDC
 			if priv := c.JWT.Keys.Private; priv != "" {
 				privRaw, err := os.ReadFile(priv)
 				if err != nil {
