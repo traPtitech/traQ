@@ -72,7 +72,7 @@ func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string
 		}
 	}
 	if scopes.Contains("email") {
-		claims["email"] = user.GetName() + "+dummy@example.com"
+		claims["email"] = user.GetName() + "@example.com"
 		claims["email_verified"] = false
 	}
 
