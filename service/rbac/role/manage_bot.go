@@ -11,6 +11,7 @@ var manageBotPerms = []permission.Permission{
 	permission.GetChannel,
 	permission.GetUser,
 	permission.GetMe,
+	permission.GetOIDCUserInfo,
 	permission.GetWebhook,
 	permission.CreateWebhook,
 	permission.EditWebhook,
