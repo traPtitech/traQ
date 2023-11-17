@@ -27,7 +27,11 @@ func NewOIDCService(
 	}
 }
 
-func (s *Service) GetUserInfo(userID uuid.UUID) (map[string]any, error) {
+type ScopeChecker interface {
+	Contains(scope model.AccessScope) bool
+}
+
+func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
 	user, err := s.repo.GetUser(userID, true)
 	if err != nil {
 		return nil, err
@@ -41,16 +45,19 @@ func (s *Service) GetUserInfo(userID uuid.UUID) (map[string]any, error) {
 		return nil, err
 	}
 
-	return map[string]any{
-		// OIDC standard claims
-		"name":               user.GetName(),
-		"email":              user.GetName() + "+dummy@example.com",
-		"email_verified":     false,
-		"preferred_username": user.GetName(),
-		"picture":            s.origin + "/api/v3/public/icon/" + user.GetName(),
-		"updated_at":         user.GetUpdatedAt(),
-		// traQ specific claims
-		"traq": map[string]any{
+	// Build claims
+	claims := make(map[string]any)
+
+	// Required in UserInfo response
+	claims["sub"] = userID.String()
+
+	// Scope specific claims
+	if scopes.Contains("profile") {
+		claims["name"] = user.GetName()
+		claims["preferred_username"] = user.GetName()
+		claims["picture"] = s.origin + "/api/v3/public/icon/" + user.GetName()
+		claims["updated_at"] = user.GetUpdatedAt().Unix()
+		claims["traq"] = map[string]any{
 			"bio":          user.GetBio(),
 			"groups":       groups,
 			"tags":         utils.Map(tags, func(tag model.UserTag) string { return tag.GetTag() }),
@@ -62,6 +69,12 @@ func (s *Service) GetUserInfo(userID uuid.UUID) (map[string]any, error) {
 			"state":        user.GetState().Int(),
 			"permissions":  s.rbac.GetGrantedPermissions(user.GetRole()),
 			"home_channel": user.GetHomeChannel(),
-		},
-	}, nil
+		}
+	}
+	if scopes.Contains("email") {
+		claims["email"] = user.GetName() + "+dummy@example.com"
+		claims["email_verified"] = false
+	}
+
+	return claims, nil
 }
