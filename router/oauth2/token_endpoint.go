@@ -51,6 +51,7 @@ func (h *Handler) TokenEndpointHandler(c echo.Context) error {
 }
 
 func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID) (string, error) {
+	// Base claims
 	claims := jwt.MapClaims{
 		"iss": h.Origin,
 		"sub": userID.String(),
@@ -58,13 +59,13 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 		"exp": token.Deadline().Unix(),
 		"iat": token.CreatedAt.Unix(),
 	}
-	if token.Scopes.Contains("profile") {
-		userInfo, err := h.OIDC.GetUserInfo(userID)
-		if err != nil {
-			return "", err
-		}
-		claims = utils.MergeMap(userInfo, claims)
+	// Extra claims according to scopes (profile, email)
+	userInfo, err := h.OIDC.GetUserInfo(userID, token.Scopes)
+	if err != nil {
+		return "", err
 	}
+	claims = utils.MergeMap(userInfo, claims)
+	// Sign to JWT
 	return jwt2.Sign(claims)
 }
 

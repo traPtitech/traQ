@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+	"github.com/samber/lo"
 	"net/http"
 	"sort"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/oidc"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -117,9 +119,18 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	})
 }
 
+type userAccessScopes struct{}
+
+func (u userAccessScopes) Contains(_ model.AccessScope) bool {
+	return true
+}
+
 // GetMeOIDC GET /users/me/oidc
 func (h *Handlers) GetMeOIDC(c echo.Context) error {
-	userInfo, err := h.OIDC.GetUserInfo(getRequestUserID(c))
+	tokenScopes, ok := c.Get(consts.KeyOAuth2AccessScopes).(model.AccessScopes)
+	scopes := lo.Ternary[oidc.ScopeChecker](ok, tokenScopes, userAccessScopes{})
+
+	userInfo, err := h.OIDC.GetUserInfo(getRequestUserID(c), scopes)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
