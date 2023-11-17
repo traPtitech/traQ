@@ -8,5 +8,5 @@ import (
 const Profile = "profile"
 
 var profilePerms = []permission.Permission{
-	permission.GetMe,
+	permission.GetOIDCUserInfo,
 }

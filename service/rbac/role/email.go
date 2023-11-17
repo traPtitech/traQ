@@ -8,5 +8,5 @@ import (
 const Email = "email"
 
 var emailPerms = []permission.Permission{
-	permission.GetMe,
+	permission.GetOIDCUserInfo,
 }
