@@ -32,26 +32,12 @@ func TestUserGroupDeleted(t *testing.T) {
 		handlerCtx := mock_handler.NewMockContext(ctrl)
 		registerBot(t, handlerCtx, b)
 
-		user := &model.User{
-			ID:     uuid.NewV3(uuid.Nil, "u"),
-			Name:   "new_user",
-			Status: model.UserAccountStatusActive,
-			Bot:    false,
-		}
-		group := model.UserGroup{
-			ID:          uuid.NewV3(uuid.Nil, "g"),
-			Name:        "new_group",
-			Description: "new_group_description",
-			Type:        "new_group_type",
-		}
-		group.Admins = append(group.Admins, &model.UserGroupAdmin{GroupID: group.ID, UserID: user.ID})
-		group.Members = append(group.Members, &model.UserGroupMember{GroupID: group.ID, UserID: user.ID})
+		groupID := uuid.NewV3(uuid.Nil, "g")
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupDeleted, payload.MakeUserGroupDeleted(et, group), []*model.Bot{b})
+		expectMulticast(handlerCtx, event.UserGroupDeleted, payload.MakeUserGroupDeleted(et, groupID), []*model.Bot{b})
 		assert.NoError(t, UserGroupDeleted(handlerCtx, et, intevent.UserGroupDeleted, hub.Fields{
-			"group_id": group.ID,
-			"group":    group,
+			"group_id": groupID,
 		}))
 	})
 
@@ -68,26 +54,12 @@ func TestUserGroupDeleted(t *testing.T) {
 		registerBot(t, handlerCtx, b)
 		registerBot(t, handlerCtx, b2)
 
-		user := &model.User{
-			ID:     uuid.NewV3(uuid.Nil, "u"),
-			Name:   "new_user",
-			Status: model.UserAccountStatusActive,
-			Bot:    false,
-		}
-		group := model.UserGroup{
-			ID:          uuid.NewV3(uuid.Nil, "g"),
-			Name:        "new_group",
-			Description: "new_group_description",
-			Type:        "new_group_type",
-		}
-		group.Admins = append(group.Admins, &model.UserGroupAdmin{GroupID: group.ID, UserID: user.ID})
-		group.Members = append(group.Members, &model.UserGroupMember{GroupID: group.ID, UserID: user.ID})
+		groupID := uuid.NewV3(uuid.Nil, "g")
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupDeleted, payload.MakeUserGroupDeleted(et, group), []*model.Bot{b})
+		expectMulticast(handlerCtx, event.UserGroupDeleted, payload.MakeUserGroupDeleted(et, groupID), []*model.Bot{b})
 		assert.NoError(t, UserGroupDeleted(handlerCtx, et, intevent.UserGroupDeleted, hub.Fields{
-			"group_id": group.ID,
-			"group":    group,
+			"group_id": groupID,
 		}))
 	})
 }

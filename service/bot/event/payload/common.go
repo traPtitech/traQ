@@ -137,7 +137,7 @@ type UserGroup struct {
 	UpdatedAt   time.Time          `json:"updatedAt"`
 }
 
-func MakeUserGroup(group model.UserGroup) UserGroup {
+func MakeUserGroup(group *model.UserGroup) UserGroup {
 	admins := make([]*UserGroupAdmin, len(group.Admins))
 	for i, admin := range group.Admins {
 		a := MakeUserGroupAdmin(admin.GroupID, admin.UserID)

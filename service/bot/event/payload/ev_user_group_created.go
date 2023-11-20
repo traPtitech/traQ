@@ -12,7 +12,7 @@ type UserGroupCreated struct {
 	Group UserGroup `json:"group"`
 }
 
-func MakeUserGroupCreated(eventTime time.Time, group model.UserGroup) *UserGroupCreated {
+func MakeUserGroupCreated(eventTime time.Time, group *model.UserGroup) *UserGroupCreated {
 	return &UserGroupCreated{
 		Base:  MakeBase(eventTime),
 		Group: MakeUserGroup(group),
