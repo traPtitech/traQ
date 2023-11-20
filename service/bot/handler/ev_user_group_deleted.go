@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserGroupDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	group := fields["group"].(model.UserGroup)
+	groupID := fields["group_id"].(uuid.UUID)
 	bots, err := ctx.GetBots(event.UserGroupDeleted)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
@@ -23,7 +23,7 @@ func UserGroupDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fiel
 
 	if err := ctx.Multicast(
 		event.UserGroupDeleted,
-		payload.MakeUserGroupDeleted(datetime, group),
+		payload.MakeUserGroupDeleted(datetime, groupID),
 		bots,
 	); err != nil {
 		return fmt.Errorf("failed to multicast: %w", err)

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
 )
 
 // UserGroupDeleted USER_GROUP_DELETEDイベントペイロード
@@ -13,9 +12,9 @@ type UserGroupDeleted struct {
 	GroupID uuid.UUID `json:"groupId"`
 }
 
-func MakeUserGroupDeleted(eventTime time.Time, group model.UserGroup) *UserGroupDeleted {
+func MakeUserGroupDeleted(eventTime time.Time, groupID uuid.UUID) *UserGroupDeleted {
 	return &UserGroupDeleted{
 		Base:    MakeBase(eventTime),
-		GroupID: group.ID,
+		GroupID: groupID,
 	}
 }
