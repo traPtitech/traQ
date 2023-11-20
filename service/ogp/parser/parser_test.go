@@ -127,6 +127,10 @@ func TestExtractTitleFromNode(t *testing.T) {
 }
 
 func TestFetchTwitterOGP(t *testing.T) {
+	// Xのページが高確率で、5～10秒ほどのレイテンシの後503を返してくる仕様になっており、
+	// テストがまともにできなくなってしまっているためスキップする
+	t.SkipNow()
+
 	t.Parallel()
 	tests := []struct {
 		name    string
