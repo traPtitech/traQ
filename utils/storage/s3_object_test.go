@@ -248,7 +248,7 @@ func getTestObject(t *testing.T, input *s3.GetObjectInput) (*s3Object, error) {
 		client:   cli,
 		input:    *input,
 		resp:     objOut,
-		length:   attrOut.ContentLength,
+		length:   *attrOut.ContentLength,
 		lengthOk: true,
 		body:     objOut.Body,
 	}
