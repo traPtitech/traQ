@@ -230,7 +230,7 @@ func (fs *S3FileStorage) getObject(ctx context.Context, input *s3.GetObjectInput
 		client:   fs.client,
 		input:    *input,
 		resp:     objOut,
-		length:   attrOut.ContentLength,
+		length:   *attrOut.ContentLength,
 		lengthOk: true,
 		body:     objOut.Body,
 	}
