@@ -38,7 +38,7 @@ func TestUserGroupCreated(t *testing.T) {
 			Status: model.UserAccountStatusActive,
 			Bot:    false,
 		}
-		group := model.UserGroup{
+		group := &model.UserGroup{
 			ID:          uuid.NewV3(uuid.Nil, "g"),
 			Name:        "new_group",
 			Description: "new_group_description",
@@ -74,7 +74,7 @@ func TestUserGroupCreated(t *testing.T) {
 			Status: model.UserAccountStatusActive,
 			Bot:    false,
 		}
-		group := model.UserGroup{
+		group := &model.UserGroup{
 			ID:          uuid.NewV3(uuid.Nil, "g"),
 			Name:        "new_group",
 			Description: "new_group_description",

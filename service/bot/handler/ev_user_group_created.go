@@ -12,7 +12,7 @@ import (
 )
 
 func UserGroupCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	group := fields["group"].(model.UserGroup)
+	group := fields["group"].(*model.UserGroup)
 	bots, err := ctx.GetBots(event.UserGroupCreated)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
