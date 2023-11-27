@@ -21,6 +21,12 @@ type Stamp struct {
 	File *FileMeta `gorm:"constraint:stamps_file_id_files_id_foreign,OnUpdate:CASCADE,OnDelete:NO ACTION;foreignKey:FileID" json:"-"`
 }
 
+// StampWithThumbnail サムネイル情報を付与したスタンプ構造体
+type StampWithThumbnail struct {
+	*Stamp
+	HasThumbnail bool `json:"hasThumbnail"`
+}
+
 // TableName スタンプテーブル名を取得します
 func (*Stamp) TableName() string {
 	return "stamps"

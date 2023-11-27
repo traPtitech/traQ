@@ -66,7 +66,7 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		stampType = repository.StampTypeOriginal
 	}
 
-	stamps, err := h.Repo.GetAllStamps(stampType)
+	stamps, err := h.Repo.GetAllStampsWithThumbnail(stampType)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

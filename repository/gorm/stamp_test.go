@@ -197,7 +197,7 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetAllStamps(t *testing.T) {
+func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, ex1)
 
@@ -206,7 +206,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
 
-	arr, err := repo.GetAllStamps(repository.StampTypeAll)
+	arr, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 	}

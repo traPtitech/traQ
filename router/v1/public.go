@@ -118,7 +118,7 @@ func (c *EmojiCache) Purge() {
 
 func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
 	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStamps(repository.StampTypeAll)
+		stamps, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ st
 
 func emojiCSSGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
 	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStamps(repository.StampTypeAll)
+		stamps, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}
