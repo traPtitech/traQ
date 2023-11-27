@@ -10,6 +10,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -71,7 +72,15 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return extension.ServeJSONWithETag(c, stamps)
+	thumbs := make([][]model.FileThumbnail, len(stamps))
+	for i, stamp := range stamps {
+		ts, err := h.Repo.GetFileMeta(stamp.FileID)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		thumbs[i] = ts.Thumbnails
+	}
+	return extension.ServeJSONWithETag(c, formatStampInfos(stamps, thumbs))
 }
 
 // CreateStamp POST /stamps
