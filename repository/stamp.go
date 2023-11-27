@@ -36,17 +36,6 @@ type StampStats struct {
 	TotalCount int64 `json:"totalCount"`
 }
 
-type StampWithThumbnail struct {
-	ID           uuid.UUID      `json:"id"`
-	Name         string         `json:"name"`
-	CreatorID    uuid.UUID      `json:"creatorId"`
-	FileID       uuid.UUID      `json:"fileId"`
-	IsUnicode    bool           `json:"isUnicode"`
-	CreatedAt    time.Time      `json:"createdAt"`
-	UpdatedAt    time.Time      `json:"updatedAt"`
-	HasThumbnail bool           `json:"hasThumbnail"`
-}
-
 // StampType スタンプの種類
 type StampType string
 
@@ -125,9 +114,4 @@ type StampRepository interface {
 	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
 	GetStampStats(stampID uuid.UUID) (*StampStats, error)
-	// StampThumbnailExists スタンプ情報にサムネイルの有無を示すbool値を付加した構造体の配列を返します
-	//
-	// 成功した場合、当該配列とnilを返します
-	// DBによるエラーを返すことがあります。
-	StampThumbnailExists(stamps []*model.Stamp) (stampsWithThumb []StampWithThumbnail, err error)
 }

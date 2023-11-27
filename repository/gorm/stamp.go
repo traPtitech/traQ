@@ -343,39 +343,3 @@ func (r *stampRepository) GetStampStats(stampID uuid.UUID) (*repository.StampSta
 	}
 	return &stats, nil
 }
-
-func (r *stampRepository) StampThumbnailExists(stamps []*model.Stamp) (stampsWithThumb []repository.StampWithThumbnail, err error) {
-	IDs := make([]uuid.UUID, len(stamps))
-
-	for i, s := range stamps {
-		IDs[i] = s.FileID
-	}
-	ts := []uuid.UUID{}
-	if err = r.db.
-		Table("files_thumbnails ft").
-		Select("file_id").
-		Where("file_id IN (?)", IDs).
-		Find(&ts).
-		Error; err != nil {
-		return stampsWithThumb, err
-	}
-	tm := make(map[uuid.UUID]struct{}, len(ts))
-	for _, v := range ts {
-		tm[v] = struct{}{}
-	}
-
-	for _, s := range(stamps) {
-		_, ok := tm[s.FileID]
-		stampsWithThumb = append(stampsWithThumb, repository.StampWithThumbnail{
-			ID: s.ID,
-			Name: s.Name,
-			CreatorID: s.CreatorID,
-			FileID: s.FileID,
-			IsUnicode: s.IsUnicode,
-			CreatedAt: s.CreatedAt,
-			UpdatedAt: s.UpdatedAt,
-			HasThumbnail: ok,
-		})
-	}
-	return
-}
