@@ -367,7 +367,13 @@ func (r *stampRepository) StampThumbnailExists(stamps []*model.Stamp) (stampsWit
 	for _, s := range stamps {
 		_, ok := tm[s.FileID]
 		stampsWithThumb = append(stampsWithThumb, repository.StampWithThumbnail{
-			Stamp:        s,
+			ID:           s.ID,
+			Name:         s.Name,
+			CreatorID:    s.CreatorID,
+			FileID:       s.FileID,
+			IsUnicode:    s.IsUnicode,
+			CreatedAt:    s.CreatedAt,
+			UpdatedAt:    s.UpdatedAt,
 			HasThumbnail: ok,
 		})
 	}

@@ -37,8 +37,14 @@ type StampStats struct {
 }
 
 type StampWithThumbnail struct {
-	*model.Stamp
-	HasThumbnail bool `json:"hasThumbnail"`
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	CreatorID    uuid.UUID `json:"creatorId"`
+	FileID       uuid.UUID `json:"fileId"`
+	IsUnicode    bool      `json:"isUnicode"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	HasThumbnail bool      `json:"hasThumbnail"`
 }
 
 // StampType スタンプの種類
