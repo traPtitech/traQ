@@ -61,7 +61,7 @@ func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repo
 		IDs = append(IDs, stamp.FileID)
 	}
 
-	ts := []uuid.UUID{}
+	ts := make([]uuid.UUID, 0, len(stamps))
 	if err := r.db.
 		Table("files_thumbnails ft").
 		Select("file_id").
