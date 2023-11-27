@@ -365,6 +365,7 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 
 }
 
+
 func TestRepositoryImpl_StampThumbnailExists(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, ex1)
