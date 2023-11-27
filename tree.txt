@@ -1,0 +1,618 @@
+.
+├── Dockerfile
+├── LICENSE
+├── Makefile
+├── README.md
+├── cmd　traQ実行ファイルのコマンドパッケージ
+│   ├── conf.go traQサーバー設定ファイルの定義
+│   ├── config.go traQサーバー起動コマンド
+│   ├── file.go
+│   ├── healthcheck.go
+│   ├── migrate.go
+│   ├── migrate_v2_to_v3.go
+│   ├── root.go
+│   ├── serve.go
+│   ├── serve_wire.go
+│   ├── stamp.go
+│   ├── version.go
+│   └── wire_gen.go
+├── codecov.yml
+├── compose.yaml
+├── dev
+│   ├── Caddyfile
+│   ├── bin
+│   │   ├── bot_debugger.go
+│   │   ├── down-test-db.sh
+│   │   ├── gen_ec_pem.go
+│   │   └── up-test-db.sh
+│   ├── elasticsearch.yml
+│   ├── errcheck-exclude.txt
+│   ├── es_jvm.options
+│   └── frontend
+│       ├── assets アセット(省略)
+│       ├── config.js
+│       ├── defaultTheme.js
+│       ├── fonts　フォント(省略)
+│       ├── img
+│       │   ├── icons　アイコン画像(省略)
+│       │   ├── screenshots　画像(省略)
+│       │   └── services　svgファイル(省略)
+│       ├── index.html
+│       ├── index.html.br
+│       ├── manifest.webmanifest
+│       ├── robots.txt
+│       └── sw.js
+├── docs
+│   ├── dbSchema
+│   │   ├── README.md
+│   │   ├── archived_messages.md
+│   │   ├── bot_event_logs.md
+│   │   ├── bot_join_channels.md
+│   │   ├── bots.md
+│   │   ├── channel_events.md
+│   │   ├── channel_latest_messages.md
+│   │   ├── channels.md
+│   │   ├── clip_folder_messages.md
+│   │   ├── clip_folders.md
+│   │   ├── devices.md
+│   │   ├── dm_channel_mappings.md
+│   │   ├── external_provider_users.md
+│   │   ├── files.md
+│   │   ├── files_acl.md
+│   │   ├── files_thumbnails.md
+│   │   ├── message_reports.md
+│   │   ├── messages.md
+│   │   ├── messages_stamps.md
+│   │   ├── migrations.md
+│   │   ├── oauth2_authorizes.md
+│   │   ├── oauth2_clients.md
+│   │   ├── oauth2_tokens.md
+│   │   ├── ogp_cache.md
+│   │   ├── pins.md
+│   │   ├── r_sessions.md
+│   │   ├── stamp_palettes.md
+│   │   ├── stamps.md
+│   │   ├── stars.md
+│   │   ├── tags.md
+│   │   ├── unreads.md
+│   │   ├── user_group_admins.md
+│   │   ├── user_group_members.md
+│   │   ├── user_groups.md
+│   │   ├── user_profiles.md
+│   │   ├── user_role_inheritances.md
+│   │   ├── user_role_permissions.md
+│   │   ├── user_roles.md
+│   │   ├── user_settings.md
+│   │   ├── users.md
+│   │   ├── users_private_channels.md
+│   │   ├── users_subscribe_channels.md
+│   │   ├── users_tags.md
+│   │   └── webhook_bots.md
+│   ├── deployment.md
+│   ├── development.md
+│   ├── favicon-16x16.png
+│   ├── favicon-32x32.png
+│   ├── swagger.yaml
+│   └── v3-api.yaml
+├── event　traQサーバー内部イベントの種類が定義されているパッケージ
+│   └── topic.go
+├── go.mod
+├── go.sum
+├── main.go
+├── migration　traQ DBマイグレーション処理パッケージ
+│   ├── current.go
+│   ├── doc.go
+│   ├── migrate.go
+│   ├── v1.go
+│   ├── v10.go
+│   ├── v11.go
+│   ├── v12.go
+│   ├── v13.go
+│   ├── v14.go
+│   ├── v15.go
+│   ├── v16.go
+│   ├── v17.go
+│   ├── v18.go
+│   ├── v19.go
+│   ├── v2.go
+│   ├── v20.go
+│   ├── v21.go
+│   ├── v22.go
+│   ├── v23.go
+│   ├── v24.go
+│   ├── v25.go
+│   ├── v26.go
+│   ├── v27.go
+│   ├── v28.go
+│   ├── v29.go
+│   ├── v2tov3
+│   │   └── v2tov3.go
+│   ├── v3.go
+│   ├── v30.go
+│   ├── v31.go
+│   ├── v32.go
+│   ├── v33.go
+│   ├── v34.go
+│   ├── v4.go
+│   ├── v5.go
+│   ├── v6.go
+│   ├── v7.go
+│   ├── v8.go
+│   └── v9.go
+├── model　アプリケーションエンティティ構造体パッケージ
+│   ├── bot.go
+│   ├── bot_test.go
+│   ├── channels.go
+│   ├── channels_test.go
+│   ├── clip.go
+│   ├── devices.go
+│   ├── devices_test.go
+│   ├── files.go
+│   ├── files_test.go
+│   ├── json.go
+│   ├── message_report.go
+│   ├── message_report_test.go
+│   ├── message_stamp.go
+│   ├── message_stamp_test.go
+│   ├── messages.go
+│   ├── messages_test.go
+│   ├── model.go
+│   ├── oauth2.go
+│   ├── oauth2_test.go
+│   ├── ogp.go
+│   ├── pins.go
+│   ├── pins_test.go
+│   ├── rbac.go
+│   ├── rbac_test.go
+│   ├── session.go
+│   ├── stamp_palettes.go
+│   ├── stamps.go
+│   ├── stamps_test.go
+│   ├── stars.go
+│   ├── stars_test.go
+│   ├── tags.go
+│   ├── tags_test.go
+│   ├── user_group.go
+│   ├── user_group_test.go
+│   ├── user_settings.go
+│   ├── users.go
+│   ├── users_test.go
+│   ├── uuids.go
+│   ├── webhooks.go
+│   └── webhooks_test.go
+├── repository リポジトリインターフェイスとそのGorm実装のパッケージ
+│   ├── bot.go
+│   ├── channel.go
+│   ├── clip.go
+│   ├── device.go
+│   ├── errors.go
+│   ├── errors_test.go
+│   ├── file.go
+│   ├── gorm
+│   │   ├── bot.go
+│   │   ├── channel.go
+│   │   ├── channel_test.go
+│   │   ├── clip.go
+│   │   ├── clip_test.go
+│   │   ├── device.go
+│   │   ├── device_test.go
+│   │   ├── errors.go
+│   │   ├── file.go
+│   │   ├── file_test.go
+│   │   ├── message.go
+│   │   ├── message_report.go
+│   │   ├── message_test.go
+│   │   ├── oauth2.go
+│   │   ├── ogp_cache.go
+│   │   ├── pin.go
+│   │   ├── pin_test.go
+│   │   ├── repository.go
+│   │   ├── repository_test.go
+│   │   ├── stamp.go
+│   │   ├── stamp_palette.go
+│   │   ├── stamp_palette_test.go
+│   │   ├── stamp_test.go
+│   │   ├── star.go
+│   │   ├── star_test.go
+│   │   ├── tag.go
+│   │   ├── tag_test.go
+│   │   ├── user.go
+│   │   ├── user_group.go
+│   │   ├── user_group_test.go
+│   │   ├── user_role.go
+│   │   ├── user_role_test.go
+│   │   ├── user_settings.go
+│   │   ├── user_test.go
+│   │   ├── webhook.go
+│   │   └── webhook_test.go
+│   ├── message.go
+│   ├── message_report.go
+│   ├── mock_repository
+│   │   ├── mock_bot.go
+│   │   ├── mock_channel.go
+│   │   ├── mock_file.go
+│   │   ├── mock_message.go
+│   │   ├── mock_pin.go
+│   │   ├── mock_tag.go
+│   │   ├── mock_user.go
+│   │   └── mock_user_role.go
+│   ├── oauth2.go
+│   ├── ogp_cache.go
+│   ├── pin.go
+│   ├── repository.go
+│   ├── stamp.go
+│   ├── stamp_palette.go
+│   ├── star.go
+│   ├── tag.go
+│   ├── user.go
+│   ├── user_group.go
+│   ├── user_role.go
+│   ├── user_settings.go
+│   ├── user_test.go
+│   └── webhook.go
+├── router　HTTP APIルーター
+│   ├── auth　外部ログインコールバックハンドラパッケージ
+│   │   ├── github.go
+│   │   ├── google.go
+│   │   ├── oidc.go
+│   │   ├── provider.go
+│   │   ├── slack.go
+│   │   └── traq.go
+│   ├── config.go
+│   ├── consts　定数パッケージ
+│   │   ├── headers.go
+│   │   ├── keys.go
+│   │   ├── mime_types.go
+│   │   ├── parameters.go
+│   │   └── stamp_type.go
+│   ├── extension　echo拡張パッケージ
+│   │   ├── context.go
+│   │   ├── ctxkey
+│   │   │   └── extension.go
+│   │   ├── error_handler.go
+│   │   ├── herror　エラーレスポンスパッケージ
+│   │   │   ├── 500.go
+│   │   │   └── errors.go
+│   │   ├── logger.go
+│   │   ├── precond.go
+│   │   └── precond_test.go
+│   ├── middlewares　echoミドルウェアパッケージ
+│   │   ├── access_control.go
+│   │   ├── access_logging.go
+│   │   ├── body_limit.go
+│   │   ├── gzip.go
+│   │   ├── no_login.go
+│   │   ├── param_retriever.go
+│   │   ├── precond.go
+│   │   ├── recovery.go
+│   │   ├── request_counter.go
+│   │   ├── request_id.go
+│   │   ├── server_version.go
+│   │   └── user_authenticate.go
+│   ├── oauth2　OAuth2認可サーバー実装
+│   │   ├── authorization_endpoint.go
+│   │   ├── authorization_endpoint_test.go
+│   │   ├── oauth2.go
+│   │   ├── oauth2_test.go
+│   │   ├── revoke_token_endpoint.go
+│   │   ├── revoke_token_endpoint_test.go
+│   │   ├── token_endpoint.go
+│   │   └── token_endpoint_test.go
+│   ├── router.go
+│   ├── router_wire.go
+│   ├── session　HTTPセッションマネージャー
+│   │   ├── gorm.go
+│   │   ├── memory.go
+│   │   └── session.go
+│   ├── utils　HTTP APIルーター用汎用関数パッケージ
+│   │   ├── common.go
+│   │   ├── process_image.go
+│   │   ├── replace_mapper.go
+│   │   └── validator.go
+│   ├── v1　v1　APIハンドラ実装パッケージ
+│   │   ├── files.go
+│   │   ├── files_test.go
+│   │   ├── public.go
+│   │   ├── public_test.go
+│   │   ├── responses.go
+│   │   ├── router.go
+│   │   └── router_test.go
+│   ├── v3　v3　APIハンドラ実装パッケージ
+│   │   ├── activity.go
+│   │   ├── activity_test.go
+│   │   ├── bots.go
+│   │   ├── bots_test.go
+│   │   ├── channels.go
+│   │   ├── channels_test.go
+│   │   ├── clients.go
+│   │   ├── clients_test.go
+│   │   ├── clips.go
+│   │   ├── clips_test.go
+│   │   ├── files.go
+│   │   ├── files_test.go
+│   │   ├── messages.go
+│   │   ├── messages_test.go
+│   │   ├── ogp.go
+│   │   ├── public.go
+│   │   ├── public_test.go
+│   │   ├── responses.go
+│   │   ├── router.go
+│   │   ├── router_test.go
+│   │   ├── sessions.go
+│   │   ├── sessions_test.go
+│   │   ├── stamp_palettes.go
+│   │   ├── stamp_palettes_test.go
+│   │   ├── stamps.go
+│   │   ├── stamps_test.go
+│   │   ├── star.go
+│   │   ├── star_test.go
+│   │   ├── tags.go
+│   │   ├── tags_test.go
+│   │   ├── user_groups.go
+│   │   ├── user_groups_test.go
+│   │   ├── user_settings.go
+│   │   ├── user_settings_test.go
+│   │   ├── users.go
+│   │   ├── users_test.go
+│   │   ├── utils.go
+│   │   ├── webhooks.go
+│   │   ├── webhooks_test.go
+│   │   ├── webrtc.go
+│   │   ├── webrtc_test.go
+│   │   └── ws.go
+│   └── wire_gen.go
+├── service　サービスパッケージ
+│   ├── bot　traQ BOT機能
+│   │   ├── event　BOTイベント
+│   │   │   ├── dispatcher.go
+│   │   │   ├── dispatcher_http.go
+│   │   │   ├── dispatcher_impl.go
+│   │   │   ├── dispatcher_test.go
+│   │   │   ├── dispatcher_ws.go
+│   │   │   ├── events.go
+│   │   │   ├── mock_event
+│   │   │   │   └── mock_dispatcher.go
+│   │   │   └── payload　BOTイベントペイロード構造体パッケージ
+│   │   │       ├── common.go
+│   │   │       ├── ev_bot_message_stamps_updated.go
+│   │   │       ├── ev_channel_created.go
+│   │   │       ├── ev_channel_topic_changed.go
+│   │   │       ├── ev_direct_message_created.go
+│   │   │       ├── ev_direct_message_deleted.go
+│   │   │       ├── ev_direct_message_updated.go
+│   │   │       ├── ev_joined.go
+│   │   │       ├── ev_left.go
+│   │   │       ├── ev_message_created.go
+│   │   │       ├── ev_message_deleted.go
+│   │   │       ├── ev_message_updated.go
+│   │   │       ├── ev_ping.go
+│   │   │       ├── ev_stamp_created.go
+│   │   │       ├── ev_tag_added.go
+│   │   │       ├── ev_tag_removed.go
+│   │   │       └── ev_user_created.go
+│   │   ├── handler　traQ内部イベントハンドラパッケージ
+│   │   │   ├── context.go
+│   │   │   ├── ev_bot_joined.go
+│   │   │   ├── ev_bot_joined_test.go
+│   │   │   ├── ev_bot_left.go
+│   │   │   ├── ev_bot_left_test.go
+│   │   │   ├── ev_bot_ping_request.go
+│   │   │   ├── ev_bot_ping_request_test.go
+│   │   │   ├── ev_channel_created.go
+│   │   │   ├── ev_channel_created_test.go
+│   │   │   ├── ev_channel_topic_updated.go
+│   │   │   ├── ev_channel_topic_updated_test.go
+│   │   │   ├── ev_message_created.go
+│   │   │   ├── ev_message_created_test.go
+│   │   │   ├── ev_message_deleted.go
+│   │   │   ├── ev_message_deleted_test.go
+│   │   │   ├── ev_message_stamps_updated.go
+│   │   │   ├── ev_message_stamps_updated_test.go
+│   │   │   ├── ev_message_updated.go
+│   │   │   ├── ev_message_updated_test.go
+│   │   │   ├── ev_stamp_created.go
+│   │   │   ├── ev_stamp_created_test.go
+│   │   │   ├── ev_user_created.go
+│   │   │   ├── ev_user_created_test.go
+│   │   │   ├── ev_user_tag_added.go
+│   │   │   ├── ev_user_tag_added_test.go
+│   │   │   ├── ev_user_tag_removed.go
+│   │   │   ├── ev_user_tag_removed_test.go
+│   │   │   ├── handler_test.go
+│   │   │   └── mock_handler
+│   │   │       └── mock_context.go
+│   │   ├── handlers.go
+│   │   ├── service.go
+│   │   ├── service_impl.go
+│   │   └── ws
+│   │       ├── config.go
+│   │       ├── handler.go
+│   │       ├── message.go
+│   │       ├── session.go
+│   │       └── streamer.go
+│   ├── channel　traQチャンネルマネージャー
+│   │   ├── manager.go
+│   │   ├── manager_impl.go
+│   │   ├── manager_impl_test.go
+│   │   ├── mock_channel
+│   │   │   ├── mock_manager.go
+│   │   │   └── mock_tree.go
+│   │   ├── tree.go
+│   │   ├── tree_impl.go
+│   │   └── tree_impl_test.go
+│   ├── counter　各種カウンター
+│   │   ├── channel.go
+│   │   ├── message.go
+│   │   ├── online.go
+│   │   └── unread.go
+│   ├── exevent　
+│   │   └── stamp_throttler.go
+│   ├── fcm
+│   │   ├── client.go
+│   │   ├── impl.go
+│   │   ├── null.go
+│   │   └── vars.go
+│   ├── file
+│   │   ├── animated_image.go
+│   │   ├── manager.go
+│   │   ├── manager_impl.go
+│   │   ├── manager_impl_test.go
+│   │   ├── meta_impl.go
+│   │   └── utils.go
+│   ├── imaging　画像処理サービス(スタンプ・アイコン・サムネイル画像の生成・変換)
+│   │   ├── config.go
+│   │   ├── mks2013_filter.go
+│   │   ├── mock_imaging
+│   │   │   └── mock_processor.go
+│   │   ├── processor.go
+│   │   ├── processor_default.go
+│   │   └── processor_default_test.go
+│   ├── message
+│   │   ├── manager.go
+│   │   ├── manager_impl.go
+│   │   ├── manager_impl_test.go
+│   │   ├── manager_test.go
+│   │   ├── model.go
+│   │   ├── model_impl.go
+│   │   ├── timeline.go
+│   │   └── timeline_impl.go
+│   ├── notification　通知サービス
+│   │   ├── handlers.go
+│   │   └── service.go
+│   ├── ogp
+│   │   ├── parser
+│   │   │   ├── domain.go
+│   │   │   ├── domain_twitter.go
+│   │   │   ├── domain_twitter_test.go
+│   │   │   ├── domain_vrchat.go
+│   │   │   ├── domain_vrchat_test.go
+│   │   │   ├── errors.go
+│   │   │   ├── formatter.go
+│   │   │   ├── parser.go
+│   │   │   └── parser_test.go
+│   │   ├── service.go
+│   │   └── service_impl.go
+│   ├── rbac　Role-Basedアクセスコントロール
+│   │   ├── permission
+│   │   │   ├── bot.go
+│   │   │   ├── channels.go
+│   │   │   ├── client.go
+│   │   │   ├── file.go
+│   │   │   ├── message.go
+│   │   │   ├── notification.go
+│   │   │   ├── permission.go
+│   │   │   ├── stamp.go
+│   │   │   └── user.go
+│   │   ├── rbac.go
+│   │   ├── rbac_impl.go
+│   │   ├── rbac_impl_test.go
+│   │   └── role
+│   │       ├── admin.go
+│   │       ├── bot.go
+│   │       ├── manage_bot.go
+│   │       ├── read.go
+│   │       ├── role.go
+│   │       ├── user.go
+│   │       └── write.go
+│   ├── search
+│   │   ├── engine.go
+│   │   ├── es.go
+│   │   ├── es_result.go
+│   │   ├── es_sync.go
+│   │   └── null.go
+│   ├── services.go
+│   ├── services_wire.go
+│   ├── variable
+│   │   └── variable_type.go
+│   ├── viewer　リアルタイムチャンネル閲覧者マネージャー
+│   │   ├── manager.go
+│   │   ├── state.go
+│   │   ├── state_with_channel.go
+│   │   ├── state_with_time.go
+│   │   └── user_state.go
+│   ├── webrtcv3　webRTCユーザーマネージャー
+│   │   ├── manager.go
+│   │   └── model.go
+│   └── ws　Websocketサーバー
+│       ├── config.go
+│       ├── handler.go
+│       ├── message.go
+│       ├── session.go
+│       ├── streamer.go
+│       └── target_func.go
+├── testdata
+│   └── images
+│       ├── embed.go
+│       ├── test.png
+│       ├── test_fit.png
+│       └── test_thumbnail.png
+├── testutils　テストコード用の汎用処理パッケージ
+│   ├── empty_test_repository.go
+│   ├── test_rbac.go
+│   └── test_repository.go
+├── tools.go
+├── tree.txt
+└── utils　汎用的な関数や小物が入っているパッケージ
+    ├── gormutil　gorm用の汎用パッケージ
+    │   ├── error.go
+    │   └── util.go
+    ├── gormzap　gorm用のログ出力ライブラリパッケージ
+    │   └── logger.go
+    ├── hmac　HMAC計算の関数パッケージ
+    │   ├── hmac.go
+    │   └── hmac_test.go
+    ├── imaging　画像処理系パッケージ
+    │   ├── icon.go
+    │   ├── icon_test.go
+    │   ├── imagemagick.go
+    │   └── imagemagick_test.go
+    ├── jwt　JWT関連の関数パッケージ
+    │   └── signer.go
+    ├── keymutex.go
+    ├── keymutex_test.go
+    ├── message　traQ投稿メッセージのパーサーパッケージ
+    │   ├── embedded.go
+    │   ├── embedded_test.go
+    │   ├── parser.go
+    │   ├── parser_test.go
+    │   ├── replacer.go
+    │   ├── replacer_test.go
+    │   ├── spoiler.go
+    │   └── spoiler_test.go
+    ├── optional　基本型のOptional(Nullable)表現を提供するパッケージ
+    │   ├── of.go
+    │   └── of_test.go
+    ├── private_ip.go
+    ├── private_ip_test.go
+    ├── random　乱数・暗号鍵生成パッケージ
+    │   ├── ecdsa.go
+    │   ├── random.go
+    │   └── random_test.go
+    ├── secure.go
+    ├── secure_test.go
+    ├── set　基本型のSet(集合)を提供するパッケージ
+    │   ├── common.go
+    │   ├── string.go
+    │   └── uuid.go
+    ├── storage
+    │   ├── composite.go
+    │   ├── inmemory.go
+    │   ├── local.go
+    │   ├── mock_storage
+    │   │   └── mock_storage.go
+    │   ├── s3.go
+    │   ├── s3_main_test.go
+    │   ├── s3_object.go
+    │   ├── s3_object_test.go
+    │   ├── s3_tester_test.go
+    │   ├── storage.go
+    │   └── swift.go
+    ├── twemoji
+    │   └── installer.go
+    ├── utils.go
+    └── validator　各種値のバリデーションパッケージ
+        ├── rules.go
+        ├── validate.go
+        └── validate_test.go
+
+76 directories, 1079 files
