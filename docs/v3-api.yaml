@@ -12,7 +12,7 @@ info:
 servers:
   - url: 'https://q.trap.jp/api/v3'
     description: production
-  - url: 'https://traq-s-dev.tokyotech.org/api/v3'
+  - url: 'https://q-dev.trapti.tech/api/v3'
     description: staging
   - url: 'http://localhost:3000/api/v3'
     description: local
