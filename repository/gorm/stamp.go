@@ -61,22 +61,22 @@ func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repo
 		IDs = append(IDs, stamp.FileID)
 	}
 
-	ts := make([]uuid.UUID, 0, len(stamps))
+	thumbnails := make([]uuid.UUID, 0, len(stamps))
 	if err := r.db.
-		Table("files_thumbnails ft").
+		Table("files_thumbnails").
 		Select("file_id").
 		Where("file_id IN (?)", IDs).
-		Find(&ts).
+		Find(&thumbnails).
 		Error; err != nil {
-		return stampsWithThumbnail, err
+		return nil, err
 	}
-	tm := make(map[uuid.UUID]struct{}, len(ts))
-	for _, v := range ts {
-		tm[v] = struct{}{}
+	thumbnailExists := make(map[uuid.UUID]struct{}, len(thumbnails))
+	for _, v := range thumbnails {
+		thumbnailExists[v] = struct{}{}
 	}
 
 	for _, stamp := range stamps {
-		_, ok := tm[stamp.FileID]
+		_, ok := thumbnailExists[stamp.FileID]
 		stampsWithThumbnail = append(stampsWithThumbnail, &model.StampWithThumbnail{
 			Stamp:        stamp,
 			HasThumbnail: ok,
