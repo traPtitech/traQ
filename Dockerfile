@@ -19,7 +19,7 @@ ENV GOARCH=$TARGETARCH
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/tmp/go/cache \
   go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
-FROM alpine:3.18.4
+FROM alpine:3.18.5
 WORKDIR /app
 
 RUN apk add --no-cache --update ca-certificates imagemagick && \
