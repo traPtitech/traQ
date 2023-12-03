@@ -10,7 +10,7 @@ import (
 
 	json "github.com/json-iterator/go"
 
-	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 
@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	esRequiredVersionPrefix = "7."
+	esRequiredVersionPrefix = "8."
 	esIndexPrefix           = "traq_"
 	esMessageIndex          = "message"
 	esDateFormat            = "2006-01-02T15:04:05.000000000Z"
