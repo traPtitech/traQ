@@ -215,30 +215,32 @@ func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 	t.Run("without thumbnail", func(t *testing.T) {
 		t.Parallel()
 		arr, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
-		if assert.NoError(err) {
-			assert.Len(arr, n*2)
-			cnt := 0
-			for _, s := range arr {
-				if !s.HasThumbnail {
-					cnt++
-				}
-			}
-			assert.Equal(n, cnt)
+		if !assert.NoError(err) {
+			t.FailNow()
 		}
+		assert.Len(arr, n*2)
+		cnt := 0
+		for _, s := range arr {
+			if !s.HasThumbnail {
+				cnt++
+			}
+		}
+		assert.Equal(n, cnt)
 	})
 	t.Run("with thumbnail", func(t *testing.T) {
 		t.Parallel()
 		arr, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
-		if assert.NoError(err) {
-			assert.Len(arr, n*2)
-			cnt := 0
-			for _, s := range arr {
-				if s.HasThumbnail {
-					cnt++
-				}
-			}
-			assert.Equal(n, cnt)
+		if !assert.NoError(err) {
+			t.FailNow()
 		}
+		assert.Len(arr, n*2)
+		cnt := 0
+		for _, s := range arr {
+			if s.HasThumbnail {
+				cnt++
+			}
+		}
+		assert.Equal(n, cnt)
 	})
 }
 

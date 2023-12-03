@@ -4765,6 +4765,9 @@ components:
         isUnicode:
           type: boolean
           description: Unicode絵文字か
+        hasThumbnail:
+          type: boolean
+          description: サムネイルの有無
       required:
         - id
         - name
@@ -4773,6 +4776,7 @@ components:
         - updatedAt
         - fileId
         - isUnicode
+        - hasThumbnail
     PostStampRequest:
       title: PostStampRequest
       type: object
