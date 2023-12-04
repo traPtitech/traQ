@@ -408,7 +408,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 }
 
 func (e *esEngine) Available() bool {
-	//このクライアントにはライフサイクルが無いので、常にtrueを返す。
+	// このクライアントにはライフサイクルが無いので、常にtrueを返す。
 	return true
 }
 

@@ -199,10 +199,12 @@ func (e *esEngine) sync() error {
 				}
 			} else {
 				doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+
 				data, err := json.Marshal(map[string]any{"doc": *doc})
 				if err != nil {
 					return err
 				}
+
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 					Action:     "update",
 					DocumentID: v.ID.String(),
