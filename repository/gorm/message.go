@@ -368,6 +368,7 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 				WHERE user_id = MIN(u.user_id)
 					AND channel_id = u.channel_id
 					AND message_created_at = MIN(u.message_created_at)
+				LIMIT 1
 			) AS oldest_message_id
 		/*
 			2023/04/26時点
