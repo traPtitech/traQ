@@ -5,10 +5,11 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/gif"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"io"
-	"time"
+	"math"
 
 	_ "golang.org/x/image/webp" // image.Decode用
 
@@ -16,6 +17,7 @@ import (
 	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/motoki317/go-waveform"
+	"golang.org/x/image/draw"
 	"golang.org/x/sync/semaphore"
 
 	imaging2 "github.com/traPtitech/traQ/utils/imaging"
@@ -72,22 +74,50 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
-func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10秒以内に終わらないファイルは無効
-	defer cancel()
-
-	b, err := imaging2.ResizeAnimationGIF(ctx, p.c.ImageMagickPath, src, width, height, false)
+func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int) (*bytes.Reader, error) {
+	src, err := gif.DecodeAll(srcFile)
 	if err != nil {
-		switch err {
-		case context.DeadlineExceeded:
-			return nil, ErrTimeout
-		case imaging2.ErrInvalidImageSrc:
-			return nil, ErrInvalidImageSrc
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
-	return b, nil
+
+	srcWidth, srcHeight := src.Config.Width, src.Config.Height
+	// 画素数チェック
+	if srcWidth*srcHeight > p.c.MaxPixels {
+		return nil, ErrPixelLimitExceeded
+	}
+	// 画像が十分小さければスキップ
+	if srcWidth <= width && srcHeight <= height {
+		return imaging2.GifToBytesReader(src), nil
+	}
+
+	// 元の比率を保つよう調整
+	floatSrcWidth, floatSrcHeight, floatWidth, floatHeight := float64(srcWidth), float64(srcHeight), float64(width), float64(height)
+	if floatSrcWidth/floatSrcHeight > floatWidth/floatHeight {
+		height = int(math.Round(floatSrcHeight * floatWidth / floatSrcWidth))
+	} else if floatSrcWidth/floatSrcHeight < floatWidth/floatHeight {
+		width = int(math.Round(floatSrcWidth * floatHeight / floatSrcHeight))
+	}
+
+	dst := &gif.GIF{
+		Delay:     src.Delay,
+		LoopCount: src.LoopCount,
+		Disposal:  src.Disposal,
+		Config: image.Config{
+			ColorModel: src.Config.ColorModel,
+			Width:      width,
+			Height:     height,
+		},
+		BackgroundIndex: src.BackgroundIndex,
+	}
+
+	rect := image.Rect(0, 0, width, height)
+	for _, s := range src.Image {
+		d := image.NewPaletted(rect, s.Palette)
+		mks2013FilterKernel.Scale(d, rect, s, s.Bounds(), draw.Src, nil)
+		dst.Image = append(dst.Image, d)
+	}
+
+	return imaging2.GifToBytesReader(src), nil
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
