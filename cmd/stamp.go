@@ -62,7 +62,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
-			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(c)), logger)
+			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(&c)), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize file manager", zap.Error(err))
 			}

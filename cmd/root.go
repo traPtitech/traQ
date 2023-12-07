@@ -29,7 +29,7 @@ var (
 	// configFile 設定ファイルyamlのパス
 	configFile string
 	// c 設定
-	c *Config
+	c Config
 )
 
 // rootコマンドはダミー。コマンドとしては使用しない

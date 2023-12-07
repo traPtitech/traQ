@@ -42,7 +42,7 @@ func serveCommand() *cobra.Command {
 
 			// Stackdriver Profiler
 			if c.GCP.Stackdriver.Profiler.Enabled {
-				if err := initStackdriverProfiler(c); err != nil {
+				if err := initStackdriverProfiler(&c); err != nil {
 					logger.Fatal("failed to setup Stackdriver Profiler", zap.Error(err))
 				}
 				logger.Info("stackdriver profiler started")
@@ -98,7 +98,7 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, engine, repo, fs, logger, c)
+			server, err := newServer(hub, engine, repo, fs, logger, &c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
 			}

@@ -75,7 +75,7 @@ func filePruneCommand() *cobra.Command {
 			}
 
 			// FileManager
-			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(c)), logger)
+			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(&c)), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize file manager", zap.Error(err))
 			}
@@ -176,7 +176,7 @@ func genMissingThumbnails() *cobra.Command {
 			}
 
 			// ImageProcessor
-			ip := imaging.NewProcessor(provideImageProcessorConfig(c))
+			ip := imaging.NewProcessor(provideImageProcessorConfig(&c))
 
 			generateImageThumb := func(file *model.FileMeta) error {
 				fid := file.ID
@@ -374,7 +374,7 @@ func genGroupImages() *cobra.Command {
 			}
 
 			// ImageProcessor
-			ip := imaging.NewProcessor(provideImageProcessorConfig(c))
+			ip := imaging.NewProcessor(provideImageProcessorConfig(&c))
 
 			// FileManager
 			fm, err := file.InitFileManager(repo, fs, ip, logger)
