@@ -1,13 +1,14 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v7/esutil"
+	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
 	"go.uber.org/zap"
@@ -183,20 +184,31 @@ func (e *esEngine) sync() error {
 					return err
 				}
 
+				data, err := json.Marshal(*doc)
+				if err != nil {
+					return err
+				}
+
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 					Action:     "index",
 					DocumentID: v.ID.String(),
-					Body:       esutil.NewJSONReader(*doc),
+					Body:       bytes.NewReader(data),
 				})
 				if err != nil {
 					return err
 				}
 			} else {
 				doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+
+				data, err := json.Marshal(map[string]any{"doc": *doc})
+				if err != nil {
+					return err
+				}
+
 				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 					Action:     "update",
 					DocumentID: v.ID.String(),
-					Body:       esutil.NewJSONReader(map[string]any{"doc": doc}),
+					Body:       bytes.NewReader(data),
 				})
 				if err != nil {
 					return err
