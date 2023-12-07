@@ -77,7 +77,7 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int) (*bytes.Reader, error) {
 	src, err := gif.DecodeAll(srcFile)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidImageSrc
 	}
 
 	srcWidth, srcHeight := src.Config.Width, src.Config.Height
