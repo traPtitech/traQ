@@ -109,7 +109,6 @@ func TestMain(m *testing.M) {
 			MaxPixels:        1000 * 1000,
 			Concurrency:      1,
 			ThumbnailMaxSize: image.Pt(360, 480),
-			ImageMagickPath:  "",
 		})
 		env.FM, _ = file.InitFileManager(repo, storage.NewInMemoryFileStorage(), env.IP, l.Named("FM"))
 

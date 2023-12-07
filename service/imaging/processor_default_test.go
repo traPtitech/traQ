@@ -26,7 +26,6 @@ func setup() (Processor, *os.File) {
 		MaxPixels:        500 * 500,
 		Concurrency:      1,
 		ThumbnailMaxSize: image.Point{50, 50},
-		ImageMagickPath:  "",
 	})
 	return processor, mustOpen("test.png")
 }

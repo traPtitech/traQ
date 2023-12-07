@@ -18,6 +18,4 @@ type Config struct {
 	Concurrency int
 	// ThumbnailMaxSize サムネイル画像サイズ
 	ThumbnailMaxSize image.Point
-	// ImageMagickPath imagemagickの実行パス
-	ImageMagickPath string
 }
