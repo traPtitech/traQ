@@ -87,7 +87,12 @@ type Config struct {
 
 	// ES Elasticsearch設定
 	ES struct {
+		// URL URL (default: "")
 		URL string `mapstructure:"url" yaml:"url"`
+		// Username ユーザー名 (default: "elastic")
+		Username string `mapstructure:"username" yaml:"username"`
+		// Password パスワード (default: "password")
+		Password string `mapstructure:"password" yaml:"password"`
 	} `mapstructure:"es" yaml:"es"`
 
 	// Storage ファイルストレージ設定
@@ -270,6 +275,8 @@ func init() {
 	viper.SetDefault("mariadb.connection.maxIdle", 2)
 	viper.SetDefault("mariadb.connection.lifetime", 0)
 	viper.SetDefault("es.url", "")
+	viper.SetDefault("es.username", "elastic")
+	viper.SetDefault("es.password", "password")
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -452,7 +459,9 @@ func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCreden
 
 func provideESEngineConfig(c *Config) search.ESEngineConfig {
 	return search.ESEngineConfig{
-		URL: c.ES.URL,
+		URL:      c.ES.URL,
+		Username: c.ES.Username,
+		Password: c.ES.Password,
 	}
 }
 

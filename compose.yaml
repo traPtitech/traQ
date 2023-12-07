@@ -69,8 +69,7 @@ services:
     environment:
       discovery.type: single-node
       cluster.name: docker-cluster
-      # デフォルトではオンになっているので、セキュリティをオフにする
-      xpack.security.enabled: false
+      ELASTIC_PASSWORD: password
     ports:
       - "9200:9200"
       - "9300:9300"
