@@ -8,7 +8,6 @@ import (
 var (
 	ErrPixelLimitExceeded = errors.New("the image exceeds max pixels limit")
 	ErrInvalidImageSrc    = errors.New("invalid image src")
-	ErrTimeout            = errors.New("processing timeout")
 )
 
 type Config struct {

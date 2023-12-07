@@ -85,7 +85,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
 		if err != nil {
 			switch err {
-			case imaging2.ErrInvalidImageSrc, imaging2.ErrTimeout:
+			case imaging2.ErrInvalidImageSrc:
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
 			default:
