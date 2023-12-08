@@ -799,7 +799,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Stamp'
+                  $ref: '#/components/schemas/StampWithThumbnail'
       operationId: getStamps
       tags:
         - stamp
@@ -4805,6 +4805,50 @@ components:
       required:
         - stampId
         - datetime
+    StampWithThumbnail:
+      title: StampWithThumbnail
+      type: object
+      description: スタンプ情報とサムネイルの有無
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スタンプUUID
+        name:
+          type: string
+          description: スタンプ名
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+        creatorId:
+          type: string
+          description: 作成者UUID
+          format: uuid
+        createdAt:
+          type: string
+          description: 作成日時
+          format: date-time
+        updatedAt:
+          type: string
+          description: 更新日時
+          format: date-time
+        fileId:
+          type: string
+          format: uuid
+          description: ファイルUUID
+        isUnicode:
+          type: boolean
+          description: Unicode絵文字か
+        hasThumbnail:
+          type: boolean
+          description: サムネイルの有無
+      required:
+        - id
+        - name
+        - creatorId
+        - createdAt
+        - updatedAt
+        - fileId
+        - isUnicode
+        - hasThumbnail
     User:
       title: User
       type: object

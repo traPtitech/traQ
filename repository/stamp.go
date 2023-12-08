@@ -85,11 +85,11 @@ type StampRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteStamp(id uuid.UUID) (err error)
-	// GetAllStamps 全てのスタンプを取得します
+	// GetAllStampsWithThumbnail 全てのスタンプとサムネイルの有無を取得します
 	//
 	// 成功した場合、スタンプのIDでソートされた配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllStamps(stampType StampType) (stamps []*model.Stamp, err error)
+	GetAllStampsWithThumbnail(stampType StampType) (stamps []*model.StampWithThumbnail, err error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。

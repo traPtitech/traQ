@@ -25,7 +25,7 @@ type stampRepository struct {
 	db      *gorm.DB
 	hub     *hub.Hub
 	stamps  *sc.Cache[struct{}, map[uuid.UUID]*model.Stamp]
-	perType *sc.Cache[repository.StampType, []*model.Stamp]
+	perType *sc.Cache[repository.StampType, []*model.StampWithThumbnail]
 }
 
 func makeStampRepository(db *gorm.DB, hub *hub.Hub) *stampRepository {
@@ -48,26 +48,55 @@ func (r *stampRepository) loadStamps(_ context.Context, _ struct{}) (map[uuid.UU
 	return stampsMap, nil
 }
 
-func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repository.StampType) ([]*model.Stamp, error) {
+func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repository.StampType) ([]*model.StampWithThumbnail, error) {
 	stamps, err := r.stamps.Get(ctx, struct{}{})
 	if err != nil {
 		return nil, err
 	}
-	arr := make([]*model.Stamp, 0, len(stamps))
+	arr := make([]*model.StampWithThumbnail, 0, len(stamps))
 
+	IDs := make([]uuid.UUID, 0, len(stamps))
+	stampsWithThumbnail := make([]*model.StampWithThumbnail, 0, len(stamps))
+	for _, stamp := range stamps {
+		IDs = append(IDs, stamp.FileID)
+	}
+
+	thumbnails := make([]uuid.UUID, 0, len(stamps))
+	if err := r.db.
+		Table("files_thumbnails").
+		Select("file_id").
+		Where("file_id IN (?)", IDs).
+		Find(&thumbnails).
+		Error; err != nil {
+		return nil, err
+	}
+	thumbnailExists := make(map[uuid.UUID]struct{}, len(thumbnails))
+	for _, v := range thumbnails {
+		thumbnailExists[v] = struct{}{}
+	}
+
+	for _, stamp := range stamps {
+		_, ok := thumbnailExists[stamp.FileID]
+		stampsWithThumbnail = append(stampsWithThumbnail, &model.StampWithThumbnail{
+			Stamp:        stamp,
+			HasThumbnail: ok,
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
 	switch stampType {
 	case repository.StampTypeAll:
-		for _, s := range stamps {
-			arr = append(arr, s)
-		}
+		arr = append(arr, stampsWithThumbnail...)
 	case repository.StampTypeUnicode:
-		for _, s := range stamps {
+		for _, s := range stampsWithThumbnail {
 			if s.IsUnicode {
 				arr = append(arr, s)
 			}
 		}
 	case repository.StampTypeOriginal:
-		for _, s := range stamps {
+		for _, s := range stampsWithThumbnail {
 			if !s.IsUnicode {
 				arr = append(arr, s)
 			}
@@ -270,8 +299,8 @@ func (r *stampRepository) DeleteStamp(id uuid.UUID) (err error) {
 	return repository.ErrNotFound
 }
 
-// GetAllStamps implements StampRepository interface.
-func (r *stampRepository) GetAllStamps(stampType repository.StampType) (stamps []*model.Stamp, err error) {
+// GetAllStampsWithThumbnail implements StampRepository interface.
+func (r *stampRepository) GetAllStampsWithThumbnail(stampType repository.StampType) (stampsWithThumbnail []*model.StampWithThumbnail, err error) {
 	return r.perType.Get(context.Background(), stampType)
 }
 

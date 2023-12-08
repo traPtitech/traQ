@@ -197,19 +197,51 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetAllStamps(t *testing.T) {
+func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 	t.Parallel()
-	repo, assert, _ := setup(t, ex1)
+	repo, assert, require := setup(t, ex1)
 
 	n := 10
+
 	for i := 0; i < 10; i++ {
 		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
-
-	arr, err := repo.GetAllStamps(repository.StampTypeAll)
-	if assert.NoError(err) {
-		assert.Len(arr, n)
+	for i := 0; i < 10; i++ {
+		stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
+		err := repo.DeleteFileMeta(stamp.FileID)
+		require.NoError(err)
 	}
+
+	t.Run("without thumbnail", func(t *testing.T) {
+		t.Parallel()
+		arr, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
+		if !assert.NoError(err) {
+			t.FailNow()
+		}
+		assert.Len(arr, n*2)
+		cnt := 0
+		for _, s := range arr {
+			if !s.HasThumbnail {
+				cnt++
+			}
+		}
+		assert.Equal(n, cnt)
+	})
+	t.Run("with thumbnail", func(t *testing.T) {
+		t.Parallel()
+		arr, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
+		if !assert.NoError(err) {
+			t.FailNow()
+		}
+		assert.Len(arr, n*2)
+		cnt := 0
+		for _, s := range arr {
+			if s.HasThumbnail {
+				cnt++
+			}
+		}
+		assert.Equal(n, cnt)
+	})
 }
 
 func TestRepositoryImpl_StampExists(t *testing.T) {
