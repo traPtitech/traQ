@@ -87,7 +87,7 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 	}
 	// 画像が十分小さければスキップ
 	if srcWidth <= width && srcHeight <= height {
-		return imaging2.GifToBytesReader(src), nil
+		return imaging2.GifToBytesReader(src)
 	}
 
 	// 元の比率を保つよう調整
@@ -117,7 +117,7 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		dst.Image = append(dst.Image, d)
 	}
 
-	return imaging2.GifToBytesReader(src), nil
+	return imaging2.GifToBytesReader(src)
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {

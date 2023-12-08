@@ -6,10 +6,10 @@ import (
 )
 
 // GifToBytesReader GIF画像を*bytes.Readerに書き出します
-func GifToBytesReader(src *gif.GIF) *bytes.Reader {
+func GifToBytesReader(src *gif.GIF) (*bytes.Reader, error) {
 	buf := new(bytes.Buffer)
 	if err := gif.EncodeAll(buf, src); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return bytes.NewReader(buf.Bytes())
+	return bytes.NewReader(buf.Bytes()), nil
 }
