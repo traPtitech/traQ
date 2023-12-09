@@ -110,11 +110,11 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		BackgroundIndex: src.BackgroundIndex,
 	}
 
-	rect := image.Rect(0, 0, width, height)
-	for _, s := range src.Image {
-		d := image.NewPaletted(rect, s.Palette)
-		mks2013FilterKernel.Scale(d, rect, s, s.Bounds(), draw.Src, nil)
-		dst.Image = append(dst.Image, d)
+	targetBounds := image.Rect(0, 0, width, height)
+	for _, frame := range src.Image {
+		destFrame := image.NewPaletted(targetBounds, frame.Palette)
+		mks2013FilterKernel.Scale(destFrame, targetBounds, frame, frame.Bounds(), draw.Src, nil)
+		dst.Image = append(dst.Image, destFrame)
 	}
 
 	return imaging2.GifToBytesReader(src)
