@@ -117,7 +117,7 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		dst.Image = append(dst.Image, destFrame)
 	}
 
-	return imaging2.GifToBytesReader(src)
+	return imaging2.GifToBytesReader(dst)
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
