@@ -101,7 +101,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		width = int(math.Round(floatSrcWidth * ratio))
 	}
 
-	dstImage := &gif.GIF{
+	destImage := &gif.GIF{
 		Delay:     srcImage.Delay,
 		LoopCount: srcImage.LoopCount,
 		Disposal:  srcImage.Disposal,
@@ -113,20 +113,21 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
-	for _, frame := range srcImage.Image {
-		srcBounds := frame.Bounds()
+	for _, srcFrame := range srcImage.Image {
+		srcBounds := srcFrame.Bounds()
 		destBounds := image.Rect(
 			int(float64(srcBounds.Min.X)*ratio),
 			int(float64(srcBounds.Min.Y)*ratio),
 			int(float64(srcBounds.Max.X)*ratio),
 			int(float64(srcBounds.Max.Y)*ratio),
 		)
-		destFrame := image.NewPaletted(destBounds, frame.Palette)
-		mks2013FilterKernel.Scale(destFrame, destBounds, frame.SubImage(srcBounds), srcBounds, draw.Over, nil)
-		dstImage.Image = append(dstImage.Image, destFrame)
+		fittedImage := imaging.Resize(srcFrame.SubImage(srcBounds), destBounds.Dx(), destBounds.Dy(), mks2013Filter)
+		destFrame := image.NewPaletted(destBounds, srcFrame.Palette)
+		draw.Draw(destFrame, destBounds, fittedImage, image.Point{}, draw.Over)
+		destImage.Image = append(destImage.Image, destFrame)
 	}
 
-	return imaging2.GifToBytesReader(dstImage)
+	return imaging2.GifToBytesReader(destImage)
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
