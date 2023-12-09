@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/draw"
 	"image/gif"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -17,7 +18,6 @@ import (
 	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/motoki317/go-waveform"
-	"golang.org/x/image/draw"
 	"golang.org/x/sync/semaphore"
 
 	imaging2 "github.com/traPtitech/traQ/utils/imaging"
@@ -92,10 +92,13 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 
 	// 元の比率を保つよう調整
 	floatSrcWidth, floatSrcHeight, floatWidth, floatHeight := float64(srcWidth), float64(srcHeight), float64(width), float64(height)
+	ratio := floatWidth / floatSrcWidth
 	if floatSrcWidth/floatSrcHeight > floatWidth/floatHeight {
-		height = int(math.Round(floatSrcHeight * floatWidth / floatSrcWidth))
+		ratio = floatWidth / floatSrcWidth
+		height = int(math.Round(floatSrcHeight * ratio))
 	} else if floatSrcWidth/floatSrcHeight < floatWidth/floatHeight {
-		width = int(math.Round(floatSrcWidth * floatHeight / floatSrcHeight))
+		ratio = floatHeight / floatSrcHeight
+		width = int(math.Round(floatSrcWidth * ratio))
 	}
 
 	dst := &gif.GIF{
@@ -110,10 +113,16 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		BackgroundIndex: src.BackgroundIndex,
 	}
 
-	targetBounds := image.Rect(0, 0, width, height)
 	for _, frame := range src.Image {
-		destFrame := image.NewPaletted(targetBounds, frame.Palette)
-		mks2013FilterKernel.Scale(destFrame, targetBounds, frame, frame.Bounds(), draw.Src, nil)
+		srcBounds := frame.Bounds()
+		destBounds := image.Rect(
+			int(float64(srcBounds.Min.X)*ratio),
+			int(float64(srcBounds.Min.Y)*ratio),
+			int(float64(srcBounds.Max.X)*ratio),
+			int(float64(srcBounds.Max.Y)*ratio),
+		)
+		destFrame := image.NewPaletted(destBounds, frame.Palette)
+		mks2013FilterKernel.Scale(destFrame, destBounds, frame.SubImage(srcBounds), srcBounds, draw.Over, nil)
 		dst.Image = append(dst.Image, destFrame)
 	}
 
