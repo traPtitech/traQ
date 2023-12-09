@@ -74,20 +74,20 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
-func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int) (*bytes.Reader, error) {
-	src, err := gif.DecodeAll(srcFile)
+func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
+	srcImage, err := gif.DecodeAll(src)
 	if err != nil {
 		return nil, ErrInvalidImageSrc
 	}
 
-	srcWidth, srcHeight := src.Config.Width, src.Config.Height
+	srcWidth, srcHeight := srcImage.Config.Width, srcImage.Config.Height
 	// 画素数チェック
 	if srcWidth*srcHeight > p.c.MaxPixels {
 		return nil, ErrPixelLimitExceeded
 	}
 	// 画像が十分小さければスキップ
 	if srcWidth <= width && srcHeight <= height {
-		return imaging2.GifToBytesReader(src)
+		return imaging2.GifToBytesReader(srcImage)
 	}
 
 	// 元の比率を保つよう調整
@@ -101,19 +101,19 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		width = int(math.Round(floatSrcWidth * ratio))
 	}
 
-	dst := &gif.GIF{
-		Delay:     src.Delay,
-		LoopCount: src.LoopCount,
-		Disposal:  src.Disposal,
+	dstImage := &gif.GIF{
+		Delay:     srcImage.Delay,
+		LoopCount: srcImage.LoopCount,
+		Disposal:  srcImage.Disposal,
 		Config: image.Config{
-			ColorModel: src.Config.ColorModel,
+			ColorModel: srcImage.Config.ColorModel,
 			Width:      width,
 			Height:     height,
 		},
-		BackgroundIndex: src.BackgroundIndex,
+		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
-	for _, frame := range src.Image {
+	for _, frame := range srcImage.Image {
 		srcBounds := frame.Bounds()
 		destBounds := image.Rect(
 			int(float64(srcBounds.Min.X)*ratio),
@@ -123,10 +123,10 @@ func (p *defaultProcessor) FitAnimationGIF(srcFile io.Reader, width, height int)
 		)
 		destFrame := image.NewPaletted(destBounds, frame.Palette)
 		mks2013FilterKernel.Scale(destFrame, destBounds, frame.SubImage(srcBounds), srcBounds, draw.Over, nil)
-		dst.Image = append(dst.Image, destFrame)
+		dstImage.Image = append(dstImage.Image, destFrame)
 	}
 
-	return imaging2.GifToBytesReader(dst)
+	return imaging2.GifToBytesReader(dstImage)
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
