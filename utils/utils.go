@@ -22,9 +22,9 @@ func IoReaderToBytes(r io.Reader) ([]byte, error) {
 }
 
 func MustIoReaderToBytes(r io.Reader) []byte {
-	buf := new(bytes.Buffer)
-	if _, err := buf.ReadFrom(r); err != nil {
+	b, err := IoReaderToBytes(r)
+	if err != nil {
 		panic(err)
 	}
-	return buf.Bytes()
+	return b
 }
