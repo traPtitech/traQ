@@ -14,7 +14,11 @@ func TestGifToBytesReader(t *testing.T) {
 	tests := []string{"cube.gif", "miku.gif", "parapara.gif", "miku2.gif", "rabbit.gif"}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt, func(t *testing.T) {
+			t.Parallel()
+
 			f, err := gif.DecodeAll(testutils.MustOpenGif(tt))
 			assert.Nil(t, err)
 
