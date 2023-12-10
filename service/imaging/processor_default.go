@@ -113,7 +113,8 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
-	for _, srcFrame := range srcImage.Image {
+	var tempCanvas *image.NRGBA
+	for i, srcFrame := range srcImage.Image {
 		srcBounds := srcFrame.Bounds()
 		destBounds := image.Rect(
 			int(math.Round(float64(srcBounds.Min.X)*ratio)),
@@ -121,9 +122,15 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			int(math.Round(float64(srcBounds.Max.X)*ratio)),
 			int(math.Round(float64(srcBounds.Max.Y)*ratio)),
 		)
-		fittedImage := imaging.Resize(srcFrame.SubImage(srcBounds), destBounds.Dx(), destBounds.Dy(), mks2013Filter)
+
+		if i == 0 {
+			tempCanvas = image.NewNRGBA(srcBounds)
+		}
+		draw.Draw(tempCanvas, srcBounds, srcFrame, srcBounds.Min, draw.Over)
+
+		fittedImage := imaging.Resize(tempCanvas, width, height, mks2013Filter)
 		destFrame := image.NewPaletted(destBounds, srcFrame.Palette)
-		draw.Draw(destFrame, destBounds, fittedImage, image.Point{}, draw.Over)
+		draw.Draw(destFrame, destBounds, fittedImage.SubImage(destBounds), destBounds.Min, draw.Src)
 		destImage.Image = append(destImage.Image, destFrame)
 	}
 
