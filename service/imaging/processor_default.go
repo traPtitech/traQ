@@ -116,10 +116,10 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	for _, srcFrame := range srcImage.Image {
 		srcBounds := srcFrame.Bounds()
 		destBounds := image.Rect(
-			int(float64(srcBounds.Min.X)*ratio),
-			int(float64(srcBounds.Min.Y)*ratio),
-			int(float64(srcBounds.Max.X)*ratio),
-			int(float64(srcBounds.Max.Y)*ratio),
+			int(math.Round(float64(srcBounds.Min.X)*ratio)),
+			int(math.Round(float64(srcBounds.Min.Y)*ratio)),
+			int(math.Round(float64(srcBounds.Max.X)*ratio)),
+			int(math.Round(float64(srcBounds.Max.Y)*ratio)),
 		)
 		fittedImage := imaging.Resize(srcFrame.SubImage(srcBounds), destBounds.Dx(), destBounds.Dy(), mks2013Filter)
 		destFrame := image.NewPaletted(destBounds, srcFrame.Palette)
