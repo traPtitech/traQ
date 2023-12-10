@@ -102,6 +102,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	}
 
 	destImage := &gif.GIF{
+		Image:     make([]*image.Paletted, len(srcImage.Image)),
 		Delay:     srcImage.Delay,
 		LoopCount: srcImage.LoopCount,
 		Disposal:  srcImage.Disposal,
@@ -147,7 +148,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		destFrame := image.NewPaletted(destBounds, srcFrame.Palette)
 		draw.Draw(destFrame, destBounds, fittedImage.SubImage(destBounds), destBounds.Min, draw.Src)
 
-		destImage.Image = append(destImage.Image, destFrame)
+		destImage.Image[i] = destFrame
 	}
 
 	return imaging2.GifToBytesReader(destImage)
