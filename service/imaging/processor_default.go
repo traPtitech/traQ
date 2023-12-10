@@ -90,7 +90,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		return imaging2.GifToBytesReader(srcImage)
 	}
 
-	// 元の比率を保つよう調整
+	// 元の比率を保つよう調整 & 拡大・縮小比率を計算
 	floatSrcWidth, floatSrcHeight, floatWidth, floatHeight := float64(srcWidth), float64(srcHeight), float64(width), float64(height)
 	ratio := floatWidth / floatSrcWidth
 	if floatSrcWidth/floatSrcHeight > floatWidth/floatHeight {
@@ -113,9 +113,20 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
+	// フレームを重ねるためのキャンバス
+	//	差分最適化されたGIFに対応するための処置
+	// 	差分最適化されたGIFでは、1フレーム目以外、周りが透明ピクセルのフレームを
+	// 	次々に重ねていくことでアニメーションを表現する
+	// 	周りが透明ピクセルのフレームをそのまま縮小すると、周りの透明ピクセルと
+	// 	混ざった色が透明色ではなくなってフレームの縁に黒っぽいノイズが入ってしまう
+	// 	ため、キャンバスでフレームを重ねてから縮小する
 	var tempCanvas *image.NRGBA
+
 	for i, srcFrame := range srcImage.Image {
+		// 元のフレームのサイズ
+		//  差分最適化されたGIFでは、これが元GIFのサイズより小さいことがある
 		srcBounds := srcFrame.Bounds()
+		// フレームサイズを、上で計算した拡大・縮小比率に合わせる
 		destBounds := image.Rect(
 			int(math.Round(float64(srcBounds.Min.X)*ratio)),
 			int(math.Round(float64(srcBounds.Min.Y)*ratio)),
@@ -123,14 +134,19 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			int(math.Round(float64(srcBounds.Max.Y)*ratio)),
 		)
 
-		if i == 0 {
+		if i == 0 { // 1フレーム目は必ずGIFと同じサイズなので、これでキャンバスを初期化
 			tempCanvas = image.NewNRGBA(srcBounds)
 		}
+		// それまでのフレームに読んだフレームを重ねる
 		draw.Draw(tempCanvas, srcBounds, srcFrame, srcBounds.Min, draw.Over)
 
+		// 重ねたフレームを縮小
 		fittedImage := imaging.Resize(tempCanvas, width, height, mks2013Filter)
+
+		// 縮小後のフレームサイズに合わせて、縮小されたイメージを切り抜き
 		destFrame := image.NewPaletted(destBounds, srcFrame.Palette)
 		draw.Draw(destFrame, destBounds, fittedImage.SubImage(destBounds), destBounds.Min, draw.Src)
+
 		destImage.Image = append(destImage.Image, destFrame)
 	}
 
