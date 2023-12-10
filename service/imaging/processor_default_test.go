@@ -6,12 +6,11 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/fs"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/testdata/gif"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils"
 )
 
@@ -32,6 +31,15 @@ func setup() (Processor, *os.File) {
 		ThumbnailMaxSize: image.Point{50, 50},
 	})
 	return processor, mustOpen("test.png")
+}
+
+func setupCustomConc(conc int) Processor {
+	processor := NewProcessor(Config{
+		MaxPixels:        500 * 500,
+		Concurrency:      conc,
+		ThumbnailMaxSize: image.Point{X: 50, Y: 50},
+	})
+	return processor
 }
 
 func assertImg(t *testing.T, actualImg image.Image, expectedFilePath string) {
@@ -71,23 +79,6 @@ func TestProcessorDefault_Fit(t *testing.T) {
 	assertImg(t, actualImg, "test_fit.png")
 }
 
-func setupCustomConc(conc int) Processor {
-	processor := NewProcessor(Config{
-		MaxPixels:        500 * 500,
-		Concurrency:      conc,
-		ThumbnailMaxSize: image.Point{X: 50, Y: 50},
-	})
-	return processor
-}
-
-func mustOpenGif(name string) fs.File {
-	f, err := gif.FS.Open(name)
-	if err != nil {
-		panic(err)
-	}
-	return f
-}
-
 func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 	t.Parallel()
 
@@ -108,38 +99,38 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 		},
 		{
 			name:   "invalid (invalid gif)",
-			reader: io.LimitReader(mustOpenGif("cube.gif"), 10),
+			reader: io.LimitReader(testutils.MustOpenGif("cube.gif"), 10),
 			want:   nil,
 			err:    ErrInvalidImageSrc,
 		},
 		{
 			name: "success (cube 正方形、透明ピクセルあり)",
 			file: "cube.gif",
-			want: utils.MustIoReaderToBytes(mustOpenGif("cube_resized.gif")),
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("cube_resized.gif")),
 			err:  nil,
 		},
 		{
 			name: "success (miku 横長、差分最適化)",
 			file: "miku.gif",
-			want: utils.MustIoReaderToBytes(mustOpenGif("miku_resized.gif")),
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("miku_resized.gif")),
 			err:  nil,
 		},
 		{
 			name: "success (parapara 正方形、差分最適化)",
 			file: "parapara.gif",
-			want: utils.MustIoReaderToBytes(mustOpenGif("parapara_resized.gif")),
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("parapara_resized.gif")),
 			err:  nil,
 		},
 		{
 			name: "success (miku2 縦長、差分最適化)",
 			file: "miku2.gif",
-			want: utils.MustIoReaderToBytes(mustOpenGif("miku2_resized.gif")),
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("miku2_resized.gif")),
 			err:  nil,
 		},
 		{
 			name: "success (rabbit 小サイズ)",
 			file: "rabbit.gif",
-			want: utils.MustIoReaderToBytes(mustOpenGif("rabbit_resized.gif")),
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("rabbit_resized.gif")),
 			err:  nil,
 		},
 	}
@@ -159,7 +150,7 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 
 					processor := setupCustomConc(conc)
 					if tt.file != "" { // ファイルはこのタイミングで開かないと正常なデータにならない
-						tt.reader = mustOpenGif(tt.file)
+						tt.reader = testutils.MustOpenGif(tt.file)
 					}
 
 					actual, err := processor.FitAnimationGIF(tt.reader, 256, 256)
