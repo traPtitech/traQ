@@ -145,7 +145,7 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 				tt := tt
 				conc := conc
 
-				t.Run(fmt.Sprintf("%s, conc=%d", tt.name, conc), func(t *testing.T) {
+				t.Run(fmt.Sprintf("concurrency=%d", conc), func(t *testing.T) {
 					t.Parallel()
 
 					processor := setupCustomConc(conc)
