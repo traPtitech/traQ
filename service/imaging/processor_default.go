@@ -131,7 +131,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 
 	// destImage.ImageのためのMutex
 	distImageMutex := sync.Mutex{}
-	eg, ctx := errgroup.WithContext(context.Background())
+	eg, _ := errgroup.WithContext(context.Background())
 
 	// 拡縮用のGoRoutineを先に生成
 	for i := range srcImage.Image {
@@ -140,11 +140,6 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		eg.Go(func() error {
 			// フレームのデータを受け取った瞬間に稼働
 			imageData := <-frameDataChannels[i]
-
-			if err := p.sp.Acquire(ctx, 1); err != nil {
-				return err
-			}
-			defer p.sp.Release(1)
 
 			// 重ねたフレームを縮小
 			fittedImage := imaging.Resize(imageData.tempCanvas, width, height, mks2013Filter)
