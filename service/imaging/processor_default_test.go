@@ -130,6 +130,18 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			want: utils.MustIoReaderToBytes(mustOpenGif("parapara_resized.gif")),
 			err:  nil,
 		},
+		{
+			name: "success (miku2 縦長、差分最適化)",
+			file: "miku2.gif",
+			want: utils.MustIoReaderToBytes(mustOpenGif("miku2_resized.gif")),
+			err:  nil,
+		},
+		{
+			name: "success (rabbit 小サイズ)",
+			file: "rabbit.gif",
+			want: utils.MustIoReaderToBytes(mustOpenGif("rabbit_resized.gif")),
+			err:  nil,
+		},
 	}
 
 	for _, tt := range test {
