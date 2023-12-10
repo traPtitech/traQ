@@ -77,6 +77,13 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
+// GIFのリサイズ時、フレーム合成GoRoutineと拡縮用GoRoutineの間でやり取りするデータ
+type frameData struct {
+	tempCanvas *image.NRGBA
+	srcBounds  image.Rectangle
+	srcPalette color.Palette
+}
+
 func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
 	srcImage, err := gif.DecodeAll(src)
 	if err != nil {
@@ -117,12 +124,6 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
-	// フレーム合成GoRoutineと拡縮用GoRoutineの間でやり取りするデータ
-	type frameData struct {
-		tempCanvas *image.NRGBA
-		srcBounds  image.Rectangle
-		srcPalette color.Palette
-	}
 	frameDataChannels := make([]chan frameData, len(srcImage.Image))
 	for i := range frameDataChannels {
 		frameDataChannels[i] = make(chan frameData)
