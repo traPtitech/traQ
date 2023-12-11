@@ -163,14 +163,18 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		})
 	}
 
-	// フレームを重ねるためのキャンバス
-	//	差分最適化されたGIFに対応するための処置
-	// 	差分最適化されたGIFでは、1フレーム目以外、周りが透明ピクセルのフレームを
-	// 	次々に重ねていくことでアニメーションを表現する
-	// 	周りが透明ピクセルのフレームをそのまま縮小すると、周りの透明ピクセルと
-	// 	混ざった色が透明色ではなくなってフレームの縁に黒っぽいノイズが入ってしまう
-	// 	ため、キャンバスでフレームを重ねてから縮小する
-	var tempCanvas *image.NRGBA
+	var (
+		gifBound = image.Rect(0, 0, srcWidth, srcHeight)
+		// フレームを重ねるためのキャンバス
+		//	差分最適化されたGIFに対応するための処置
+		// 	差分最適化されたGIFでは、1フレーム目以外、周りが透明ピクセルのフレームを
+		// 	次々に重ねていくことでアニメーションを表現する
+		// 	周りが透明ピクセルのフレームをそのまま縮小すると、周りの透明ピクセルと
+		// 	混ざった色が透明色ではなくなってフレームの縁に黒っぽいノイズが入ってしまう
+		// 	ため、キャンバスでフレームを重ねてから縮小する
+		tempCanvas      = image.NewNRGBA(gifBound)
+		unDisposedFrame = image.NewNRGBA(gifBound)
+	)
 
 	// これまでのフレームを重ねたキャンバスを作成し、GoRoutineに渡す
 	for i, srcFrame := range srcImage.Image {
@@ -178,11 +182,23 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		//  差分最適化されたGIFでは、これが元GIFのサイズより小さいことがある
 		srcBounds := srcFrame.Bounds()
 
-		if i == 0 { // 1フレーム目は必ず元GIFと同じサイズなので、これでキャンバスを初期化
-			tempCanvas = image.NewNRGBA(srcBounds)
+		switch srcImage.Disposal[i] {
+		case gif.DisposalBackground:
+			// Disposalが2に設定されていたらキャンバスを初期化
+			tempCanvas = image.NewNRGBA(gifBound)
+
+		case gif.DisposalPrevious:
+			// Disposalが3に設定されていたら、Disposeされていないフレームまでキャンバスを戻す
+			tempCanvas = unDisposedFrame
 		}
-		// それまでのフレームに読んだフレームを重ねる
+
+		// キャンバスに読んだフレームを重ねる
 		draw.Draw(tempCanvas, srcBounds, srcFrame, srcBounds.Min, draw.Over)
+
+		// Disposalが1に設定されていたら、Disposeされていないフレームを更新
+		if srcImage.Disposal[i] == gif.DisposalNone {
+			unDisposedFrame = tempCanvas
+		}
 
 		// 重ねたフレームを拡縮用GoRoutineに渡す
 		frameDataChannels[i] <- frameData{
