@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/testutils"
-	"github.com/traPtitech/traQ/utils"
 )
 
 const testdataFolder = "../../testdata/images/"
@@ -94,19 +94,19 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 		{
 			name: "success (tooth 正方形、Disposal設定アリ)",
 			file: "tooth.gif",
-			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("tooth_resized.gif")),
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("tooth_resized.gif"))),
 			err:  nil,
 		},
 		{
 			name: "success (new_year 横長)",
 			file: "new_year.gif",
-			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("new_year_resized.gif")),
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("new_year_resized.gif"))),
 			err:  nil,
 		},
 		{
 			name: "success (miku 縦長、差分最適化)",
 			file: "miku.gif",
-			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("miku_resized.gif")),
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("miku_resized.gif"))),
 			err:  nil,
 		},
 	}
@@ -127,7 +127,7 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 				assert.Equal(t, tt.err, err)
 			} else {
 				assert.Nil(t, err)
-				assert.Equal(t, tt.want, utils.MustIoReaderToBytes(actual))
+				assert.Equal(t, tt.want, lo.Must(io.ReadAll(actual)))
 			}
 		})
 	}
