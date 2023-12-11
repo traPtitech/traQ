@@ -99,8 +99,8 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 		},
 		{
 			name: "success (new_year 横長)",
-			file: "frog.gif",
-			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("frog_resized.gif")),
+			file: "new_year.gif",
+			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("new_year_resized.gif")),
 			err:  nil,
 		},
 		{
