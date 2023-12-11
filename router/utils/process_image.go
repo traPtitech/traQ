@@ -12,8 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/file"
-	imaging2 "github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/imaging"
 )
 
 const (
@@ -24,16 +23,16 @@ const (
 )
 
 // SaveUploadIconImage MultipartFormでアップロードされたアイコン画像ファイルを保存
-func SaveUploadIconImage(p imaging2.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+func SaveUploadIconImage(p imaging.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, m, name, model.FileTypeIcon, iconMaxFileSize, iconMaxImageSize)
 }
 
 // SaveUploadStampImage MultipartFormでアップロードされたスタンプ画像ファイルを保存
-func SaveUploadStampImage(p imaging2.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+func SaveUploadStampImage(p imaging.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, m, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
 }
 
-func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
+func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
 	const (
 		tooLargeImage = "too large image"
 		badImage      = "bad image"
@@ -61,9 +60,9 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
 			switch err {
-			case imaging2.ErrInvalidImageSrc:
+			case imaging.ErrInvalidImageSrc:
 				return uuid.Nil, herror.BadRequest(badImage)
-			case imaging2.ErrPixelLimitExceeded:
+			case imaging.ErrPixelLimitExceeded:
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -71,7 +70,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 		}
 
 		// PNGに変換
-		var b = bytes.Buffer{}
+		b := bytes.Buffer{}
 		if err := png.Encode(&b, img); err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
@@ -86,10 +85,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
 		if err != nil {
 			switch err {
-			case imaging.ErrImageMagickUnavailable:
-				// gifは一時的にサポートされていない
-				return uuid.Nil, herror.BadRequest("gif file is temporarily unsupported")
-			case imaging2.ErrInvalidImageSrc, imaging2.ErrTimeout:
+			case imaging.ErrInvalidImageSrc:
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
 			default:

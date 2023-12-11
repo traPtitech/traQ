@@ -22,9 +22,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/tmp/go/cach
 FROM alpine:3.19.0
 WORKDIR /app
 
-RUN apk add --no-cache --update ca-certificates imagemagick && \
-  update-ca-certificates
-ENV TRAQ_IMAGEMAGICK=/usr/bin/convert
+RUN apk add --no-cache --update ca-certificates && update-ca-certificates
 
 COPY --from=build /traQ ./
 

@@ -8,7 +8,6 @@ import (
 var (
 	ErrPixelLimitExceeded = errors.New("the image exceeds max pixels limit")
 	ErrInvalidImageSrc    = errors.New("invalid image src")
-	ErrTimeout            = errors.New("processing timeout")
 )
 
 type Config struct {
@@ -19,6 +18,4 @@ type Config struct {
 	Concurrency int
 	// ThumbnailMaxSize サムネイル画像サイズ
 	ThumbnailMaxSize image.Point
-	// ImageMagickPath imagemagickの実行パス
-	ImageMagickPath string
 }

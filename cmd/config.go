@@ -51,9 +51,6 @@ type Config struct {
 		Enabled bool `mapstructure:"enabled" yaml:"enabled"`
 	} `mapstructure:"accessLog" yaml:"accessLog"`
 
-	// ImageMagick ImageMagick実行ファイルパス
-	ImageMagick string `mapstructure:"imagemagick" yaml:"imagemagick"`
-
 	// Imaging 画像処理設定
 	Imaging struct {
 		// MaxPixels 処理可能な最大画素数 (default: 2560*1600)
@@ -263,7 +260,6 @@ func init() {
 	viper.SetDefault("gzip", true)
 	viper.SetDefault("allowSignUp", false)
 	viper.SetDefault("accessLog.enabled", true)
-	viper.SetDefault("imagemagick", "")
 	viper.SetDefault("imaging.maxPixels", 2560*1600)
 	viper.SetDefault("imaging.concurrency", 1)
 	viper.SetDefault("mariadb.host", "127.0.0.1")
@@ -470,7 +466,6 @@ func provideImageProcessorConfig(c *Config) imaging.Config {
 		MaxPixels:        c.Imaging.MaxPixels,
 		Concurrency:      c.Imaging.Concurrency,
 		ThumbnailMaxSize: image.Pt(360, 480),
-		ImageMagickPath:  c.ImageMagick,
 	}
 }
 
