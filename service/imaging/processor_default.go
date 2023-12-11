@@ -174,7 +174,11 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 
 		// Disposalが1に設定されていたら、Disposeされていないフレームを更新
 		if srcImage.Disposal[i] == gif.DisposalNone {
-			unDisposedFrame = tempCanvas
+			unDisposedFrame = &image.NRGBA{
+				Pix:    append([]uint8{}, tempCanvas.Pix...),
+				Stride: tempCanvas.Stride,
+				Rect:   tempCanvas.Rect,
+			} // tempCanvasはポインタを使い回しているので、Deep Copyする
 		}
 
 		// 拡縮用GoRoutineを起動
