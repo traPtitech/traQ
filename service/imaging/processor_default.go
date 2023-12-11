@@ -77,11 +77,15 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
-// GIFのリサイズ時、フレーム合成GoRoutineと拡縮用GoRoutineの間でやり取りするデータ
+// GIFのリサイズ時、拡縮用GoRoutineに渡すフレームのデータ
 type frameData struct {
-	tempCanvas *image.NRGBA
-	srcBounds  image.Rectangle
-	srcPalette color.Palette
+	index        int
+	tempCanvas   *image.NRGBA
+	resizeWidth  int
+	resizeHeight int
+	srcBounds    image.Rectangle
+	destBounds   image.Rectangle
+	srcPalette   color.Palette
 }
 
 func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
@@ -124,47 +128,9 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		BackgroundIndex: srcImage.BackgroundIndex,
 	}
 
-	frameDataChannels := make([]chan frameData, len(srcImage.Image))
-	for i := range frameDataChannels {
-		frameDataChannels[i] = make(chan frameData)
-	}
-
-	// destImage.ImageのためのMutex
-	distImageMutex := sync.Mutex{}
-	eg, _ := errgroup.WithContext(context.Background())
-
-	// 拡縮用のGoRoutineを先に生成
-	for i := range srcImage.Image {
-		i := i
-
-		eg.Go(func() error {
-			// フレームのデータを受け取った瞬間に稼働
-			imageData := <-frameDataChannels[i]
-
-			// 重ねたフレームを縮小
-			fittedImage := imaging.Resize(imageData.tempCanvas, width, height, mks2013Filter)
-
-			// 縮小後のフレームのサイズと位置を計算
-			destBounds := image.Rect(
-				int(math.Round(float64(imageData.srcBounds.Min.X)*ratio)),
-				int(math.Round(float64(imageData.srcBounds.Min.Y)*ratio)),
-				int(math.Round(float64(imageData.srcBounds.Max.X)*ratio)),
-				int(math.Round(float64(imageData.srcBounds.Max.Y)*ratio)),
-			)
-			// destBoundsに合わせて、縮小されたイメージを切り抜き
-			destFrame := image.NewPaletted(destBounds, imageData.srcPalette)
-			draw.Draw(destFrame, destBounds, fittedImage.SubImage(destBounds), destBounds.Min, draw.Src)
-
-			distImageMutex.Lock()
-			defer distImageMutex.Unlock()
-			destImage.Image[i] = destFrame
-
-			return nil
-		})
-	}
-
 	var (
 		gifBound = image.Rect(0, 0, srcWidth, srcHeight)
+
 		// フレームを重ねるためのキャンバス
 		//	差分最適化されたGIFに対応するための処置
 		// 	差分最適化されたGIFでは、1フレーム目以外、周りが透明ピクセルのフレームを
@@ -172,15 +138,26 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		// 	周りが透明ピクセルのフレームをそのまま縮小すると、周りの透明ピクセルと
 		// 	混ざった色が透明色ではなくなってフレームの縁に黒っぽいノイズが入ってしまう
 		// 	ため、キャンバスでフレームを重ねてから縮小する
-		tempCanvas      = image.NewNRGBA(gifBound)
+		tempCanvas = image.NewNRGBA(gifBound)
+		// DisposalPreviousに対応するため、Disposeされていないフレームを保持
 		unDisposedFrame = image.NewNRGBA(gifBound)
+
+		// destImage.ImageのためのMutex
+		destImageMutex = &sync.Mutex{}
+		eg, _          = errgroup.WithContext(context.Background())
 	)
 
-	// これまでのフレームを重ねたキャンバスを作成し、GoRoutineに渡す
 	for i, srcFrame := range srcImage.Image {
 		// 元のフレームのサイズと位置
 		//  差分最適化されたGIFでは、これが元GIFのサイズより小さいことがある
 		srcBounds := srcFrame.Bounds()
+		// 縮小後のフレームのサイズと位置を計算
+		destBounds := image.Rect(
+			int(math.Round(float64(srcBounds.Min.X)*ratio)),
+			int(math.Round(float64(srcBounds.Min.Y)*ratio)),
+			int(math.Round(float64(srcBounds.Max.X)*ratio)),
+			int(math.Round(float64(srcBounds.Max.Y)*ratio)),
+		)
 
 		switch srcImage.Disposal[i] {
 		case gif.DisposalBackground:
@@ -200,16 +177,20 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			unDisposedFrame = tempCanvas
 		}
 
-		// 重ねたフレームを拡縮用GoRoutineに渡す
-		frameDataChannels[i] <- frameData{
-			tempCanvas: &image.NRGBA{ // tempCanvasは使い回すので、Deep Copyする
+		// 拡縮用GoRoutineを起動
+		eg.Go(resizeRoutine(frameData{
+			index: i,
+			tempCanvas: &image.NRGBA{
 				Pix:    append([]uint8{}, tempCanvas.Pix...),
 				Stride: tempCanvas.Stride,
 				Rect:   tempCanvas.Rect,
-			},
-			srcBounds:  srcBounds,
-			srcPalette: srcFrame.Palette,
-		}
+			}, // tempCanvasはポインタを使い回しているので、Deep Copyする
+			resizeWidth:  width,
+			resizeHeight: height,
+			srcBounds:    srcBounds,
+			destBounds:   destBounds,
+			srcPalette:   srcImage.Image[i].Palette,
+		}, destImage, destImageMutex))
 	}
 
 	err = eg.Wait()
@@ -218,6 +199,23 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	}
 
 	return imaging2.GifToBytesReader(destImage)
+}
+
+func resizeRoutine(data frameData, destImage *gif.GIF, destImageMutex *sync.Mutex) func() error {
+	return func() error {
+		// 重ねたフレームを縮小
+		fittedImage := imaging.Resize(data.tempCanvas, data.resizeWidth, data.resizeHeight, mks2013Filter)
+
+		// destBoundsに合わせて、縮小されたイメージを切り抜き
+		destFrame := image.NewPaletted(data.destBounds, data.srcPalette)
+		draw.Draw(destFrame, data.destBounds, fittedImage.SubImage(data.destBounds), data.destBounds.Min, draw.Src)
+
+		destImageMutex.Lock()
+		defer destImageMutex.Unlock()
+		destImage.Image[data.index] = destFrame
+
+		return nil
+	}
 }
 
 func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
