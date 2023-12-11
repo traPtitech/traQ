@@ -12,6 +12,6 @@ var FS embed.FS
 // miku.gif https://piapro.jp/t/FB3J
 //	marucaさんの作品
 
-// tooth.gif https://patirabi.com/2021/10/10/061gif/
+// new_year.gif https://freesozaixtrain.web.fc2.com/freesozai-nenga-train2.html
 
-// frog.gif https://sozai-good.com/illust/gifanimation/29065
+// tooth.gif https://patirabi.com/2021/10/10/061gif/

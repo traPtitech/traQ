@@ -92,13 +92,13 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			err:    ErrInvalidImageSrc,
 		},
 		{
-			name: "success (tooth 正方形)",
+			name: "success (tooth 正方形、Disposal設定アリ)",
 			file: "tooth.gif",
 			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("tooth_resized.gif")),
 			err:  nil,
 		},
 		{
-			name: "success (frog 横長、Disposal設定アリ)",
+			name: "success (new_year 横長)",
 			file: "frog.gif",
 			want: utils.MustIoReaderToBytes(testutils.MustOpenGif("frog_resized.gif")),
 			err:  nil,
