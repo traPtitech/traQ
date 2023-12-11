@@ -11,7 +11,7 @@ import (
 func TestGifToBytesReader(t *testing.T) {
 	t.Parallel()
 
-	tests := []string{"frog.gif", "miku.gif", "tooth.gif"}
+	tests := []string{"miku.gif", "new_year.gif", "tooth.gif"}
 
 	for _, tt := range tests {
 		tt := tt
