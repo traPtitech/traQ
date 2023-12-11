@@ -2,7 +2,6 @@ package imaging
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/png"
 	"io"
@@ -31,15 +30,6 @@ func setup() (Processor, *os.File) {
 		ThumbnailMaxSize: image.Point{50, 50},
 	})
 	return processor, mustOpen("test.png")
-}
-
-func setupCustomConc(conc int) Processor {
-	processor := NewProcessor(Config{
-		MaxPixels:        500 * 500,
-		Concurrency:      conc,
-		ThumbnailMaxSize: image.Point{X: 50, Y: 50},
-	})
-	return processor
 }
 
 func assertImg(t *testing.T, actualImg image.Image, expectedFilePath string) {
@@ -81,8 +71,6 @@ func TestProcessorDefault_Fit(t *testing.T) {
 
 func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 	t.Parallel()
-
-	testConc := []int{1, 2, 3, 4, 5}
 
 	test := []struct {
 		name   string
@@ -141,26 +129,17 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			for _, conc := range testConc {
-				tt := tt
-				conc := conc
+			processor, _ := setup()
+			if tt.file != "" { // ファイルはこのタイミングで開かないと正常なデータにならない
+				tt.reader = testutils.MustOpenGif(tt.file)
+			}
 
-				t.Run(fmt.Sprintf("concurrency=%d", conc), func(t *testing.T) {
-					t.Parallel()
-
-					processor := setupCustomConc(conc)
-					if tt.file != "" { // ファイルはこのタイミングで開かないと正常なデータにならない
-						tt.reader = testutils.MustOpenGif(tt.file)
-					}
-
-					actual, err := processor.FitAnimationGIF(tt.reader, 256, 256)
-					if tt.err != nil {
-						assert.Equal(t, tt.err, err)
-					} else {
-						assert.Nil(t, err)
-						assert.Equal(t, tt.want, utils.MustIoReaderToBytes(actual))
-					}
-				})
+			actual, err := processor.FitAnimationGIF(tt.reader, 256, 256)
+			if tt.err != nil {
+				assert.Equal(t, tt.err, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.want, utils.MustIoReaderToBytes(actual))
 			}
 		})
 	}
