@@ -84,6 +84,8 @@ mariadb:
 # You must set this to enable the message search feature.
 es:
   url: http://es:9200
+  username: elastic
+  password: password
 
 # Storage settings for uploaded files.
 storage:
@@ -217,6 +219,8 @@ mariadb:
 
 es:
   url: http://es:9200
+  username: elastic
+  password: password
 
 storage:
   type: local
@@ -402,6 +406,7 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
+      - ELASTIC_PASSWORD=password
     expose:
       - "9200"
     volumes:
