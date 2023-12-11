@@ -77,17 +77,6 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
-// GIFのリサイズ時、拡縮用GoRoutineに渡すフレームのデータ
-type frameData struct {
-	index        int
-	tempCanvas   *image.NRGBA
-	resizeWidth  int
-	resizeHeight int
-	srcBounds    image.Rectangle
-	destBounds   image.Rectangle
-	srcPalette   color.Palette
-}
-
 func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
 	srcImage, err := gif.DecodeAll(src)
 	if err != nil {
@@ -203,6 +192,17 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	}
 
 	return imaging2.GifToBytesReader(destImage)
+}
+
+// GIFのリサイズ時、拡縮用GoRoutineに渡すフレームのデータ
+type frameData struct {
+	index        int
+	tempCanvas   *image.NRGBA
+	resizeWidth  int
+	resizeHeight int
+	srcBounds    image.Rectangle
+	destBounds   image.Rectangle
+	srcPalette   color.Palette
 }
 
 func resizeRoutine(data frameData, destImage *gif.GIF, destImageMutex *sync.Mutex) func() error {
