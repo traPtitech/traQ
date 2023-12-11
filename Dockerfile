@@ -1,5 +1,4 @@
 FROM --platform=$BUILDPLATFORM golang:1.21.5 AS build
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN mkdir /storage
 
