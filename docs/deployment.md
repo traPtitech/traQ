@@ -406,7 +406,8 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
-      - cluster.name=docker-cluster
+      - network.host=_local_,_site_
+      - http.port=9200
       - ELASTIC_PASSWORD=password
     expose:
       - "9200"
