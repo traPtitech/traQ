@@ -68,8 +68,8 @@ services:
     restart: always
     environment:
       discovery.type: single-node
-      ELASTIC_PASSWORD: password
       xpack.security.http.ssl.enabled: false
+      ELASTIC_PASSWORD: password
     ports:
       - "9200:9200"
       - "9300:9300"
