@@ -406,6 +406,7 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
+      - cluster.name=docker-cluster
       - ELASTIC_PASSWORD=password
     expose:
       - "9200"
