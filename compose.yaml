@@ -68,7 +68,6 @@ services:
     restart: always
     environment:
       discovery.type: single-node
-      cluster.name: docker-cluster
       ELASTIC_PASSWORD: password
       xpack.security.http.ssl.enabled: false
     ports:
