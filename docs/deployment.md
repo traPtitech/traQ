@@ -361,8 +361,10 @@ services:
     expose:
       - "3000"
     depends_on:
-      - db
-      - es
+      db:
+        condition: service_healthy
+      es:
+        condition: service_healthy
     volumes:
       - ./config.yml:/app/config.yml
       - app-storage:/app/storage
@@ -399,6 +401,11 @@ services:
       - "3306"
     volumes:
       - db:/var/lib/mysql
+    healthcheck:
+      test: mysql --user=$$MYSQL_USER --password=$$MYSQL_PASSWORD --execute "SHOW DATABASES;"
+      interval: 1s
+      timeout: 10s
+      retries: 60
 
   es:
     image: ghcr.io/traptitech/es-with-sudachi:8.8.1-3.1.0
@@ -413,6 +420,11 @@ services:
     volumes:
       - ./es_jvm.options:/usr/share/elasticsearch/config/jvm.options.d/es_jvm.options
       - es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 60
 
 volumes:
   caddy-data:
