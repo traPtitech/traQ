@@ -406,8 +406,7 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
-      - network.host=_local_,_site_
-      - http.port=9200
+      - xpack.security.http.ssl.enabled=false
       - ELASTIC_PASSWORD=password
     expose:
       - "9200"
