@@ -179,7 +179,8 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		switch srcImage.Disposal[i] {
 		case gif.DisposalBackground: // DisposalがBackgroundなら、このフレームの範囲を背景色で塗りつぶす
 			// フレームのカラーパレットに透明色が含まれていたら、背景色を透明色とみなす
-			if r, g, b, a := srcFrame.Palette[srcFrame.Palette.Index(color.Transparent)].RGBA(); r == 0 && g == 0 && b == 0 && a == 0 {
+			r, g, b, a := srcFrame.Palette[srcFrame.Palette.Index(color.Transparent)].RGBA()
+			if r == 0 && g == 0 && b == 0 && a == 0 {
 				draw.Draw(tempCanvas, srcBounds, image.Transparent, image.Point{}, draw.Src)
 			} else {
 				draw.Draw(tempCanvas, srcBounds, bgColorUniform, image.Point{}, draw.Src)
