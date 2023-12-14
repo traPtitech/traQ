@@ -9,6 +9,8 @@ var FS embed.FS
 
 // GIF画像 出典
 
+// frog.gif https://sozai-good.com/illust/gifanimation/29065
+
 // miku.gif https://piapro.jp/t/FB3J
 //	marucaさんの作品
 
