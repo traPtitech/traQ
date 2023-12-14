@@ -92,6 +92,12 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			err:    ErrInvalidImageSrc,
 		},
 		{
+			name: "success (mushroom 正方形、小サイズ)",
+			file: "mushroom.gif",
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("mushroom_resized.gif"))),
+			err:  nil,
+		},
+		{
 			name: "success (tooth 正方形、DisposalBackground)",
 			file: "tooth.gif",
 			want: lo.Must(io.ReadAll(testutils.MustOpenGif("tooth_resized.gif"))),
