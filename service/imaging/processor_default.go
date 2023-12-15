@@ -119,7 +119,6 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 
 	var (
 		gifBound = image.Rect(0, 0, srcWidth, srcHeight)
-
 		// フレームを重ねるためのキャンバス
 		//	差分最適化されたGIFに対応するための処置
 		// 	差分最適化されたGIFでは、1フレーム目以外、周りが透明ピクセルのフレームを
@@ -128,8 +127,10 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		// 	混ざった色が透明色ではなくなってフレームの縁に黒っぽいノイズが入ってしまう
 		// 	ため、キャンバスでフレームを重ねてから縮小する
 		tempCanvas = image.NewNRGBA(gifBound)
-		// DisposalPreviousに対応するため、Disposeされていないフレームを保持
-		unDisposedFrame = image.NewNRGBA(gifBound)
+		// 	DisposalBackgroundに対応するための、背景色の画像
+		bgColorUniform = image.NewUniform(srcImage.Config.ColorModel.(color.Palette)[srcImage.BackgroundIndex])
+		// DisposalPreviousに対応するため、直前のフレームを保持するためのキャンバス
+		backupCanvas = image.NewNRGBA(gifBound)
 
 		// destImage.ImageのためのMutex
 		destImageMutex = &sync.Mutex{}
@@ -148,27 +149,17 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			int(math.Round(float64(srcBounds.Max.Y)*ratio)),
 		)
 
-		switch srcImage.Disposal[i] {
-		case gif.DisposalBackground:
-			// Disposalが2に設定されていたらキャンバスを初期化
-			tempCanvas = image.NewNRGBA(gifBound)
-
-		case gif.DisposalPrevious:
-			// Disposalが3に設定されていたら、Disposeされていないフレームまでキャンバスを戻す
-			tempCanvas = unDisposedFrame
+		// DisposalがPreviousなら、今のキャンバスをDeep Copyしてバックアップ
+		if srcImage.Disposal[i] == gif.DisposalPrevious {
+			backupCanvas = &image.NRGBA{
+				Pix:    append([]uint8{}, tempCanvas.Pix...),
+				Stride: tempCanvas.Stride,
+				Rect:   tempCanvas.Rect,
+			}
 		}
 
 		// キャンバスに読んだフレームを重ねる
 		draw.Draw(tempCanvas, srcBounds, srcFrame, srcBounds.Min, draw.Over)
-
-		// Disposalが1に設定されていたら、Disposeされていないフレームを更新
-		if srcImage.Disposal[i] == gif.DisposalNone {
-			unDisposedFrame = &image.NRGBA{
-				Pix:    append([]uint8{}, tempCanvas.Pix...),
-				Stride: tempCanvas.Stride,
-				Rect:   tempCanvas.Rect,
-			} // tempCanvasはポインタを使い回しているので、Deep Copyする
-		}
 
 		// 拡縮用GoRoutineを起動
 		eg.Go(resizeRoutine(frameData{
@@ -184,6 +175,19 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			destBounds:   destBounds,
 			srcPalette:   srcImage.Image[i].Palette,
 		}, destImage, destImageMutex))
+
+		switch srcImage.Disposal[i] {
+		case gif.DisposalBackground: // DisposalがBackgroundなら、このフレームの範囲を背景色で塗りつぶす
+			// フレームのカラーパレットに透明色が含まれていたら、背景色を透明色とみなす
+			r, g, b, a := srcFrame.Palette[srcFrame.Palette.Index(color.Transparent)].RGBA()
+			if r == 0 && g == 0 && b == 0 && a == 0 {
+				draw.Draw(tempCanvas, srcBounds, image.Transparent, image.Point{}, draw.Src)
+			} else {
+				draw.Draw(tempCanvas, srcBounds, bgColorUniform, image.Point{}, draw.Src)
+			}
+		case gif.DisposalPrevious: // DisposalがPreviousなら、直前のフレームを復元
+			tempCanvas = backupCanvas
+		}
 	}
 
 	err = eg.Wait()

@@ -92,7 +92,13 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			err:    ErrInvalidImageSrc,
 		},
 		{
-			name: "success (tooth 正方形、Disposal設定アリ)",
+			name: "success (mushroom 正方形、小サイズ)",
+			file: "mushroom.gif",
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("mushroom_resized.gif"))),
+			err:  nil,
+		},
+		{
+			name: "success (tooth 正方形、DisposalBackground)",
 			file: "tooth.gif",
 			want: lo.Must(io.ReadAll(testutils.MustOpenGif("tooth_resized.gif"))),
 			err:  nil,
@@ -107,6 +113,12 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			name: "success (miku 縦長、差分最適化)",
 			file: "miku.gif",
 			want: lo.Must(io.ReadAll(testutils.MustOpenGif("miku_resized.gif"))),
+			err:  nil,
+		},
+		{
+			name: "success (frog 縦長、DisposalBackground + 背景色不整合)",
+			file: "frog.gif",
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("frog_resized.gif"))),
 			err:  nil,
 		},
 	}
