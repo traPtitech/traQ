@@ -17,7 +17,7 @@ jobs:
           go-version-file: "./go.mod"
       - run: go mod download
       - run: make traQ
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: traQ
           path: traQ
