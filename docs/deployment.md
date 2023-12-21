@@ -333,7 +333,7 @@ Configure the rest of the required components, and connect them in `docker-compo
 - [MariaDB](https://hub.docker.com/_/mariadb)
 - (optional) [Elasticsearch with Sudachi plugin](https://github.com/orgs/traPtitech/packages/container/package/es-with-sudachi) (Sudachi is a Japanese analyzer)
 
-Below is an example `docker-compose.yaml` file, configured to work with the above "Minimal configuration" `config.yml` and "Minimal configuration" `config.js` (placed inside `override` directory), plus `Caddyfile` and `es_jvm.options` below.
+Below is an example `compose.yaml` file, configured to work with the above "Minimal configuration" `config.yml` and "Minimal configuration" `config.js` (placed inside `override` directory), plus `Caddyfile` and `es_jvm.options` below.
 
 ```yaml
 version: '3'
@@ -458,6 +458,19 @@ example.com {
 ```
 -Xms512m
 -Xmx512m
+```
+
+Place the files as follows
+```
+./
+├── Caddyfile
+├── compose.yml
+├── config.yml
+├── es_jvm.options
+└── override
+    └── config.js
+
+1 directory, 5 files
 ```
 
 Run `docker-compose up -d`, and you're ready to go!
