@@ -473,6 +473,6 @@ Place the files as follows
 1 directory, 5 files
 ```
 
-Run `docker-compose up -d`, and you're ready to go!
+Run `docker compose up -d`, and you're ready to go!
 
 <!-- TODO: For more on actually operating the service, refer to [wiki](https://github.com/traPtitech/traQ/wiki). -->
