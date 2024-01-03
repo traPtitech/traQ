@@ -396,7 +396,7 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: traq
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     expose:
       - "3306"
     volumes:
