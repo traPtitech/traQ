@@ -290,7 +290,6 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 
 		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, failed %v message(s),  last delete %v",
 			bulkIndexer.Stats().NumDeleted, bulkIndexer.Stats().NumFailed, lastDelete))
-		return
 	}()
 
 	count := 0
