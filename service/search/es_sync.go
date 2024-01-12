@@ -211,10 +211,14 @@ func (e *esEngine) sync() error {
 }
 
 func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
-	bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client: e.client,
 		Index:  getIndexName(esMessageIndex),
 	})
+	if err != nil {
+		return err
+	}
+
 	defer func() {
 		er := bulkIndexer.Close(context.Background())
 		if err != nil && er != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ。
@@ -273,10 +277,14 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 }
 
 func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time.Time, lastSynced time.Time) (err error) {
-	bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client: e.client,
 		Index:  getIndexName(esMessageIndex),
 	})
+	if err != nil {
+		return err
+	}
+
 	defer func() {
 		er := bulkIndexer.Close(context.Background())
 		if err != nil && er != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ
