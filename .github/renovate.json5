@@ -6,8 +6,6 @@
     ":disableRateLimiting",
     ":dependencyDashboard",
     ":semanticCommits",
-    // ":automergeDigest",
-    // ":automergePatch", // no auto merge
     "github>traPtitech/traQ//.github/renovate/auto-merge.json5",
     "github>traPtitech/traQ//.github/renovate/commit-message.json5",
     "github>traPtitech/traQ//.github/renovate/gomod.json5",
