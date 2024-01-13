@@ -1,8 +1,10 @@
 SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
 TEST_DB_PORT := 3100
-TBLS_VERSION := v1.65.3
-SPECTRAL_VERSION := 6.2.1
+# renovate:image-tag imageName=ghcr.io/k1low/tbls
+TBLS_VERSION := "v1.65.3"
+# renovate:image-tag imageName=stoplight/spectral
+SPECTRAL_VERSION := "6.2.1"
 
 .DEFAULT_GOAL := help
 
@@ -16,8 +18,8 @@ traQ: $(SOURCES) ## Build traQ binary
 .PHONY: init
 init: ## Download and install go mod dependencies
 	go mod download
-	go install github.com/google/wire/cmd/wire@latest
-	go install github.com/golang/mock/mockgen@latest
+	go install github.com/google/wire/cmd/wire@0.5.0
+	go install github.com/golang/mock/mockgen@v1.6.0
 
 .PHONY: genkey
 genkey: ## Generate dev keys

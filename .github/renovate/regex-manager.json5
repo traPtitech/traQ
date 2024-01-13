@@ -32,7 +32,7 @@
     {
       "description": "OCI image dependencies (tag)",
       "fileMatch": [
-        ".+\\.ya?ml$"
+        ".+\\.ya?ml$", "(^|/)Makefile$"
       ],
       "matchStrings": [
         // Example:
@@ -47,7 +47,7 @@
     {
       "description": "GitHub URL dependencies",
       "fileMatch": [
-        ".+\\.ya?ml$"
+        ".+\\.ya?ml$", "(^|/)Makefile$"
       ],
       "matchStrings": [
         // Example: kustomize build https://github.com/argoproj/argo-cd//manifests/crds?ref=v2.7.6 | kubectl create -f -
@@ -58,6 +58,17 @@
         "# renovate:github-url\n.*?https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>[^/]+)"
       ],
       "datasourceTemplate": "github-releases",
+    },
+    {
+      "description": "Go tool dependencies",
+      "fileMatch": [
+        ".+\\.ya?ml$", "(^|/)Makefile$"
+      ],
+      "matchStrings": [
+        "go install (?<depName>((?:[^@c]|c(?:[^m]|m(?:[^d]))))+?)@(?<currentValue>.+)\n",
+        "go install (?<depName>[^@]+?)/cmd/[^@]+@(?<currentValue>.+)\n"
+      ],
+      "datasourceTemplate": "go"
     }
   ]
 }
