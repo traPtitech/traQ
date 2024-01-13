@@ -40,7 +40,6 @@ require (
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/motoki317/sc v1.7.1
 	github.com/ncw/swift/v2 v2.0.2
-	github.com/ncw/swift/v2 v2.0.2
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/prometheus/client_golang v1.18.0
