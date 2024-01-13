@@ -48,11 +48,6 @@ func GetSystemRoles() Roles {
 			oauth2Scope: true,
 			permissions: permission.PermissionsFromArray(profilePerms),
 		},
-		Email: &systemRole{
-			name:        Email,
-			oauth2Scope: true,
-			permissions: permission.PermissionsFromArray(emailPerms),
-		},
 	}
 }
 

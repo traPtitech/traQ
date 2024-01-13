@@ -5289,12 +5289,6 @@ components:
           description: 更新日時
         traq:
           $ref: '#/components/schemas/OIDCTraqUserInfo'
-        email:
-          type: string
-          description: メールアドレス (フェイク値)
-        email_verified:
-          type: boolean
-          description: メールアドレスの確認が取れているか (フェイク値)
       required:
         - sub
     OIDCTraqUserInfo:

@@ -71,10 +71,6 @@ func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string
 			"home_channel": user.GetHomeChannel(),
 		}
 	}
-	if scopes.Contains("email") {
-		claims["email"] = user.GetName() + "@example.com"
-		claims["email_verified"] = false
-	}
 
 	return claims, nil
 }

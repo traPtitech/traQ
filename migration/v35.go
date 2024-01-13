@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// v35  OIDC実装のため、openid, profile, emailロール、get_oidc_userinfo権限を追加
+// v35  OIDC実装のため、openid, profileロール、get_oidc_userinfo権限を追加
 func v35() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "35",
@@ -19,17 +19,6 @@ func v35() *gormigrate.Migration {
 				},
 				{
 					Name:        "profile",
-					Oauth2Scope: true,
-					System:      true,
-					Permissions: []v35RolePermission{
-						{
-							Role:       "profile",
-							Permission: "get_oidc_userinfo",
-						},
-					},
-				},
-				{
-					Name:        "email",
 					Oauth2Scope: true,
 					System:      true,
 					Permissions: []v35RolePermission{
