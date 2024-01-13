@@ -220,13 +220,13 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	}
 
 	defer func() {
-		er := bulkIndexer.Close(context.Background())
-		if err != nil && er != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ。
-			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, er) //無名関数の戻り値を名前付きにしているので、このerrが返る。
+		closeErr := bulkIndexer.Close(context.Background())
+		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ。
+			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
 			return
 		}
-		if er != nil {
-			err = er
+		if closeErr != nil {
+			err = closeErr
 			return
 		}
 
@@ -286,13 +286,13 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 	}
 
 	defer func() {
-		er := bulkIndexer.Close(context.Background())
-		if err != nil && er != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ
-			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, er)
+		closeErr := bulkIndexer.Close(context.Background())
+		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ
+			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
 			return
 		}
-		if er != nil {
-			err = er
+		if closeErr != nil {
+			err = closeErr
 			return
 		}
 
@@ -300,12 +300,10 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 			bulkIndexer.Stats().NumDeleted, bulkIndexer.Stats().NumFailed, lastDelete))
 	}()
 
-	count := 0
 	for _, v := range messages {
 		if v.CreatedAt.After(lastSynced) {
 			continue
 		}
-		count++
 		err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
 			Action:     "delete",
 			DocumentID: v.ID.String(),
@@ -313,9 +311,6 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 		if err != nil {
 			return err
 		}
-	}
-	if count == 0 {
-		return nil
 	}
 
 	return nil
