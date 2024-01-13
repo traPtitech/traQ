@@ -39,7 +39,7 @@ require (
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/motoki317/sc v1.7.1
-	github.com/ncw/swift v1.0.53
+	github.com/ncw/swift/v2 v2.0.2
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/ory/dockertest/v3 v3.10.0
