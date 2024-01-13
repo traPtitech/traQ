@@ -4,7 +4,7 @@ TEST_DB_PORT := 3100
 # renovate:image-tag imageName=ghcr.io/k1low/tbls
 TBLS_VERSION := "v1.72.1"
 # renovate:image-tag imageName=index.docker.io/stoplight/spectral
-SPECTRAL_VERSION := "6.2.1"
+SPECTRAL_VERSION := "6.11.0"
 
 .DEFAULT_GOAL := help
 
