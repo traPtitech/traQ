@@ -58,6 +58,19 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 	return nil, fmt.Errorf("container %s is not found", container)
 }
 
+// swift v2でSeek()の仕様が変わったことに対するワークアラウンド
+type objectOpenFileWrapper struct {
+	*swift.ObjectOpenFile
+}
+
+func (o *objectOpenFileWrapper) Seek(offset int64, whence int) (int64, error) {
+	return o.ObjectOpenFile.Seek(context.Background(), offset, whence)
+}
+
+func wrapFile(file *swift.ObjectOpenFile) *objectOpenFileWrapper {
+	return &objectOpenFileWrapper{file}
+}
+
 // OpenFileByKey ファイルを取得します
 func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (reader io.ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
@@ -72,7 +85,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (
 			}
 			return nil, err
 		}
-		return file, nil
+		return wrapFile(file), nil
 	}
 
 	fs.mutexes.Lock(key)
@@ -89,7 +102,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (
 		// save cache
 		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666) // ファイルが存在していた場合はエラーにしてremoteを返す
 		if err != nil {
-			return remote, nil
+			return wrapFile(remote), nil
 		}
 
 		if _, err := io.Copy(file, remote); err != nil {
