@@ -1,13 +1,14 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/ncw/swift"
+	"github.com/ncw/swift/v2"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
@@ -38,11 +39,13 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 		mutexes:  utils.NewKeyMutex(256),
 	}
 
-	if err := m.connection.Authenticate(); err != nil {
+	ctx := context.Background()
+
+	if err := m.connection.Authenticate(ctx); err != nil {
 		return nil, err
 	}
 
-	containers, err := m.connection.ContainerNamesAll(nil)
+	containers, err := m.connection.ContainerNamesAll(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +62,10 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (reader io.ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
 
+	ctx := context.Background()
+
 	if !fs.cacheable(fileType) {
-		file, _, err := fs.connection.ObjectOpen(fs.container, key, true, nil)
+		file, _, err := fs.connection.ObjectOpen(ctx, fs.container, key, true, nil)
 		if err != nil {
 			if err == swift.ObjectNotFound {
 				return nil, ErrFileNotFound
@@ -73,7 +78,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (
 	fs.mutexes.Lock(key)
 	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
 		defer fs.mutexes.Unlock(key)
-		remote, _, err := fs.connection.ObjectOpen(fs.container, key, true, nil)
+		remote, _, err := fs.connection.ObjectOpen(ctx, fs.container, key, true, nil)
 		if err != nil {
 			if err == swift.ObjectNotFound {
 				return nil, ErrFileNotFound
@@ -123,7 +128,7 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType stri
 		}
 	}
 
-	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
+	_, err = fs.connection.ObjectPut(context.Background(), fs.container, key, src, true, "", contentType, swift.Headers{
 		"Content-Disposition": fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name)),
 	})
 	return
@@ -131,7 +136,7 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType stri
 
 // DeleteByKey ファイルを削除します
 func (fs *SwiftFileStorage) DeleteByKey(key string, _ model.FileType) (err error) {
-	err = fs.connection.ObjectDelete(fs.container, key)
+	err = fs.connection.ObjectDelete(context.Background(), fs.container, key)
 	if err != nil {
 		if err == swift.ObjectNotFound {
 			return ErrFileNotFound
