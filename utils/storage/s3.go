@@ -139,13 +139,11 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 	}
 
 	input := &s3.PutObjectInput{
-		Bucket:      aws.String(fs.bucket),
-		Key:         aws.String(key),
-		Body:        src,
-		ContentType: aws.String(contentType),
-		Metadata: map[string]string{
-			"Content-Disposition": fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name)),
-		},
+		Bucket:             aws.String(fs.bucket),
+		Key:                aws.String(key),
+		Body:               src,
+		ContentType:        aws.String(contentType),
+		ContentDisposition: aws.String(fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name))),
 	}
 
 	uploader := manager.NewUploader(fs.client)
