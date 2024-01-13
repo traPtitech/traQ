@@ -9,6 +9,11 @@
     {
       "matchManagers": ["gomod"],
       "postUpdateOptions": ["gomodTidy", "gomodMassage"]
+    },
+    {
+      "matchDepTypes": ["gomod"],
+      "matchUpdateTypes": ["patch", "minor", "digest"],
+      "groupName": "devDependencies (non-major)"
     }
   ]
 }
