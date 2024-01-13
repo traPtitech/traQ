@@ -31,7 +31,7 @@ services:
       - app:/app/storage
 
   frontend:
-    image: caddy:latest
+    image: caddy:2.7.5-alpine
     restart: always
     expose:
       - "80"
@@ -94,7 +94,7 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:alpine
+    image: golang:1.21.5-alpine
     restart: always
     volumes:
       - ./dev/bin:/app
