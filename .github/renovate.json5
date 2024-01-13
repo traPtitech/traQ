@@ -15,6 +15,7 @@
   ],
   "platform": "github",
   "platformAutomerge": true,
+  "rebaseWhen": conflicted,
   "onboarding": false,
   "dependencyDashboardTitle": "Renovate Dashboard 🤖",
   "suppressNotifications": ["prIgnoreNotification"],
