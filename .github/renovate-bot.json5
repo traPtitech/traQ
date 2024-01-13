@@ -1,0 +1,6 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "username": "trap-renovate[bot]",
+  "gitAuthor": "trap-renovate <138502363+trap-renovate[bot]@users.noreply.github.com>",
+  "repositories": ["traPtitech/traQ"]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "docker:enableMajor",
+    ":disableRateLimiting",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    // ":automergeDigest",
+    // ":automergePatch", // no auto merge
+    "github>traPtitech/traQ//.github/renovate/auto-merge.json5",
+    "github>traPtitech/traQ//.github/renovate/commit-message.json5",
+    "github>traPtitech/traQ//.github/renovate/gomod.json5",
+    "github>traPtitech/traQ//.github/renovate/labels.json5",
+    "github>traPtitech/traQ//.github/renovate/regex-manager.json5",
+    "github>traPtitech/traQ//.github/renovate/semantic-commits.json5"
+  ],
+  "platform": "github",
+  "platformAutomerge": true,
+  "onboarding": false,
+  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "suppressNotifications": ["prIgnoreNotification"],
+  "branchConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+}
