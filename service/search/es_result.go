@@ -1,8 +1,6 @@
 package search
 
 import (
-	"fmt"
-
 	"github.com/gofrs/uuid"
 	"github.com/samber/lo"
 
@@ -69,7 +67,7 @@ func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, 
 	for _, id := range messageIDs {
 		msg, ok := messagesMap[id]
 		if !ok {
-			return nil, fmt.Errorf("message %v not found", id)
+			continue
 		}
 		r.messages = append(r.messages, msg)
 	}
