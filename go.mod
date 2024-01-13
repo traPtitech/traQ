@@ -15,7 +15,7 @@ require (
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/disintegration/imaging v1.6.2
-	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
+	github.com/dyatlov/go-opengraph/opengraph v1.0.1
 	github.com/elastic/go-elasticsearch/v8 v8.11.1
 	github.com/gavv/httpexpect/v2 v2.16.0
 	github.com/go-audio/audio v1.0.0
