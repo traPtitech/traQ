@@ -113,8 +113,9 @@ github.com/docker/docker v20.10.27+incompatible h1:Id/ZooynV4ZlD6xX20RCd3SR0Ikn7
 github.com/docker/docker v20.10.27+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
 github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
-github.com/docker/go-units v0.4.0 h1:3uh0PgVws3nIA0Q+MwDC8yjEPf9zjRfZZWXZYDct3Tw=
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
+github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
+github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a h1:etIrTD8BQqzColk9nKRusM9um5+1q0iOEJLqfBMIK64=
 github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a/go.mod h1:emQhSYTXqB0xxjLITTw4EaWZ+8IIQYw+kx9GqNUKdLg=
 github.com/elastic/elastic-transport-go/v8 v8.3.0 h1:DJGxovyQLXGr62e9nDMPSxRyWION0Bh6d9eCFBriiHo=

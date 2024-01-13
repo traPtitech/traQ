@@ -101,7 +101,7 @@ require (
 	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/docker v20.10.27+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
