@@ -71,7 +71,8 @@ goreleaser-snapshot: ## Release dry-run
 .PHONY: update-frontend
 update-frontend: ## Update frontend files in dev/frontend
 	@mkdir -p ./dev/frontend
-	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/latest/download/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
+# renovate:github-url
+	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.18.2/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
 
 .PHONY: reset-frontend
 reset-frontend: ## Completely replace frontend files in dev/frontend

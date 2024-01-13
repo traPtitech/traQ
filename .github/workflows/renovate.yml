@@ -1,0 +1,54 @@
+name: Renovate
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: Dry-Run
+        default: "false"
+        required: false
+      logLevel:
+        description: Log-Level
+        default: debug
+        required: false
+  schedule:
+    # 5 a.m. in JST(+9)
+    - cron: "0 20 * * *"
+  push:
+    branches: ["main"]
+    paths:
+      - .github/renovate-bot.json5
+      - .github/renovate.json5
+      - .github/renovate/**.json5
+      - .github/workflows/renovate.json
+
+env:
+  LOG_LEVEL: debug
+  RENOVATE_DRY_RUN: false
+  RENOVATE_CONFIG_FILE: .github/renovate-bot.json5
+
+jobs:
+  renovate:
+    name: Renovate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PUSHER_APP_ID }}
+          private-key: ${{ secrets.PUSHER_PRIVATE_KEY }}
+      - uses: actions/checkout@v4
+      - name: Override default config from dispatch variables
+        shell: bash
+        run: |
+          echo "RENOVATE_DRY_RUN=${{ github.event.inputs.dryRun || env.RENOVATE_DRY_RUN }}" >> "${GITHUB_ENV}"
+          echo "LOG_LEVEL=${{ github.event.inputs.logLevel || env.LOG_LEVEL }}" >> "${GITHUB_ENV}"
+      - name: Renovate
+        uses: renovatebot/github-action@v39.2.4
+        with:
+          renovate-image: "ghcr.io/renovatebot/renovate"
+          # renovate:image-tag imageName=ghcr.io/renovatebot/renovate
+          renovate-version: "37.130.0"
+          configurationFile: "${{ env.RENOVATE_CONFIG_FILE }}"
+          token: "${{ steps.generate-token.outputs.token }}"

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customManagers": [
+    {
+      "description": "Custom dependencies",
+      "fileMatch": [
+        ".+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        // Example: (github-releases) version: "v1.27.3"
+        "# renovate:general datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n.*?\"(?<currentValue>.*)\"\n",
+        // Example: (helm) targetRevision: "6.11.5"
+        "# renovate:general datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)\n.*?\"(?<currentValue>.*)\"\n",
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+    },
+    {
+      "description": "OCI image dependencies (full)",
+      "fileMatch": [
+        ".+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        // Example:
+        // # renovate:image-full
+        // fooImage: "ghcr.io/motoki317/k8s-csi-s3:0.35.5-p1"
+        "# renovate:image-full\n.*?\"(?<registryUrl>[^\\s/]+)/(?<depName>[^\\s:]+):(?<currentValue>.+)\"\n",
+      ],
+      "datasourceTemplate": "docker",
+      "registryUrlTemplate": "https://{{{registryUrl}}}",
+      "depNameTemplate": "{{{registryUrl}}}/{{{depName}}}",
+    },
+    {
+      "description": "OCI image dependencies (tag)",
+      "fileMatch": [
+        ".+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        // Example:
+        // # renovate:image-tag imageName=ghcr.io/traptitech/traq
+        // fooTag: "0.35.5-p1"
+        "# renovate:image-tag imageName=(?<registryUrl>[^\\s/]+)/(?<depName>\\S+)\n.*?\"(?<currentValue>.+)\"\n",
+      ],
+      "datasourceTemplate": "docker",
+      "registryUrlTemplate": "https://{{{registryUrl}}}",
+      "depNameTemplate": "{{{registryUrl}}}/{{{depName}}}"
+    },
+    {
+      "description": "GitHub URL dependencies",
+      "fileMatch": [
+        ".+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        // Example: kustomize build https://github.com/argoproj/argo-cd//manifests/crds?ref=v2.7.6 | kubectl create -f -
+        "# renovate:github-url\n.*?https://github\\.com/(?<depName>[^/]+/[^/]+)//.*?\\?ref=(?<currentValue>\\S+)",
+        // Example: - https://raw.githubusercontent.com/traefik/traefik/v2.10.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+        "# renovate:github-url\n.*?https://raw\\.githubusercontent\\.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)",
+        // Example: - https://github.com/rancher/system-upgrade-controller/releases/download/v0.11.0/crd.yaml
+        "# renovate:github-url\n.*?https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>[^/]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+    }
+  ]
+}
