@@ -47,7 +47,7 @@
     {
       "description": "GitHub URL dependencies",
       "fileMatch": [
-        ".+\\.ya?ml$"
+        ".+\\.ya?ml$", "(^|/)Makefile$"
       ],
       "matchStrings": [
         // Example: kustomize build https://github.com/argoproj/argo-cd//manifests/crds?ref=v2.7.6 | kubectl create -f -
