@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-var (
-	priv *ecdsa.PrivateKey
-)
+var priv *ecdsa.PrivateKey
 
 // SetupSigner JWTを発行・検証するためのSignerのセットアップ
 func SetupSigner(privRaw []byte) error {
