@@ -59,7 +59,7 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 		"exp": token.Deadline().Unix(),
 		"iat": token.CreatedAt.Unix(),
 	}
-	// Extra claims according to scopes (profile, email)
+	// Extra claims according to scopes (profile)
 	userInfo, err := h.OIDC.GetUserInfo(userID, token.Scopes)
 	if err != nil {
 		return "", err

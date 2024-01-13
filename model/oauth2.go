@@ -31,7 +31,7 @@ type AccessScopes map[AccessScope]struct{}
 
 // SupportedAccessScopes 対応するスコープ一覧を返します
 func SupportedAccessScopes() []string {
-	return []string{"read", "write", "manage_bot", "openid", "profile", "email"}
+	return []string{"read", "write", "manage_bot", "openid", "profile"}
 }
 
 // Value database/sql/driver.Valuer 実装
