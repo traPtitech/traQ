@@ -172,57 +172,11 @@ func (e *esEngine) sync() error {
 				return err
 			}
 		}
-		bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
-			Client: e.client,
-			Index:  getIndexName(esMessageIndex),
-		})
 
-		for _, v := range messages {
-			if v.CreatedAt.After(lastSynced) {
-				doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
-				if err != nil {
-					return err
-				}
-
-				data, err := json.Marshal(*doc)
-				if err != nil {
-					return err
-				}
-
-				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
-					Action:     "index",
-					DocumentID: v.ID.String(),
-					Body:       bytes.NewReader(data),
-				})
-				if err != nil {
-					return err
-				}
-			} else {
-				doc := e.convertMessageUpdated(v, message.Parse(v.Text))
-
-				data, err := json.Marshal(map[string]any{"doc": *doc})
-				if err != nil {
-					return err
-				}
-
-				err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
-					Action:     "update",
-					DocumentID: v.ID.String(),
-					Body:       bytes.NewReader(data),
-				})
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		err = bulkIndexer.Close(context.Background())
+		err = syncNewMessages(e, messages, lastInsert, lastSynced, userCache)
 		if err != nil {
 			return err
 		}
-
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
-			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
 
 		if !more {
 			break
@@ -243,41 +197,119 @@ func (e *esEngine) sync() error {
 		}
 		lastDelete = messages[len(messages)-1].DeletedAt.Time
 
-		bulkIndexer, _ := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
-			Client: e.client,
-			Index:  getIndexName(esMessageIndex),
-		})
+		err = syncDeletedMessages(e, messages, lastDelete, lastSynced)
+		if err != nil {
+			return err
+		}
 
-		count := 0
-		for _, v := range messages {
-			if v.CreatedAt.After(lastSynced) {
-				continue
+		if !more {
+			break
+		}
+	}
+
+	return nil
+}
+
+func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
+	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+		Client: e.client,
+		Index:  getIndexName(esMessageIndex),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		closeErr := bulkIndexer.Close(context.Background())
+		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ。
+			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
+			return
+		}
+		if closeErr != nil {
+			err = closeErr
+			return
+		}
+
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
+	}()
+
+	for _, v := range messages {
+		if v.CreatedAt.After(lastSynced) {
+			doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
+			if err != nil {
+				return err
 			}
-			count++
+
+			data, err := json.Marshal(*doc)
+			if err != nil {
+				return err
+			}
+
 			err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
-				Action:     "delete",
+				Action:     "index",
 				DocumentID: v.ID.String(),
+				Body:       bytes.NewReader(data),
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+
+			data, err := json.Marshal(map[string]any{"doc": *doc})
+			if err != nil {
+				return err
+			}
+
+			err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+				Action:     "update",
+				DocumentID: v.ID.String(),
+				Body:       bytes.NewReader(data),
 			})
 			if err != nil {
 				return err
 			}
 		}
-		if count == 0 {
-			if more {
-				continue
-			}
-			break
+	}
+
+	return nil
+}
+
+func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time.Time, lastSynced time.Time) (err error) {
+	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+		Client: e.client,
+		Index:  getIndexName(esMessageIndex),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		closeErr := bulkIndexer.Close(context.Background())
+		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ
+			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
+			return
 		}
-		err = bulkIndexer.Close(context.Background())
-		if err != nil {
-			return err
+		if closeErr != nil {
+			err = closeErr
+			return
 		}
 
 		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, failed %v message(s),  last delete %v",
 			bulkIndexer.Stats().NumDeleted, bulkIndexer.Stats().NumFailed, lastDelete))
+	}()
 
-		if !more {
-			break
+	for _, v := range messages {
+		if v.CreatedAt.After(lastSynced) {
+			continue
+		}
+		err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+			Action:     "delete",
+			DocumentID: v.ID.String(),
+		})
+		if err != nil {
+			return err
 		}
 	}
 
