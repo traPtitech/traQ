@@ -1,5 +1,4 @@
-name: Renovate Auto Merge
-
+name: Renovate Auto Approve
 on:
   pull_request:
 
