@@ -48,7 +48,6 @@ jobs:
         uses: renovatebot/github-action@v39.2.4
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
-          # renovate:image-tag imageName=ghcr.io/renovatebot/renovate
-          renovate-version: "37.131.0"
+          renovate-version: "latest"
           configurationFile: "${{ env.RENOVATE_CONFIG_FILE }}"
           token: "${{ steps.generate-token.outputs.token }}"
