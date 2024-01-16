@@ -31,6 +31,8 @@ const (
 	ChannelTopicChanged model.BotEventType = "CHANNEL_TOPIC_CHANGED"
 	// UserCreated ユーザー作成イベント
 	UserCreated model.BotEventType = "USER_CREATED"
+	// UserActivated ユーザー凍結解除イベント
+	UserActivated model.BotEventType = "USER_ACTIVATED"
 	// StampCreated スタンプ作成イベント
 	StampCreated model.BotEventType = "STAMP_CREATED"
 	// TagAdded タグ追加イベント
@@ -75,6 +77,7 @@ func init() {
 		ChannelCreated,
 		ChannelTopicChanged,
 		UserCreated,
+		UserActivated,
 		StampCreated,
 		TagAdded,
 		TagRemoved,

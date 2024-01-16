@@ -217,13 +217,15 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
+	var u model.User
+
 	var (
+		activate   bool
 		deactivate bool
 		changed    bool
 		count      int
 	)
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		var u model.User
 		if err := tx.Preload("Profile").First(&u, model.User{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
@@ -239,6 +241,8 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 			changes["status"] = args.UserState.V.Int()
 			if args.UserState.V.Int() == model.UserAccountStatusDeactivated.Int() {
 				deactivate = true
+			} else if args.UserState.V.Int() == model.UserAccountStatusActive.Int() {
+				activate = true
 			}
 		}
 		if args.IconFileID.Valid {
@@ -310,6 +314,13 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 				Fields: hub.Fields{
 					"user_id": id,
 					"file_id": args.IconFileID.V,
+				},
+			})
+		} else if activate {
+			r.hub.Publish(hub.Message{
+				Name: event.UserActivated,
+				Fields: hub.Fields{
+					"user": &u,
 				},
 			})
 		} else {
