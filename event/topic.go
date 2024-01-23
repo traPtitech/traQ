@@ -24,6 +24,10 @@ const (
 	// 		user_id: uuid.UUID
 	// 		datetime: time.Time
 	UserOffline = "user.offline"
+	// UserActivated ユーザーの凍結が解除された
+	// 	Fields:
+	// 		user: *model.User
+	UserActivated = "user.activated"
 	// UserViewStateChanged ユーザーの閲覧状態が変化した
 	// 	Fields:
 	// 		user_id: uuid.UUID
