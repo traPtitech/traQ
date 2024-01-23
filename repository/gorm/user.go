@@ -239,10 +239,11 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 		}
 		if args.UserState.Valid {
 			changes["status"] = args.UserState.V.Int()
-			if args.UserState.V.Int() == model.UserAccountStatusDeactivated.Int() {
-				deactivate = true
-			} else if args.UserState.V.Int() == model.UserAccountStatusActive.Int() {
+			switch args.UserState.V.Int() {
+			case model.UserAccountStatusActive.Int():
 				activate = true
+			case model.UserAccountStatusDeactivated.Int():
+				deactivate = true
 			}
 		}
 		if args.IconFileID.Valid {
@@ -306,31 +307,34 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 	if args.LastOnline.Valid && count == 1 {
 		return nil // 最終オンライン日時のみの更新の時はUserUpdatedイベントを発生させない
 	}
-	if changed {
-		r.forgetCache(id)
-		if args.IconFileID.Valid && count == 1 {
-			r.hub.Publish(hub.Message{
-				Name: event.UserIconUpdated,
-				Fields: hub.Fields{
-					"user_id": id,
-					"file_id": args.IconFileID.V,
-				},
-			})
-		} else if activate {
-			r.hub.Publish(hub.Message{
-				Name: event.UserActivated,
-				Fields: hub.Fields{
-					"user": &u,
-				},
-			})
-		} else {
-			r.hub.Publish(hub.Message{
-				Name: event.UserUpdated,
-				Fields: hub.Fields{
-					"user_id": id,
-				},
-			})
-		}
+	if !changed {
+		return nil
+	}
+
+	r.forgetCache(id)
+	switch {
+	case args.IconFileID.Valid && count == 1:
+		r.hub.Publish(hub.Message{
+			Name: event.UserIconUpdated,
+			Fields: hub.Fields{
+				"user_id": id,
+				"file_id": args.IconFileID.V,
+			},
+		})
+	case activate:
+		r.hub.Publish(hub.Message{
+			Name: event.UserActivated,
+			Fields: hub.Fields{
+				"user": &u,
+			},
+		})
+	default:
+		r.hub.Publish(hub.Message{
+			Name: event.UserUpdated,
+			Fields: hub.Fields{
+				"user_id": id,
+			},
+		})
 	}
 	return nil
 }
