@@ -217,9 +217,9 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	var u model.User
 
 	var (
+		u          model.User
 		activate   bool
 		deactivate bool
 		changed    bool
@@ -328,6 +328,7 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 				"user": &u,
 			},
 		})
+		fallthrough
 	default:
 		r.hub.Publish(hub.Message{
 			Name: event.UserUpdated,
