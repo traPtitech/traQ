@@ -3,7 +3,7 @@ package imaging
 import (
 	"image"
 
-	"github.com/jakobvarmose/go-qidenticon"
+	"github.com/fivenp/go-identicon"
 )
 
 const iconSize = 256
