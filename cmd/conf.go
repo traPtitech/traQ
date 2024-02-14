@@ -13,7 +13,7 @@ func confCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "conf",
 		Short: "Print loaded config variables",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			bs, err := yaml.Marshal(c)
 			if err != nil {
 				log.Fatalf("unable to marshal config to YAML: %v", err)

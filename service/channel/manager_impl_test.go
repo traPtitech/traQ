@@ -90,7 +90,7 @@ func TestInitChannelManager(t *testing.T) {
 func TestManagerImpl_GetChannel(t *testing.T) {
 	t.Parallel()
 
-	must := func(c *model.Channel, err error) *model.Channel { return c }
+	must := func(c *model.Channel, _ error) *model.Channel { return c }
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()

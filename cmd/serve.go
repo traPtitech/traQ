@@ -33,7 +33,7 @@ func serveCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "serve",
 		Short: "Serve traQ API",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getLogger()
 			defer logger.Sync()

@@ -21,7 +21,7 @@ func migrateV2ToV3Command() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "migrate-v2-to-v3",
 		Short: "migrate from v2 to v3 (messages, files)",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getCLILogger()
 			defer logger.Sync()

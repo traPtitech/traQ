@@ -132,7 +132,7 @@ func tests3ObjectSeek(t *testing.T) {
 				offset: 1024,
 				whence: 0,
 			},
-			wantNewPos: func(len, pos, offset int64) int64 {
+			wantNewPos: func(_, _, offset int64) int64 {
 				return offset
 			},
 		},
@@ -153,7 +153,7 @@ func tests3ObjectSeek(t *testing.T) {
 				offset: 1024,
 				whence: 1,
 			},
-			wantNewPos: func(len, pos, offset int64) int64 {
+			wantNewPos: func(_, pos, offset int64) int64 {
 				return pos + offset
 			},
 		},
@@ -173,7 +173,7 @@ func tests3ObjectSeek(t *testing.T) {
 				offset: -1024,
 				whence: 2,
 			},
-			wantNewPos: func(len, pos, offset int64) int64 {
+			wantNewPos: func(len, _, offset int64) int64 {
 				return len + offset
 			},
 		},

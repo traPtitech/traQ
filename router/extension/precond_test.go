@@ -43,7 +43,7 @@ func TestCheckPreconditions(t *testing.T) {
 			Client: &http.Client{
 				Jar:     nil, // クッキーは保持しない
 				Timeout: time.Second * 30,
-				CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 					return http.ErrUseLastResponse // リダイレクトを自動処理しない
 				},
 			},

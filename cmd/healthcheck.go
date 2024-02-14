@@ -13,7 +13,7 @@ func healthcheckCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "healthcheck",
 		Short: "Run healthcheck",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			logger := getCLILogger()
 			defer logger.Sync()
 

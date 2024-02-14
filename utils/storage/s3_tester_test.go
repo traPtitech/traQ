@@ -58,7 +58,7 @@ func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 		config.WithRegion("ap-northeast-1"),
 		config.WithEndpointResolverWithOptions(
 			aws.EndpointResolverWithOptionsFunc(
-				func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
+				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
 					return aws.Endpoint{
 						URL:           ep,
 						SigningRegion: region,

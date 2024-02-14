@@ -36,7 +36,7 @@ var (
 var rootCommand = &cobra.Command{
 	Use: "traQ",
 	// 全コマンド共通の前処理
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		// enable pprof http handler
 		if c.Pprof {
 			go func() { _ = http.ListenAndServe("0.0.0.0:6060", nil) }()

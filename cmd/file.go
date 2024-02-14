@@ -45,7 +45,7 @@ func filePruneCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "prune",
 		Short: "delete files which are not used or linked to anywhere",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getCLILogger()
 			defer logger.Sync()
@@ -152,7 +152,7 @@ func genMissingThumbnails() *cobra.Command {
 	return &cobra.Command{
 		Use:   "gen-missing-thumbs",
 		Short: "Generate missing thumbnails",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getCLILogger()
 			defer logger.Sync()
@@ -344,7 +344,7 @@ func genGroupImages() *cobra.Command {
 	return &cobra.Command{
 		Use:   "gen-group-images",
 		Short: "Generate missing icons for user groups",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getCLILogger()
 			defer logger.Sync()

@@ -143,7 +143,7 @@ func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 		Client: &http.Client{
 			Jar:     nil, // クッキーは保持しない
 			Timeout: 10 * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 				return http.ErrUseLastResponse // リダイレクトを自動処理しない
 			},
 		},

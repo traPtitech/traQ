@@ -34,7 +34,7 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forceP
 		config.WithRegion(region),
 		config.WithEndpointResolverWithOptions(
 			aws.EndpointResolverWithOptionsFunc(
-				func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
+				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
 					return aws.Endpoint{
 						URL:           endpoint,
 						SigningRegion: region,

@@ -92,49 +92,49 @@ func (pr *ParamRetriever) error(err error) error {
 
 // GroupID リクエストURLの`groupID`パラメータからGroupを取り出す
 func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetUserGroup(v)
 	})
 }
 
 // MessageID リクエストURLの`messageID`パラメータからMessageを取り出す
 func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamMessageID, consts.KeyParamMessage, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamMessageID, consts.KeyParamMessage, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.mm.Get(v)
 	})
 }
 
 // ClientID リクエストURLの`clientID`パラメータからOAuth2Clientを取り出す
 func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
-	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(c echo.Context, v string) (interface{}, error) {
+	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(_ echo.Context, v string) (interface{}, error) {
 		return pr.repo.GetClient(v)
 	})
 }
 
 // BotID リクエストURLの`botID`パラメータからBotを取り出す
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetBotByID(v)
 	})
 }
 
 // ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
 func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.cm.GetChannel(v)
 	})
 }
 
 // FileID リクエストURLの`fileID`パラメータからFileを取り出す
 func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.fm.Get(v)
 	})
 }
 
 // WebhookID リクエストURLの`webhookID`パラメータからBotを取り出す
 func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetWebhook(v)
 	})
 }
@@ -142,18 +142,18 @@ func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
 // StampID リクエストURLの`stampID`パラメータからStampを取り出します
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
-		return pr.checkOnlyByUUID(consts.ParamStampID, func(c echo.Context, v uuid.UUID) (bool, error) {
+		return pr.checkOnlyByUUID(consts.ParamStampID, func(_ echo.Context, v uuid.UUID) (bool, error) {
 			return pr.repo.StampExists(v)
 		})
 	}
-	return pr.byUUID(consts.ParamStampID, consts.KeyParamStamp, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamStampID, consts.KeyParamStamp, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetStamp(v)
 	})
 }
 
 // StampPalettesID リクエストURLの`paletteID`パラメータからStampPaletteを取り出す
 func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamStampPaletteID, consts.KeyParamStampPalette, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamStampPaletteID, consts.KeyParamStampPalette, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetStampPalette(v)
 	})
 }
@@ -161,18 +161,18 @@ func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
 // UserID リクエストURLの`userID`パラメータからUserを取り出す
 func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
-		return pr.checkOnlyByUUID(consts.ParamUserID, func(c echo.Context, v uuid.UUID) (bool, error) {
+		return pr.checkOnlyByUUID(consts.ParamUserID, func(_ echo.Context, v uuid.UUID) (bool, error) {
 			return pr.repo.UserExists(v)
 		})
 	}
-	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetUser(v, true)
 	})
 }
 
 // ClipFolderID リクエストURLの`folderID`パラメータからClipFolderを取り出す
 func (pr *ParamRetriever) ClipFolderID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamClipFolderID, consts.KeyParamClipFolder, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+	return pr.byUUID(consts.ParamClipFolderID, consts.KeyParamClipFolder, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetClipFolder(v)
 	})
 }
