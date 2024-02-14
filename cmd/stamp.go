@@ -33,7 +33,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "install-emojis",
 		Short: "download and install Unicode emojiMeta stamps",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
 			logger := getCLILogger()
 			defer logger.Sync()

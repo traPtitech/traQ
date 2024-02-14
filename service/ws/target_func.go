@@ -57,7 +57,7 @@ func TargetTimelineStreamingEnabled() TargetFunc {
 
 // TargetNone いずれのセッションにも送信しません
 func TargetNone() TargetFunc {
-	return func(s Session) bool {
+	return func(_ Session) bool {
 		return false
 	}
 }

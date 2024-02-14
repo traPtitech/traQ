@@ -29,7 +29,7 @@ func Test_fetchVRChatWorldInfo(t *testing.T) {
 		{
 			name:    "not found",
 			worldID: "wrld_aa762efb-17b3-4302-8f41-09c4db2489ee",
-			want: func(t *testing.T, res *VRChatAPIWorldResponse) {
+			want: func(_ *testing.T, _ *VRChatAPIWorldResponse) {
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, ErrClient, i...)

@@ -56,7 +56,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 
-	gone := func(c echo.Context) error {
+	gone := func(_ echo.Context) error {
 		return herror.HTTPError(http.StatusGone, "This API has been deleted. Please migrate to v3 or newer API.")
 	}
 

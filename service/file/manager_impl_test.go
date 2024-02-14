@@ -58,14 +58,14 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			DoAndReturn(func(meta *model.FileMeta, acl []*model.FileACLEntry) error {
+			DoAndReturn(func(meta *model.FileMeta, _ []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
 			}).
@@ -109,21 +109,21 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/png", model.FileTypeThumbnail).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, err := png.Decode(src)
 				return err
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			DoAndReturn(func(meta *model.FileMeta, acl []*model.FileACLEntry) error {
+			DoAndReturn(func(meta *model.FileMeta, _ []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
 			}).
@@ -172,21 +172,21 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+			Do(func(src io.Reader, _, _, _ string, _ model.FileType) {
 				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/png", model.FileTypeThumbnail).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, err := png.Decode(src)
 				return err
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Do(func(meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
@@ -238,21 +238,21 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+			Do(func(src io.Reader, _, _, _ string, _ model.FileType) {
 				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/png", model.FileTypeThumbnail).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, err := png.Decode(src)
 				return err
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Do(func(meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
@@ -304,26 +304,26 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+			Do(func(src io.Reader, _, _, _ string, _ model.FileType) {
 				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Do(func(meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
 			WaveformMp3(gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(io.Discard, src) }).
+			Do(func(src io.ReadSeeker, _, _ int) { _, _ = io.Copy(io.Discard, src) }).
 			Return(waveform, nil).
 			Times(1)
 
@@ -368,26 +368,26 @@ func TestManagerImpl_Save(t *testing.T) {
 
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
-			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+			Do(func(src io.Reader, _, _, _ string, _ model.FileType) {
 				_, _ = io.Copy(io.Discard, src)
 			}).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
 			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
-			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
 				_, _ = io.Copy(io.Discard, src)
 				return nil
 			}).
 			Times(1)
 		repo.EXPECT().
 			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
-			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Do(func(meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
 			WaveformWav(gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(io.Discard, src) }).
+			Do(func(src io.ReadSeeker, _, _ int) { _, _ = io.Copy(io.Discard, src) }).
 			Return(waveform, nil).
 			Times(1)
 

@@ -13,7 +13,7 @@ func migrateCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "migrate",
 		Short: "Execute database schema migration only",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			engine, err := c.getDatabase()
 			if err != nil {
 				return err
