@@ -340,7 +340,7 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: caddy:latest
+    image: caddy:2.7.5-alpine
     container_name: traq-reverse-proxy
     restart: always
     ports:
@@ -388,7 +388,7 @@ services:
       - "80"
 
   db:
-    image: mariadb:10.6.4
+    image: mariadb:10.11.6
     container_name: traq-db
     restart: always
     environment:
