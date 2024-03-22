@@ -21,6 +21,8 @@ import (
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/oidc"
+	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -469,6 +471,10 @@ func provideImageProcessorConfig(c *Config) imaging.Config {
 	}
 }
 
+func provideOIDCService(c *Config, repo repository.Repository, rbac rbac.RBAC) *oidc.Service {
+	return oidc.NewOIDCService(repo, c.Origin, rbac)
+}
+
 func provideAuthGithubProviderConfig(c *Config) auth.GithubProviderConfig {
 	return auth.GithubProviderConfig{
 		ClientID:               c.ExternalAuth.GitHub.ClientID,
@@ -530,6 +536,7 @@ func provideRouterExternalAuthConfig(c *Config) router.ExternalAuthConfig {
 
 func provideRouterConfig(c *Config) *router.Config {
 	return &router.Config{
+		Origin:           c.Origin,
 		Development:      c.DevMode,
 		Version:          Version,
 		Revision:         Revision,

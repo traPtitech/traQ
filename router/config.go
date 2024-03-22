@@ -8,6 +8,8 @@ import (
 
 // Config APIサーバー設定
 type Config struct {
+	// Origin サーバーオリジン (e.g. https://q.trap.jp)
+	Origin string
 	// 開発モードかどうか
 	Development bool
 	// Version サーバーバージョン
@@ -66,6 +68,7 @@ func (c ExternalAuthConfig) ValidProviders() map[string]bool {
 
 func provideOAuth2Config(c *Config) oauth2.Config {
 	return oauth2.Config{
+		Origin:           c.Origin,
 		AccessTokenExp:   c.AccessTokenExp,
 		IsRefreshEnabled: c.IsRefreshEnabled,
 	}

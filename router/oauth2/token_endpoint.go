@@ -5,11 +5,15 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
+	"github.com/traPtitech/traQ/utils"
+	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 )
 
 type oauth2ErrorResponse struct {
@@ -23,6 +27,7 @@ type tokenResponse struct {
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in,omitempty"`
 	RefreshToken string `json:"refresh_token,omitempty"`
+	IDToken      string `json:"id_token,omitempty"`
 	Scope        string `json:"scope,omitempty"`
 }
 
@@ -43,6 +48,54 @@ func (h *Handler) TokenEndpointHandler(c echo.Context) error {
 	default:
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errUnsupportedGrantType})
 	}
+}
+
+func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID) (string, error) {
+	// Base claims
+	claims := jwt.MapClaims{
+		"iss": h.Origin,
+		"sub": userID.String(),
+		"aud": client.ID,
+		"exp": token.Deadline().Unix(),
+		"iat": token.CreatedAt.Unix(),
+	}
+	// Extra claims according to scopes (profile)
+	userInfo, err := h.OIDC.GetUserInfo(userID, token.Scopes)
+	if err != nil {
+		return "", err
+	}
+	claims = utils.MergeMap(userInfo, claims)
+	// Sign to JWT
+	return jwt2.Sign(claims)
+}
+
+func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool) (*tokenResponse, error) {
+	isOIDC := scopes.Contains("openid")
+	// OIDCの場合は、Refresh TokenのScopeの管理（主にoffline_access周り）が面倒なので、一律で発行しないことにする
+	refresh := h.IsRefreshEnabled && grantTypeRefreshAllowed && !isOIDC
+	token, err := h.Repo.IssueToken(client, userID, client.RedirectURI, scopes, h.AccessTokenExp, refresh)
+	if err != nil {
+		return nil, err
+	}
+	res := &tokenResponse{
+		TokenType:   authScheme,
+		AccessToken: token.AccessToken,
+		ExpiresIn:   token.ExpiresIn,
+	}
+	if len(originalScopes) != len(token.Scopes) {
+		res.Scope = token.Scopes.String()
+	}
+	if token.IsRefreshEnabled() {
+		res.RefreshToken = token.RefreshToken
+	}
+	if scopes.Contains("openid") {
+		idToken, err := h.issueIDToken(client, token, userID)
+		if err != nil {
+			return nil, err
+		}
+		res.IDToken = idToken
+	}
+	return res, nil
 }
 
 type tokenEndpointAuthorizationCodeHandlerRequest struct {
@@ -119,22 +172,10 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	newToken, err := h.Repo.IssueToken(client, code.UserID, client.RedirectURI, code.Scopes, h.AccessTokenExp, h.IsRefreshEnabled)
+	res, err := h.issueToken(client, code.UserID, code.Scopes, code.OriginalScopes, true)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
-	}
-
-	res := &tokenResponse{
-		TokenType:   authScheme,
-		AccessToken: newToken.AccessToken,
-		ExpiresIn:   newToken.ExpiresIn,
-	}
-	if len(code.OriginalScopes) != len(newToken.Scopes) {
-		res.Scope = newToken.Scopes.String()
-	}
-	if newToken.IsRefreshEnabled() {
-		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -212,22 +253,10 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	newToken, err := h.Repo.IssueToken(client, user.GetID(), client.RedirectURI, validScopes, h.AccessTokenExp, h.IsRefreshEnabled)
+	res, err := h.issueToken(client, user.GetID(), validScopes, reqScopes, true)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
-	}
-
-	res := &tokenResponse{
-		TokenType:   authScheme,
-		AccessToken: newToken.AccessToken,
-		ExpiresIn:   newToken.ExpiresIn,
-	}
-	if len(reqScopes) != len(validScopes) {
-		res.Scope = newToken.Scopes.String()
-	}
-	if newToken.IsRefreshEnabled() {
-		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -282,19 +311,10 @@ func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	newToken, err := h.Repo.IssueToken(client, uuid.Nil, client.RedirectURI, validScopes, h.AccessTokenExp, false)
+	res, err := h.issueToken(client, uuid.Nil, validScopes, reqScopes, false)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
-	}
-
-	res := &tokenResponse{
-		TokenType:   authScheme,
-		AccessToken: newToken.AccessToken,
-		ExpiresIn:   newToken.ExpiresIn,
-	}
-	if len(reqScopes) != len(validScopes) {
-		res.Scope = newToken.Scopes.String()
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -368,26 +388,15 @@ func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	newToken, err := h.Repo.IssueToken(client, token.UserID, token.RedirectURI, newScopes, h.AccessTokenExp, h.IsRefreshEnabled)
+	res, err := h.issueToken(client, token.UserID, newScopes, token.Scopes, true)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
+	// 旧リフレッシュトークン削除
 	if err := h.Repo.DeleteTokenByRefresh(req.RefreshToken); err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
-	}
-
-	res := &tokenResponse{
-		TokenType:   authScheme,
-		AccessToken: newToken.AccessToken,
-		ExpiresIn:   newToken.ExpiresIn,
-	}
-	if len(token.Scopes) != len(newToken.Scopes) {
-		res.Scope = newToken.Scopes.String()
-	}
-	if newToken.IsRefreshEnabled() {
-		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }

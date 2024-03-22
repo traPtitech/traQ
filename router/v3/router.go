@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/ogp"
+	"github.com/traPtitech/traQ/service/oidc"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/search"
@@ -34,6 +35,7 @@ type Handlers struct {
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
 	OGP            ogp.Service
+	OIDC           *oidc.Service
 	VM             *viewer.Manager
 	WebRTC         *webrtcv3.Manager
 	Imaging        imaging.Processor
@@ -113,6 +115,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
 				apiUsersMe.PATCH("", h.EditMe, requires(permission.EditMe))
+				apiUsersMe.GET("/oidc", h.GetMeOIDC, requires(permission.GetOIDCUserInfo))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode), blockBot)
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
@@ -375,6 +378,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	apiNoAuth := e.Group("/v3")
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
+		apiNoAuth.GET("/jwks", h.GetJWKS)
 		if h.Config.AllowSignUp {
 			apiNoAuth.POST("/users", h.CreateUser, noLogin)
 		}
