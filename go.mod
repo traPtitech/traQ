@@ -16,7 +16,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
-	github.com/elastic/go-elasticsearch/v8 v8.12.1
+	github.com/elastic/go-elasticsearch/v8 v8.13.0
 	github.com/fivenp/go-identicon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/gavv/httpexpect/v2 v2.16.0
 	github.com/go-audio/audio v1.0.0
@@ -103,7 +103,7 @@ require (
 	github.com/docker/docker v20.10.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/elastic/elastic-transport-go/v8 v8.4.0 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.5.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
