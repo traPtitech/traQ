@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"firebase.google.com/go/messaging"
+	"firebase.google.com/go/v4/messaging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/exp/utf8string"
