@@ -306,8 +306,8 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/motoki317/go-waveform v0.0.3 h1:6efPqPi1VXRtFCIVworPclxzh0ysP2k9+5CwnEv56bg=
 github.com/motoki317/go-waveform v0.0.3/go.mod h1:qvnSTo335eMOHcawLX9By5yNC+FQ1FFCHe5HkisfUTo=
-github.com/motoki317/sc v1.8.0 h1:TGcBz+wvvUCgY64HWLe0dcs9ui/mNB/L5T8Bac6i+Yc=
-github.com/motoki317/sc v1.8.0/go.mod h1:hB1MaSQaz8ujgCJVRj7iiZQ7x0vivDcar4vrRi3e+EU=
+github.com/motoki317/sc v1.8.1 h1:2WcCDvuqwbthjEXey/AMoOsTbsXsyh3b6NTpTzJON7g=
+github.com/motoki317/sc v1.8.1/go.mod h1:hB1MaSQaz8ujgCJVRj7iiZQ7x0vivDcar4vrRi3e+EU=
 github.com/mrunalp/fileutils v0.5.0/go.mod h1:M1WthSahJixYnrXQl/DFQuteStB1weuxD2QJNHXfbSQ=
 github.com/ncw/swift/v2 v2.0.2 h1:jx282pcAKFhmoZBSdMcCRFn9VWkoBIRsCpe+yZq7vEk=
 github.com/ncw/swift/v2 v2.0.2/go.mod h1:z0A9RVdYPjNjXVo2pDOPxZ4eu3oarO1P91fTItcb+Kg=
