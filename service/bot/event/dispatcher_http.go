@@ -41,7 +41,7 @@ func newHTTPDispatcher(logger *zap.Logger) *httpDispatcher {
 func (d *httpDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid.UUID, body []byte) (ok bool, log *model.BotEventLog) {
 	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))
 	req.Header.Set(headerUserAgent, ua)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	req.Header.Set(headerTRAQBotEvent, event.String())
 	req.Header.Set(headerTRAQBotRequestID, reqID.String())
 	req.Header.Set(headerTRAQBotVerificationToken, b.VerificationToken)
