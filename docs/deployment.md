@@ -340,7 +340,7 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: caddy:2.7.5-alpine
+    image: caddy:2.7.6-alpine
     container_name: traq-reverse-proxy
     restart: always
     ports:
