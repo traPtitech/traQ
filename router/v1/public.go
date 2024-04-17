@@ -64,7 +64,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return extension.ServeWithETag(c, echo.MIMEApplicationJSONCharsetUTF8, emojiJSON)
+	return extension.ServeWithETag(c, echo.MIMEApplicationJSON, emojiJSON)
 }
 
 // GetPublicEmojiCSS GET /public/emoji.css

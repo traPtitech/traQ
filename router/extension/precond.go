@@ -209,7 +209,7 @@ func ServeJSONWithETag(c echo.Context, i interface{}) error {
 		return err
 	}
 
-	return ServeWithETag(c, echo.MIMEApplicationJSONCharsetUTF8, b)
+	return ServeWithETag(c, echo.MIMEApplicationJSON, b)
 }
 
 // ServeWithETag Etagを付与して返します。304を返せるときは304を返します。

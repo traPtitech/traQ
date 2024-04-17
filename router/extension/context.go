@@ -30,7 +30,7 @@ func json(c echo.Context, code int, i interface{}, cfg jsonIter.API) error {
 	stream := cfg.BorrowStream(c.Response())
 	defer cfg.ReturnStream(stream)
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c.Response().WriteHeader(code)
 	stream.WriteVal(i)
 	stream.WriteRaw("\n")
