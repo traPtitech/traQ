@@ -388,7 +388,7 @@ services:
       - "80"
 
   db:
-    image: mariadb:10.11.6
+    image: mariadb:10.11.7
     container_name: traq-db
     restart: always
     environment:
