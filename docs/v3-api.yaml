@@ -5525,7 +5525,7 @@ components:
           pattern: '^[a-zA-Z0-9_-]{1,32}$'
         password:
           type: string
-          pattern: "^[\\\\x20-\\\\x7E]{10,32}$"
+          pattern: "^[\\x20-\\x7E]{10,32}$"
           description: パスワード
       required:
         - name
@@ -5653,7 +5653,7 @@ components:
         password:
           type: string
           description: パスワード
-          pattern: "^[\\\\x20-\\\\x7E]{10,32}$"
+          pattern: "^[\\x20-\\x7E]{10,32}$"
       required:
         - name
         - password
