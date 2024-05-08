@@ -51,12 +51,18 @@ func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string
 	// Required in UserInfo response
 	claims["sub"] = userID.String()
 
+	// Also supply some basic traQ ID related information
+	// These claims usually belong to 'profile' scope according to OpenID spec,
+	// but in traQ, we will just supply traQ ID related information as well
+	claims["name"] = user.GetName()
+	claims["preferred_username"] = user.GetName()
+	claims["picture"] = s.origin + "/api/v3/public/icon/" + user.GetName()
+
 	// Scope specific claims
 	if scopes.Contains("profile") {
-		claims["name"] = user.GetName()
-		claims["preferred_username"] = user.GetName()
-		claims["picture"] = s.origin + "/api/v3/public/icon/" + user.GetName()
 		claims["updated_at"] = user.GetUpdatedAt().Unix()
+		// Putting non-standard traq-specific claims under the 'traq.' key
+		// for clarity and to avoid possible conflict with other standard claims
 		claims["traq"] = map[string]any{
 			"bio":          user.GetBio(),
 			"groups":       groups,
