@@ -17,7 +17,6 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
 	github.com/elastic/go-elasticsearch/v8 v8.13.1
-	github.com/fivenp/go-identicon v0.0.0-20180326215656-a5b7d5ff972d
 	github.com/gavv/httpexpect/v2 v2.16.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
@@ -37,6 +36,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
+	github.com/motoki317/go-identicon v0.0.1
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/motoki317/sc v1.8.1
 	github.com/ncw/swift/v2 v2.0.2
