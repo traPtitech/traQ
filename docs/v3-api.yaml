@@ -5817,6 +5817,8 @@ components:
       title: OAuth2Scope
       description: OAuth2スコープ
       enum:
+        - openid
+        - profile
         - read
         - write
         - manage_bot
