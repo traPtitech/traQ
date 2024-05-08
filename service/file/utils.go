@@ -16,7 +16,10 @@ import (
 // 成功した場合、そのファイルのUUIDとnilを返します。
 func GenerateIconFile(m Manager, salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
-	icon := imaging.GenerateIcon(salt)
+	icon, err := imaging.GenerateIcon(salt)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
 	if err := png.Encode(&img, icon); err != nil {
 		return uuid.Nil, err

@@ -133,8 +133,6 @@ github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
-github.com/fivenp/go-identicon v0.0.0-20170128000056-5c327fb4e74a h1:nlaSiFY1VxmQqmmlHEVx5iUYTi2/1Q4utuuA1RxoHfk=
-github.com/fivenp/go-identicon v0.0.0-20170128000056-5c327fb4e74a/go.mod h1:OP6goBndFDJFLA3iLwBZRqDKVvFJL7fsYaPa5HnIR0M=
 github.com/fogleman/gg v1.3.0 h1:/7zJX8F6AaYQc57WQCyN9cAIz+4bCJGO9B+dyW29am8=
 github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/frankban/quicktest v1.11.3/go.mod h1:wRf/ReqHper53s+kmmSZizM8NamnL3IM0I9ntUbOk+k=
@@ -308,6 +306,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
+github.com/motoki317/go-identicon v0.0.1 h1:PF14Gwx6Qu+fqR9KTMvmKzJCzV3WOwzpisgVxsJjihM=
+github.com/motoki317/go-identicon v0.0.1/go.mod h1:c4MUzyFQAOv/N7KYiPjWHK5CkMR0PhxEpSrWGwCY+qs=
 github.com/motoki317/go-waveform v0.0.3 h1:6efPqPi1VXRtFCIVworPclxzh0ysP2k9+5CwnEv56bg=
 github.com/motoki317/go-waveform v0.0.3/go.mod h1:qvnSTo335eMOHcawLX9By5yNC+FQ1FFCHe5HkisfUTo=
 github.com/motoki317/sc v1.8.1 h1:2WcCDvuqwbthjEXey/AMoOsTbsXsyh3b6NTpTzJON7g=
