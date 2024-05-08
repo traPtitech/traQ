@@ -7,6 +7,8 @@ const (
 	RegisterUser = Permission("register_user")
 	// GetMe 自ユーザー情報取得権限
 	GetMe = Permission("get_me")
+	// GetOIDCUserInfo 自ユーザー情報取得権限 (OIDC専用)
+	GetOIDCUserInfo = Permission("get_oidc_userinfo")
 	// EditMe 自ユーザー情報変更権限
 	EditMe = Permission("edit_me")
 	// ChangeMyIcon 自ユーザーアイコン変更権限

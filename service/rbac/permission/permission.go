@@ -118,6 +118,7 @@ var List = []Permission{
 	GetUser,
 	RegisterUser,
 	GetMe,
+	GetOIDCUserInfo,
 	EditMe,
 	ChangeMyIcon,
 	ChangeMyPassword,

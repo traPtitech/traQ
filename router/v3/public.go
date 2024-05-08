@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jwt"
 )
 
 // GetVersion GET /version
@@ -26,6 +27,15 @@ func (h *Handlers) GetVersion(c echo.Context) error {
 			"signUpAllowed": h.Config.AllowSignUp,
 		},
 	})
+}
+
+// GetJWKS GET /jwks
+func (h *Handlers) GetJWKS(c echo.Context) error {
+	jwks, err := jwt.JWKSet(c.Request().Context())
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, jwks)
 }
 
 // GetPublicUserIcon GET /public/icon/{username}
