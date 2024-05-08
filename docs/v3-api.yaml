@@ -5291,6 +5291,9 @@ components:
           $ref: '#/components/schemas/OIDCTraqUserInfo'
       required:
         - sub
+        - name
+        - preferred_username
+        - picture
     OIDCTraqUserInfo:
       title: OIDCTraqUserInfo
       type: object
