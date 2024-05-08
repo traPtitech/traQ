@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/blendle/zapdriver v1.3.1
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
-	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
 	github.com/elastic/go-elasticsearch/v8 v8.13.1
@@ -111,6 +111,7 @@ require (
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -150,7 +151,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/pquerna/cachecontrol v0.2.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.53.0 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
@@ -192,7 +192,6 @@ require (
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
