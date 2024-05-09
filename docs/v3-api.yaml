@@ -7007,6 +7007,7 @@ components:
         - get_user
         - register_user
         - get_me
+        - get_oidc_userinfo
         - edit_me
         - change_my_icon
         - change_my_password
@@ -7089,6 +7090,7 @@ components:
         - GetUser
         - RegisterUser
         - GetMe
+        - GetOIDCUserInfo
         - EditMe
         - ChangeMyIcon
         - ChangeMyPassword
