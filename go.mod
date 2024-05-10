@@ -59,7 +59,7 @@ require (
 	golang.org/x/net v0.25.0
 	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sync v0.7.0
-	google.golang.org/api v0.178.0
+	google.golang.org/api v0.180.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/gorm v1.25.10
@@ -67,7 +67,7 @@ require (
 
 require (
 	cloud.google.com/go v0.112.2 // indirect
-	cloud.google.com/go/auth v0.3.0 // indirect
+	cloud.google.com/go/auth v0.4.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/firestore v1.14.0 // indirect
