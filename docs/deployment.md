@@ -440,6 +440,9 @@ example.com {
     handle /api/* {
         reverse_proxy backend:3000
     }
+    handle /.well-known/* {
+        reverse_proxy backend:3000
+    }
     handle /widget {
         uri strip_prefix /widget
         reverse_proxy widget:80

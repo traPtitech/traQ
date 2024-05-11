@@ -38,6 +38,16 @@ func GetSystemRoles() Roles {
 			oauth2Scope: true,
 			permissions: permission.PermissionsFromArray(manageBotPerms),
 		},
+		OpenID: &systemRole{
+			name:        OpenID,
+			oauth2Scope: true,
+			permissions: permission.PermissionsFromArray(openIDPerms),
+		},
+		Profile: &systemRole{
+			name:        Profile,
+			oauth2Scope: true,
+			permissions: permission.PermissionsFromArray(profilePerms),
+		},
 	}
 }
 

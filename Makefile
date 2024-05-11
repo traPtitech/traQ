@@ -2,7 +2,7 @@ SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go
 
 TEST_DB_PORT := 3100
 # renovate:image-tag imageName=ghcr.io/k1low/tbls
-TBLS_VERSION := "v1.74.1"
+TBLS_VERSION := "v1.74.3"
 # renovate:image-tag imageName=index.docker.io/stoplight/spectral
 SPECTRAL_VERSION := "6.11.1"
 
@@ -74,7 +74,7 @@ goreleaser-snapshot: ## Release dry-run
 update-frontend: ## Update frontend files in dev/frontend
 	@mkdir -p ./dev/frontend
 # renovate:github-url
-	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.19.1/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
+	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.20.0/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
 
 .PHONY: reset-frontend
 reset-frontend: ## Completely replace frontend files in dev/frontend

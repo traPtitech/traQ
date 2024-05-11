@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/coreos/go-oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"

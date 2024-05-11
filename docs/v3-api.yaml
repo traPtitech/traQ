@@ -1230,6 +1230,22 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchMeRequest'
       description: 自身のユーザー情報を変更します。
+  '/users/me/oidc':
+    get:
+      summary: 自分のユーザー詳細を取得 (OIDC UserInfo)
+      tags:
+        - me
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OIDCUserInfo'
+      operationId: getOIDCUserInfo
+      description: |
+        OIDCトークンを用いてユーザー詳細を取得します。
+        OIDC UserInfo Endpointです。
   '/users/{userId}/messages':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -5247,6 +5263,103 @@ components:
         - state
         - permissions
         - homeChannel
+    OIDCUserInfo:
+      title: OIDCUserInfo
+      type: object
+      description: 自分のユーザー詳細情報
+      properties:
+        sub:
+          type: string
+          description: ユーザーUUID
+          format: uuid
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+          description: ユーザー名
+        preferred_username:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+          description: ユーザー名
+        picture:
+          type: string
+          description: アイコン画像URL
+        updated_at:
+          type: integer
+          format: int64
+          description: 更新日時
+        traq:
+          $ref: '#/components/schemas/OIDCTraqUserInfo'
+      required:
+        - sub
+        - name
+        - preferred_username
+        - picture
+    OIDCTraqUserInfo:
+      title: OIDCTraqUserInfo
+      type: object
+      description: traQ特有のユーザー詳細情報
+      properties:
+        bio:
+          type: string
+          description: 自己紹介(biography)
+          maxLength: 1000
+        groups:
+          type: array
+          description: 所属グループのUUIDの配列
+          items:
+            type: string
+            format: uuid
+        tags:
+          type: array
+          description: タグリスト
+          items:
+            $ref: '#/components/schemas/UserTag'
+        last_online:
+          type: string
+          description: 最終オンライン日時
+          format: date-time
+          nullable: true
+        twitter_id:
+          type: string
+          description: Twitter ID
+          pattern: '^[a-zA-Z0-9_]{1,15}$'
+        display_name:
+          type: string
+          description: ユーザー表示名
+          minLength: 0
+          maxLength: 32
+        icon_file_id:
+          type: string
+          format: uuid
+          description: アイコンファイルUUID
+        bot:
+          type: boolean
+          description: BOTかどうか
+        state:
+          $ref: '#/components/schemas/UserAccountState'
+        permissions:
+          type: array
+          description: 所有している権限の配列
+          items:
+            $ref: '#/components/schemas/UserPermission'
+        home_channel:
+          type: string
+          format: uuid
+          description: ホームチャンネル
+          nullable: true
+      required:
+        - bio
+        - groups
+        - tags
+        - updated_at
+        - last_online
+        - twitter_id
+        - display_name
+        - icon_file_id
+        - bot
+        - state
+        - permissions
+        - home_channel
     PatchChannelSubscribersRequest:
       title: PatchChannelSubscribersRequest
       type: object
@@ -5704,6 +5817,8 @@ components:
       title: OAuth2Scope
       description: OAuth2スコープ
       enum:
+        - openid
+        - profile
         - read
         - write
         - manage_bot
@@ -6892,6 +7007,7 @@ components:
         - get_user
         - register_user
         - get_me
+        - get_oidc_userinfo
         - edit_me
         - change_my_icon
         - change_my_password
@@ -6974,6 +7090,7 @@ components:
         - GetUser
         - RegisterUser
         - GetMe
+        - GetOIDCUserInfo
         - EditMe
         - ChangeMyIcon
         - ChangeMyPassword

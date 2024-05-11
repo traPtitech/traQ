@@ -69,4 +69,4 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           known_hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
       - name: Deploy
-        run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "sudo sh /srv/traQ-dev-server/deploy.sh traq-backend"
+        run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "sudo sh /srv/traq/deploy.sh traq-backend"
