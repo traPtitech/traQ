@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	firebase "firebase.google.com/go"
-	"firebase.google.com/go/messaging"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/messaging"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
@@ -231,7 +231,7 @@ func (c *clientImpl) sendMessages(messages []*messaging.Message) {
 }
 
 func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens []string, err error) {
-	res, err := c.c.SendAll(context.Background(), messages)
+	res, err := c.c.SendEach(context.Background(), messages)
 	if err != nil {
 		fcmBatchRequestCounter.WithLabelValues("error").Inc()
 		return nil, err
@@ -245,7 +245,7 @@ func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens 
 				continue
 			}
 			switch {
-			case messaging.IsRegistrationTokenNotRegistered(v.Error):
+			case messaging.IsUnregistered(v.Error):
 				invalidTokens = append(invalidTokens, messages[i].Token)
 			default:
 				c.logger.Warn("fcm: "+v.Error.Error(), zap.String("token", messages[i].Token))
