@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/zitadel/oidc/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/jwt"
