@@ -12,11 +12,11 @@ import (
 
 var (
 	priv *ecdsa.PrivateKey
-	jwks jwkset.JWKSet[any]
+	jwks jwkset.Storage
 )
 
 func init() {
-	jwks = jwkset.NewMemory[any]()
+	jwks = jwkset.NewMemoryStorage()
 }
 
 // SetupSigner JWTを発行・検証するためのSignerのセットアップ
@@ -25,9 +25,13 @@ func SetupSigner(privRaw []byte) error {
 	if err != nil {
 		return err
 	}
-
 	priv = _priv
-	return jwks.Store.WriteKey(context.Background(), jwkset.NewKey[any](priv, "traq"))
+
+	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{})
+	if err != nil {
+		return err
+	}
+	return jwks.KeyWrite(context.Background(), jwk)
 }
 
 // Sign JWTの発行を行う
