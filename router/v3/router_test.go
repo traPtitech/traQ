@@ -407,8 +407,8 @@ func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uu
 	return w
 }
 
-// CreateOAuth2Client OAuth2クライアントを必ず作成します
-func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
+// CreateOAuth2PublicClient OAuth2 Publicクライアントを必ず作成します
+func (env *Env) CreateOAuth2PublicClient(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
@@ -418,6 +418,26 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 		Name:         name,
 		Description:  "desc",
 		Confidential: false,
+		CreatorID:    creatorID,
+		RedirectURI:  "https://example.com",
+		Secret:       random.SecureAlphaNumeric(36),
+		Scopes:       model.AccessScopes{"read": {}},
+	}
+	require.NoError(t, env.Repository.SaveClient(client))
+	return client
+}
+
+// CreateOAuth2ConfidentialClient OAuth2 Confidentialクライアントを必ず作成します
+func (env *Env) CreateOAuth2ConfidentialClient(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	client := &model.OAuth2Client{
+		ID:           random.SecureAlphaNumeric(36),
+		Name:         name,
+		Description:  "desc",
+		Confidential: true,
 		CreatorID:    creatorID,
 		RedirectURI:  "https://example.com",
 		Secret:       random.SecureAlphaNumeric(36),

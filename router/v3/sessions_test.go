@@ -333,7 +333,7 @@ func TestHandlers_GetMyTokens(t *testing.T) {
 	path := "/api/v3/users/me/tokens"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
-	client := env.CreateOAuth2Client(t, rand, user.GetID())
+	client := env.CreateOAuth2PublicClient(t, rand, user.GetID())
 	tok := env.IssueToken(t, client, user.GetID())
 	require.ElementsMatch(t, tok.Scopes.StringArray(), []interface{}{"read"})
 	s := env.S(t, user.GetID())
@@ -374,7 +374,7 @@ func TestHandlers_RevokeMyToken(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
-	client := env.CreateOAuth2Client(t, rand, user.GetID())
+	client := env.CreateOAuth2PublicClient(t, rand, user.GetID())
 	tok := env.IssueToken(t, client, user.GetID())
 	tok2 := env.IssueToken(t, client, user2.GetID())
 	s := env.S(t, user.GetID())
