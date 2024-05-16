@@ -502,6 +502,7 @@ type OAuth2Client struct {
 	Description string             `json:"description"`
 	DeveloperID uuid.UUID          `json:"developerId"`
 	Scopes      model.AccessScopes `json:"scopes"`
+	Confidential bool              `json:"confidential"`
 }
 
 func formatOAuth2Client(oc *model.OAuth2Client) *OAuth2Client {
@@ -511,6 +512,7 @@ func formatOAuth2Client(oc *model.OAuth2Client) *OAuth2Client {
 		Description: oc.Description,
 		DeveloperID: oc.CreatorID,
 		Scopes:      oc.Scopes,
+		Confidential: oc.Confidential,
 	}
 }
 
@@ -530,6 +532,7 @@ type OAuth2ClientDetail struct {
 	Scopes      model.AccessScopes `json:"scopes"`
 	CallbackURL string             `json:"callbackUrl"`
 	Secret      string             `json:"secret"`
+	Confidential bool               `json:"confidential"`
 }
 
 func formatOAuth2ClientDetail(oc *model.OAuth2Client) *OAuth2ClientDetail {
@@ -541,6 +544,7 @@ func formatOAuth2ClientDetail(oc *model.OAuth2Client) *OAuth2ClientDetail {
 		Scopes:      oc.Scopes,
 		CallbackURL: oc.RedirectURI,
 		Secret:      oc.Secret,
+		Confidential: oc.Confidential,
 	}
 }
 
