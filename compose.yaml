@@ -31,7 +31,7 @@ services:
       - app:/app/storage
 
   frontend:
-    image: caddy:2.8.1-alpine
+    image: caddy:2.8.4-alpine
     restart: always
     expose:
       - "80"
