@@ -15,6 +15,7 @@
   ],
   "platform": "github",
   "platformAutomerge": true,
+  "automergeType": "branch",
   "rebaseWhen": "conflicted",
   "onboarding": false,
   "dependencyDashboardTitle": "Renovate Dashboard 🤖",
