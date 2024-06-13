@@ -51,7 +51,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zitadel/oidc/v3 v3.24.0
+	github.com/zitadel/oidc/v3 v3.25.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
@@ -181,9 +181,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
-	go.opentelemetry.io/otel v1.26.0 // indirect
-	go.opentelemetry.io/otel/metric v1.26.0 // indirect
-	go.opentelemetry.io/otel/trace v1.26.0 // indirect
+	go.opentelemetry.io/otel v1.27.0 // indirect
+	go.opentelemetry.io/otel/metric v1.27.0 // indirect
+	go.opentelemetry.io/otel/trace v1.27.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
