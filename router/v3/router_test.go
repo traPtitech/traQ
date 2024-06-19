@@ -420,7 +420,7 @@ func WithConfidential(confidential bool) OAuth2ClientOption {
 // CreateOAuth2Client OAuth2クライアントを必ず作成します
 func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID, opts ...OAuth2ClientOption) *model.OAuth2Client {
 	t.Helper()
-	if name == "rand" {
+	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
 	client := &model.OAuth2Client{
