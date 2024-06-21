@@ -50,7 +50,7 @@ func GetSystemRoles() Roles {
 		},
 		Client: &systemRole{
 			name:        Client,
-			oauth2Scope: true,
+			oauth2Scope: false,
 			permissions: permission.PermissionsFromArray(clientPerms),
 		},
 	}
