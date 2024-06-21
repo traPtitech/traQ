@@ -4,7 +4,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
-// Cliet Clientロール (for OAuth2 client credentials grant)
+// Client Clientロール (for OAuth2 client credentials grant)
 const Client = "client"
 
 var clientPerms = []permission.Permission{
