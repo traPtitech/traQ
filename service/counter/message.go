@@ -1,7 +1,6 @@
 package counter
 
 import (
-	//"fmt"
 	"sync"
 
 	"github.com/leandro-lugaresi/hub"
