@@ -1,7 +1,7 @@
 package counter
 
 import (
-	"fmt"
+	//"fmt"
 	"sync"
 
 	"github.com/leandro-lugaresi/hub"
@@ -34,10 +34,14 @@ type messageCounterImpl struct {
 // NewMessageCounter 全メッセージ数カウンタを生成します
 func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 	counter := &messageCounterImpl{}
-	if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
-		return nil, fmt.Errorf("failed to load total messages count: %w", err)
-	}
-	messagesCounter.Add(float64(counter.count))
+
+	go func() {
+		if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
+			panic(err)
+		}
+		messagesCounter.Add(float64(counter.count))
+	}()
+
 	go func() {
 		for range hub.Subscribe(1, event.MessageCreated).Receiver {
 			counter.inc()
