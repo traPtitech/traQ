@@ -138,7 +138,7 @@ func (repo *Repository) DeleteAuthorize(code string) error {
 // IssueToken implements OAuth2Repository interface.
 func (repo *Repository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
-		ID:             uuid.Must(uuid.NewV4()),
+		ID:             uuid.Must(uuid.NewV7()),
 		UserID:         userID,
 		RedirectURI:    redirectURI,
 		AccessToken:    random.SecureAlphaNumeric(36),

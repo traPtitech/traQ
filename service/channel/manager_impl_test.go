@@ -298,7 +298,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 				repo := mock_repository.NewMockChannelRepository(ctrl)
 				cm := initCM(t, repo)
 
-				cid := uuid.Must(uuid.NewV4())
+				cid := uuid.Must(uuid.NewV7())
 				createdAt := time.Now()
 				expected := &model.Channel{
 					ID:         cid,
@@ -446,42 +446,42 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 			{
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV4()),
+					UpdaterID: uuid.Must(uuid.NewV7()),
 					Topic:     optional.From(""),
 				},
 			},
 			{
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID:  uuid.Must(uuid.NewV4()),
+					UpdaterID:  uuid.Must(uuid.NewV7()),
 					Visibility: optional.From(true),
 				},
 			},
 			{
 				ID: cA,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID:          uuid.Must(uuid.NewV4()),
+					UpdaterID:          uuid.Must(uuid.NewV7()),
 					ForcedNotification: optional.From(true),
 				},
 			},
 			{
 				ID: cABBC,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV4()),
+					UpdaterID: uuid.Must(uuid.NewV7()),
 					Parent:    optional.From(pubChannelRootUUID),
 				},
 			},
 			{
 				ID: cABCE,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV4()),
+					UpdaterID: uuid.Must(uuid.NewV7()),
 					Parent:    optional.From(cABCD),
 				},
 			},
 			{
 				ID: cEFGHI,
 				Args: repository.UpdateChannelArgs{
-					UpdaterID:          uuid.Must(uuid.NewV4()),
+					UpdaterID:          uuid.Must(uuid.NewV7()),
 					Name:               optional.From("test"),
 					Topic:              optional.From("test"),
 					Visibility:         optional.From(false),

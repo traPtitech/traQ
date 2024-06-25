@@ -35,7 +35,7 @@ func (repo *Repository) GetOrCreateTag(name string) (*model.Tag, error) {
 	tag := &model.Tag{}
 	err := repo.db.
 		Where(&model.Tag{Name: name}).
-		Attrs(&model.Tag{ID: uuid.Must(uuid.NewV4())}).
+		Attrs(&model.Tag{ID: uuid.Must(uuid.NewV7())}).
 		FirstOrCreate(tag).
 		Error
 	return tag, err

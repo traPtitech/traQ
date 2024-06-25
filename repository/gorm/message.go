@@ -22,7 +22,7 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 	}
 
 	m := &model.Message{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uuid.Must(uuid.NewV7()),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
@@ -87,7 +87,7 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 
 		// archiving
 		if err := tx.Create(&model.ArchivedMessage{
-			ID:        uuid.Must(uuid.NewV4()),
+			ID:        uuid.Must(uuid.NewV7()),
 			MessageID: oldMes.ID,
 			UserID:    oldMes.UserID,
 			Text:      oldMes.Text,

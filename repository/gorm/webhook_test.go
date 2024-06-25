@@ -30,7 +30,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 	t.Run("channel not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateWebhook(random2.AlphaNumeric(20), "aaa", uuid.Must(uuid.NewV4()), fid, user.GetID(), "test")
+		_, err := repo.CreateWebhook(random2.AlphaNumeric(20), "aaa", uuid.Must(uuid.NewV7()), fid, user.GetID(), "test")
 		assert.Error(t, err)
 	})
 
@@ -67,7 +67,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.UpdateWebhook(uuid.Must(uuid.NewV4()), repository.UpdateWebhookArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateWebhook(uuid.Must(uuid.NewV7()), repository.UpdateWebhookArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid name", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			ChannelID: optional.From(uuid.Must(uuid.NewV4())),
+			ChannelID: optional.From(uuid.Must(uuid.NewV7())),
 		})
 		assert.Error(t, err)
 	})
@@ -92,7 +92,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			CreatorID: optional.From(uuid.Must(uuid.NewV4())),
+			CreatorID: optional.From(uuid.Must(uuid.NewV7())),
 		})
 		assert.Error(t, err)
 	})
@@ -149,7 +149,7 @@ func TestRepositoryImpl_DeleteWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.DeleteWebhook(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteWebhook(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -177,7 +177,7 @@ func TestRepositoryImpl_GetWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.GetWebhook(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetWebhook(uuid.Must(uuid.NewV7()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -211,7 +211,7 @@ func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.GetWebhookByBotUserID(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetWebhookByBotUserID(uuid.Must(uuid.NewV7()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 

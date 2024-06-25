@@ -65,7 +65,7 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV4()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV7()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -146,7 +146,7 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {

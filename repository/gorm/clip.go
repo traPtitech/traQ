@@ -19,7 +19,7 @@ func (repo *Repository) CreateClipFolder(userID uuid.UUID, name string, descript
 		return nil, repository.ErrNilID
 	}
 
-	uid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
 	clipFolder := &model.ClipFolder{
 		ID:          uid,
 		Description: description,

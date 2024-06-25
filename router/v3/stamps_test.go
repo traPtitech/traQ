@@ -153,7 +153,7 @@ func TestHandlers_GetStamp(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.GET(path, uuid.Must(uuid.NewV4())).
+		e.GET(path, uuid.Must(uuid.NewV7())).
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
@@ -220,7 +220,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PatchStampRequest{CreatorID: optional.From(uuid.Must(uuid.NewV4()))}).
+			WithJSON(&PatchStampRequest{CreatorID: optional.From(uuid.Must(uuid.NewV7()))}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

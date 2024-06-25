@@ -40,7 +40,7 @@ func NewDispatcher(logger *zap.Logger, repo repository.BotRepository, s *botWS.S
 }
 
 func (d *dispatcherImpl) Send(b *model.Bot, event model.BotEventType, body []byte) (ok bool) {
-	reqID := uuid.Must(uuid.NewV4())
+	reqID := uuid.Must(uuid.NewV7())
 
 	var log *model.BotEventLog
 	switch b.Mode {

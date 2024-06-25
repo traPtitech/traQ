@@ -30,7 +30,7 @@ func TestUsersQuery_NotBot(t *testing.T) {
 func TestUsersQuery_CMemberOf(t *testing.T) {
 	t.Parallel()
 
-	id, _ := uuid.NewV4()
+	id, _ := uuid.NewV7()
 	assert.EqualValues(t,
 		UsersQuery{IsCMemberOf: optional.From(id)},
 		UsersQuery{}.CMemberOf(id),
@@ -40,7 +40,7 @@ func TestUsersQuery_CMemberOf(t *testing.T) {
 func TestUsersQuery_GMemberOf(t *testing.T) {
 	t.Parallel()
 
-	id, _ := uuid.NewV4()
+	id, _ := uuid.NewV7()
 	assert.EqualValues(t,
 		UsersQuery{IsGMemberOf: optional.From(id)},
 		UsersQuery{}.GMemberOf(id),

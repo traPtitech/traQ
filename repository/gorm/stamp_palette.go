@@ -18,7 +18,7 @@ func (repo *Repository) CreateStampPalette(name, description string, stamps mode
 		return nil, repository.ErrNilID
 	}
 	stampPalette := &model.StampPalette{
-		ID:          uuid.Must(uuid.NewV4()),
+		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
 		Description: description,
 		Stamps:      stamps,

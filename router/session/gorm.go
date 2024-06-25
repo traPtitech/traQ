@@ -280,7 +280,7 @@ func (ss *sessionStore) IssueSession(userID uuid.UUID, data map[string]interface
 
 	s := &model.SessionRecord{
 		Token:       random.SecureAlphaNumeric(50),
-		ReferenceID: uuid.Must(uuid.NewV4()),
+		ReferenceID: uuid.Must(uuid.NewV7()),
 		UserID:      userID,
 		Created:     time.Now(),
 	}

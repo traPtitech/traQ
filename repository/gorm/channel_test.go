@@ -108,7 +108,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
 				user1.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
 				user2.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
-				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelMarkAndNotify,
+				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelMarkAndNotify,
 			},
 		}
 		_, _, err := repo.ChangeChannelSubscription(ch.ID, args)
@@ -120,7 +120,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
 				user1.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
 				user2.GetID():           model.ChannelSubscribeLevelNone,
-				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelNone,
+				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelNone,
 			},
 		}
 		_, _, err = repo.ChangeChannelSubscription(ch.ID, args)
@@ -144,7 +144,7 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV7()))
 		assert.Error(t, err)
 	})
 

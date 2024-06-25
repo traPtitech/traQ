@@ -24,7 +24,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		meta := &model.FileMeta{
-			ID:   uuid.Must(uuid.NewV4()),
+			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
 			Mime: "application/octet-stream",
 			Size: 10,
@@ -153,7 +153,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Parallel()
 
 		meta := &model.FileMeta{
-			ID:   uuid.Must(uuid.NewV4()),
+			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
 			Mime: "application/octet-stream",
 			Size: 10,
@@ -199,7 +199,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 
 		user2 := mustMakeUser(t, repo, rand)
 		meta := &model.FileMeta{
-			ID:   uuid.Must(uuid.NewV4()),
+			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
 			Mime: "application/octet-stream",
 			Size: 10,
@@ -255,7 +255,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 
 		deniedUser := mustMakeUser(t, repo, rand)
 		meta := &model.FileMeta{
-			ID:   uuid.Must(uuid.NewV4()),
+			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
 			Mime: "application/octet-stream",
 			Size: 10,

@@ -28,9 +28,9 @@ func TestAuthenticateUser(t *testing.T) {
 		tt := []UserInfo{
 			&User{Bot: true},
 			&User{},
-			&User{Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Salt: "アイウエオ"},
-			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: "アイウエオ"},
-			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes())},
+			&User{Password: hex.EncodeToString(uuid.Must(uuid.NewV7()).Bytes()), Salt: "アイウエオ"},
+			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV7()).Bytes()), Password: "アイウエオ"},
+			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV7()).Bytes()), Password: hex.EncodeToString(uuid.Must(uuid.NewV7()).Bytes())},
 		}
 		for _, u := range tt {
 			assert.Error(u.Authenticate("test"))

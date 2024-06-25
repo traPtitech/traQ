@@ -18,9 +18,9 @@ import (
 
 // CreateBot implements BotRepository interface.
 func (repo *Repository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
-	uid := uuid.Must(uuid.NewV4())
-	bid := uuid.Must(uuid.NewV4())
-	tid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
+	bid := uuid.Must(uuid.NewV7())
+	tid := uuid.Must(uuid.NewV7())
 	u := &model.User{
 		ID:          uid,
 		Name:        "BOT_" + name,
@@ -296,7 +296,7 @@ func (repo *Repository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 			return err
 		}
 
-		tid := uuid.Must(uuid.NewV4())
+		tid := uuid.Must(uuid.NewV7())
 		scopes := model.AccessScopes{}
 		scopes.Add("bot")
 		t := &model.OAuth2Token{

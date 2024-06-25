@@ -71,7 +71,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV7()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("duplicate", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV7()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -310,7 +310,7 @@ func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -344,7 +344,7 @@ func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("cannot remove last admin", func(t *testing.T) {

@@ -99,7 +99,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
-	uid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
 	user := model.User{
 		ID:          uid,
 		Name:        args.Name,
@@ -312,7 +312,7 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 
 func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
-		ID:          uuid.Must(uuid.NewV4()),
+		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
 		Description: description,
 		Icon:        iconFileID,
@@ -619,7 +619,7 @@ func (repo *TestRepository) GetOrCreateTag(name string) (*model.Tag, error) {
 		}
 	}
 	t := model.Tag{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uuid.Must(uuid.NewV7()),
 		Name:      name,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -726,7 +726,7 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 }
 
 func (repo *TestRepository) CreateChannel(ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
-	ch.ID = uuid.Must(uuid.NewV4())
+	ch.ID = uuid.Must(uuid.NewV7())
 	ch.IsPublic = true
 	ch.CreatedAt = time.Now()
 	ch.UpdatedAt = time.Now()
@@ -901,7 +901,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	}
 
 	m := &model.Message{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uuid.Must(uuid.NewV7()),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
@@ -1281,8 +1281,8 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, i
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
-	uid := uuid.Must(uuid.NewV4())
-	bid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
+	bid := uuid.Must(uuid.NewV7())
 	u := model.User{
 		ID:          uid,
 		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),

@@ -62,7 +62,7 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV7()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolder(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolder(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -135,7 +135,7 @@ func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolderMessage(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolderMessage(uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, err := repo.AddClipFolderMessage(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()))
+		_, err := repo.AddClipFolderMessage(uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -250,7 +250,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetClipFolder(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetClipFolder(uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
