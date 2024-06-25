@@ -19,6 +19,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
+	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -60,18 +61,27 @@ func TestMain(m *testing.M) {
 		s2,
 		s3,
 	}
+	config := &driverMysql.Config{
+		User:                 user,
+		Passwd:               pass,
+		Net:                  "tcp",
+		Addr:                 fmt.Sprintf("%s:%s", host, port),
+		Collation:            "utf8mb4_general_ci",
+		ParseTime:            true,
+		AllowNativePasswords: true,
+	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
 		panic(err)
 	}
 
 	for _, key := range dbs {
 		env := &Env{}
-
+		config.DBName = fmt.Sprintf("%s%s", dbPrefix, key)
 		l := zap.NewNop()
 
 		// テスト用データベース接続
 		engine, err := gorm.Open(mysql.New(mysql.Config{
-			DSN: fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)),
+			DSNConfig: config,
 		}))
 		if err != nil {
 			panic(err)
