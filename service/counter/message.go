@@ -12,10 +12,12 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-var messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
-	Namespace: "traq",
-	Name:      "messages_count_total",
-})
+// Do not initialize messagesCounter until DB operation is completed
+// /api/metrics will not provide traq_messages_count_total until all previous messages are counted
+var (
+	messagesCounter prometheus.Counter
+	once            sync.Once
+)
 
 // MessageCounter 全メッセージ数カウンタ
 type MessageCounter interface {
@@ -38,7 +40,16 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 		if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
 			panic(err)
 		}
-		messagesCounter.Add(float64(counter.count))
+
+		once.Do(func() {
+			// Initialize messagesCounter
+			// /api/metrics will not provide traq_messages_count_total until here
+			messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
+				Namespace: "traq",
+				Name:      "messages_count_total",
+			})
+			messagesCounter.Add(float64(counter.count))
+		})
 	}()
 
 	go func() {
