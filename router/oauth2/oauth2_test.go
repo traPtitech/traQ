@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 		db1,
 		db2,
 	}
-	config:= &driverMysql.Config{
+	config := &driverMysql.Config{
 		User:                 user,
 		Passwd:               pass,
 		Net:                  "tcp",
