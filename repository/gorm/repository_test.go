@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 		common2,
 		common3,
 	}
-	config:= &driverMysql.Config{
+	config := &driverMysql.Config{
 		User:                 user,
 		Passwd:               pass,
 		Net:                  "tcp",
