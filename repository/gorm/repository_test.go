@@ -166,7 +166,7 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string) mod
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
 	require.NoError(t, err)
 	return u
 }
@@ -211,7 +211,7 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 func mustMakeDummyFile(t *testing.T, repo repository.Repository) *model.FileMeta {
 	t.Helper()
 	meta := &model.FileMeta{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.Must(uuid.NewV7()),
 		Name: "dummy",
 		Mime: "application/octet-stream",
 		Size: 10,

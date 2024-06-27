@@ -20,8 +20,8 @@ func (repo *Repository) CreateWebhook(name, description string, channelID, iconF
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
 
-	uid := uuid.Must(uuid.NewV4())
-	bid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
+	bid := uuid.Must(uuid.NewV7())
 	u := &model.User{
 		ID:          uid,
 		Name:        "Webhook#" + base64.RawURLEncoding.EncodeToString(uid.Bytes()),

@@ -51,7 +51,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		ID:           random.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    uuid.Must(uuid.NewV7()),
 		Secret:       random.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
@@ -482,7 +482,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			ID:           random.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.Must(uuid.NewV4()),
+			CreatorID:    uuid.Must(uuid.NewV7()),
 			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopes,
 		}

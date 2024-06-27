@@ -25,7 +25,7 @@ func (repo *Repository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, err
 			return convertError(err)
 		}
 
-		p = model.Pin{ID: uuid.Must(uuid.NewV4()), MessageID: messageID, UserID: userID}
+		p = model.Pin{ID: uuid.Must(uuid.NewV7()), MessageID: messageID, UserID: userID}
 		if err := tx.Create(&p).Error; err != nil {
 			if gormutil.IsMySQLDuplicatedRecordErr(err) {
 				return repository.ErrAlreadyExists

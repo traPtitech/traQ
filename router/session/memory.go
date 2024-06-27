@@ -225,7 +225,7 @@ func (ms *memoryStore) IssueSession(userID uuid.UUID, data map[string]interface{
 	if data == nil {
 		data = map[string]interface{}{}
 	}
-	s := newMemorySession(random.SecureAlphaNumeric(50), uuid.Must(uuid.NewV4()), userID, time.Now(), data)
+	s := newMemorySession(random.SecureAlphaNumeric(50), uuid.Must(uuid.NewV7()), userID, time.Now(), data)
 	ms.Lock()
 	ms.sessions[s.Token()] = s
 	ms.Unlock()

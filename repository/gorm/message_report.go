@@ -17,7 +17,7 @@ func (repo *Repository) CreateMessageReport(messageID, reporterID uuid.UUID, rea
 
 	// make report
 	r := &model.MessageReport{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uuid.Must(uuid.NewV7()),
 		MessageID: messageID,
 		Reporter:  reporterID,
 		Reason:    reason,

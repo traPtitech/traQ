@@ -15,25 +15,25 @@ func TestWebhookBot_TableName(t *testing.T) {
 
 func TestWebhookBot_GetID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.Must(uuid.NewV7())
 	assert.Equal(t, id, (&WebhookBot{ID: id}).GetID())
 }
 
 func TestWebhookBot_GetChannelID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.Must(uuid.NewV7())
 	assert.Equal(t, id, (&WebhookBot{ChannelID: id}).GetChannelID())
 }
 
 func TestWebhookBot_GetBotUserID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.Must(uuid.NewV7())
 	assert.Equal(t, id, (&WebhookBot{BotUserID: id}).GetBotUserID())
 }
 
 func TestWebhookBot_GetCreatorID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.Must(uuid.NewV7())
 	assert.Equal(t, id, (&WebhookBot{CreatorID: id}).GetCreatorID())
 }
 

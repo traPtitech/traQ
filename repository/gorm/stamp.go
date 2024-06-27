@@ -139,7 +139,7 @@ func (r *stampRepository) allStampsExist(ids []uuid.UUID) (ok bool, err error) {
 // CreateStamp implements StampRepository interface.
 func (r *stampRepository) CreateStamp(args repository.CreateStampArgs) (s *model.Stamp, err error) {
 	stamp := &model.Stamp{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uuid.Must(uuid.NewV7()),
 		Name:      args.Name,
 		FileID:    args.FileID,
 		CreatorID: args.CreatorID, // uuid.Nilを許容する

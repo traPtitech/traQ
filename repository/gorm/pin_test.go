@@ -23,14 +23,14 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 	t.Run("nil id (user)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), uuid.Nil)
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), uuid.Nil)
 		assert.Error(t, err)
 	})
 
 	t.Run("message not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -68,7 +68,7 @@ func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 	t.Run("pin not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 

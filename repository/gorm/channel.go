@@ -21,7 +21,7 @@ var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRoot
 func (repo *Repository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
 	arr := []interface{}{&ch}
 
-	ch.ID = uuid.Must(uuid.NewV4())
+	ch.ID = uuid.Must(uuid.NewV7())
 	ch.IsPublic = true
 	ch.DeletedAt = gorm.DeletedAt{}
 
@@ -436,7 +436,7 @@ func (repo *Repository) GetChannelEvents(query repository.ChannelEventsQuery) (e
 // RecordChannelEvent implements ChannelRepository interface.
 func (repo *Repository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
 	return repo.db.Create(&model.ChannelEvent{
-		EventID:   uuid.Must(uuid.NewV4()),
+		EventID:   uuid.Must(uuid.NewV7()),
 		ChannelID: channelID,
 		EventType: eventType,
 		Detail:    detail,

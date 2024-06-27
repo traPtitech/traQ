@@ -169,7 +169,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("Unknown User", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV7()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("DisplayName", func(t *testing.T) {
@@ -257,7 +257,7 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserStats(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetUserStats(uuid.Must(uuid.NewV7()))
 		assert.Error(t, err)
 	})
 

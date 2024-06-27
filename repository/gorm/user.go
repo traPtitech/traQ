@@ -58,7 +58,7 @@ func (r *userRepository) forgetCache(id uuid.UUID) {
 
 // CreateUser implements UserRepository interface.
 func (r *userRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
-	uid := uuid.Must(uuid.NewV4())
+	uid := uuid.Must(uuid.NewV7())
 	user := &model.User{
 		ID:          uid,
 		Name:        args.Name,

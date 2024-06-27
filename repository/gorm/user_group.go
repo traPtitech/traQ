@@ -17,7 +17,7 @@ import (
 // CreateUserGroup implements UserGroupRepository interface.
 func (repo *Repository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
-		ID:          uuid.Must(uuid.NewV4()),
+		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
 		Description: description,
 		Icon:        iconFileID,
