@@ -171,15 +171,24 @@ func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) err
 func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	g := getParamGroup(c)
 
-	var req PostUserGroupMemberRequest
-	if err := bindAndValidate(c, &req); err != nil {
+	var reqs []PostUserGroupMemberRequest
+	if err := bindAndValidate(c, &reqs); err != nil {
 		return err
 	}
-
-	if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
-		return herror.InternalServerError(err)
+    if len(reqs) == 1 {
+        req := reqs[0]
+        if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
+            return herror.InternalServerError(err)
+        }
+	} else if len(reqs) >= 2 {
+		users := make([]User, len(reqs))
+		for i, req := range reqs {
+			users[i] = User{userID: req.ID, role: req.Role}
+		}
+		if err := h.Repo.AddUsersToGroup(users, g.ID); err != nil {
+			return herror.InternalServerError(err)
+		}
 	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 

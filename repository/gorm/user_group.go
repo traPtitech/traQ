@@ -229,6 +229,62 @@ func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) e
 	return nil
 }
 
+// AddUsersToGroup implements UserGroupRepository interface.
+func (repo *Repository) AddUsersToGroup(users []User, groupID uuid.UUID) error {
+	if groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	var(
+		added bool
+		updated bool
+	)
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		for _, user := range users {
+			if g.IsMember(user.userID) {
+				if err := tx.Model(&model.UserGroupMember{UserID: user.userID, GroupID: groupID}).Update("role", user.role).Error; err != nil {
+					return err
+				}
+				updated = true
+			} else {
+				if err := tx.Create(&model.UserGroupMember{UserID: user.userID, GroupID: groupID, Role: user.role}).Error; err != nil {
+					return err
+				}
+				added = true
+			}
+		}
+		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+	})
+	if err != nil {
+		return err
+	}
+	if added {
+		for _, user := range users {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserGroupMemberAdded,
+				Fields: hub.Fields{
+					"group_id": groupID,
+					"user_id":  user.userID,
+				},
+			})
+		}
+	}
+	if updated {
+		for _, user := range users {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserGroupMemberUpdated,
+				Fields: hub.Fields{
+					"group_id": groupID,
+					"user_id":  user.userID,
+				},
+			})
+		}
+	}
+}
 // RemoveUserFromGroup implements UserGroupRepository interface.
 func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
