@@ -497,20 +497,22 @@ func formatFileInfos(metas []model.File) []*FileInfo {
 }
 
 type OAuth2Client struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	DeveloperID uuid.UUID          `json:"developerId"`
-	Scopes      model.AccessScopes `json:"scopes"`
+	ID           string             `json:"id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	DeveloperID  uuid.UUID          `json:"developerId"`
+	Scopes       model.AccessScopes `json:"scopes"`
+	Confidential bool               `json:"confidential"`
 }
 
 func formatOAuth2Client(oc *model.OAuth2Client) *OAuth2Client {
 	return &OAuth2Client{
-		ID:          oc.ID,
-		Name:        oc.Name,
-		Description: oc.Description,
-		DeveloperID: oc.CreatorID,
-		Scopes:      oc.Scopes,
+		ID:           oc.ID,
+		Name:         oc.Name,
+		Description:  oc.Description,
+		DeveloperID:  oc.CreatorID,
+		Scopes:       oc.Scopes,
+		Confidential: oc.Confidential,
 	}
 }
 
@@ -523,24 +525,26 @@ func formatOAuth2Clients(ocs []*model.OAuth2Client) []*OAuth2Client {
 }
 
 type OAuth2ClientDetail struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	DeveloperID uuid.UUID          `json:"developerId"`
-	Scopes      model.AccessScopes `json:"scopes"`
-	CallbackURL string             `json:"callbackUrl"`
-	Secret      string             `json:"secret"`
+	ID           string             `json:"id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	DeveloperID  uuid.UUID          `json:"developerId"`
+	Scopes       model.AccessScopes `json:"scopes"`
+	CallbackURL  string             `json:"callbackUrl"`
+	Secret       string             `json:"secret"`
+	Confidential bool               `json:"confidential"`
 }
 
 func formatOAuth2ClientDetail(oc *model.OAuth2Client) *OAuth2ClientDetail {
 	return &OAuth2ClientDetail{
-		ID:          oc.ID,
-		Name:        oc.Name,
-		Description: oc.Description,
-		DeveloperID: oc.CreatorID,
-		Scopes:      oc.Scopes,
-		CallbackURL: oc.RedirectURI,
-		Secret:      oc.Secret,
+		ID:           oc.ID,
+		Name:         oc.Name,
+		Description:  oc.Description,
+		DeveloperID:  oc.CreatorID,
+		Scopes:       oc.Scopes,
+		CallbackURL:  oc.RedirectURI,
+		Secret:       oc.Secret,
+		Confidential: oc.Confidential,
 	}
 }
 

@@ -28,6 +28,7 @@ func oAuth2ClientEquals(t *testing.T, expect *model.OAuth2Client, actual *httpex
 		scopes = append(scopes, scope)
 	}
 	actual.Value("scopes").Array().ContainsOnly(scopes...)
+	actual.Value("confidential").Boolean().IsEqual(expect.Confidential)
 }
 
 func TestHandlers_GetClients(t *testing.T) {
@@ -38,7 +39,7 @@ func TestHandlers_GetClients(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
 	c1 := env.CreateOAuth2Client(t, rand, user.GetID())
-	c2 := env.CreateOAuth2Client(t, rand, user2.GetID())
+	c2 := env.CreateOAuth2Client(t, rand, user2.GetID(), WithConfidential(true))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -95,10 +96,11 @@ func TestPostClientsRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        string
-		Description string
-		CallbackURL string
-		Scopes      model.AccessScopes
+		Name         string
+		Description  string
+		CallbackURL  string
+		Scopes       model.AccessScopes
+		Confidential bool
 	}
 	tests := []struct {
 		name    string
@@ -163,6 +165,17 @@ func TestPostClientsRequest_Validate(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"success (confidential client)",
+			fields{
+				Name:         "test",
+				Description:  "desc",
+				CallbackURL:  "https://example.com",
+				Scopes:       map[model.AccessScope]struct{}{"read": {}},
+				Confidential: true,
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -192,6 +205,15 @@ func TestHandlers_CreateClient(t *testing.T) {
 		Description: "desc",
 		CallbackURL: "https://example.com",
 		Scopes:      map[model.AccessScope]struct{}{"read": {}},
+	}
+
+	// confidential client
+	req2 := &PostClientsRequest{
+		Name:         "test",
+		Description:  "desc",
+		CallbackURL:  "https://example.com",
+		Scopes:       map[model.AccessScope]struct{}{"read": {}},
+		Confidential: true,
 	}
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -233,6 +255,34 @@ func TestHandlers_CreateClient(t *testing.T) {
 		scopes.Value(0).String().IsEqual("read")
 		obj.Value("callbackUrl").String().IsEqual("https://example.com")
 		obj.Value("secret").String().NotEmpty()
+		obj.Value("confidential").Boolean().IsFalse()
+
+		c, err := env.Repository.GetClient(obj.Value("id").String().Raw())
+		assert.NoError(t, err)
+		oAuth2ClientEquals(t, c, obj)
+	})
+
+	t.Run("success (confidential client)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(req2).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("id").String().NotEmpty()
+		obj.Value("developerId").String().IsEqual(user.GetID().String())
+		obj.Value("description").String().IsEqual("desc")
+		obj.Value("name").String().IsEqual("test")
+		scopes := obj.Value("scopes").Array()
+		scopes.Length().IsEqual(1)
+		scopes.Value(0).String().IsEqual("read")
+		obj.Value("callbackUrl").String().IsEqual("https://example.com")
+		obj.Value("secret").String().NotEmpty()
+		obj.Value("confidential").Boolean().IsTrue()
 
 		c, err := env.Repository.GetClient(obj.Value("id").String().Raw())
 		assert.NoError(t, err)
@@ -250,6 +300,7 @@ func TestHandlers_GetClient(t *testing.T) {
 	admin := env.CreateAdmin(t, rand)
 	c1 := env.CreateOAuth2Client(t, rand, user1.GetID())
 	c2 := env.CreateOAuth2Client(t, rand, user2.GetID())
+	c3 := env.CreateOAuth2Client(t, rand, user1.GetID(), WithConfidential(true))
 	user1Session := env.S(t, user1.GetID())
 	adminSession := env.S(t, admin.GetID())
 
@@ -337,16 +388,34 @@ func TestHandlers_GetClient(t *testing.T) {
 		obj.Value("callbackUrl").String().NotEmpty()
 		obj.Value("secret").String().NotEmpty()
 	})
+
+	t.Run("success (c3, detail=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, c3.ID).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("detail", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		oAuth2ClientEquals(t, c3, obj)
+		obj.Value("callbackUrl").String().NotEmpty()
+		obj.Value("secret").String().NotEmpty()
+		obj.Value("confidential").Boolean().IsTrue()
+	})
 }
 
 func TestPatchClientRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Name        optional.Of[string]
-		Description optional.Of[string]
-		CallbackURL optional.Of[string]
-		DeveloperID optional.Of[uuid.UUID]
+		Name         optional.Of[string]
+		Description  optional.Of[string]
+		CallbackURL  optional.Of[string]
+		DeveloperID  optional.Of[uuid.UUID]
+		Confidential optional.Of[bool]
 	}
 	tests := []struct {
 		name    string
@@ -393,14 +462,20 @@ func TestPatchClientRequest_Validate(t *testing.T) {
 			fields{Name: optional.From("po")},
 			false,
 		},
+		{
+			"success (confidential client)",
+			fields{Confidential: optional.From(true)},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := PatchClientRequest{
-				Name:        tt.fields.Name,
-				Description: tt.fields.Description,
-				CallbackURL: tt.fields.CallbackURL,
-				DeveloperID: tt.fields.DeveloperID,
+				Name:         tt.fields.Name,
+				Description:  tt.fields.Description,
+				CallbackURL:  tt.fields.CallbackURL,
+				DeveloperID:  tt.fields.DeveloperID,
+				Confidential: tt.fields.Confidential,
 			}
 			if err := r.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
@@ -419,6 +494,7 @@ func TestHandlers_EditClient(t *testing.T) {
 	admin := env.CreateAdmin(t, rand)
 	c1 := env.CreateOAuth2Client(t, rand, user1.GetID())
 	c2 := env.CreateOAuth2Client(t, rand, user2.GetID())
+	c3 := env.CreateOAuth2Client(t, rand, user1.GetID(), WithConfidential(true))
 	user1Session := env.S(t, user1.GetID())
 	adminSession := env.S(t, admin.GetID())
 
@@ -487,6 +563,20 @@ func TestHandlers_EditClient(t *testing.T) {
 		c, err := env.Repository.GetClient(c2.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, c.Name, "po2")
+	})
+
+	t.Run("success (user1, c3, confidential)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, c3.ID).
+			WithCookie(session.CookieName, user1Session).
+			WithJSON(&PatchClientRequest{Confidential: optional.From(true)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		c, err := env.Repository.GetClient(c3.ID)
+		require.NoError(t, err)
+		assert.True(t, c.Confidential)
 	})
 }
 
