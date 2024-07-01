@@ -2,10 +2,11 @@ package v3
 
 import (
 	"context"
-	"github.com/samber/lo"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/samber/lo"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -100,23 +101,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"id":          me.GetID(),
-		"bio":         me.GetBio(),
-		"groups":      groups,
-		"tags":        formatUserTags(tags),
-		"updatedAt":   me.GetUpdatedAt(),
-		"lastOnline":  me.GetLastOnline(),
-		"twitterId":   me.GetTwitterID(),
-		"name":        me.GetName(),
-		"displayName": me.GetResponseDisplayName(),
-		"iconFileId":  me.GetIconFileID(),
-		"bot":         me.IsBot(),
-		"state":       me.GetState().Int(),
-		"permissions": h.RBAC.GetGrantedPermissions(me.GetRole()),
-		"homeChannel": me.GetHomeChannel(),
-	})
+	return extension.ServeJSONWithETag(c, FormatUserInfo(me, tags, groups, h.RBAC.GetGrantedPermissions(me.GetRole())))
 }
 
 type userAccessScopes struct{}
