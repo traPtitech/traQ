@@ -11,6 +11,8 @@ const (
 	EditStampCreatedByOthers = Permission("edit_stamp_created_by_others")
 	// DeleteStamp スタンプ削除権限
 	DeleteStamp = Permission("delete_stamp")
+	// DeleteMyStamp 自分のスタンプ削除権限
+	DeleteMyStamp = Permission("delete_my_stamp")
 	// AddMessageStamp メッセージスタンプ追加権限
 	AddMessageStamp = Permission("add_message_stamp")
 	// RemoveMessageStamp メッセージスタンプ削除権限
