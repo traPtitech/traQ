@@ -221,3 +221,21 @@ func CheckClipFolderAccessPerm() echo.MiddlewareFunc {
 		}
 	}
 }
+
+// CheckDeleteStampPerm スタンプ削除権限を確認するミドルウェア
+func CheckDeleteStampPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user := c.Get(consts.KeyUser).(model.UserInfo)
+
+			if rbac.IsGranted(user.GetRole(), permission.DeleteStamp) {
+				return next(c) //adminのアクセス
+			}
+			stamp := c.Get(consts.KeyParamStamp).(*model.Stamp)
+			if rbac.IsGranted(user.GetRole(), permission.DeleteMyStamp) && stamp.CreatorID == user.GetID() {
+				return next(c) //スタンプ作成者のアクセス
+			}
+			return herror.Forbidden()
+		}
+	}
+}
