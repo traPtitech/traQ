@@ -27,6 +27,7 @@ var writePerms = []permission.Permission{
 	permission.EditUserGroup,
 	permission.DeleteUserGroup,
 	permission.CreateStamp,
+	permission.DeleteMyStamp,
 	permission.AddMessageStamp,
 	permission.RemoveMessageStamp,
 	permission.EditStamp,
