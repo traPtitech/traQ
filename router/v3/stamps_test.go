@@ -277,9 +277,11 @@ func TestHandlers_DeleteStamp(t *testing.T) {
 	path := "/api/v3/stamps/{stampId}"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
 	admin := env.CreateAdmin(t, rand)
 	stamp := env.CreateStamp(t, user.GetID(), rand)
 	stamp2 := env.CreateStamp(t, user.GetID(), rand)
+	stamp3 := env.CreateStamp(t, user2.GetID(), rand)
 	userSession := env.S(t, user.GetID())
 	adminSession := env.S(t, admin.GetID())
 
@@ -291,10 +293,22 @@ func TestHandlers_DeleteStamp(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("forbidden", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, stamp2.ID).
+			WithCookie(session.CookieName, userSession).
+			Expect().
+			Status(http.StatusNoContent)
+
+		_, err := env.Repository.GetStamp(stamp2.ID)
+		assert.ErrorIs(t, err, repository.ErrNotFound)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, stamp3.ID).
 			WithCookie(session.CookieName, userSession).
 			Expect().
 			Status(http.StatusForbidden)
@@ -309,7 +323,7 @@ func TestHandlers_DeleteStamp(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("admin success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, stamp.ID).
