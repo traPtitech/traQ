@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
@@ -393,14 +394,16 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 
 func (c Config) getDatabase() (*gorm.DB, error) {
 	engine, err := gorm.Open(mysql.New(mysql.Config{
-		DSN: fmt.Sprintf(
-			"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
-			c.MariaDB.Username,
-			c.MariaDB.Password,
-			c.MariaDB.Host,
-			c.MariaDB.Port,
-			c.MariaDB.Database,
-		),
+		DSNConfig: &driverMysql.Config{
+			User:                 c.MariaDB.Username,
+			Passwd:               c.MariaDB.Password,
+			Net:                  "tcp",
+			Addr:                 fmt.Sprintf("%s:%d", c.MariaDB.Host, c.MariaDB.Port),
+			DBName:               c.MariaDB.Database,
+			Collation:            "utf8mb4_general_ci",
+			ParseTime:            true,
+			AllowNativePasswords: true,
+		},
 	}), &gorm.Config{
 		// MariaDBにはnanosecondを保存できないため、microsecondまでprecisionを予め落とす
 		NowFunc: func() time.Time {
