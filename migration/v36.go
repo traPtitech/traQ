@@ -14,7 +14,7 @@ func v36() *gormigrate.Migration {
 				"user": {
 					"delete_my_stamp",
 				},
-				"write":{
+				"write": {
 					"delete_my_stamp",
 				},
 			}
