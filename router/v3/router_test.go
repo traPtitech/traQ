@@ -76,12 +76,13 @@ func TestMain(m *testing.M) {
 
 	for _, key := range dbs {
 		env := &Env{}
-		config.DBName = fmt.Sprintf("%s%s", dbPrefix, key)
+		dbConfig := *config
+		dbConfig.DBName = fmt.Sprintf("%s%s", dbPrefix, key)
 		l := zap.NewNop()
 
 		// テスト用データベース接続
 		engine, err := gorm.Open(mysql.New(mysql.Config{
-			DSNConfig: config,
+			DSNConfig: &dbConfig,
 		}))
 		if err != nil {
 			panic(err)
