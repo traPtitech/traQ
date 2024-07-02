@@ -108,6 +108,7 @@ var List = []Permission{
 	AddMessageStamp,
 	RemoveMessageStamp,
 	GetMyStampHistory,
+	DeleteMyStamp,
 
 	GetChannelStar,
 	EditChannelStar,
