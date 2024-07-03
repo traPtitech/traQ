@@ -7161,17 +7161,7 @@ components:
           type: array
           description: セッションの配列
           items:
-            type: object
-            properties:
-              state:
-                type: string
-                description: 状態
-              sessionId:
-                type: string
-                description: セッションID
-            required:
-              - state
-              - sessionId
+            $ref: '#/components/schemas/Session'
       required:
         - userId
         - channelId
@@ -7284,6 +7274,18 @@ components:
           description: メッセージ引用通知の設定情報
       required:
         - notifyCitation
+    Session:
+      type: object
+      properties:
+        state:
+          type: string
+          description: 状態
+        sessionId:
+          type: string
+          description: セッションID
+      required:
+        - state
+        - sessionId
   headers:
     X-TRAQ-MORE:
       schema:
