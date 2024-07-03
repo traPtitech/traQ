@@ -23,6 +23,7 @@ var (
 
 type Manager interface {
 	GetChannel(id uuid.UUID) (*model.Channel, error)
+	GetChannelPathFromID(id uuid.UUID) string
 	CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error)
 	UpdateChannel(id uuid.UUID, args repository.UpdateChannelArgs) error
 	PublicChannelTree() Tree

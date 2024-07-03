@@ -387,3 +387,12 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, &DMChannel{ID: ch.ID, UserID: userID})
 }
+
+// GetChannelPath GET /channels/:channelID/path
+func (h *Handlers) GetChannelPath(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	channelPath := h.ChannelManager.GetChannelPathFromID(channelID)
+
+	return c.JSON(http.StatusOK, channelPath)
+}

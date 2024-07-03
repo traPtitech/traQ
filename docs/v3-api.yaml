@@ -4279,6 +4279,24 @@ paths:
         - me
       operationId: changeMyNotifyCitation
       description: メッセージ引用通知の設定情報を変更します
+  '/channels/{channelID}/path':
+    parameters:
+      - $ref: '#/components/parameters/channelIDInPath'
+    get:
+      summary: 指定したチャンネルパスを取得
+      tags:
+        - channel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelPath'
+        '404':
+          description: Not Found
+      operationId: getChannelPath
+      description: 指定したチャンネルのパスを取得します。
 
 components:
   securitySchemes:
@@ -7284,6 +7302,28 @@ components:
           description: メッセージ引用通知の設定情報
       required:
         - notifyCitation
+    ChannelPath:
+      title: ChannelPath
+      type: object
+      description: チャンネルパス
+      properties:
+        path:
+          type: string
+          description: チャンネルパス
+          pattern: '#^[a-zA-Z0-9-_-/]$'
+      required:
+        - path
+    ChannelID:
+      title: ChannelID
+      type: object
+      description: チャンネルID
+      properties:
+        id:
+          type: string
+          description: チャンネルID
+          format: uuid
+      required:
+        - id
   headers:
     X-TRAQ-MORE:
       schema:
