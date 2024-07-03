@@ -24,8 +24,23 @@ import (
 
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
+	if isTrue(c.QueryParam("include-dm")) && len(c.QueryParam("path")) > 0 {
+		return herror.BadRequest("include-dm and path cannot be specified at the same time")
+	}
+
 	res := echo.Map{
 		"public": h.ChannelManager.PublicChannelTree(),
+	}
+
+	if len(c.QueryParam("path")) > 0 {
+		channelPath := c.QueryParam("path")
+		channel, err := h.ChannelManager.GetChannelFromPath(channelPath)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		res = echo.Map{
+			"public": channel,
+		}
 	}
 
 	if isTrue(c.QueryParam("include-dm")) {

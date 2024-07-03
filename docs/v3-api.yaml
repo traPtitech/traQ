@@ -1984,6 +1984,11 @@ paths:
           in: query
           name: include-dm
           description: ダイレクトメッセージチャンネルをレスポンスに含めるかどうか
+        - schema:
+            type: string
+          in: query
+          name: path
+          description: パスが一致するチャンネルのみを取得する
   '/users/{userId}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
