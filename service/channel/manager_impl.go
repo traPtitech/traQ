@@ -66,7 +66,7 @@ func (m *managerImpl) GetChannel(id uuid.UUID) (*model.Channel, error) {
 	return ch, nil
 }
 
-func (m *managerImpl) GetChannelPathFromID(id uuid.UUID) (string) {
+func (m *managerImpl) GetChannelPathFromID(id uuid.UUID) string {
 	return m.T.getChannelPath(id)
 }
 
