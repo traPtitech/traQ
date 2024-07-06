@@ -555,3 +555,100 @@ func TestHandlers_DeleteClient(t *testing.T) {
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
+
+func TestHandlers_RevokeClientTokens(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/clients/{clientId}/tokens"
+	env := Setup(t, common1)
+
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	client1 := env.CreateOAuth2Client(t, rand, user1.GetID())
+	client2 := env.CreateOAuth2Client(t, rand, user1.GetID())
+
+	tests := map[string]struct {
+		user            model.UserInfo
+		userTokenCounts map[uuid.UUID][]*model.OAuth2Client
+		clientID        string
+		statusCode      int
+	}{
+		"success": {
+			user1,
+			map[uuid.UUID][]*model.OAuth2Client{
+				user1.GetID(): {client1},
+			},
+			client1.ID,
+			http.StatusNoContent,
+		},
+		"success (同じクライアント, 複数トークン)": {
+			user1,
+			map[uuid.UUID][]*model.OAuth2Client{
+				user1.GetID(): {client1, client1},
+			},
+			client1.ID,
+			http.StatusNoContent,
+		},
+		"success (複数クライアント, 複数トークン)": {
+			user1,
+			map[uuid.UUID][]*model.OAuth2Client{
+				user1.GetID(): {client1, client2},
+			},
+			client1.ID,
+			http.StatusNoContent,
+		},
+		"success (複数ユーザー, 複数クライアント, 複数トークン)": {
+			user1,
+			map[uuid.UUID][]*model.OAuth2Client{
+				user1.GetID(): {client1},
+				user2.GetID(): {client1},
+			},
+			client1.ID,
+			http.StatusNoContent,
+		},
+		"success (トークン無し)": {
+			user1,
+			nil,
+			client1.ID,
+			http.StatusNoContent,
+		},
+		"クライアントが存在しない": {
+			user1,
+			map[uuid.UUID][]*model.OAuth2Client{
+				user1.GetID(): {client1},
+			},
+			uuid.Must(uuid.NewV7()).String(),
+			http.StatusNotFound,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			tokens := make(map[uuid.UUID][]*model.OAuth2Token, len(tt.userTokenCounts))
+			for userID, clients := range tt.userTokenCounts {
+				for _, c := range clients {
+					tokens[userID] = append(tokens[userID], env.IssueToken(t, c, userID))
+				}
+			}
+
+			sess := env.S(t, tt.user.GetID())
+
+			e := env.R(t)
+			e.DELETE(path, tt.clientID).
+				WithCookie(session.CookieName, sess).
+				Expect().
+				Status(tt.statusCode)
+
+			for userID, userTokens := range tokens {
+				for _, userToken := range userTokens {
+					_, err := env.Repository.GetTokenByID(userToken.ID)
+					if userToken.ClientID == tt.clientID && userID == tt.user.GetID() && tt.statusCode == http.StatusNoContent {
+						assert.ErrorIs(t, err, repository.ErrNotFound)
+					} else {
+						assert.NoError(t, err)
+					}
+				}
+			}
+		})
+	}
+}
