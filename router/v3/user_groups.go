@@ -1,8 +1,10 @@
 package v3
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -162,11 +164,6 @@ type PostUserGroupMemberRequest struct {
 	Role string    `json:"role"`
 }
 
-// PostUsersGroupMemberRequest POST/groups/:groupID/members リクエストボディ(一括追加)
-type PostUsersGroupMemberRequest struct {
-	Users []PostUserGroupMemberRequest `json:"users"`
-}
-
 func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID, utils.IsNotWebhookUserID),
@@ -177,6 +174,10 @@ func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) err
 // AddUserGroupMember POST /groups/:groupID/members
 func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	g := getParamGroup(c)
+	bodyBytes, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
 
 	var singleReq PostUserGroupMemberRequest
 	if err := bindAndValidate(c, &singleReq); err == nil {
@@ -184,15 +185,16 @@ func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 			return herror.InternalServerError(err)
 		}
 	} else {
-		var reqs PostUsersGroupMemberRequest
+		var reqs []PostUserGroupMemberRequest
+		c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		if err := bindAndValidate(c, &reqs); err != nil {
 			return err
 		}
-		if len(reqs.Users) == 0 {
+		if len(reqs) == 0 {
 			return herror.BadRequest(errors.New("no users provided"))
 		}
-		users := make([]model.UserGroupMember, len(reqs.Users))
-		for i, req := range reqs.Users {
+		users := make([]model.UserGroupMember, len(reqs))
+		for i, req := range reqs {
 			users[i] = model.UserGroupMember{UserID: req.ID, Role: req.Role, GroupID: g.ID}
 		}
 		if err := h.Repo.AddUsersToGroup(users, g.ID); err != nil {
