@@ -2,12 +2,14 @@ package v3
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -160,6 +162,11 @@ type PostUserGroupMemberRequest struct {
 	Role string    `json:"role"`
 }
 
+// PostUsersGroupMemberRequest POST/groups/:groupID/members リクエストボディ(一括追加)
+type PostUsersGroupMemberRequest struct {
+	Users []PostUserGroupMemberRequest `json:"users"`
+}
+
 func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID, utils.IsNotWebhookUserID),
@@ -171,23 +178,27 @@ func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) err
 func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	g := getParamGroup(c)
 
-	var reqs []PostUserGroupMemberRequest
-	if err := bindAndValidate(c, &reqs); err != nil {
-		return err
-	}
-    if len(reqs) == 1 {
-        req := reqs[0]
-        if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
-            return herror.InternalServerError(err)
-        }
-	} else if len(reqs) >= 2 {
-		users := make([]User, len(reqs))
-		for i, req := range reqs {
-			users[i] = User{userID: req.ID, role: req.Role}
+	var singleReq PostUserGroupMemberRequest
+	if err := bindAndValidate(c, &singleReq); err == nil {
+		if err := h.Repo.AddUserToGroup(singleReq.ID, g.ID, singleReq.Role); err != nil {
+			return herror.InternalServerError(err)
+		}
+	} else {
+		var reqs PostUsersGroupMemberRequest
+		if err := bindAndValidate(c, &reqs); err != nil {
+			return err
+		}
+		if len(reqs.Users) == 0 {
+			return herror.BadRequest(errors.New("no users provided"))
+		}
+		users := make([]model.UserGroupMember, len(reqs.Users))
+		for i, req := range reqs.Users {
+			users[i] = model.UserGroupMember{UserID: req.ID, Role: req.Role, GroupID: g.ID}
 		}
 		if err := h.Repo.AddUsersToGroup(users, g.ID); err != nil {
 			return herror.InternalServerError(err)
 		}
+
 	}
 	return c.NoContent(http.StatusNoContent)
 }

@@ -15,12 +15,6 @@ type UpdateUserGroupArgs struct {
 	Icon        optional.Of[uuid.UUID]
 }
 
-// Users ユーザー情報
-type User struct {
-	userID uuid.UUID
-	role   string
-}
-
 // UserGroupRepository ユーザーグループリポジトリ
 type UserGroupRepository interface {
 	// CreateUserGroup ユーザーグループを作成します
@@ -80,10 +74,10 @@ type UserGroupRepository interface {
 	// 存在しないグループの場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	AddUsersToGroup(users []User, groupID uuid.UUID) error
+	AddUsersToGroup(users []model.UserGroupMember, groupID uuid.UUID) error
 	// RemoveUserFromGroup 指定したグループから指定したユーザーを削除します
 	//
-	// 成功した、或いは既に居ない場合、nilを返します。
+	// 全員の追加が成功した、或いは既に追加されている場合、nilを返します。
 	// 存在しないグループの場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
