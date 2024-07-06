@@ -71,7 +71,7 @@ func (m *managerImpl) GetChannelPathFromID(id uuid.UUID) string {
 }
 
 func (m *managerImpl) GetChannelFromPath(path string) (*model.Channel, error) {
-	id :=  m.T.getChannelIDFromPath(path)
+	id := m.T.getChannelIDFromPath(path)
 	if id == uuid.Nil {
 		return nil, ErrInvalidChannelPath
 	}
