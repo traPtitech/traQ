@@ -1086,7 +1086,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGroupMember'
+              oneOf:
+                - $ref: '#/components/schemas/UserGroupMember'
+                - $ref: '#/components/schemas/UserGroupMemberWithRole'
         description: ''
       tags:
         - group
@@ -5095,6 +5097,15 @@ components:
       required:
         - id
         - role
+    UserGroupMembers:
+      title: UserGroupMembers
+      type: array
+      description: ユーザーグループメンバーの配列
+      properties:
+        items:
+          $ref: '#/components/schemas/UserGroupMember'
+      required:
+        - items
     UserStats:
       title: UserStats
       type: object
