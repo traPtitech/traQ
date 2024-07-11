@@ -573,6 +573,12 @@ func TestHandlers_RevokeClientTokens(t *testing.T) {
 		clientID        string
 		statusCode      int
 	}{
+		"not logged in": {
+			nil,
+			nil,
+			client1.ID,
+			http.StatusUnauthorized,
+		},
 		"success": {
 			user1,
 			map[uuid.UUID][]*model.OAuth2Client{
@@ -631,13 +637,19 @@ func TestHandlers_RevokeClientTokens(t *testing.T) {
 				}
 			}
 
-			sess := env.S(t, tt.user.GetID())
-
 			e := env.R(t)
-			e.DELETE(path, tt.clientID).
-				WithCookie(session.CookieName, sess).
-				Expect().
-				Status(tt.statusCode)
+
+			if tt.user != nil {
+				sess := env.S(t, tt.user.GetID())
+				e.DELETE(path, tt.clientID).
+					WithCookie(session.CookieName, sess).
+					Expect().
+					Status(tt.statusCode)
+			} else {
+				e.DELETE(path, tt.clientID).
+					Expect().
+					Status(tt.statusCode)
+			}
 
 			for userID, userTokens := range tokens {
 				for _, userToken := range userTokens {
