@@ -144,6 +144,7 @@ type PatchBotRequest struct {
 	Privileged      optional.Of[bool]      `json:"privileged"`
 	DeveloperID     optional.Of[uuid.UUID] `json:"developerId"`
 	SubscribeEvents model.BotEventTypes    `json:"subscribeEvents"`
+	Bio             optional.Of[string]    `json:"bio"`
 }
 
 func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
@@ -154,6 +155,7 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
+		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
 	)
 }
 
@@ -184,6 +186,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 		Privileged:      req.Privileged,
 		CreatorID:       req.DeveloperID,
 		SubscribeEvents: req.SubscribeEvents,
+		Bio:             req.Bio,
 	}
 
 	if err := h.Repo.UpdateBot(b.ID, args); err != nil {

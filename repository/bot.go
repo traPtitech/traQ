@@ -19,6 +19,7 @@ type UpdateBotArgs struct {
 	Privileged      optional.Of[bool]
 	CreatorID       optional.Of[uuid.UUID]
 	SubscribeEvents model.BotEventTypes
+	Bio             optional.Of[string]
 }
 
 // BotsQuery Bot情報取得用クエリ

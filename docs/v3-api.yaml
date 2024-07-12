@@ -6130,6 +6130,10 @@ components:
           items:
             type: string
             format: uuid
+        bio:
+          type: string
+          description: 自己紹介(biography)
+          maxLength: 1000
       required:
         - id
         - updatedAt
@@ -6144,6 +6148,7 @@ components:
         - endpoint
         - privileged
         - channels
+        - bio
     BotEventLog:
       title: BotEventLog
       type: object
