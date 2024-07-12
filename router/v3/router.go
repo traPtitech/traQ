@@ -320,6 +320,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
 				apiClientsCID.PATCH("", h.EditClient, requiresClientAccessPerm, requires(permission.EditMyClient))
 				apiClientsCID.DELETE("", h.DeleteClient, requiresClientAccessPerm, requires(permission.DeleteMyClient))
+				apiClientsCID.DELETE("/tokens", h.RevokeClientTokens, requires(permission.RevokeMyToken))
 			}
 		}
 		apiBots := api.Group("/bots")

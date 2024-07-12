@@ -240,3 +240,10 @@ func (repo *Repository) DeleteTokenByClient(clientID string) error {
 	}
 	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: clientID}).Error
 }
+
+func (repo *Repository) DeleteUserTokensByClient(userID uuid.UUID, clientID string) error {
+	if userID == uuid.Nil || len(clientID) == 0 {
+		return nil
+	}
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID, ClientID: clientID}).Error
+}

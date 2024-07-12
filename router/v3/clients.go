@@ -140,3 +140,16 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// RevokeClientTokens /clients/:clientID/tokens
+func (h *Handlers) RevokeClientTokens(c echo.Context) error {
+	oc := getParamClient(c)
+	userID := getRequestUserID(c)
+
+	err := h.Repo.DeleteUserTokensByClient(userID, oc.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

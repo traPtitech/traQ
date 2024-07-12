@@ -127,4 +127,9 @@ type OAuth2Repository interface {
 	// 成功した場合、nilを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteTokenByClient(clientID string) error
+	// DeleteUserTokensByClient 指定したユーザーの指定したクライアントのトークンをすべて削除します
+	//
+	// 成功した場合、nilを返します。
+	// DBによるエラーを返すことがあります。
+	DeleteUserTokensByClient(userID uuid.UUID, clientID string) error
 }

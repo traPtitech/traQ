@@ -2896,6 +2896,25 @@ paths:
         指定したOAuth2クライアントの情報を変更します。
         対象のクライアントの管理権限が必要です。
         クライアント開発者UUIDを変更した場合は、変更先ユーザーにクライアント管理権限が移譲され、自分自身は権限を失います。
+  '/clients/{clientId}/tokens':
+    delete:
+      summary: OAuthクライアントのトークンを削除
+      parameters:
+        - $ref: '#/components/parameters/clientIdInPath'
+      responses:
+        '204':
+          description: |-
+            No Content
+            削除できました。
+        '404':
+          description: |-
+            Not Found
+            OAuth2クライアントが見つかりません。
+      tags:
+        - oauth2
+      operationId: revokeClientTokens
+      description: |-
+        自分が許可している指定したOAuthクライアントのアクセストークンを全てRevokeします。
   /clients:
     get:
       summary: OAuth2クライアントのリストを取得
