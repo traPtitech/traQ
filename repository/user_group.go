@@ -82,6 +82,13 @@ type UserGroupRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	RemoveUserFromGroup(userID, groupID uuid.UUID) error
+	// RemoveUsersFromGroup 指定したグループから指定した複数のユーザーを削除します
+	//
+	// 全員の削除が成功した、或いは既に削除されている場合、nilを返します。
+	// 存在しないグループの場合、ErrNotFoundを返します。
+	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	RemoveUsersFromGroup(groupID uuid.UUID) error
 	// AddUserToGroupAdmin 指定したグループの管理者に指定したユーザーを追加します
 	//
 	// 成功した、或いは既に追加されている場合、nilを返します。

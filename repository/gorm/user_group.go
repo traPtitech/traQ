@@ -273,6 +273,7 @@ func (repo *Repository) AddUsersToGroup(users []model.UserGroupMember, groupID u
 	
 	return nil
 }
+
 // RemoveUserFromGroup implements UserGroupRepository interface.
 func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
@@ -306,6 +307,22 @@ func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 				"user_id":  userID,
 			},
 		})
+	}
+	return nil
+}
+// RemoveUsersFromGroup implements UserGroupRepository interface.
+func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
+	if groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("group_id = ?", groupID).Delete(&model.UserGroupMember{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }

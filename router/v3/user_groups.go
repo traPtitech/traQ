@@ -242,11 +242,25 @@ func (h *Handlers) EditUserGroupMember(c echo.Context) error {
 func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	g := getParamGroup(c)
-
+	if userID == uuid.Nil {
+		if err := h.Repo.RemoveUsersFromGroup(g.ID); err != nil {
+			return herror.InternalServerError(err)
+		}
+		return c.NoContent(http.StatusNoContent)
+	}
 	if err := h.Repo.RemoveUserFromGroup(userID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
+	return c.NoContent(http.StatusNoContent)
+}
+
+// RemoveUserGroupMembers DELETE /groups/:groupID/members
+func (h *Handlers) RemoveUserGroupMembers(c echo.Context) error {
+	g := getParamGroup(c)
+	if err := h.Repo.RemoveUsersFromGroup(g.ID); err != nil {
+		return herror.InternalServerError(err)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
