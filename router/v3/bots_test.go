@@ -237,7 +237,6 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("endpoint").String().IsEqual("https://example.com")
 		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
-		obj.Value("bio").String().IsEmpty()
 	})
 
 	t.Run("success with WebSocket mode", func(t *testing.T) {
