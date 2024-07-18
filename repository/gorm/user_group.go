@@ -270,7 +270,7 @@ func (repo *Repository) AddUsersToGroup(users []model.UserGroupMember, groupID u
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -310,6 +310,7 @@ func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	}
 	return nil
 }
+
 // RemoveUsersFromGroup implements UserGroupRepository interface.
 func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
 	if groupID == uuid.Nil {
