@@ -180,6 +180,7 @@ func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	}
 
 	var singleReq PostUserGroupMemberRequest
+	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	if err := bindAndValidate(c, &singleReq); err == nil {
 		if err := h.Repo.AddUserToGroup(singleReq.ID, g.ID, singleReq.Role); err != nil {
 			return herror.InternalServerError(err)
