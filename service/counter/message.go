@@ -16,7 +16,9 @@ import (
 // /api/metrics will not provide traq_messages_count_total until all previous messages are counted
 var (
 	messagesCounter prometheus.Counter
-	once            sync.Once
+	initOnce        sync.Once
+	initDone        = make(chan struct{})
+	initError       = make(chan error)
 )
 
 // MessageCounter 全メッセージ数カウンタ
@@ -38,10 +40,11 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 
 	go func() {
 		if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
-			panic(err)
+			initError <- err
+			// panic(err)
 		}
 
-		once.Do(func() {
+		initOnce.Do(func() {
 			// Initialize messagesCounter
 			// /api/metrics will not provide traq_messages_count_total until here
 			messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
@@ -49,10 +52,17 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 				Name:      "messages_count_total",
 			})
 			messagesCounter.Add(float64(counter.count))
+			close(initDone)
 		})
 	}()
 
+	err := <-initError
+	if err != nil {
+		return nil, err
+	}
+
 	go func() {
+		<-initDone
 		for range hub.Subscribe(1, event.MessageCreated).Receiver {
 			counter.inc()
 		}
@@ -61,6 +71,7 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 }
 
 func (c *messageCounterImpl) Get() int64 {
+	<-initDone
 	c.RLock()
 	defer c.RUnlock()
 	return c.count
