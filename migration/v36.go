@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// v16 パーミッション修正
+// v36 delete_my_stampパーミッションを追加
 func v36() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "36",
