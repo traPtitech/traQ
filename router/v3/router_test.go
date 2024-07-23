@@ -418,8 +418,18 @@ func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uu
 	return w
 }
 
+// OAuth2ClientOption represents a functional option for OAuth2Client
+type OAuth2ClientOption func(*model.OAuth2Client)
+
+// WithConfidential sets the confidentiality of the OAuth2Client
+func WithConfidential(confidential bool) OAuth2ClientOption {
+	return func(c *model.OAuth2Client) {
+		c.Confidential = confidential
+	}
+}
+
 // CreateOAuth2Client OAuth2クライアントを必ず作成します
-func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
+func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID, opts ...OAuth2ClientOption) *model.OAuth2Client {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
@@ -433,6 +443,9 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 		RedirectURI:  "https://example.com",
 		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       model.AccessScopes{"read": {}},
+	}
+	for _, opt := range opts {
+		opt(client)
 	}
 	require.NoError(t, env.Repository.SaveClient(client))
 	return client

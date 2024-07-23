@@ -34,10 +34,11 @@ func (h *Handlers) GetClients(c echo.Context) error {
 
 // PostClientsRequest POST /clients リクエストボディ
 type PostClientsRequest struct {
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	CallbackURL string             `json:"callbackUrl"`
-	Scopes      model.AccessScopes `json:"scopes"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	CallbackURL  string             `json:"callbackUrl"`
+	Scopes       model.AccessScopes `json:"scopes"`
+	Confidential bool               `json:"confidential"` // default false (public client)
 }
 
 func (r PostClientsRequest) Validate() error {
@@ -62,7 +63,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 		ID:           random.SecureAlphaNumeric(36),
 		Name:         req.Name,
 		Description:  req.Description,
-		Confidential: false,
+		Confidential: req.Confidential,
 		CreatorID:    userID,
 		RedirectURI:  req.CallbackURL,
 		Secret:       random.SecureAlphaNumeric(36),
@@ -92,10 +93,11 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClientRequest PATCH /clients/:clientID リクエストボディ
 type PatchClientRequest struct {
-	Name        optional.Of[string]    `json:"name"`
-	Description optional.Of[string]    `json:"description"`
-	CallbackURL optional.Of[string]    `json:"callbackUrl"`
-	DeveloperID optional.Of[uuid.UUID] `json:"developerId"`
+	Name         optional.Of[string]    `json:"name"`
+	Description  optional.Of[string]    `json:"description"`
+	CallbackURL  optional.Of[string]    `json:"callbackUrl"`
+	DeveloperID  optional.Of[uuid.UUID] `json:"developerId"`
+	Confidential optional.Of[bool]      `json:"confidential"`
 }
 
 func (r PatchClientRequest) Validate() error {
@@ -117,10 +119,11 @@ func (h *Handlers) EditClient(c echo.Context) error {
 	}
 
 	args := repository.UpdateClientArgs{
-		Name:        req.Name,
-		Description: req.Description,
-		DeveloperID: req.DeveloperID,
-		CallbackURL: req.CallbackURL,
+		Name:         req.Name,
+		Description:  req.Description,
+		DeveloperID:  req.DeveloperID,
+		CallbackURL:  req.CallbackURL,
+		Confidential: req.Confidential,
 	}
 	if err := h.Repo.UpdateClient(oc.ID, args); err != nil {
 		return herror.InternalServerError(err)

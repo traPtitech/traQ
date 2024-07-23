@@ -5868,12 +5868,16 @@ components:
           description: 要求スコープの配列
           items:
             $ref: '#/components/schemas/OAuth2Scope'
+        confidential:
+          type: boolean
+          description: confidential client なら true, public client なら false
       required:
         - id
         - name
         - description
         - developerId
         - scopes
+        - confidential
     PatchClientRequest:
       title: PatchClientRequest
       type: object
@@ -5896,6 +5900,9 @@ components:
           type: string
           description: クライアント開発者UUID
           format: uuid
+        confidential:
+          type: boolean
+          description: confidential client なら true, public client なら false
     OAuth2ClientDetail:
       title: OAuth2ClientDetail
       description: OAuth2クライアント詳細情報
@@ -5929,6 +5936,9 @@ components:
         secret:
           type: string
           description: クライアントシークレット
+        confidential:
+          type: boolean
+          description: confidential client なら true, public client なら false
       required:
         - id
         - developerId
@@ -5937,6 +5947,7 @@ components:
         - scopes
         - callbackUrl
         - secret
+        - confidential
     PostClientRequest:
       title: PostClientRequest
       type: object
@@ -5960,6 +5971,10 @@ components:
           type: string
           description: 説明
           maxLength: 1000
+        confidential:
+          type: boolean
+          description: confidential client なら true, public cleint なら false
+          default: false
       required:
         - name
         - callbackUrl
