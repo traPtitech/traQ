@@ -4164,6 +4164,7 @@ paths:
     parameters:
       - schema:
           type: string
+          format: uuid
         name: userId
         in: path
         required: true
