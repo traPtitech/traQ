@@ -3,7 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/aws/smithy-go"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 	"net/http"
+	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -52,22 +55,34 @@ func (t *s3Tester) getClient() *s3.Client {
 	return t.client
 }
 
+func (r *customResolver) ResolveEndpoint(_ context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	u, err := url.Parse(r.endpoint)
+	if err != nil {
+		return smithyendpoints.Endpoint{}, err
+	}
+
+	properties := smithy.Properties{}
+	properties.Set("Region", params.Region)
+
+	return smithyendpoints.Endpoint{
+		URI:        *u,
+		Properties: properties,
+	}, nil
+}
+
 func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 	ep := fmt.Sprintf("http://localhost:%s", port)
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("ap-northeast-1"),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{
-						URL:           ep,
-						SigningRegion: region,
-					}, nil
-				},
-			),
-		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("ROOT", "PASSWORD", "")),
 	)
+	_ = s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.EndpointResolverV2 = &customResolver{endpoint: ep}
+		o.BaseEndpoint = aws.String(ep)
+	})
+	if err != nil {
+		return aws.Config{}, err
+	}
 
 	return cfg, err
 }
