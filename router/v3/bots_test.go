@@ -531,6 +531,7 @@ func TestHandlers_EditBot(t *testing.T) {
 				SubscribeEvents: map[model.BotEventType]struct{}{
 					event.Ping: {},
 				},
+				Bio: optional.From("Bio"),
 			}).
 			Expect().
 			Status(http.StatusNoContent)

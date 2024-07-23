@@ -93,6 +93,7 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 		return repository.ErrNilID
 	}
 	var (
+		u           model.User
 		b           model.Bot
 		updated     bool
 		userUpdated bool
@@ -133,6 +134,17 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 
 		if args.DisplayName.Valid {
 			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.V).Error; err != nil {
+				return err
+			}
+			userUpdated = true
+		}
+
+		if args.Bio.Valid {
+			if err := tx.Preload("Profile").First(&u, model.User{ID: b.BotUserID}).Error; err != nil {
+				return convertError(err)
+			}
+
+			if err := tx.Model(u.Profile).Update("bio", args.Bio.V).Error; err != nil {
 				return err
 			}
 			userUpdated = true

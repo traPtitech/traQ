@@ -6098,6 +6098,10 @@ components:
           uniqueItems: false
           items:
             type: string
+        bio:
+          type: string
+          description: 自己紹介(biography)
+          maxLength: 1000
     BotTokens:
       title: BotTokens
       type: object
@@ -6179,6 +6183,7 @@ components:
         - endpoint
         - privileged
         - channels
+        - bio
     BotEventLog:
       title: BotEventLog
       type: object
