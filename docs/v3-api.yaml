@@ -5563,7 +5563,7 @@ components:
         file:
           type: string
           format: binary
-          description: 'アイコン画像(1MBまでのpng, jpeg, gif)'
+          description: 'アイコン画像(2MBまでのpng, jpeg, gif)'
       required:
         - file
     PutMyPasswordRequest:
