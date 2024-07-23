@@ -3,16 +3,12 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/aws/smithy-go"
-	smithyendpoints "github.com/aws/smithy-go/endpoints"
-	"net/http"
-	"net/url"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/ory/dockertest/v3"
+	"net/http"
 )
 
 type s3Tester struct {
@@ -53,21 +49,6 @@ func (t *s3Tester) teardown() error {
 
 func (t *s3Tester) getClient() *s3.Client {
 	return t.client
-}
-
-func (r *customResolver) ResolveEndpoint(_ context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
-	u, err := url.Parse(r.endpoint)
-	if err != nil {
-		return smithyendpoints.Endpoint{}, err
-	}
-
-	properties := smithy.Properties{}
-	properties.Set("Region", params.Region)
-
-	return smithyendpoints.Endpoint{
-		URI:        *u,
-		Properties: properties,
-	}, nil
 }
 
 func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
