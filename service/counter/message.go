@@ -2,6 +2,7 @@ package counter
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,13 +13,10 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// Do not initialize messagesCounter until DB operation is completed
-// /api/metrics will not provide traq_messages_count_total until all previous messages are counted
 var (
-	messagesCounter prometheus.Counter
-	initOnce        sync.Once
-	initDone        = make(chan struct{})
-	initError       = make(chan error)
+	initOnce       sync.Once
+	count          int64
+	messageCounter prometheus.Counter
 )
 
 // MessageCounter 全メッセージ数カウンタ
@@ -30,56 +28,46 @@ type MessageCounter interface {
 }
 
 type messageCounterImpl struct {
-	count int64
-	sync.RWMutex
+	db  *gorm.DB
+	hub *hub.Hub
 }
 
 // NewMessageCounter 全メッセージ数カウンタを生成します
-func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
-	counter := &messageCounterImpl{}
-
-	go func() {
-		if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
-			initError <- err
-			// panic(err)
-		}
-
-		initOnce.Do(func() {
-			// Initialize messagesCounter
-			// /api/metrics will not provide traq_messages_count_total until here
-			messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
-				Namespace: "traq",
-				Name:      "messages_count_total",
-			})
-			messagesCounter.Add(float64(counter.count))
-			close(initDone)
-		})
-	}()
-
-	err := <-initError
-	if err != nil {
-		return nil, err
+func NewMessageCounter(db *gorm.DB, hub *hub.Hub) MessageCounter {
+	messageCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "traq",
+		Name:      "messages_count_total",
+	})
+	mc := &messageCounterImpl{
+		db:  db,
+		hub: hub,
 	}
+	initOnce.Do(mc.initializeCounter)
+	return mc
+}
+
+func (mc *messageCounterImpl) initializeCounter() {
+	var initialCount int64
+	if err := mc.db.Unscoped().Model(&model.Message{}).Count(&initialCount).Error; err != nil {
+		panic(err)
+	}
+	atomic.StoreInt64(&count, initialCount)
+	messageCounter.Add(float64(initialCount))
 
 	go func() {
-		<-initDone
-		for range hub.Subscribe(1, event.MessageCreated).Receiver {
-			counter.inc()
+		for range mc.hub.Subscribe(1, event.MessageCreated).Receiver {
+			mc.inc()
 		}
 	}()
-	return counter, nil
 }
 
-func (c *messageCounterImpl) Get() int64 {
-	<-initDone
-	c.RLock()
-	defer c.RUnlock()
-	return c.count
+func (mc *messageCounterImpl) Get() int64 {
+	initOnce.Do(mc.initializeCounter)
+	return atomic.LoadInt64(&count)
 }
 
-func (c *messageCounterImpl) inc() {
-	c.Lock()
-	c.count++
-	c.Unlock()
-	messagesCounter.Inc()
+func (mc *messageCounterImpl) inc() {
+	initOnce.Do(mc.initializeCounter)
+	atomic.AddInt64(&count, 1)
+	messageCounter.Inc()
 }
