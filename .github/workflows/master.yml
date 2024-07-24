@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - staging
 
 env:
   IMAGE_NAME: traq
