@@ -10,13 +10,10 @@ on:
         description: 'Branch to deploy'
         required: true
         default: 'master'
-      commit:
-        description: 'Specific commit to deploy'
-        required: false
 
 env:
   IMAGE_NAME: traq
-  IMAGE_TAG: master
+  IMAGE_TAG: ${{ github.event.inputs.branch || 'master' }}
 
 jobs:
   image:
@@ -25,14 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
+          ref: ${{ github.event.inputs.branch || 'master' }}
       - name: Set TRAQ_VERSION env
-        run: echo "TRAQ_VERSION=master-SNAPSHOT" >> $GITHUB_ENV
+        run: echo "TRAQ_VERSION=${{ github.event.inputs.branch || 'master' }}-SNAPSHOT" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
-        if: ${{ github.event.inputs.commit != '' }}
-        run: echo "TRAQ_REVISION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-      - name: Set TRAQ_REVISION env (fallback)
-        if: ${{ github.event.inputs.commit == '' }}
         run: echo "TRAQ_REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -59,13 +52,16 @@ jobs:
             TRAQ_VERSION=${{ env.TRAQ_VERSION }}
             TRAQ_REVISION=${{ env.TRAQ_REVISION }}
           tags: |
-            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:master
+            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
   scan:
     name: Scan Image Vulnerability
     runs-on: ubuntu-latest
     needs: [image]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'master' }}
       - name: Pull docker image
         run: docker pull ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Container image scan
