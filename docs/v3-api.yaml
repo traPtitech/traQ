@@ -7037,6 +7037,7 @@ components:
         - edit_stamp
         - edit_stamp_created_by_others
         - delete_stamp
+        - delete_my_stamp
         - add_message_stamp
         - remove_message_stamp
         - get_my_stamp_history
