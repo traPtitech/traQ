@@ -318,18 +318,24 @@ func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
 	if groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	var removedUsers [].model.UserGroupMember
-	if err := tx.Where("group_id = ?", groupID).Find(&members).Error; err != nil {
-		return err
-	}
-	for _, userID := range removedUsers {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupMemberRemoved,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
-		})
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var removedUsers []model.UserGroupMember
+		if err := tx.Where("group_id = ?", groupID).Find(&model.UserGroupMember{}).Error; err != nil {
+			return err
+		}
+		for _, userID := range removedUsers {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserGroupMemberRemoved,
+				Fields: hub.Fields{
+					"group_id": groupID,
+					"user_id":  userID,
+				},
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil
 	}
 	return nil
 }
