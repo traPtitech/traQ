@@ -1088,7 +1088,9 @@ paths:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/UserGroupMember'
-                - $ref: '#/components/schemas/UserGroupMembers'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/UserGroupMember'
         description: ''
       tags:
         - group
