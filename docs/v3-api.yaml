@@ -7121,6 +7121,7 @@ components:
         - EditStamp
         - EditStampCreatedByOthers
         - DeleteStamp
+        - DeleteMyStamp
         - AddMessageStamp
         - RemoveMessageStamp
         - GetMyStampHistory
