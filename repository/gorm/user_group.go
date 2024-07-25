@@ -229,6 +229,53 @@ func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) e
 	return nil
 }
 
+// AddUsersToGroup implements UserGroupRepository interface.
+func (repo *Repository) AddUsersToGroup(users []model.UserGroupMember, groupID uuid.UUID) error {
+	if groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+		if err := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "group_id"}, {Name: "user_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"role"}),
+		}).Create(&users).Error; err != nil {
+			return convertError(err)
+		}
+
+		for _, user := range users {
+			if g.IsMember(user.UserID) {
+				repo.hub.Publish(hub.Message{
+					Name: event.UserGroupMemberUpdated,
+					Fields: hub.Fields{
+						"group_id": user.GroupID,
+						"user_id":  user.UserID,
+					},
+				})
+			} else {
+				repo.hub.Publish(hub.Message{
+					Name: event.UserGroupMemberAdded,
+					Fields: hub.Fields{
+						"group_id": user.GroupID,
+						"user_id":  user.UserID,
+					},
+				})
+			}
+		}
+
+		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RemoveUserFromGroup implements UserGroupRepository interface.
 func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
@@ -262,6 +309,33 @@ func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 				"user_id":  userID,
 			},
 		})
+	}
+	return nil
+}
+
+// RemoveUsersFromGroup implements UserGroupRepository interface.
+func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
+	if groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var removedUsers []model.UserGroupMember
+		if err := tx.Where("group_id = ?", groupID).Find(&model.UserGroupMember{}).Error; err != nil {
+			return err
+		}
+		for _, userID := range removedUsers {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserGroupMemberRemoved,
+				Fields: hub.Fields{
+					"group_id": groupID,
+					"user_id":  userID,
+				},
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil
 	}
 	return nil
 }
