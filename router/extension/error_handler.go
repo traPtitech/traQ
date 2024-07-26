@@ -1,6 +1,7 @@
 package extension
 
 import (
+	"net"
 	"net/http"
 
 	jsonIter "github.com/json-iterator/go"
@@ -42,6 +43,10 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 			logger.Error(err.Error(), append(err.Fields, zap.String("requestId", GetRequestID(c)))...)
 			code = http.StatusInternalServerError
 			body = echo.Map{"message": http.StatusText(http.StatusInternalServerError)}
+		case *net.OpError:
+			logger.Warn("network error", zap.Error(err), zap.String("requestId", GetRequestID(c)))
+			code = http.StatusBadGateway
+			body = echo.Map{"message": http.StatusText(http.StatusBadGateway)}
 		default:
 			logger.Error(err.Error(), zap.String("requestId", GetRequestID(c)))
 			code = http.StatusInternalServerError
