@@ -14,7 +14,7 @@ var (
 
 	webSocketWriteBytesTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "traq",
-		Name:      "bot_ws__bot_write_bytes_total",
+		Name:      "bot_ws_write_bytes_total",
 	}, []string{"user_id"})
 )
 
