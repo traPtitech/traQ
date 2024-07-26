@@ -52,6 +52,7 @@ func (s *session) ReadLoop() {
 		if err != nil {
 			return
 		}
+		incWebSocketReadBytesTotal(s.userID, len(m))
 
 		if t == websocket.TextMessage {
 			s.commandHandler(string(m))
@@ -80,6 +81,7 @@ func (s *session) WriteLoop() {
 			if err := s.write(msg.t, msg.data); err != nil {
 				return
 			}
+			incWebSocketWriteBytesTotal(s.userID, len(msg.data))
 
 			if msg.t == websocket.CloseMessage {
 				return
