@@ -3,13 +3,12 @@ package storage
 import (
 	"context"
 	"fmt"
-	"net/http"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/ory/dockertest/v3"
+	"net/http"
 )
 
 type s3Tester struct {
@@ -56,18 +55,15 @@ func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
 	ep := fmt.Sprintf("http://localhost:%s", port)
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("ap-northeast-1"),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{
-						URL:           ep,
-						SigningRegion: region,
-					}, nil
-				},
-			),
-		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("ROOT", "PASSWORD", "")),
 	)
+	_ = s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.EndpointResolverV2 = &customResolver{endpoint: ep}
+		o.BaseEndpoint = aws.String(ep)
+	})
+	if err != nil {
+		return aws.Config{}, err
+	}
 
 	return cfg, err
 }
