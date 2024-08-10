@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/aws/smithy-go"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 	"io"
 	"net/url"
 	"os"
@@ -28,28 +30,39 @@ type S3FileStorage struct {
 	mutexes  *utils.KeyMutex
 }
 
+type customResolver struct {
+	endpoint string
+}
+
+func (r *customResolver) ResolveEndpoint(_ context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	u, err := url.Parse(r.endpoint)
+	if err != nil {
+		return smithyendpoints.Endpoint{}, err
+	}
+
+	properties := smithy.Properties{}
+	properties.Set("Region", params.Region)
+
+	return smithyendpoints.Endpoint{
+		URI:        *u,
+		Properties: properties,
+	}, nil
+}
+
 // NewS3FileStorage 引数の情報でS3ストレージを生成します
 func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forcePathStyle bool, cacheDir string) (*S3FileStorage, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{
-						URL:           endpoint,
-						SigningRegion: region,
-					}, nil
-				},
-			),
-		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(apiKey, apiSecret, "")),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	client := s3.NewFromConfig(cfg, func(opt *s3.Options) {
-		opt.UsePathStyle = forcePathStyle
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.EndpointResolverV2 = &customResolver{endpoint: endpoint}
+		o.BaseEndpoint = aws.String(endpoint)
+		o.UsePathStyle = forcePathStyle
 	})
 
 	m := &S3FileStorage{
