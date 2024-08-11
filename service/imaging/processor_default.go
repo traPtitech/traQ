@@ -128,7 +128,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		// 	ため、キャンバスでフレームを重ねてから縮小する
 		tempCanvas = image.NewNRGBA(gifBound)
 		// 	DisposalBackgroundに対応するための、背景色の画像
-		bgColorUniform = image.NewUniform(srcImage.Config.ColorModel.(color.Palette)[srcImage.BackgroundIndex])
+		bgColorUniform *image.Uniform
 		// DisposalPreviousに対応するため、直前のフレームを保持するためのキャンバス
 		backupCanvas = image.NewNRGBA(gifBound)
 
@@ -136,6 +136,12 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		destImageMutex = &sync.Mutex{}
 		eg, _          = errgroup.WithContext(context.Background())
 	)
+
+	// グローバルカラーテーブルがあれば、背景色を取得
+	palette, ok := srcImage.Config.ColorModel.(color.Palette)
+	if ok && len(palette) > 0 {
+		bgColorUniform = image.NewUniform(palette[srcImage.BackgroundIndex])
+	}
 
 	for i, srcFrame := range srcImage.Image {
 		// 元のフレームのサイズと位置
@@ -182,7 +188,7 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 			r, g, b, a := srcFrame.Palette[srcFrame.Palette.Index(color.Transparent)].RGBA()
 			if r == 0 && g == 0 && b == 0 && a == 0 {
 				draw.Draw(tempCanvas, srcBounds, image.Transparent, image.Point{}, draw.Src)
-			} else {
+			} else if bgColorUniform != nil {
 				draw.Draw(tempCanvas, srcBounds, bgColorUniform, image.Point{}, draw.Src)
 			}
 		case gif.DisposalPrevious: // DisposalがPreviousなら、直前のフレームを復元

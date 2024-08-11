@@ -121,6 +121,12 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			want: lo.Must(io.ReadAll(testutils.MustOpenGif("frog_resized.gif"))),
 			err:  nil,
 		},
+		{
+			name: "success (surprised 正方形、グローバルカラーテーブルなし)",
+			file: "surprised.gif",
+			want: lo.Must(io.ReadAll(testutils.MustOpenGif("surprised_resized.gif"))),
+			err:  nil,
+		},
 	}
 
 	for _, tt := range test {
