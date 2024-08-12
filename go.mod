@@ -41,7 +41,7 @@ require (
 	github.com/motoki317/sc v1.8.1
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
-	github.com/ory/dockertest/v3 v3.10.0
+	github.com/ory/dockertest/v3 v3.11.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/samber/lo v1.46.0
 	github.com/sapphi-red/midec v0.5.2
@@ -73,10 +73,11 @@ require (
 	cloud.google.com/go/iam v1.1.12 // indirect
 	cloud.google.com/go/longrunning v0.5.11 // indirect
 	cloud.google.com/go/storage v1.42.0 // indirect
+	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
-	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2 // indirect
 	github.com/ajg/form v1.5.1 // indirect
@@ -98,14 +99,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.10 // indirect
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/containerd/continuity v0.4.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/cli v20.10.17+incompatible // indirect
-	github.com/docker/docker v20.10.7+incompatible // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/cli v26.1.4+incompatible // indirect
+	github.com/docker/docker v27.1.1+incompatible // indirect
+	github.com/docker/go-connections v0.5.0 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/elastic-transport-go/v8 v8.6.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
@@ -132,7 +133,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
-	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -145,13 +145,14 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
+	github.com/moby/docker-image-spec v1.3.1 // indirect
+	github.com/moby/term v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
-	github.com/opencontainers/runc v1.1.5 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/runc v1.1.13 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
