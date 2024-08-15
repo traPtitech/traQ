@@ -20,3 +20,5 @@ var FS embed.FS
 // new_year.gif https://freesozaixtrain.web.fc2.com/freesozai-nenga-train2.html
 
 // tooth.gif https://patirabi.com/2021/10/10/061gif/
+
+// surprised.gif https://patirabi.com/2021/10/08/058gif/
