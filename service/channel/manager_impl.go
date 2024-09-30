@@ -66,6 +66,18 @@ func (m *managerImpl) GetChannel(id uuid.UUID) (*model.Channel, error) {
 	return ch, nil
 }
 
+func (m *managerImpl) GetChannelPathFromID(id uuid.UUID) string {
+	return m.T.getChannelPath(id)
+}
+
+func (m *managerImpl) GetChannelFromPath(path string) (*model.Channel, error) {
+	id := m.T.getChannelIDFromPath(path)
+	if id == uuid.Nil {
+		return nil, ErrInvalidChannelPath
+	}
+	return m.GetChannel(id)
+}
+
 func (m *managerImpl) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	m.T.Lock()
 	defer m.T.Unlock()
