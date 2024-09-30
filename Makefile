@@ -4,7 +4,7 @@ TEST_DB_PORT := 3100
 # renovate:image-tag imageName=ghcr.io/k1low/tbls
 TBLS_VERSION := "v1.77.0"
 # renovate:image-tag imageName=index.docker.io/stoplight/spectral
-SPECTRAL_VERSION := "6.11.1"
+SPECTRAL_VERSION := "6.13.1"
 
 .DEFAULT_GOAL := help
 
@@ -74,7 +74,7 @@ goreleaser-snapshot: ## Release dry-run
 update-frontend: ## Update frontend files in dev/frontend
 	@mkdir -p ./dev/frontend
 # renovate:github-url
-	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.20.2/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
+	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.21.0/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
 
 .PHONY: reset-frontend
 reset-frontend: ## Completely replace frontend files in dev/frontend
