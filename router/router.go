@@ -1,7 +1,6 @@
 package router
 
 import (
-	"compress/gzip"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/echoprometheus"
@@ -101,9 +100,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 	}
 	e.Use(middlewares.Recovery(logger))
 	if config.Gzipped {
-		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-			Level: gzip.BestSpeed,
-		}))
+		e.Use(middlewares.Gzip())
 	}
 	e.Use(extension.Wrap(repo, cm))
 	e.Use(middlewares.RequestCounter())
