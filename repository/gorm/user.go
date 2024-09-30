@@ -219,11 +219,11 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 	}
 
 	var (
-		u          model.User
-		activate   bool
-		deactivate bool
-		changed    bool
-		count      int
+		u        model.User
+		activate bool
+		//deactivate bool
+		changed bool
+		count   int
 	)
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Preload("Profile").First(&u, model.User{ID: id}).Error; err != nil {
@@ -243,7 +243,7 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 			case model.UserAccountStatusActive.Int():
 				activate = true
 			case model.UserAccountStatusDeactivated.Int():
-				deactivate = true
+				//deactivate = true
 			}
 		}
 		if args.IconFileID.Valid {
