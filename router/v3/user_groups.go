@@ -1,13 +1,17 @@
 package v3
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -170,16 +174,34 @@ func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) err
 // AddUserGroupMember POST /groups/:groupID/members
 func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	g := getParamGroup(c)
-
-	var req PostUserGroupMemberRequest
-	if err := bindAndValidate(c, &req); err != nil {
+	bodyBytes, err := io.ReadAll(c.Request().Body)
+	if err != nil {
 		return err
 	}
 
-	if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
+	var singleReq PostUserGroupMemberRequest
+	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	if err := bindAndValidate(c, &singleReq); err == nil {
+		if err := h.Repo.AddUserToGroup(singleReq.ID, g.ID, singleReq.Role); err != nil {
+			return herror.InternalServerError(err)
+		}
+		return c.NoContent(http.StatusNoContent)
+	}
+	var reqs []PostUserGroupMemberRequest
+	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	if err := bindAndValidate(c, &reqs); err != nil {
+		return err
+	}
+	if len(reqs) == 0 {
+		return herror.BadRequest(errors.New("no users provided"))
+	}
+	users := make([]model.UserGroupMember, len(reqs))
+	for i, req := range reqs {
+		users[i] = model.UserGroupMember{UserID: req.ID, Role: req.Role, GroupID: g.ID}
+	}
+	if err := h.Repo.AddUsersToGroup(users, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -220,11 +242,19 @@ func (h *Handlers) EditUserGroupMember(c echo.Context) error {
 func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	g := getParamGroup(c)
-
 	if err := h.Repo.RemoveUserFromGroup(userID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
+	return c.NoContent(http.StatusNoContent)
+}
+
+// RemoveUserGroupMembers DELETE /groups/:groupID/members
+func (h *Handlers) RemoveUserGroupMembers(c echo.Context) error {
+	g := getParamGroup(c)
+	if err := h.Repo.RemoveUsersFromGroup(g.ID); err != nil {
+		return herror.InternalServerError(err)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
