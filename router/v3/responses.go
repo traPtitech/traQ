@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
@@ -623,40 +622,4 @@ func formatStampPalettes(cfs []*model.StampPalette) []*StampPalette {
 	}
 	sort.Slice(res, func(i, j int) bool { return res[i].ID.String() < res[j].ID.String() })
 	return res
-}
-
-type UserInfo struct {
-	ID          uuid.UUID               `json:"id"`
-	Bio         string                  `json:"bio"`
-	Groups      []uuid.UUID             `json:"groups"`
-	Tags        []UserTag               `json:"tags"`
-	UpdatedAt   time.Time               `json:"updatedAt"`
-	LastOnline  optional.Of[time.Time]  `json:"lastOnline"`
-	TwitterID   string                  `json:"twitterId"`
-	Name        string                  `json:"name"`
-	DisplayName string                  `json:"displayName"`
-	IconFileID  uuid.UUID               `json:"iconFileId"`
-	Bot         bool                    `json:"bot"`
-	State       int                     `json:"state"`
-	Permissions []permission.Permission `json:"permissions"`
-	HomeChannel optional.Of[uuid.UUID]  `json:"homeChannel"`
-}
-
-func FormatUserInfo(ui model.UserInfo, tags []model.UserTag, groups []uuid.UUID, permissions []permission.Permission) *UserInfo {
-	return &UserInfo{
-		ID:          ui.GetID(),
-		Bio:         ui.GetBio(),
-		Groups:      groups,
-		Tags:        formatUserTags(tags),
-		UpdatedAt:   ui.GetUpdatedAt(),
-		LastOnline:  ui.GetLastOnline(),
-		TwitterID:   ui.GetTwitterID(),
-		Name:        ui.GetName(),
-		DisplayName: ui.GetResponseDisplayName(),
-		IconFileID:  ui.GetIconFileID(),
-		Bot:         ui.IsBot(),
-		State:       ui.GetState().Int(),
-		Permissions: permissions,
-		HomeChannel: ui.GetHomeChannel(),
-	}
 }

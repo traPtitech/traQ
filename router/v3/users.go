@@ -6,12 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/samber/lo"
-
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 	"github.com/skip2/go-qrcode"
 
 	"github.com/traPtitech/traQ/model"
@@ -101,7 +100,22 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return extension.ServeJSONWithETag(c, FormatUserInfo(me, tags, groups, h.RBAC.GetGrantedPermissions(me.GetRole())))
+	return extension.ServeJSONWithETag(c, echo.Map{
+		"id":          me.GetID(),
+		"bio":         me.GetBio(),
+		"groups":      groups,
+		"tags":        formatUserTags(tags),
+		"updatedAt":   me.GetUpdatedAt(),
+		"lastOnline":  me.GetLastOnline(),
+		"twitterId":   me.GetTwitterID(),
+		"name":        me.GetName(),
+		"displayName": me.GetResponseDisplayName(),
+		"iconFileId":  me.GetIconFileID(),
+		"bot":         me.IsBot(),
+		"state":       me.GetState().Int(),
+		"permissions": h.RBAC.GetGrantedPermissions(me.GetRole()),
+		"homeChannel": me.GetHomeChannel(),
+	})
 }
 
 type userAccessScopes struct{}
