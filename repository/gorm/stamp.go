@@ -203,10 +203,14 @@ func (r *stampRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStampA
 				return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 			}
 
-			// 重複チェック
-			if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: args.Name.V}); err != nil {
-				return err
-			} else if exists {
+			// 重複チェックで名前が一致するレコードを取得
+			var existingStamp model.Stamp
+			if err := tx.Where("name = ?", args.Name.V).First(&existingStamp).Error; err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					return err
+				}
+			} else if existingStamp.ID != s.ID {
+				// 名前が一致する他のレコードが存在し、IDも異なる場合はエラーを返す
 				return repository.ErrAlreadyExists
 			}
 			changes["name"] = args.Name.V
