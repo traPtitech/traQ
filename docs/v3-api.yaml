@@ -4286,7 +4286,7 @@ paths:
       description: メッセージ引用通知の設定情報を変更します
   '/channels/{channelID}/path':
     parameters:
-      - $ref: '#/components/parameters/channelIDInPath'
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       summary: 指定したチャンネルパスを取得
       tags:
@@ -7297,7 +7297,6 @@ components:
           description: メッセージ引用通知の設定情報
       required:
         - notifyCitation
-
     ChannelPath:
       title: ChannelPath
       type: object
@@ -7320,7 +7319,6 @@ components:
           format: uuid
       required:
         - id
-
     Session:
       type: object
       properties:
@@ -7333,7 +7331,6 @@ components:
       required:
         - state
         - sessionId
-
   headers:
     X-TRAQ-MORE:
       schema:
