@@ -4284,7 +4284,7 @@ paths:
         - me
       operationId: changeMyNotifyCitation
       description: メッセージ引用通知の設定情報を変更します
-  '/channels/{channelID}/path':
+  '/channels/{channelId}/path':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
@@ -4302,7 +4302,6 @@ paths:
           description: Not Found
       operationId: getChannelPath
       description: 指定したチャンネルのパスを取得します。
-
 components:
   securitySchemes:
     cookieAuth:
@@ -7305,20 +7304,11 @@ components:
         path:
           type: string
           description: チャンネルパス
-          pattern: '#^[a-zA-Z0-9-_-/]$'
+          pattern: '^(\/[a-zA-Z0-9-_]+)+$'
       required:
         - path
-    ChannelID:
-      title: ChannelID
-      type: object
-      description: チャンネルID
-      properties:
-        id:
-          type: string
-          description: チャンネルID
-          format: uuid
-      required:
-        - id
+      example:
+        path: '/general'
     Session:
       type: object
       properties:

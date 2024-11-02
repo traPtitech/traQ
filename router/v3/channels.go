@@ -409,5 +409,5 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 
 	channelPath := h.ChannelManager.GetChannelPathFromID(channelID)
 
-	return c.JSON(http.StatusOK, channelPath)
+	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
