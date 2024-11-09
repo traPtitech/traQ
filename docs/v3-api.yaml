@@ -1086,13 +1086,36 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGroupMember'
+              oneOf:
+                - $ref: '#/components/schemas/UserGroupMember'
+                - $ref: '#/components/schemas/UserGroupMembers'
         description: ''
       tags:
         - group
       operationId: addUserGroupMember
       description: |-
         指定したグループにメンバーを追加します。
+        対象のユーザーグループの管理者権限が必要です。
+    delete:
+      summary: グループメンバーを一括削除
+      responses:
+        '204':
+          description: |-
+            No Content
+            グループから全てのユーザーが削除されました。
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      tags:
+        - group
+      operationId: removeUserGroupMembers
+      description: |-
+        指定したグループから全てのメンバーを削除します。
         対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members/{userId}':
     parameters:
@@ -5137,6 +5160,12 @@ components:
       required:
         - id
         - role
+    UserGroupMembers:
+      title: UserGroupMembers
+      type: array
+      description: ユーザーグループメンバーの配列
+      items:
+        $ref: '#/components/schemas/UserGroupMember'
     UserStats:
       title: UserStats
       type: object

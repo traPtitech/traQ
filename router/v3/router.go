@@ -291,6 +291,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
 					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDMembers.DELETE("", h.RemoveUserGroupMembers, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
 						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
