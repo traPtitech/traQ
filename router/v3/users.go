@@ -2,7 +2,6 @@ package v3
 
 import (
 	"context"
-	"github.com/samber/lo"
 	"net/http"
 	"sort"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 	"github.com/skip2/go-qrcode"
 
 	"github.com/traPtitech/traQ/model"
@@ -100,8 +100,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
-	return c.JSON(http.StatusOK, echo.Map{
+	return extension.ServeJSONWithETag(c, echo.Map{
 		"id":          me.GetID(),
 		"bio":         me.GetBio(),
 		"groups":      groups,
