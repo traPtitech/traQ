@@ -65,14 +65,14 @@ func (n *channelNode) getChildrenIDs() []uuid.UUID {
 }
 
 func (n *channelNode) getChannelDepth() int {
-	max := 0
+	maxDepth := 0
 	for _, c := range n.children {
 		d := c.getChannelDepth()
-		if max < d {
-			max = d
+		if maxDepth < d {
+			maxDepth = d
 		}
 	}
-	return max + 1
+	return maxDepth + 1
 }
 
 func (n *channelNode) getDescendantIDs() []uuid.UUID {
