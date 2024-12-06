@@ -47,6 +47,7 @@ func Migrations() []*gormigrate.Migration {
 		v34(), // 未読テーブルのcreated_atカラムをメッセージテーブルを元に更新 / カラム名を変更
 		v35(), // OIDC実装のため、openid, profileロール、get_oidc_userinfo権限を追加
 		v36(), // delete_my_stampパーミッションを追加
+		v37(), // OAuth Client Credentials Grantの対応のため、clientロールを追加
 	}
 }
 
