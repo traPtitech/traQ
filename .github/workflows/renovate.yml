@@ -50,7 +50,7 @@ jobs:
           echo "RENOVATE_DRY_RUN=${{ github.event.inputs.dryRun || env.RENOVATE_DRY_RUN }}" >> "${GITHUB_ENV}"
           echo "LOG_LEVEL=${{ github.event.inputs.logLevel || env.LOG_LEVEL }}" >> "${GITHUB_ENV}"
       - name: Renovate
-        uses: renovatebot/github-action@v41.0.5
+        uses: renovatebot/github-action@v41.0.6
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
           renovate-version: "latest"
