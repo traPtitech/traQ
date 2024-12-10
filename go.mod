@@ -54,7 +54,7 @@ require (
 	github.com/zitadel/oidc/v3 v3.33.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.30.0
-	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
+	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
 	golang.org/x/image v0.23.0
 	golang.org/x/net v0.32.0
 	golang.org/x/oauth2 v0.24.0
