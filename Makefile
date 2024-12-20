@@ -66,10 +66,6 @@ db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
 	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint -c .tbls.yml
 
-.PHONY: goreleaser-snapshot
-goreleaser-snapshot: ## Release dry-run
-	@docker run --rm -it -v $$PWD:/src -w /src goreleaser/goreleaser --snapshot --skip-publish --rm-dist
-
 .PHONY: update-frontend
 update-frontend: ## Update frontend files in dev/frontend
 	@mkdir -p ./dev/frontend
