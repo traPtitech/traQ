@@ -32,8 +32,8 @@ type Query struct {
 	After          optional.Of[time.Time] `query:"after"`          // 以降(投稿日時) 2020-06-20T00:00:00Z
 	Before         optional.Of[time.Time] `query:"before"`         // 以前(投稿日時)
 	In             optional.Of[uuid.UUID] `query:"in"`             // 投稿チャンネル
-	To             optional.Of[uuid.UUID] `query:"to"`             // メンション先
-	From           optional.Of[uuid.UUID] `query:"from"`           // 投稿者
+	To             []uuid.UUID            `query:"to"`             // メンション先
+	From           []uuid.UUID            `query:"from"`           // 投稿者
 	Citation       optional.Of[uuid.UUID] `query:"citation"`       // 引用しているメッセージ
 	Bot            optional.Of[bool]      `query:"bot"`            // 投稿者がBotか
 	HasURL         optional.Of[bool]      `query:"hasURL"`         // URLの存在

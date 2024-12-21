@@ -119,14 +119,18 @@ paths:
           name: in
           description: メッセージが投稿されたチャンネル
         - schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
           in: query
           name: to
           description: メンションされたユーザー
         - schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
           in: query
           name: from
           description: メッセージを投稿したユーザー
