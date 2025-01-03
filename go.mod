@@ -53,7 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/zitadel/oidc/v3 v3.33.1
+	github.com/zitadel/oidc/v3 v3.34.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329
