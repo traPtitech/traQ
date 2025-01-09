@@ -7,7 +7,7 @@ toolchain go1.23.4
 require (
 	cloud.google.com/go/profiler v0.4.2
 	firebase.google.com/go/v4 v4.15.1
-	github.com/MicahParks/jwkset v0.5.20
+	github.com/MicahParks/jwkset v0.6.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.27.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.16
@@ -191,7 +191,7 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.8.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	google.golang.org/appengine/v2 v2.0.2 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
