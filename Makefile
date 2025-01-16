@@ -66,17 +66,6 @@ db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
 	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint -c .tbls.yml
 
-.PHONY: update-frontend
-update-frontend: ## Update frontend files in dev/frontend
-	@mkdir -p ./dev/frontend
-# renovate:github-url
-	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.22.1/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
-
-.PHONY: reset-frontend
-reset-frontend: ## Completely replace frontend files in dev/frontend
-	rm -rf ./dev/frontend
-	@make update-frontend
-
 .PHONY: up
 up: ## Build and start the app containers
 	@docker compose up -d --build

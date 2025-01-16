@@ -30,9 +30,6 @@ Now you can access to
 #### Rebuild traQ
 `make up`
 
-#### Update frontend
-`make update-frontend` or `make reset-frontend`
-
 #### Destroy Containers
 `make down`
 
