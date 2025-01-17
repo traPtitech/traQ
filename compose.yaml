@@ -31,7 +31,9 @@ services:
       - app:/app/storage
 
   frontend:
-    image: caddy:2.9.1-alpine
+    build:
+      context: ./dev
+      dockerfile: Dockerfile-frontend
     restart: always
     expose:
       - "80"
@@ -39,9 +41,6 @@ services:
       - "3000:80"
     depends_on:
       - backend
-    volumes:
-      - ./dev/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./dev/frontend:/usr/share/caddy:ro
 
   mysql:
     image: mariadb:10.11.10
