@@ -502,7 +502,7 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 
 	s := env.S(t, user.GetID())
 
-	t.Run("not logged in - single", func(t *testing.T) {
+	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -510,16 +510,8 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
-	t.Run("not logged in - multiple", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.POST(path, ug.ID).
-			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
 
-	t.Run("bad request - single", func(t *testing.T) {
+	t.Run("bad request", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -528,17 +520,8 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusBadRequest)
 	})
-	t.Run("bad request - multiple", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.POST(path, ug.ID).
-			WithCookie(session.CookieName, s).
-			WithJSON(&[]PostUserGroupMemberRequest{{ID: uuid.Must(uuid.NewV4())}}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
 
-	t.Run("forbidden - single", func(t *testing.T) {
+	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug2.ID).
@@ -547,17 +530,8 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusForbidden)
 	})
-	t.Run("forbidden - multiple", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.POST(path, ug2.ID).
-			WithCookie(session.CookieName, s).
-			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
-			Expect().
-			Status(http.StatusForbidden)
-	})
 
-	t.Run("not found - single", func(t *testing.T) {
+	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, uuid.Must(uuid.NewV4())).
@@ -566,17 +540,8 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNotFound)
 	})
-	t.Run("not found - multiple", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.POST(path, uuid.Must(uuid.NewV4())).
-			WithCookie(session.CookieName, s).
-			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
-			Expect().
-			Status(http.StatusNotFound)
-	})
 
-	t.Run("success - single", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -593,7 +558,61 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			assert.EqualValues(t, m.Role, "")
 		}
 	})
-	t.Run("success - multiple", func(t *testing.T) {
+}
+
+func TestHandlers_AddUsersGroupMember(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/groups/{groupId}/members"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+
+	ug := env.CreateUserGroup(t, rand, "", "", user.GetID())
+	ug2 := env.CreateUserGroup(t, rand, "", "", user2.GetID())
+
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+	
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: uuid.Must(uuid.NewV4())}}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+	
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug2.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+	
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+	
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
