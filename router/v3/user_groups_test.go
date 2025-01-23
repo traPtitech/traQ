@@ -808,6 +808,76 @@ func TestHandlers_RemoveUserGroupMember(t *testing.T) {
 	})
 }
 
+func TestHandlers_RemoveUserGroupMembers(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/groups/{groupId}/members"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+
+	ug := env.CreateUserGroup(t, rand, "", "", user.GetID())
+	ug2 := env.CreateUserGroup(t, rand, "", "", user2.GetID())
+	env.AddUserToUserGroup(t, user.GetID(), ug.ID, "")
+	env.AddUserToUserGroup(t, user.GetID(), ug2.ID, "")
+
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug2.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("user group not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("already removed", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ug, err := env.Repository.GetUserGroup(ug.ID)
+		require.NoError(t, err)
+		assert.Len(t, ug.Members, 0)
+
+		// already removed
+		e.DELETE(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
 func TestHandlers_GetUserGroupAdmins(t *testing.T) {
 	t.Parallel()
 
