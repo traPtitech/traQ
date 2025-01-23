@@ -581,7 +581,7 @@ func TestHandlers_AddUsersGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
-	
+
 	t.Run("bad request", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -591,7 +591,7 @@ func TestHandlers_AddUsersGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusBadRequest)
 	})
-	
+
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -601,7 +601,7 @@ func TestHandlers_AddUsersGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusForbidden)
 	})
-	
+
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -611,7 +611,7 @@ func TestHandlers_AddUsersGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNotFound)
 	})
-	
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
