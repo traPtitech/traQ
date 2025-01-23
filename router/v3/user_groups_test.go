@@ -502,7 +502,7 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 
 	s := env.S(t, user.GetID())
 
-	t.Run("not logged in", func(t *testing.T) {
+	t.Run("not logged in - single", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -510,8 +510,16 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
+	t.Run("not logged in - multiple", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
 
-	t.Run("bad request", func(t *testing.T) {
+	t.Run("bad request - single", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -520,8 +528,17 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusBadRequest)
 	})
+	t.Run("bad request - multiple", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: uuid.Must(uuid.NewV4())}}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
 
-	t.Run("forbidden", func(t *testing.T) {
+	t.Run("forbidden - single", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug2.ID).
@@ -530,8 +547,17 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusForbidden)
 	})
+	t.Run("forbidden - multiple", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug2.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found - single", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, uuid.Must(uuid.NewV4())).
@@ -540,8 +566,17 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNotFound)
 	})
+	t.Run("not found - multiple", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success - single", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, ug.ID).
@@ -555,6 +590,27 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 		if assert.Len(t, ug.Members, 1) {
 			m := ug.Members[0]
 			assert.EqualValues(t, m.UserID, user.GetID())
+			assert.EqualValues(t, m.Role, "")
+		}
+	})
+	t.Run("success - multiple", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}, {ID: user2.GetID()}}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ug, err := env.Repository.GetUserGroup(ug.ID)
+		require.NoError(t, err)
+		if assert.Len(t, ug.Members, 2) {
+			m := ug.Members[0]
+			assert.EqualValues(t, m.UserID, user.GetID())
+			assert.EqualValues(t, m.Role, "")
+
+			m = ug.Members[1]
+			assert.EqualValues(t, m.UserID, user2.GetID())
 			assert.EqualValues(t, m.Role, "")
 		}
 	})
