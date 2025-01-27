@@ -560,6 +560,81 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 	})
 }
 
+func TestHandlers_AddUsersGroupMember(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/groups/{groupId}/members"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+
+	ug := env.CreateUserGroup(t, rand, "", "", user.GetID())
+	ug2 := env.CreateUserGroup(t, rand, "", "", user2.GetID())
+
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: uuid.Must(uuid.NewV4())}}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug2.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&[]PostUserGroupMemberRequest{{ID: user.GetID()}, {ID: user2.GetID()}}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ug, err := env.Repository.GetUserGroup(ug.ID)
+		require.NoError(t, err)
+		if assert.Len(t, ug.Members, 2) {
+			m := ug.Members[0]
+			assert.EqualValues(t, m.UserID, user.GetID())
+			assert.EqualValues(t, m.Role, "")
+
+			m = ug.Members[1]
+			assert.EqualValues(t, m.UserID, user2.GetID())
+			assert.EqualValues(t, m.Role, "")
+		}
+	})
+}
+
 func TestPatchUserGroupMemberRequest_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -746,6 +821,76 @@ func TestHandlers_RemoveUserGroupMember(t *testing.T) {
 
 		// already removed
 		e.DELETE(path, ug.ID, user.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
+func TestHandlers_RemoveUserGroupMembers(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/groups/{groupId}/members"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+
+	ug := env.CreateUserGroup(t, rand, "", "", user.GetID())
+	ug2 := env.CreateUserGroup(t, rand, "", "", user2.GetID())
+	env.AddUserToUserGroup(t, user.GetID(), ug.ID, "")
+	env.AddUserToUserGroup(t, user.GetID(), ug2.ID, "")
+
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug2.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("user group not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("already removed", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, ug.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ug, err := env.Repository.GetUserGroup(ug.ID)
+		require.NoError(t, err)
+		assert.Len(t, ug.Members, 0)
+
+		// already removed
+		e.DELETE(path, ug.ID).
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
