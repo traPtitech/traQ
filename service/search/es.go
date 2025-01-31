@@ -260,30 +260,28 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 type searchQuery m
 
 type searchBody struct {
-	Query *struct {
-		Bool *struct {
-			Musts []searchQuery `json:"must,omitempty"`
-		} `json:"bool,omitempty"`
-	} `json:"query,omitempty"`
+	Query searchQuery `json:"query,omitempty"`
 }
 
-func newSearchBody(sq []searchQuery) searchBody {
-	sb := searchBody{
-		Query: &struct {
-			Bool *struct {
-				Musts []searchQuery `json:"must,omitempty"`
-			} `json:"bool,omitempty"`
-		}{Bool: &struct {
-			Musts []searchQuery `json:"must,omitempty"`
-		}{Musts: sq}},
+func newSearchBody(andQueries []searchQuery) searchBody {
+	return searchBody{
+		Query: searchQuery{
+			"bool": boolQuery{
+				Must: andQueries,
+			},
+		},
 	}
-	return sb
 }
 
 type simpleQueryString struct {
 	Query           string   `json:"query"`
 	Fields          []string `json:"fields"`
 	DefaultOperator string   `json:"default_operator"`
+}
+
+type boolQuery struct {
+	Must   []searchQuery `json:"must,omitempty"`
+	Should []searchQuery `json:"should,omitempty"`
 }
 
 type rangeQuery map[string]rangeParameters
@@ -338,12 +336,34 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"term": termQuery{"isPublic": termQueryParameter{Value: true}}})
 	}
 
-	if q.To.Valid {
-		musts = append(musts, searchQuery{"term": termQuery{"to": termQueryParameter{Value: q.To}}})
+	if len(q.To) > 0 {
+		orQueries := make([]searchQuery, 0, len(q.To))
+		for _, toID := range q.To {
+			orQueries = append(orQueries, searchQuery{"term": termQuery{"to": termQueryParameter{Value: toID}}})
+		}
+
+		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
+		if len(q.To) == 1 {
+			// OR検索が不要
+			sq = orQueries[0]
+		}
+
+		musts = append(musts, sq)
 	}
 
-	if q.From.Valid {
-		musts = append(musts, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: q.From}}})
+	if len(q.From) > 0 {
+		orQueries := make([]searchQuery, 0, len(q.From))
+		for _, fromID := range q.From {
+			orQueries = append(orQueries, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: fromID}}})
+		}
+
+		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
+		if len(q.From) == 1 {
+			// OR検索が不要
+			sq = orQueries[0]
+		}
+
+		musts = append(musts, sq)
 	}
 
 	if q.Citation.Valid {
