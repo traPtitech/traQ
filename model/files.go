@@ -47,6 +47,8 @@ func (f FileType) String() string {
 		return "stamp"
 	case FileTypeThumbnail:
 		return "thumbnail"
+	case FileTypeSoundboardItem:
+		return "soundboard_item"
 	default:
 		return "null"
 	}
@@ -62,6 +64,8 @@ func FileTypeFromString(s string) (FileType, error) {
 		return FileTypeStamp, nil
 	case "thumbnail":
 		return FileTypeThumbnail, nil
+	case "soundboard_item":
+		return FileTypeSoundboardItem, nil
 	default:
 		return 0, errors.New("unknown FileType")
 	}
@@ -76,6 +80,8 @@ const (
 	FileTypeStamp
 	// FileTypeThumbnail サムネイルファイルタイプ
 	FileTypeThumbnail
+	// FileTypeSoundboardItem サウンドボードアイテムファイルタイプ
+	FileTypeSoundboardItem
 )
 
 type ThumbnailType int
