@@ -5,15 +5,9 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/extension/herror"
 )
-
-// CreateSoundBoardItemRequest POST /soundboard/items リクエストボディ
-type CreateSoundBoardItemRequest struct {
-	Name      string    `json:"name"`
-	StampID   uuid.UUID `json:"stampId"`
-	CreatorID uuid.UUID `json:"creatorId"`
-}
 
 // GetSoundboardItems
 func (h *Handlers) GetSoundBoardItems(c echo.Context) error {
@@ -26,12 +20,21 @@ func (h *Handlers) GetSoundBoardItems(c echo.Context) error {
 
 // CreateSoundBoardItem
 func (h *Handlers) CreateSoundBoardItem(c echo.Context) error {
-	var req CreateSoundBoardItemRequest
-	if err := bindAndValidate(c, &req); err != nil {
+	src, uploadedFile, err := c.Request().FormFile("file")
+	if err != nil {
 		return herror.BadRequest(err)
 	}
+	defer src.Close()
+	if uploadedFile.Size == 0 {
+		return herror.BadRequest("non-empty file is required")
+	}
 
-	if err := h.Repo.CreateSoundBoardItem(uuid.Must(uuid.NewV7()), req.Name, req.StampID, req.CreatorID); err != nil {
+	mimeType := uploadedFile.Header.Get(echo.HeaderContentType)
+	soundName := c.FormValue("name")
+	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
+	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
+
+	if err := h.Soundboard.SaveSoundboardItem(uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -7939,6 +7939,9 @@ components:
         soundName:
           type: string
           description: ユーザが自由につけるサウンド名
+        stampId:
+          type: string
+          description: アイコンスタンプID
       required:
         - audio
         - soundName

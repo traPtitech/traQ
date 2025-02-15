@@ -17,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/oidc"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/search"
@@ -45,6 +46,7 @@ type Handlers struct {
 	MessageManager message.Manager
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
+	Soundboard     qall.Soundboard
 	Config
 }
 

@@ -67,6 +67,8 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
+require github.com/jfreymuth/vorbis v1.0.2 // indirect
+
 require (
 	cel.dev/expr v0.19.0 // indirect
 	cloud.google.com/go v0.117.0 // indirect
@@ -145,6 +147,7 @@ require (
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
