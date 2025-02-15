@@ -5,7 +5,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-func (repo *Repository) CreateSoundBoardItem(soundID uuid.UUID, soundName string, stampID *uuid.UUID, creatorID uuid.UUID) error {
+func (repo *Repository) CreateSoundboardItem(soundID uuid.UUID, soundName string, stampID *uuid.UUID, creatorID uuid.UUID) error {
 	return repo.db.Create(&model.SoundboardItem{
 		ID:        soundID,
 		Name:      soundName,
@@ -14,7 +14,7 @@ func (repo *Repository) CreateSoundBoardItem(soundID uuid.UUID, soundName string
 	}).Error
 }
 
-func (repo *Repository) GetAllSoundBoardItems() ([]*model.SoundboardItem, error) {
+func (repo *Repository) GetAllSoundboardItems() ([]*model.SoundboardItem, error) {
 	items := make([]*model.SoundboardItem, 0)
 	if err := repo.db.Find(&items).Error; err != nil {
 		return nil, err

@@ -10,16 +10,16 @@ import (
 )
 
 // GetSoundboardItems
-func (h *Handlers) GetSoundBoardItems(c echo.Context) error {
-	items, err := h.Repo.GetAllSoundBoardItems()
+func (h *Handlers) GetSoundboardItems(c echo.Context) error {
+	items, err := h.Repo.GetAllSoundboardItems()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.JSON(http.StatusOK, items)
 }
 
-// CreateSoundBoardItem
-func (h *Handlers) CreateSoundBoardItem(c echo.Context) error {
+// CreateSoundboardItem
+func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	src, uploadedFile, err := c.Request().FormFile("file")
 	if err != nil {
 		return herror.BadRequest(err)

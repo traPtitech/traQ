@@ -51,7 +51,7 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 		return err
 	}
 
-	return m.repo.CreateSoundBoardItem(soundID, soundName, stampID, creatorID)
+	return m.repo.CreateSoundboardItem(soundID, soundName, stampID, creatorID)
 }
 
 func (m *soundboardManager) GetURL(soundID uuid.UUID) (string, error) {
