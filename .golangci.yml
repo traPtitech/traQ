@@ -12,4 +12,5 @@ linters:
 
 linters-settings:
   errcheck:
-    exclude: dev/errcheck-exclude.txt
+    exclude-functions:
+      - dev/errcheck-exclude.txt
