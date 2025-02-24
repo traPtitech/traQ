@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
+	channelService "github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
@@ -28,27 +30,35 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		return herror.BadRequest("include-dm and path cannot be specified at the same time")
 	}
 
-	res := echo.Map{
-		"public": h.ChannelManager.PublicChannelTree(),
-	}
+	var res echo.Map
 
 	if len(c.QueryParam("path")) > 0 {
 		channelPath := c.QueryParam("path")
 		channel, err := h.ChannelManager.GetChannelFromPath(channelPath)
 		if err != nil {
-			return herror.InternalServerError(err)
+			if errors.Is(err, channelService.ErrInvalidChannelPath) {
+				return herror.HTTPError(http.StatusNotFound, err)
+			} else {
+				return herror.InternalServerError(err)
+			}
 		}
 		res = echo.Map{
-			"public": channel,
+			"public": []*Channel{
+				formatChannel(channel, h.ChannelManager.PublicChannelTree().GetChildrenIDs(channel.ID)),
+			},
 		}
-	}
+	} else {
+		res = echo.Map{
+			"public": h.ChannelManager.PublicChannelTree(),
+		}
 
-	if isTrue(c.QueryParam("include-dm")) {
-		mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
-		if err != nil {
-			return herror.InternalServerError(err)
+		if isTrue(c.QueryParam("include-dm")) {
+			mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
+			if err != nil {
+				return herror.InternalServerError(err)
+			}
+			res["dm"] = formatDMChannels(mapping)
 		}
-		res["dm"] = formatDMChannels(mapping)
 	}
 
 	return extension.ServeJSONWithETag(c, res)
