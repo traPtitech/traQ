@@ -71,6 +71,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
+	rateLimit := middlewares.RateLimiterWithLogging
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
@@ -82,7 +83,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), rateLimit(10, 10, h.Logger))
 	{
 		apiUsers := api.Group("/users")
 		{
