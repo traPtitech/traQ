@@ -164,6 +164,32 @@ func TestHandlers_GetChannels(t *testing.T) {
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
 	})
+
+	t.Run("success (valid path, user1)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", channel.Name).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().IsEqual(1)
+		public.Value(0).Object().Value("id").String().IsEqual(channel.ID.String())
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		_ = e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", "invalid-channel-path").
+			Expect().
+			Status(http.StatusNotFound)
+	})
 }
 
 func TestPostChannelRequest_Validate(t *testing.T) {
