@@ -21,7 +21,7 @@ var usersCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
 // UserCounter status別ユーザー数カウンタ
 type UserCounter interface {
 	// Get 全ユーザー数を返します
-	// botも含む
+	// 削除されていないbotも含みます
 	Get() int64
 }
 
@@ -31,13 +31,14 @@ type userCounter struct {
 }
 type usersCounterImpl struct {
 	userCounter map[model.UserAccountStatus]*userCounter
-	botCounter userCounter
+	botCounter map[model.BotState]*userCounter
 	countersLock sync.Mutex
 }
 // NewUserCounter status別ユーザー数カウンタを生成します
 func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 	counter := &usersCounterImpl{
 		userCounter: make(map[model.UserAccountStatus]*userCounter),
+		botCounter: make(map[model.BotState]*userCounter),
 	}
 
 	if err := counter.countUsers(model.UserAccountStatusDeactivated, db); err != nil {
@@ -49,18 +50,26 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 	if err := counter.countUsers(model.UserAccountStatusSuspended, db); err != nil {
 		return nil, err
 	}
-	if err := counter.countBots(db); err != nil {
+	if err := counter.countBots(model.BotInactive, db); err != nil {
 		return nil, err
 	}
-	
-	usersCounter.WithLabelValues("deactivated").Set(float64(counter.userCounter[model.UserAccountStatusDeactivated].count))
-	usersCounter.WithLabelValues("active").Set(float64(counter.userCounter[model.UserAccountStatusActive].count))
-	usersCounter.WithLabelValues("suspended").Set(float64(counter.userCounter[model.UserAccountStatusSuspended].count))
-	usersCounter.WithLabelValues("bot").Set(float64(counter.botCounter.count))
+	if err := counter.countBots(model.BotActive, db); err != nil {
+		return nil, err
+	}
+	if err := counter.countBots(model.BotPaused, db); err != nil {
+		return nil, err
+	}
+	usersCounter.WithLabelValues("user-deactivated").Set(float64(counter.userCounter[model.UserAccountStatusDeactivated].count))
+	usersCounter.WithLabelValues("user-active").Set(float64(counter.userCounter[model.UserAccountStatusActive].count))
+	usersCounter.WithLabelValues("user-suspended").Set(float64(counter.userCounter[model.UserAccountStatusSuspended].count))
+	usersCounter.WithLabelValues("bot-inactive").Set(float64(counter.botCounter[model.BotInactive].count))
+	usersCounter.WithLabelValues("bot-active").Set(float64(counter.botCounter[model.BotActive].count))
+	usersCounter.WithLabelValues("bot-paused").Set(float64(counter.botCounter[model.BotPaused].count))
 
 	return counter, nil
 }
 
+// countUsers 指定したステータスのユーザー数をカウントします
 func (c *usersCounterImpl) countUsers(status model.UserAccountStatus, db *gorm.DB) error {
 	tmpUserCounter := userCounter{
 		count: 0,
@@ -76,19 +85,28 @@ func (c *usersCounterImpl) countUsers(status model.UserAccountStatus, db *gorm.D
 	c.userCounter[status] = &tmpUserCounter
 	return nil
 }
-func (c *usersCounterImpl) countBots(db *gorm.DB) error {
+
+// countBots 指定したステータスのBot数をカウントします
+func (c *usersCounterImpl) countBots(status model.BotState, db *gorm.DB) error {
+	tmpUserCounter := userCounter{
+		count: 0,
+	}
 	if err := db.
-		Model(&model.User{}).
-		Where("bot = ?", "1").
-		Count(&c.botCounter.count).
+		Model(&model.Bot{}).
+		Where("state = ?", strconv.Itoa(int(status))).
+		Count(&tmpUserCounter.count).
 		Error; err != nil {
 		fmt.Errorf("failed to load Bots: %w", err)
 	}
+	c.botCounter[status] = &tmpUserCounter
 	return nil
 }
 
+// Get 全ユーザー数を返します
+// botも含む
 func (c *usersCounterImpl) Get() int64 {
 	c.countersLock.Lock()
 	defer c.countersLock.Unlock()
-	return c.userCounter[model.UserAccountStatusDeactivated].count + c.userCounter[model.UserAccountStatusActive].count + c.userCounter[model.UserAccountStatusSuspended].count + c.botCounter.count
+	return c.userCounter[model.UserAccountStatusDeactivated].count + c.userCounter[model.UserAccountStatusActive].count + c.userCounter[model.UserAccountStatusSuspended].count + 
+		c.botCounter[model.BotInactive].count + c.botCounter[model.BotActive].count + c.botCounter[model.BotPaused].count
 }
