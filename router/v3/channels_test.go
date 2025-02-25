@@ -73,6 +73,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
+	subchannel := env.CreateSubchannel(t, channel, rand)
 	dm := env.CreateDMChannel(t, user1.GetID(), user2.GetID())
 	user1Session := env.S(t, user1.GetID())
 	user2Session := env.S(t, user2.GetID())
@@ -97,9 +98,10 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
+		public.Length().IsEqual(2)
 
 		channelEquals(t, channel, public.Value(0).Object())
+		channelEquals(t, subchannel, public.Value(1).Object())
 	})
 
 	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
@@ -114,8 +116,9 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
+		public.Length().IsEqual(2)
 		channelEquals(t, channel, public.Value(0).Object())
+		channelEquals(t, subchannel, public.Value(1).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -136,8 +139,9 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
+		public.Length().IsEqual(2)
 		channelEquals(t, channel, public.Value(0).Object())
+		channelEquals(t, subchannel, public.Value(1).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -158,19 +162,20 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
+		public.Length().IsEqual(2)
 		channelEquals(t, channel, public.Value(0).Object())
+		channelEquals(t, subchannel, public.Value(1).Object())
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
 	})
 
-	t.Run("success (valid path, user1)", func(t *testing.T) {
+	t.Run("success (path=*, user1)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		obj := e.GET(path).
 			WithCookie(session.CookieName, user1Session).
-			WithQuery("path", channel.Name).
+			WithQuery("path", env.CM.GetChannelPathFromID(channel.ID)).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -178,7 +183,23 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 		public := obj.Value("public").Array()
 		public.Length().IsEqual(1)
-		public.Value(0).Object().Value("id").String().IsEqual(channel.ID.String())
+		channelEquals(t, channel, public.Value(0).Object())
+	})
+
+	t.Run("success (path=*/*, user1)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", env.CM.GetChannelPathFromID(subchannel.ID)).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().IsEqual(1)
+		channelEquals(t, subchannel, public.Value(0).Object())
 	})
 
 	t.Run("invalid path", func(t *testing.T) {
