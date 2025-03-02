@@ -153,11 +153,21 @@ oauth2:
   # Access token expiration time in seconds. Default: 31536000 (1 year)
   accessTokenExp: 31536000 # 1 year
 
-# Skyway settings.
+# (deprecated) Skyway settings.
 # You must set this to enable the call ('Qall') feature.
 skyway:
   # Skyway secret key.
   secretKey: secretKey
+
+# LiveKit settings.
+# You must set these to enable the call ('Qall') feature.
+livekit:
+  # LiveKit host url
+  livekitHost: livekitHost
+  # LiveKit api key
+  livekitApiKey: livekitApiKey
+  # LiveKit api secret
+  livekitApiSecret: livekitApiSecret
 
 # (optional) JWT settings.
 # Used to issue QR codes to authenticate user.

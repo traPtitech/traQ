@@ -47,6 +47,7 @@ type Handlers struct {
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
 	Soundboard     qall.Soundboard
+	QallRepo       qall.RoomStateManager
 	Config
 }
 
@@ -56,6 +57,15 @@ type Config struct {
 
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+
+	// LiveKitHost LiveKitホスト
+	LiveKitHost string
+
+	// LiveKitApiKey LiveKit APIキー
+	LiveKitApiKey string
+
+	// LiveKitApiSecret LiveKit APIシークレットキー
+	LiveKitApiSecret string
 
 	// AllowSignUp ユーザーが自分自身で登録できるかどうか
 	AllowSignUp bool
@@ -378,6 +388,17 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiOgp.GET("", h.GetOgp)
 			apiOgp.DELETE("/cache", h.DeleteOgpCache)
 		}
+
+		apiQall := api.Group("/qall")
+		{
+			apiQall.GET("/soundboard", h.GetSoundboardItems, requires(permission.WebRTC))
+			apiQall.POST("/soundboard", h.CreateSoundboardItem, requires(permission.WebRTC))
+			apiQall.GET("/rooms", h.GetRoomState, requires(permission.WebRTC))
+			apiQall.GET("/token", h.GetLiveKitToken, requires(permission.WebRTC))
+			apiQall.PATCH(("rooms/:roomID/metadata"), h.PatchRoomMetadata, requires(permission.WebRTC))
+			apiQall.PATCH(("/rooms/:room_id/participants"), h.PatchRoomParticipants, requires(permission.WebRTC))
+		}
+
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
 	}
 
@@ -391,6 +412,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)

@@ -10,6 +10,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/jfreymuth/oggvorbis"
+	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -20,13 +22,15 @@ type soundboardManager struct {
 	repo repository.SoundboardRepository
 	fs   storage.FileStorage
 	l    *zap.Logger
+	hub  *hub.Hub
 }
 
-func NewSoundboardManager(repo repository.SoundboardRepository, fs storage.FileStorage, logger *zap.Logger) (Soundboard, error) {
+func NewSoundboardManager(repo repository.SoundboardRepository, fs storage.FileStorage, logger *zap.Logger, hub *hub.Hub) (Soundboard, error) {
 	return &soundboardManager{
 		repo: repo,
 		fs:   fs,
 		l:    logger.Named("soundboard_manager"),
+		hub:  hub,
 	}, nil
 }
 
@@ -45,13 +49,31 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 	}
 
 	// ファイルを保存
-	err = m.fs.SaveByKey(src, soundID.String(), "soundboardItem", contentType, fileType)
+	bytesReader := bytes.NewReader(b)
+	err = m.fs.SaveByKey(bytesReader, soundID.String(), "soundboardItem", contentType, fileType)
 	if err != nil {
 		m.l.Error("failed to save soundboard item", zap.Error(err))
 		return err
 	}
 
-	return m.repo.CreateSoundboardItem(soundID, soundName, stampID, creatorID)
+	err = m.repo.CreateSoundboardItem(soundID, soundName, stampID, creatorID)
+	if err != nil {
+		return err
+	}
+	
+	// イベント発行
+	if m.hub != nil {
+		m.hub.Publish(hub.Message{
+			Name: event.QallSoundboardItemCreated,
+			Fields: hub.Fields{
+				"sound_id":   soundID,
+				"name":       soundName,
+				"creator_id": creatorID,
+			},
+		})
+	}
+	
+	return nil
 }
 
 func (m *soundboardManager) GetURL(soundID uuid.UUID) (string, error) {
@@ -65,7 +87,22 @@ func (m *soundboardManager) DeleteSoundboardItem(soundID uuid.UUID) error {
 		return err
 	}
 
-	return m.repo.DeleteSoundboardItem(soundID)
+	err = m.repo.DeleteSoundboardItem(soundID)
+	if err != nil {
+		return err
+	}
+	
+	// イベント発行
+	if m.hub != nil {
+		m.hub.Publish(hub.Message{
+			Name: event.QallSoundboardItemDeleted,
+			Fields: hub.Fields{
+				"sound_id": soundID,
+			},
+		})
+	}
+	
+	return nil
 }
 
 // checkAudioDuration は拡張子(ext)に基づいて対応ライブラリを使い、秒数をチェックする

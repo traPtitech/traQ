@@ -2,11 +2,10 @@ package qall
 
 import (
 	"context"
-	"encoding/json"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/livekit/protocol/livekit"
-	lksdk "github.com/livekit/server-sdk-go/v2"
-	"time"
 )
 
 // Metadataに収容されるJSONの構造体
@@ -49,169 +48,44 @@ type RoomWithParticipants struct {
 	RoomId uuid.UUID `json:"roomId"`
 }
 
-type Repository struct {
-	LiveKitHost string
-	ApiKey      string
-	ApiSecret   string
-	RoomState   []RoomWithParticipants
-}
+// RoomStateManager はQallルーム状態を管理するインターフェース
+type RoomStateManager interface {
+	// InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
+	InitializeRoomState() error
 
-// InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
-func (r *Repository) InitializeRoomState() error {
-	roomWithParticipants, err := r.GetRoomsWithParticipantsByLiveKitServer(context.Background())
-	r.RoomState = roomWithParticipants
-	return err
-}
+	// AddParticipantToRoomState ルーム状態に参加者を追加
+	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)
 
-func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomId.String() == room.Name {
-			t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-			r.RoomState[i].Participants = append(r.RoomState[i].Participants, Participant{
-				Identity:   &participant.Identity,
-				JoinedAt:   &t,
-				Name:       &participant.Name,
-				Attributes: &participant.Attributes,
-				CanPublish: &participant.Permission.CanPublish,
-			})
-		}
-	}
-}
+	// UpdateParticipantCanPublish 参加者の発言権限を更新
+	UpdateParticipantCanPublish(roomId string, participantId string, canPublish bool)
 
-func (r *Repository) UpdateParticipantCanPublish(roomId string, participantId string, canPublish bool) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomId.String() == roomId {
-			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantId {
-					r.RoomState[i].Participants[j].CanPublish = &canPublish
-				}
-			}
-		}
-	}
-}
+	// UpdateParticipant 参加者情報を更新
+	UpdateParticipant(roomId string, participant *livekit.ParticipantInfo)
 
-func (r *Repository) UpdateParticipant(roomId string, participant *livekit.ParticipantInfo) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomId.String() == roomId {
-			for j, p := range roomState.Participants {
-				if *p.Identity == participant.Identity {
-					t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-					r.RoomState[i].Participants[j] = Participant{
-						Identity:   &participant.Identity,
-						JoinedAt:   &t,
-						Name:       &participant.Name,
-						Attributes: &participant.Attributes,
-					}
-				}
-			}
-		}
-	}
-}
+	// RemoveParticipant ルームから参加者を削除
+	RemoveParticipant(roomId string, participantId string)
 
-func (r *Repository) RemoveParticipant(roomId string, participantId string) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomId.String() == roomId {
-			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantId {
-					r.RoomState[i].Participants = append(r.RoomState[i].Participants[:j], r.RoomState[i].Participants[j+1:]...)
-				}
-			}
-		}
-	}
-}
+	// GetRoomsWithParticipantsByLiveKitServerAndSave LiveKitサーバーからルーム状態を取得して保存
+	GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.Context) error
 
-func (r *Repository) GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.Context) error {
-	roomWithParticipants, err := r.GetRoomsWithParticipantsByLiveKitServer(ctx)
-	if err != nil {
-		return err
-	}
-	r.RoomState = roomWithParticipants
-	return nil
-}
+	// AddRoomState ルーム状態を追加
+	AddRoomState(room RoomWithParticipants)
 
-func (r *Repository) AddRoomState(room RoomWithParticipants) {
-	r.RoomState = append(r.RoomState, room)
-}
+	// UpdateRoomMetadata ルームのメタデータを更新
+	UpdateRoomMetadata(roomId string, metadata Metadata)
 
-func (r *Repository) CreateRoomState(roomId string) error {
-	roomUUID, err := uuid.FromString(roomId)
-	if err != nil {
-		return err
-	}
-	r.AddRoomState(RoomWithParticipants{
-		RoomId:       roomUUID,
-		Participants: make([]Participant, 0),
-	})
-	return nil
-}
+	// RemoveRoomState ルーム状態を削除
+	RemoveRoomState(roomId string)
 
-func (r *Repository) RemoveRoomState(roomId string) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomId.String() == roomId {
-			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
-		}
-	}
-}
+	// GetRoomsByLiveKitServer LiveKitサーバーからルーム一覧を取得
+	GetRoomsByLiveKitServer(ctx context.Context) (*livekit.ListRoomsResponse, error)
 
-func (r *Repository) NewLiveKitRoomServiceClient() *lksdk.RoomServiceClient {
-	return lksdk.NewRoomServiceClient(r.LiveKitHost, r.ApiKey, r.ApiSecret)
-}
+	// GetParticipantsByLiveKitServer LiveKitサーバーから参加者一覧を取得
+	GetParticipantsByLiveKitServer(ctx context.Context, roomId string) (*livekit.ListParticipantsResponse, error)
 
-func (r *Repository) GetRoomsByLiveKitServer(ctx context.Context) (*livekit.ListRoomsResponse, error) {
-	rsClient := r.NewLiveKitRoomServiceClient()
-	return rsClient.ListRooms(ctx, &livekit.ListRoomsRequest{})
-}
+	// GetRoomsWithParticipantsByLiveKitServer LiveKitサーバーからルーム状態と参加者一覧を取得
+	GetRoomsWithParticipantsByLiveKitServer(ctx context.Context) ([]RoomWithParticipants, error)
 
-func (r *Repository) GetParticipantsByLiveKitServer(ctx context.Context, roomId string) (*livekit.ListParticipantsResponse, error) {
-	rsClient := r.NewLiveKitRoomServiceClient()
-	return rsClient.ListParticipants(ctx, &livekit.ListParticipantsRequest{
-		Room: roomId,
-	})
-}
-
-func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context) ([]RoomWithParticipants, error) {
-	roomResp, err := r.GetRoomsByLiveKitServer(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var roomWithParticipants []RoomWithParticipants
-	for _, rm := range roomResp.Rooms {
-		partResp, err := r.GetParticipantsByLiveKitServer(ctx, rm.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		var Participants []Participant
-		for _, p := range partResp.Participants {
-			t := time.Unix(p.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-			Participants = append(Participants, Participant{
-				Identity:   &p.Identity,
-				JoinedAt:   &t,
-				Name:       &p.Name,
-				Attributes: &p.Attributes,
-			})
-		}
-
-		roomId, err := uuid.FromString(rm.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		var metadata *Metadata
-		// rm.MetadataをJSON文字列としてunmarshalする
-		err = json.Unmarshal([]byte(rm.Metadata), &metadata)
-		if err != nil {
-			return nil, err
-		}
-
-		roomWithParticipants = append(roomWithParticipants, RoomWithParticipants{
-			Metadata:     &metadata.Status,
-			IsWebinar:    &metadata.IsWebinar,
-			RoomId:       roomId,
-			Participants: Participants,
-		})
-	}
-
-	return roomWithParticipants, nil
+	// GetState 現在のルーム状態を取得
+	GetState() []RoomWithParticipants
 }

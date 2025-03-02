@@ -28,6 +28,12 @@ type Config struct {
 	IsRefreshEnabled bool
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+	// LiveKitHost LiveKitホスト
+	LiveKitHost string
+	// LiveKitApiKey LiveKit APIキー
+	LiveKitApiKey string
+	// LiveKitApiSecret LiveKit APIシークレット
+	LiveKitApiSecret string
 	// ExternalAuth 外部認証設定
 	ExternalAuth ExternalAuthConfig
 }
@@ -79,6 +85,9 @@ func provideV3Config(c *Config) v3.Config {
 		Version:                         c.Version,
 		Revision:                        c.Revision,
 		SkyWaySecretKey:                 c.SkyWaySecretKey,
+		LiveKitHost:                     c.LiveKitHost,
+		LiveKitApiKey:                   c.LiveKitApiKey,
+		LiveKitApiSecret:                c.LiveKitApiSecret,
 		AllowSignUp:                     c.AllowSignUp,
 		EnabledExternalAccountProviders: c.ExternalAuth.ValidProviders(),
 	}
