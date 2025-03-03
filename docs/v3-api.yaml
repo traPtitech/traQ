@@ -4493,7 +4493,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/qallParticipant'
+                $ref: '#/components/schemas/qallParticipantRequest'
       responses:
         '200':
           description: 成功 - 発言権限を変更（部分的成功含む）
@@ -7893,6 +7893,22 @@ components:
         canPublish:
           type: boolean
           description: 発言権限
+    qallParticipantRequest:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                description: ユーザーID
+              canPublish:
+                type: boolean
+                description: 発言権限
+      required:
+        - users
     qallRoomsListResponse:
       type: array
       items:
