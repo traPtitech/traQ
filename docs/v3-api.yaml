@@ -4603,8 +4603,7 @@ paths:
       summary: アップロード済み音声を LiveKit ルームで再生
       description: >
         S3上にある音声ファイルの署名付きURLを生成し、  
-        Ingressを介して指定ルームに音声を流します。  
-        リクエストヘッダの認証トークンからユーザIDを取得し、  
+        Ingressを介して指定ルームに音声を流します。    
         該当ルームに参加しているユーザであれば再生可能とします。
       operationId: postSoundboardPlay
       tags:

@@ -393,6 +393,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiQall.GET("/soundboard", h.GetSoundboardItems, requires(permission.WebRTC))
 			apiQall.POST("/soundboard", h.CreateSoundboardItem, requires(permission.WebRTC))
+			apiQall.POST("/soundboard/play", h.PlaySoundboardItem, requires(permission.WebRTC))
 			apiQall.GET("/rooms", h.GetRoomState, requires(permission.WebRTC))
 			apiQall.GET("/token", h.GetLiveKitToken, requires(permission.WebRTC))
 			apiQall.PATCH(("rooms/:roomID/metadata"), h.PatchRoomMetadata, requires(permission.WebRTC))

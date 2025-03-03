@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -48,6 +49,105 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// PlaySoundboardItem
+func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
+	type playSoundboardItemRequest struct {
+		SoundID string `json:"soundId"`
+		RoomID  string `json:"roomID"`
+	}
+	var req playSoundboardItemRequest
+	if err := c.Bind(&req); err != nil {
+		return herror.BadRequest(err)
+	}
+
+	soundID, err := uuid.FromString(req.SoundID)
+	if err != nil {
+		return herror.BadRequest("invalid sound ID")
+	}
+
+	roomID, err := uuid.FromString(req.RoomID)
+	if err != nil {
+		return herror.BadRequest("invalid room ID")
+	}
+
+	userID := getRequestUserID(c)
+
+	// 2)
+	//    ここで "ユーザが roomName に参加しているか" を確認
+	//    もし参加していないなら 400や403を返す
+
+	// 2-1) ルームが存在するか確認
+	isExistingRoom := false
+	for _, roomState := range h.QallRepo.GetState() {
+		if roomState.RoomId == roomID {
+			isExistingRoom = true
+			break
+		}
+	}
+	if !isExistingRoom {
+		return herror.NotFound("room not found")
+	}
+
+	// 2-2) ルームに参加しているか確認
+	isParticipant := false
+	for _, roomState := range h.QallRepo.GetState() {
+		if roomState.RoomId == roomID {
+			for _, participant := range roomState.Participants {
+				if *participant.Name == userID.String() {
+					isParticipant = true
+					break
+				}
+			}
+			break
+		}
+	}
+	if !isParticipant {
+		return herror.Forbidden("you are not a participant of the room")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 3) S3ファイルキー = soundId として署名付きURL生成
+	audioURL, err := h.Soundboard.GetURL(soundID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	// 4) Ingressクライアント
+	ingressClient := lksdk.NewIngressClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+
+	// 5) Ingress リクエスト作成
+	ingReq := &livekit.CreateIngressRequest{
+		InputType: livekit.IngressInput_URL_INPUT,
+		// ここでは SFU内の participantIdentity等をどう扱うかは任意
+		// たとえば "soundboard-user" など固定でOK
+		Name:                "soundboard-ingress",
+		RoomName:            req.RoomID,
+		ParticipantIdentity: "soundboard-" + req.SoundID,
+		ParticipantName:     "Soundboard " + req.SoundID,
+		Url:                 audioURL,
+	}
+
+	info, err := ingressClient.CreateIngress(ctx, ingReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("failed to create ingress: %v", err),
+		})
+	}
+
+	resp := struct {
+		IngressId string  `json:"ingressId"`
+		Url       *string `json:"url"`
+		StreamKey *string `json:"streamKey"`
+	}{
+		IngressId: info.IngressId,
+		Url:       &info.Url,
+		StreamKey: &info.StreamKey,
+	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 // GetRoomState returns the current state of all rooms
