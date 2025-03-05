@@ -62,7 +62,7 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	type playSoundboardItemRequest struct {
 		SoundID string `json:"soundId"`
-		RoomID  string `json:"roomID"`
+		RoomID  string `json:"roomId"`
 	}
 	var req playSoundboardItemRequest
 	if err := c.Bind(&req); err != nil {
@@ -146,12 +146,12 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	}
 
 	resp := struct {
-		IngressId string  `json:"ingressId"`
-		Url       *string `json:"url"`
+		IngressID string  `json:"ingressId"`
+		URL       *string `json:"url"`
 		StreamKey *string `json:"streamKey"`
 	}{
-		IngressId: info.IngressId,
-		Url:       &info.Url,
+		IngressID: info.IngressId,
+		URL:       &info.Url,
 		StreamKey: &info.StreamKey,
 	}
 	return c.JSON(http.StatusOK, resp)
@@ -324,7 +324,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 
 	roomID, err := uuid.FromString(room)
 	if err != nil {
-		return herror.BadRequest("invalid room ID")
+		return herror.BadRequest("invalid room Id")
 	}
 
 	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(roomID) {

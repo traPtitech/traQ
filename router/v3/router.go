@@ -398,7 +398,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiQall.GET("/rooms", h.GetRoomState, requires(permission.WebRTC))
 			apiQall.GET("/token", h.GetLiveKitToken, requires(permission.WebRTC))
 			apiQall.PATCH(("rooms/:roomID/metadata"), h.PatchRoomMetadata, requires(permission.WebRTC))
-			apiQall.PATCH(("/rooms/:room_id/participants"), h.PatchRoomParticipants, requires(permission.WebRTC))
+			apiQall.PATCH(("/rooms/:roomID/participants"), h.PatchRoomParticipants, requires(permission.WebRTC))
 		}
 
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
