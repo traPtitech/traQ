@@ -44,8 +44,8 @@ type RoomWithParticipants struct {
 	Metadata     *string       `json:"metadata,omitempty"`
 	Participants []Participant `json:"participants"`
 
-	// RoomId ルームのID
-	RoomId uuid.UUID `json:"roomId"`
+	// RoomID ルームのID
+	RoomID uuid.UUID `json:"roomdID"`
 }
 
 // RoomStateManager はQallルーム状態を管理するインターフェース
@@ -57,13 +57,13 @@ type RoomStateManager interface {
 	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)
 
 	// UpdateParticipantCanPublish 参加者の発言権限を更新
-	UpdateParticipantCanPublish(roomId string, participantId string, canPublish bool)
+	UpdateParticipantCanPublish(roomdID string, participantId string, canPublish bool)
 
 	// UpdateParticipant 参加者情報を更新
-	UpdateParticipant(roomId string, participant *livekit.ParticipantInfo)
+	UpdateParticipant(roomdID string, participant *livekit.ParticipantInfo)
 
 	// RemoveParticipant ルームから参加者を削除
-	RemoveParticipant(roomId string, participantId string)
+	RemoveParticipant(roomdID string, participantId string)
 
 	// GetRoomsWithParticipantsByLiveKitServerAndSave LiveKitサーバーからルーム状態を取得して保存
 	GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.Context) error
@@ -72,16 +72,16 @@ type RoomStateManager interface {
 	AddRoomState(room RoomWithParticipants)
 
 	// UpdateRoomMetadata ルームのメタデータを更新
-	UpdateRoomMetadata(roomId string, metadata Metadata)
+	UpdateRoomMetadata(roomdID string, metadata Metadata)
 
 	// RemoveRoomState ルーム状態を削除
-	RemoveRoomState(roomId string)
+	RemoveRoomState(roomdID string)
 
 	// GetRoomsByLiveKitServer LiveKitサーバーからルーム一覧を取得
 	GetRoomsByLiveKitServer(ctx context.Context) (*livekit.ListRoomsResponse, error)
 
 	// GetParticipantsByLiveKitServer LiveKitサーバーから参加者一覧を取得
-	GetParticipantsByLiveKitServer(ctx context.Context, roomId string) (*livekit.ListParticipantsResponse, error)
+	GetParticipantsByLiveKitServer(ctx context.Context, roomdID string) (*livekit.ListParticipantsResponse, error)
 
 	// GetRoomsWithParticipantsByLiveKitServer LiveKitサーバーからルーム状態と参加者一覧を取得
 	GetRoomsWithParticipantsByLiveKitServer(ctx context.Context) ([]RoomWithParticipants, error)

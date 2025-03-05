@@ -88,7 +88,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	// 2-1) ルームが存在するか確認
 	isExistingRoom := false
 	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomId == roomID {
+		if roomState.RoomID == roomID {
 			isExistingRoom = true
 			break
 		}
@@ -100,7 +100,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	// 2-2) ルームに参加しているか確認
 	isParticipant := false
 	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomId == roomID {
+		if roomState.RoomID == roomID {
 			for _, participant := range roomState.Participants {
 				if *participant.Name == userID.String() {
 					isParticipant = true
@@ -169,7 +169,7 @@ func (h *Handlers) GetRoomState(c echo.Context) error {
 func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
 	roomState := h.QallRepo.GetState()
 	for _, state := range roomState {
-		if state.RoomId == roomID {
+		if state.RoomID == roomID {
 			return c.JSON(http.StatusOK, state.Metadata)
 		}
 	}
@@ -196,7 +196,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
 	roomState := h.QallRepo.GetState()
 	for _, state := range roomState {
-		if state.RoomId == roomID {
+		if state.RoomID == roomID {
 			// Check if the user is one of the participants
 			isParticipant := false
 			for _, participant := range state.Participants {
@@ -215,7 +215,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 				IsWebinar: *state.IsWebinar,
 			}
 			_, err := livekitClient.UpdateRoomMetadata(c.Request().Context(), &livekit.UpdateRoomMetadataRequest{
-				Room:     state.RoomId.String(),
+				Room:     state.RoomID.String(),
 				Metadata: req.Metadata,
 			})
 			if err != nil {
@@ -255,7 +255,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 
 	// ルームが存在するか確認
 	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomId == roomID {
+		if roomState.RoomID == roomID {
 			// userがcanPublishかどうかを確認
 			canPublish := false
 			for _, participant := range roomState.Participants {
@@ -338,7 +338,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	// 6-2) ルームが存在するか確認
 	isExistingRoom := false
 	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomId == roomID {
+		if roomState.RoomID == roomID {
 			isExistingRoom = true
 			break
 		}
@@ -347,7 +347,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	if isExistingRoom {
 		// ルームが存在して、webinar=true の場合はCanPublish=false
 		for _, roomState := range h.QallRepo.GetState() {
-			if roomState.RoomId.String() == room {
+			if roomState.RoomID.String() == room {
 				if roomState.IsWebinar != nil && *roomState.IsWebinar {
 					isWebinar = true
 				}
@@ -362,7 +362,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	// ただし、自分がすでに参加していてCanPublish=true の場合はCanPublish=true
 	isAlreadyCanPublish := false
 	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomId == roomID {
+		if roomState.RoomID == roomID {
 			for _, participant := range roomState.Participants {
 				if *participant.Name == userID.String() {
 					isAlreadyCanPublish = *participant.CanPublish
@@ -417,7 +417,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		roomWithParticipants := qall.RoomWithParticipants{
 			IsWebinar:    &isWebinar,
 			Metadata:     &emptyMetadata,
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []qall.Participant{},
 		}
 		h.QallRepo.AddRoomState(roomWithParticipants)

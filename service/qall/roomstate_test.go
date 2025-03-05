@@ -25,7 +25,7 @@ func TestRepository_AddRoomState(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []Participant{},
 		}
 
@@ -34,7 +34,7 @@ func TestRepository_AddRoomState(t *testing.T) {
 
 		// 検証
 		assert.Equal(t, 1, len(repo.RoomState))
-		assert.Equal(t, roomID, repo.RoomState[0].RoomId)
+		assert.Equal(t, roomID, repo.RoomState[0].RoomID)
 	})
 }
 
@@ -49,7 +49,7 @@ func TestRepository_RemoveRoomState(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []Participant{},
 		}
 
@@ -73,7 +73,7 @@ func TestRepository_RemoveRoomState(t *testing.T) {
 		roomID := uuid.Must(uuid.NewV7())
 		otherRoomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []Participant{},
 		}
 
@@ -87,7 +87,7 @@ func TestRepository_RemoveRoomState(t *testing.T) {
 
 		// 検証 - 何も変わらないはず
 		assert.Equal(t, 1, len(repo.RoomState))
-		assert.Equal(t, roomID, repo.RoomState[0].RoomId)
+		assert.Equal(t, roomID, repo.RoomState[0].RoomID)
 	})
 }
 
@@ -102,7 +102,7 @@ func TestRepository_AddParticipantToRoomState(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []Participant{},
 		}
 
@@ -148,7 +148,7 @@ func TestRepository_AddParticipantToRoomState(t *testing.T) {
 		roomID := uuid.Must(uuid.NewV7())
 		otherRoomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId:       roomID,
+			RoomID:       roomID,
 			Participants: []Participant{},
 		}
 
@@ -193,7 +193,7 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -230,7 +230,7 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 		roomID := uuid.Must(uuid.NewV7())
 		otherRoomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -266,7 +266,7 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -309,7 +309,7 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -359,7 +359,7 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 		roomID := uuid.Must(uuid.NewV7())
 		otherRoomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -401,7 +401,7 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -450,7 +450,7 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 		// テスト用のルーム状態を準備
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -492,7 +492,7 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 		roomID := uuid.Must(uuid.NewV7())
 		otherRoomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -528,7 +528,7 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 
 		roomID := uuid.Must(uuid.NewV7())
 		roomState := RoomWithParticipants{
-			RoomId: roomID,
+			RoomID: roomID,
 			Participants: []Participant{
 				{
 					Identity:   &participantID,
@@ -564,11 +564,11 @@ func TestRepository_GetState(t *testing.T) {
 
 		roomStates := []RoomWithParticipants{
 			{
-				RoomId:       roomID1,
+				RoomID:       roomID1,
 				Participants: []Participant{},
 			},
 			{
-				RoomId:       roomID2,
+				RoomID:       roomID2,
 				Participants: []Participant{},
 			},
 		}
@@ -582,8 +582,8 @@ func TestRepository_GetState(t *testing.T) {
 
 		// 検証
 		assert.Equal(t, 2, len(result))
-		assert.Equal(t, roomID1, result[0].RoomId)
-		assert.Equal(t, roomID2, result[1].RoomId)
+		assert.Equal(t, roomID1, result[0].RoomID)
+		assert.Equal(t, roomID2, result[1].RoomID)
 	})
 
 	t.Run("empty_state", func(t *testing.T) {
