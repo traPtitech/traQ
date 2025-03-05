@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
 // AccessControlMiddlewareGenerator アクセスコントロールミドルウェアのジェネレーターを返します
@@ -33,6 +34,16 @@ func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...permission.Permissi
 
 				// ユーザー権限検証
 				user := c.Get(consts.KeyUser).(model.UserInfo)
+				if user == nil {
+					for _, v := range p {
+						if !r.IsGranted(role.Client, v) {
+							// NG
+							return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
+						}
+					}
+
+					return next(c) // OK
+				}
 				for _, v := range p {
 					if !r.IsGranted(user.GetRole(), v) {
 						// NG
