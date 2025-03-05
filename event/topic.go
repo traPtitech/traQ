@@ -279,6 +279,24 @@ const (
 	// 		sessions: map[string]string
 	UserWebRTCv3StateChanged = "user.webrtc_v3.state_changed"
 
+	// QallRoomStateChanged Qallのルーム状態が変更された
+	// 	Fields:
+	// 		room_id: uuid.UUID
+	// 		state: *qall.RoomWithParticipants
+	QallRoomStateChanged = "qall.roomstate.changed"
+
+	// QallSoundboardItemCreated サウンドボードアイテムが作成された
+	// 	Fields:
+	// 		sound_id: uuid.UUID
+	// 		name: string
+	// 		creator_id: uuid.UUID
+	QallSoundboardItemCreated = "qall.soundboard.item.created"
+
+	// QallSoundboardItemDeleted サウンドボードアイテムが削除された
+	// 	Fields:
+	// 		sound_id: uuid.UUID
+	QallSoundboardItemDeleted = "qall.soundboard.item.deleted"
+
 	// WSConnected ユーザーがWSストリームに接続した
 	// 	Fields:
 	// 		user_id: uuid.UUID
