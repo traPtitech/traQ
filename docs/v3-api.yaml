@@ -4348,7 +4348,25 @@ paths:
         '404':
           description: Not Found
       operationId: getChannelPath
-
+  /qall/endpoints:
+    get:
+      summary: LiveKitエンドポイントを取得
+      description: >
+        接続可能なLiveKitエンドポイントを取得します。
+      operationId: getEndpoints
+      tags:
+        - qall
+      responses:
+        '200':
+          description: 成功 - LiveKitエンドポイントの取得
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallEndpointResponse'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
   /qall/token:
     get:
       summary: LiveKitトークンを取得
@@ -7675,6 +7693,159 @@ components:
       required:
         - state
         - sessionId
+    soundboardPlayResponse:
+      type: object
+      properties:
+        ingressId:
+          type: string
+          description: 作成された Ingress のID
+        url:
+          type: string
+          description: 作成された Ingress のストリームURL等
+        streamKey:
+          type: string
+          description: RTMP配信の場合のstream key
+      required:
+        - ingressId
+    qallEndpointResponse:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          description: LiveKitのエンドポイント
+      required:
+        - endpoint
+    soundboardListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/soundboardItem'
+    soundboardItem:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: サーバが発行したサウンドID
+        soundName:
+          type: string
+          description: ユーザが指定した表示用のサウンド名
+        stampId:
+          type: string
+          description: 任意のスタンプID等、サウンドに紐づく拡張情報
+        creatorId:
+          type: string
+          description: 作成者のユーザID
+      required:
+        - soundId
+        - soundName
+        - stampId
+        - creatorId
+    soundboardUploadResponse:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: 登録されたサウンドID (ファイル名)
+      required:
+        - soundId
+    qallRoomsListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/qallRoomWithParticipants'
+    qallTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: LiveKit用のJWTトークン
+      required:
+        - token
+    qallRoomWithParticipants:
+      type: object
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: ルームのID
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/qallParticipant'
+        isWebinar:
+          type: boolean
+          description: ウェビナールームかどうか
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
+      required:
+        - roomId
+        - participants
+    qallParticipant:
+      description: ルーム内の参加者一覧
+      type: object
+      properties:
+        identity:
+          type: string
+          description: ユーザーID_RandomUUID
+        name:
+          type: string
+          description: 表示名
+        joinedAt:
+          type: string
+          format: date-time
+          description: 参加した時刻
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: ユーザーに関連付けられたカスタム属性
+        canPublish:
+          type: boolean
+          description: 発言権限
+    qallParticipantRequest:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                description: ユーザーID
+              canPublish:
+                type: boolean
+                description: 発言権限
+      required:
+        - users
+    soundboardUploadRequest:
+      type: object
+      properties:
+        audio:
+          type: string
+          format: binary
+          description: アップロードする音声ファイル(20秒以内)
+        soundName:
+          type: string
+          description: ユーザが自由につけるサウンド名
+        stampId:
+          type: string
+          description: アイコンスタンプID
+      required:
+        - audio
+        - soundName
+    soundboardPlayRequest:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: サウンドID (DB登録済み)
+        roomName:
+          type: string
+          format: uuid
+          description: 再生させたいルームのUUID
+      required:
+        - soundId
+        - roomName
   headers:
     X-TRAQ-MORE:
       schema:
@@ -7850,151 +8021,6 @@ components:
       schema:
         type: string
         format: uuid
-    qallRoomWithParticipants:
-      type: object
-      properties:
-        roomId:
-          type: string
-          format: uuid
-          description: ルームのID
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/qallParticipant'
-        isWebinar:
-          type: boolean
-          description: ウェビナールームかどうか
-        metadata:
-          type: string
-          description: ルームに関連付けられたカスタム属性
-      required:
-        - roomId
-        - participants
-    qallParticipant:
-      description: ルーム内の参加者一覧
-      type: object
-      properties:
-        identity:
-          type: string
-          description: ユーザーID_RandomUUID
-        name:
-          type: string
-          description: 表示名
-        joinedAt:
-          type: string
-          format: date-time
-          description: 参加した時刻
-        attributes:
-          type: object
-          additionalProperties:
-            type: string
-          description: ユーザーに関連付けられたカスタム属性
-        canPublish:
-          type: boolean
-          description: 発言権限
-    qallParticipantRequest:
-      type: object
-      properties:
-        users:
-          type: array
-          items:
-            type: object
-            properties:
-              userId:
-                type: string
-                description: ユーザーID
-              canPublish:
-                type: boolean
-                description: 発言権限
-      required:
-        - users
-    qallRoomsListResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/qallRoomWithParticipants'
-    qallTokenResponse:
-      type: object
-      properties:
-        token:
-          type: string
-          description: LiveKit用のJWTトークン
-      required:
-        - token
-    soundboardListResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/soundboardItem'
-    soundboardItem:
-      type: object
-      properties:
-        soundId:
-          type: string
-          description: サーバが発行したサウンドID
-        soundName:
-          type: string
-          description: ユーザが指定した表示用のサウンド名
-        stampId:
-          type: string
-          description: 任意のスタンプID等、サウンドに紐づく拡張情報
-        creatorId:
-          type: string
-          description: 作成者のユーザID
-      required:
-        - soundId
-        - soundName
-        - stampId
-        - creatorId
-    soundboardUploadRequest:
-      type: object
-      properties:
-        audio:
-          type: string
-          format: binary
-          description: アップロードする音声ファイル(20秒以内)
-        soundName:
-          type: string
-          description: ユーザが自由につけるサウンド名
-        stampId:
-          type: string
-          description: アイコンスタンプID
-      required:
-        - audio
-        - soundName
-    soundboardUploadResponse:
-      type: object
-      properties:
-        soundId:
-          type: string
-          description: 登録されたサウンドID (ファイル名)
-      required:
-        - soundId
-    soundboardPlayRequest:
-      type: object
-      properties:
-        soundId:
-          type: string
-          description: サウンドID (DB登録済み)
-        roomName:
-          type: string
-          format: uuid
-          description: 再生させたいルームのUUID
-      required:
-        - soundId
-        - roomName
-    soundboardPlayResponse:
-      type: object
-      properties:
-        ingressId:
-          type: string
-          description: 作成された Ingress のID
-        url:
-          type: string
-          description: 作成された Ingress のストリームURL等
-        streamKey:
-          type: string
-          description: RTMP配信の場合のstream key
-      required:
-        - ingressId
 tags:
   - name: user
     description: ユーザーAPI

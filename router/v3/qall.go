@@ -19,6 +19,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// GetQallEndpoints
+func (h *Handlers) GetQallEndpoints(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"endpoint": h.Config.LiveKitHost,
+	})
+}
+
 // GetSoundboardItems
 func (h *Handlers) GetSoundboardItems(c echo.Context) error {
 	items, err := h.Repo.GetAllSoundboardItems()

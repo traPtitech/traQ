@@ -391,6 +391,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 		apiQall := api.Group("/qall")
 		{
+			apiQall.GET("/endpoints", h.GetQallEndpoints, requires(permission.WebRTC))
 			apiQall.GET("/soundboard", h.GetSoundboardItems, requires(permission.WebRTC))
 			apiQall.POST("/soundboard", h.CreateSoundboardItem, requires(permission.WebRTC))
 			apiQall.POST("/soundboard/play", h.PlaySoundboardItem, requires(permission.WebRTC))
