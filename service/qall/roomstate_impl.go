@@ -62,11 +62,11 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 }
 
 // UpdateParticipantCanPublish 参加者の発言権限を更新
-func (r *Repository) UpdateParticipantCanPublish(roomdID string, participantId string, canPublish bool) {
+func (r *Repository) UpdateParticipantCanPublish(roomdID string, participantID string, canPublish bool) {
 	for i, roomState := range r.RoomState {
 		if roomState.RoomID.String() == roomdID {
 			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantId {
+				if *participant.Identity == participantID {
 					r.RoomState[i].Participants[j].CanPublish = &canPublish
 
 					if r.Hub != nil {
@@ -121,11 +121,11 @@ func (r *Repository) UpdateParticipant(roomdID string, participant *livekit.Part
 }
 
 // RemoveParticipant ルームから参加者を削除
-func (r *Repository) RemoveParticipant(roomdID string, participantId string) {
+func (r *Repository) RemoveParticipant(roomdID string, participantID string) {
 	for i, roomState := range r.RoomState {
 		if roomState.RoomID.String() == roomdID {
 			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantId {
+				if *participant.Identity == participantID {
 					r.RoomState[i].Participants = append(r.RoomState[i].Participants[:j], r.RoomState[i].Participants[j+1:]...)
 
 					if r.Hub != nil {

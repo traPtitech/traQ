@@ -57,13 +57,13 @@ type RoomStateManager interface {
 	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)
 
 	// UpdateParticipantCanPublish 参加者の発言権限を更新
-	UpdateParticipantCanPublish(roomdID string, participantId string, canPublish bool)
+	UpdateParticipantCanPublish(roomdID string, participantID string, canPublish bool)
 
 	// UpdateParticipant 参加者情報を更新
 	UpdateParticipant(roomdID string, participant *livekit.ParticipantInfo)
 
 	// RemoveParticipant ルームから参加者を削除
-	RemoveParticipant(roomdID string, participantId string)
+	RemoveParticipant(roomdID string, participantID string)
 
 	// GetRoomsWithParticipantsByLiveKitServerAndSave LiveKitサーバーからルーム状態を取得して保存
 	GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.Context) error
