@@ -213,10 +213,10 @@ type Config struct {
 	LiveKit struct {
 		// Host ホスト名
 		Host string `mapstructure:"host" yaml:"host"`
-		// ApiKey APIキー
-		ApiKey string `mapstructure:"apiKey" yaml:"apiKey"`
-		// ApiSecret APIシークレット
-		ApiSecret string `mapstructure:"apiSecret" yaml:"apiSecret"`
+		// APIKey APIキー
+		APIKey string `mapstructure:"apiKey" yaml:"apiKey"`
+		// APISecret APIシークレット
+		APISecret string `mapstructure:"apiSecret" yaml:"apiSecret"`
 	} `mapstructure:"livekit" yaml:"livekit"`
 
 	// JWT JsonWebToken設定
@@ -563,8 +563,8 @@ func provideRouterConfig(c *Config) *router.Config {
 		IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
 		SkyWaySecretKey:  c.SkyWay.SecretKey,
 		LiveKitHost:      c.LiveKit.Host,
-		LiveKitApiKey:    c.LiveKit.ApiKey,
-		LiveKitApiSecret: c.LiveKit.ApiSecret,
+		LiveKitAPIKey:    c.LiveKit.APIKey,
+		LiveKitAPISecret: c.LiveKit.APISecret,
 		ExternalAuth:     provideRouterExternalAuthConfig(c),
 	}
 }

@@ -60,7 +60,7 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 	if err != nil {
 		return err
 	}
-	
+
 	// イベント発行
 	if m.hub != nil {
 		m.hub.Publish(hub.Message{
@@ -72,7 +72,7 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 			},
 		})
 	}
-	
+
 	return nil
 }
 
@@ -91,7 +91,7 @@ func (m *soundboardManager) DeleteSoundboardItem(soundID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// イベント発行
 	if m.hub != nil {
 		m.hub.Publish(hub.Message{
@@ -101,7 +101,7 @@ func (m *soundboardManager) DeleteSoundboardItem(soundID uuid.UUID) error {
 			},
 		})
 	}
-	
+
 	return nil
 }
 

@@ -15,8 +15,8 @@ import (
 // Repository はRoomStateManagerインターフェースの実装
 type Repository struct {
 	LiveKitHost string
-	ApiKey      string
-	ApiSecret   string
+	APIKey      string
+	APISecret   string
 	RoomState   []RoomWithParticipants
 	Hub         *hub.Hub
 }
@@ -218,7 +218,7 @@ func (r *Repository) RemoveRoomState(roomdID string) {
 
 // NewLiveKitRoomServiceClient LiveKitルームサービスクライアントを作成
 func (r *Repository) NewLiveKitRoomServiceClient() *lksdk.RoomServiceClient {
-	return lksdk.NewRoomServiceClient(r.LiveKitHost, r.ApiKey, r.ApiSecret)
+	return lksdk.NewRoomServiceClient(r.LiveKitHost, r.APIKey, r.APISecret)
 }
 
 // GetRoomsByLiveKitServer LiveKitサーバーからルーム一覧を取得
@@ -287,8 +287,8 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 func NewRoomStateManager(liveKitHost, apiKey, apiSecret string, hub *hub.Hub) RoomStateManager {
 	return &Repository{
 		LiveKitHost: liveKitHost,
-		ApiKey:      apiKey,
-		ApiSecret:   apiSecret,
+		APIKey:      apiKey,
+		APISecret:   apiSecret,
 		RoomState:   make([]RoomWithParticipants, 0),
 		Hub:         hub,
 	}

@@ -607,8 +607,8 @@ func TestNewRoomStateManager(t *testing.T) {
 		t.Parallel()
 		// テストデータを準備
 		liveKitHost := "https://livekit.example.com"
-		apiKey := "testApiKey"
-		apiSecret := "testApiSecret"
+		apiKey := "testAPIKey"
+		apiSecret := "testAPISecret"
 		h := hub.New()
 
 		// テスト実行
@@ -620,8 +620,8 @@ func TestNewRoomStateManager(t *testing.T) {
 
 		// キャストしてフィールドを検証
 		assert.Equal(t, liveKitHost, repo.LiveKitHost)
-		assert.Equal(t, apiKey, repo.ApiKey)
-		assert.Equal(t, apiSecret, repo.ApiSecret)
+		assert.Equal(t, apiKey, repo.APIKey)
+		assert.Equal(t, apiSecret, repo.APISecret)
 		assert.Equal(t, 0, len(repo.RoomState))
 		assert.Equal(t, h, repo.Hub)
 	})

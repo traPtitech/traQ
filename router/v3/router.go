@@ -61,11 +61,11 @@ type Config struct {
 	// LiveKitHost LiveKitホスト
 	LiveKitHost string
 
-	// LiveKitApiKey LiveKit APIキー
-	LiveKitApiKey string
+	// LiveKitAPIKey LiveKit APIキー
+	LiveKitAPIKey string
 
-	// LiveKitApiSecret LiveKit APIシークレットキー
-	LiveKitApiSecret string
+	// LiveKitAPISecret LiveKit APIシークレットキー
+	LiveKitAPISecret string
 
 	// AllowSignUp ユーザーが自分自身で登録できるかどうか
 	AllowSignUp bool

@@ -30,10 +30,10 @@ type Config struct {
 	SkyWaySecretKey string
 	// LiveKitHost LiveKitホスト
 	LiveKitHost string
-	// LiveKitApiKey LiveKit APIキー
-	LiveKitApiKey string
-	// LiveKitApiSecret LiveKit APIシークレット
-	LiveKitApiSecret string
+	// LiveKitAPIKey LiveKit APIキー
+	LiveKitAPIKey string
+	// LiveKitAPISecret LiveKit APIシークレット
+	LiveKitAPISecret string
 	// ExternalAuth 外部認証設定
 	ExternalAuth ExternalAuthConfig
 }
@@ -86,8 +86,8 @@ func provideV3Config(c *Config) v3.Config {
 		Revision:                        c.Revision,
 		SkyWaySecretKey:                 c.SkyWaySecretKey,
 		LiveKitHost:                     c.LiveKitHost,
-		LiveKitApiKey:                   c.LiveKitApiKey,
-		LiveKitApiSecret:                c.LiveKitApiSecret,
+		LiveKitAPIKey:                   c.LiveKitAPIKey,
+		LiveKitAPISecret:                c.LiveKitAPISecret,
 		AllowSignUp:                     c.AllowSignUp,
 		EnabledExternalAccountProviders: c.ExternalAuth.ValidProviders(),
 	}

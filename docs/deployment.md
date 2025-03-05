@@ -165,9 +165,9 @@ livekit:
   # LiveKit host url
   livekitHost: livekitHost
   # LiveKit api key
-  livekitApiKey: livekitApiKey
+  livekitAPIKey: livekitAPIKey
   # LiveKit api secret
-  livekitApiSecret: livekitApiSecret
+  livekitAPISecret: livekitAPISecret
 
 # (optional) JWT settings.
 # Used to issue QR codes to authenticate user.

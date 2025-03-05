@@ -124,7 +124,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	}
 
 	// 4) Ingressクライアント
-	ingressClient := lksdk.NewIngressClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+	ingressClient := lksdk.NewIngressClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 
 	// 5) Ingress リクエスト作成
 	ingReq := &livekit.CreateIngressRequest{
@@ -193,7 +193,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 
 	userID := getRequestUserID(c)
 
-	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	roomState := h.QallRepo.GetState()
 	for _, state := range roomState {
 		if state.RoomID == roomID {
@@ -267,7 +267,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 			if !canPublish {
 				return herror.Forbidden("you are not allowed to update participants")
 			}
-			livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+			livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 			for _, participant := range req.Users {
 				for _, roomParticipant := range roomState.Participants {
 					if *roomParticipant.Name == participant.UserID {
@@ -372,7 +372,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 			break
 		}
 	}
-	at := auth.NewAccessToken(h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+	at := auth.NewAccessToken(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	grant := &auth.VideoGrant{
 		RoomJoin:             true,
 		Room:                 room,
@@ -404,7 +404,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
-		lkclient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+		lkclient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 		_, err = lkclient.CreateRoom(c.Request().Context(), &livekit.CreateRoomRequest{
 			Name:     room,
 			Metadata: string(metadataStr),
@@ -430,7 +430,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 // LiveKitWebhook handles webhooks from LiveKit server
 func (h *Handlers) LiveKitWebhook(c echo.Context) error {
 	// Authプロバイダーを初期化
-	authProvider := auth.NewSimpleKeyProvider(h.Config.LiveKitApiKey, h.Config.LiveKitApiSecret)
+	authProvider := auth.NewSimpleKeyProvider(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 
 	// Webhookイベントを受け取る
 	event, err := webhook.ReceiveWebhookEvent(c.Request(), authProvider)
