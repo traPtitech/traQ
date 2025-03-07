@@ -38,9 +38,8 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		if err != nil {
 			if errors.Is(err, channelService.ErrInvalidChannelPath) {
 				return herror.HTTPError(http.StatusNotFound, err)
-			} else {
-				return herror.InternalServerError(err)
 			}
+			return herror.InternalServerError(err)
 		}
 		res = echo.Map{
 			"public": []*Channel{
