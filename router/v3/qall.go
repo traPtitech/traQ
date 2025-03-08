@@ -60,11 +60,10 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 
 // PlaySoundboardItem
 func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
-	type playSoundboardItemRequest struct {
+	var req struct {
 		SoundID string `json:"soundId"`
 		RoomID  string `json:"roomId"`
 	}
-	var req playSoundboardItemRequest
 	if err := c.Bind(&req); err != nil {
 		return herror.BadRequest(err)
 	}
