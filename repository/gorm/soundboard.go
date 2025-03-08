@@ -24,7 +24,7 @@ func (repo *Repository) GetAllSoundboardItems() ([]*model.SoundboardItem, error)
 
 func (repo *Repository) GetSoundboardByCreatorID(creatorID uuid.UUID) ([]*model.SoundboardItem, error) {
 	items := make([]*model.SoundboardItem, 0)
-	if err := repo.db.Where("creator_id = ?", creatorID).Find(&items).Error; err != nil {
+	if err := repo.db.Where(&model.SoundboardItem{CreatorID: creatorID}).Find(&items).Error; err != nil {
 		return nil, err
 	}
 	return items, nil
