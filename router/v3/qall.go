@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetQallEndpoints
+// GetQallEndpoints GET /qall/endpoints
 func (h *Handlers) GetQallEndpoints(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"endpoint": h.Config.LiveKitHost,
