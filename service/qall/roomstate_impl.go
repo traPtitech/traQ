@@ -126,7 +126,7 @@ func (r *Repository) RemoveParticipant(roomdID string, participantID string) {
 		if roomState.RoomID.String() == roomdID {
 			for j, participant := range roomState.Participants {
 				if *participant.Identity == participantID {
-					r.RoomState[i].Participants = append(r.RoomState[i].Participants[:j], r.RoomState[i].Participants[j+1:]...)
+					r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
 
 					if r.Hub != nil {
 						r.Hub.Publish(hub.Message{
