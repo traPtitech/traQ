@@ -57,6 +57,8 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		provideOIDCService,
 		provideRouterConfig,
 		provideESEngineConfig,
+		provideQallRoomStateManager,
+		provideQallSoundboard,
 		wire.Struct(new(service.Services), "*"),
 		wire.Struct(new(Server), "*"),
 		wire.Bind(new(repository.ChannelRepository), new(repository.Repository)),
