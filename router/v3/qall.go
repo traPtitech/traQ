@@ -155,13 +155,11 @@ func (h *Handlers) GetRoomState(c echo.Context) error {
 
 // GetRoomMetadata GET /qall/rooms/:roomID/metadata
 func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
-	roomState := h.QallRepo.GetState()
-	for _, state := range roomState {
-		if state.RoomID == roomID {
-			return c.JSON(http.StatusOK, state.Metadata)
-		}
+	roomState := h.QallRepo.GetRoomState(roomID.String())
+	if roomState == nil {
+		return herror.NotFound("room not found")
 	}
-	return herror.NotFound("room not found")
+	return c.JSON(http.StatusOK, roomState.Metadata)
 }
 
 // PatchRoomMetadata PATCH /qall/rooms/:roomID/metadata
@@ -181,15 +179,9 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
-	roomState := h.QallRepo.GetState()
 	// Find the room
 	var targetRoom *qall.RoomWithParticipants
-	for i := range roomState {
-		if roomState[i].RoomID == roomID {
-			targetRoom = &roomState[i]
-			break
-		}
-	}
+	targetRoom = h.QallRepo.GetRoomState(roomID.String())
 
 	if targetRoom == nil {
 		return herror.NotFound("room not found")
@@ -348,17 +340,15 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	// ルームが存在して、webinar=true の場合はCanPublish=false
 	// ただし、自分がすでに参加していてCanPublish=true の場合はCanPublish=true
 	isAlreadyCanPublish := false
-	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomID == roomID {
-			for _, participant := range roomState.Participants {
-				if *participant.Name == userID.String() {
-					isAlreadyCanPublish = *participant.CanPublish
-					break
-				}
+	if roomState != nil {
+		for _, participant := range roomState.Participants {
+			if *participant.Name == userID.String() {
+				isAlreadyCanPublish = *participant.CanPublish
+				break
 			}
-			break
 		}
 	}
+
 	at := auth.NewAccessToken(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	grant := &auth.VideoGrant{
 		RoomJoin:             true,
