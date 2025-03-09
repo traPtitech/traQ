@@ -45,7 +45,7 @@ type RoomWithParticipants struct {
 	Participants []Participant `json:"participants"`
 
 	// RoomID ルームのID
-	RoomID uuid.UUID `json:"roomdID"`
+	RoomID uuid.UUID `json:"roomID"`
 }
 
 // RoomStateManager はQallルーム状態を管理するインターフェース
@@ -57,13 +57,13 @@ type RoomStateManager interface {
 	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)
 
 	// UpdateParticipantCanPublish 参加者の発言権限を更新
-	UpdateParticipantCanPublish(roomdID string, participantID string, canPublish bool)
+	UpdateParticipantCanPublish(roomID string, participantID string, canPublish bool)
 
 	// UpdateParticipant 参加者情報を更新
-	UpdateParticipant(roomdID string, participant *livekit.ParticipantInfo)
+	UpdateParticipant(roomID string, participant *livekit.ParticipantInfo)
 
 	// RemoveParticipant ルームから参加者を削除
-	RemoveParticipant(roomdID string, participantID string)
+	RemoveParticipant(roomID string, participantID string)
 
 	// GetRoomsWithParticipantsByLiveKitServerAndSave LiveKitサーバーからルーム状態を取得して保存
 	GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.Context) error
@@ -72,16 +72,16 @@ type RoomStateManager interface {
 	AddRoomState(room RoomWithParticipants)
 
 	// UpdateRoomMetadata ルームのメタデータを更新
-	UpdateRoomMetadata(roomdID string, metadata Metadata)
+	UpdateRoomMetadata(roomID string, metadata Metadata)
 
 	// RemoveRoomState ルーム状態を削除
-	RemoveRoomState(roomdID string)
+	RemoveRoomState(roomID string)
 
 	// GetRoomsByLiveKitServer LiveKitサーバーからルーム一覧を取得
 	GetRoomsByLiveKitServer(ctx context.Context) (*livekit.ListRoomsResponse, error)
 
 	// GetParticipantsByLiveKitServer LiveKitサーバーから参加者一覧を取得
-	GetParticipantsByLiveKitServer(ctx context.Context, roomdID string) (*livekit.ListParticipantsResponse, error)
+	GetParticipantsByLiveKitServer(ctx context.Context, roomID string) (*livekit.ListParticipantsResponse, error)
 
 	// GetRoomsWithParticipantsByLiveKitServer LiveKitサーバーからルーム状態と参加者一覧を取得
 	GetRoomsWithParticipantsByLiveKitServer(ctx context.Context) ([]RoomWithParticipants, error)
@@ -90,5 +90,5 @@ type RoomStateManager interface {
 	GetState() []RoomWithParticipants
 
 	// GetRoomState 指定したルームの状態を取得
-	GetRoomState(roomdID string) *RoomWithParticipants
+	GetRoomState(roomID string) *RoomWithParticipants
 }

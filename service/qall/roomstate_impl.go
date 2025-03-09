@@ -63,9 +63,9 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 }
 
 // UpdateParticipantCanPublish 参加者の発言権限を更新
-func (r *Repository) UpdateParticipantCanPublish(roomdID string, participantID string, canPublish bool) {
+func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID string, canPublish bool) {
 	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			for j, participant := range roomState.Participants {
 				if *participant.Identity == participantID {
 					r.RoomState[i].Participants[j].CanPublish = &canPublish
@@ -89,9 +89,9 @@ func (r *Repository) UpdateParticipantCanPublish(roomdID string, participantID s
 }
 
 // UpdateParticipant 参加者情報を更新
-func (r *Repository) UpdateParticipant(roomdID string, participant *livekit.ParticipantInfo) {
+func (r *Repository) UpdateParticipant(roomID string, participant *livekit.ParticipantInfo) {
 	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			for j, p := range roomState.Participants {
 				if *p.Identity == participant.Identity {
 					t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
@@ -122,9 +122,9 @@ func (r *Repository) UpdateParticipant(roomdID string, participant *livekit.Part
 }
 
 // RemoveParticipant ルームから参加者を削除
-func (r *Repository) RemoveParticipant(roomdID string, participantID string) {
+func (r *Repository) RemoveParticipant(roomID string, participantID string) {
 	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			for j, participant := range roomState.Participants {
 				if *participant.Identity == participantID {
 					r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
@@ -173,9 +173,9 @@ func (r *Repository) AddRoomState(room RoomWithParticipants) {
 }
 
 // UpdateRoomMetadata ルームのメタデータを更新
-func (r *Repository) UpdateRoomMetadata(roomdID string, metadata Metadata) {
+func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			r.RoomState[i].Metadata = &metadata.Status
 
 			if r.Hub != nil {
@@ -194,13 +194,13 @@ func (r *Repository) UpdateRoomMetadata(roomdID string, metadata Metadata) {
 }
 
 // RemoveRoomState ルーム状態を削除
-func (r *Repository) RemoveRoomState(roomdID string) {
+func (r *Repository) RemoveRoomState(roomID string) {
 	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
 
 			if r.Hub != nil {
-				roomUUID, err := uuid.FromString(roomdID)
+				roomUUID, err := uuid.FromString(roomID)
 				if err == nil {
 					r.Hub.Publish(hub.Message{
 						Name: event.QallRoomStateChanged,
@@ -229,10 +229,10 @@ func (r *Repository) GetRoomsByLiveKitServer(ctx context.Context) (*livekit.List
 }
 
 // GetParticipantsByLiveKitServer LiveKitサーバーから参加者一覧を取得
-func (r *Repository) GetParticipantsByLiveKitServer(ctx context.Context, roomdID string) (*livekit.ListParticipantsResponse, error) {
+func (r *Repository) GetParticipantsByLiveKitServer(ctx context.Context, roomID string) (*livekit.ListParticipantsResponse, error) {
 	rsClient := r.NewLiveKitRoomServiceClient()
 	return rsClient.ListParticipants(ctx, &livekit.ListParticipantsRequest{
-		Room: roomdID,
+		Room: roomID,
 	})
 }
 
@@ -261,7 +261,7 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 			})
 		}
 
-		roomdID, err := uuid.FromString(rm.Name)
+		roomID, err := uuid.FromString(rm.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +276,7 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 		roomWithParticipants = append(roomWithParticipants, RoomWithParticipants{
 			Metadata:     &metadata.Status,
 			IsWebinar:    &metadata.IsWebinar,
-			RoomID:       roomdID,
+			RoomID:       roomID,
 			Participants: Participants,
 		})
 	}
@@ -285,9 +285,9 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 }
 
 // GetRoomState ルーム状態を取得
-func (r *Repository) GetRoomState(roomdID string) *RoomWithParticipants {
+func (r *Repository) GetRoomState(roomID string) *RoomWithParticipants {
 	for _, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomdID {
+		if roomState.RoomID.String() == roomID {
 			return &roomState
 		}
 	}
