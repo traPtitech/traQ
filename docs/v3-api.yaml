@@ -4443,11 +4443,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  metadata:
-                    type: string
-                    description: ルームに関連付けられたカスタム属性
+                $ref: '#/components/schemas/qallMetadataResponse'
         '404':
           description: Not Found
         '500':
@@ -4473,11 +4469,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                metadata:
-                  type: string
-                  description: ルームに関連付けられたカスタム属性
+              $ref: '#/components/schemas/qallMetadataRequest'
       responses:
         '200':
           description: 成功 - ルームのメタデータを更新
@@ -7795,6 +7787,18 @@ components:
                 description: 発言権限
       required:
         - users
+    qallMetadataRequest:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
+    qallMetadataResponse:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
     qallParticipantResponse:
       type: object
       properties:
