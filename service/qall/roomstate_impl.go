@@ -3,6 +3,7 @@ package qall
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -281,6 +282,16 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 	}
 
 	return roomWithParticipants, nil
+}
+
+// GetRoomState ルーム状態を取得
+func (r *Repository) GetRoomState(roomdID string) *RoomWithParticipants {
+	for _, roomState := range r.RoomState {
+		if roomState.RoomID.String() == roomdID {
+			return &roomState
+		}
+	}
+	return nil
 }
 
 // NewRoomStateManager は新しいRoomStateManagerを作成する

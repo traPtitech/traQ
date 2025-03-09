@@ -88,4 +88,7 @@ type RoomStateManager interface {
 
 	// GetState 現在のルーム状態を取得
 	GetState() []RoomWithParticipants
+
+	// GetRoomState 指定したルームの状態を取得
+	GetRoomState(roomdID string) *RoomWithParticipants
 }

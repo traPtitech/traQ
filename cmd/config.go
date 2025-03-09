@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/profiler"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
@@ -23,6 +24,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/oidc"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
@@ -567,4 +569,12 @@ func provideRouterConfig(c *Config) *router.Config {
 		LiveKitAPISecret: c.LiveKit.APISecret,
 		ExternalAuth:     provideRouterExternalAuthConfig(c),
 	}
+}
+
+func provideQallRoomStateManager(c *Config, h *hub.Hub) qall.RoomStateManager {
+	return qall.NewRoomStateManager(c.LiveKit.Host, c.LiveKit.APIKey, c.LiveKit.APISecret, h)
+}
+
+func provideQallSoundboard(repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, h *hub.Hub) (qall.Soundboard, error) {
+	return qall.NewSoundboardManager(repo, fs, logger, h)
 }

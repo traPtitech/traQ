@@ -4518,29 +4518,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        participantId:
-                          type: string
-                          description: 対象参加者ID
-                        status:
-                          type: string
-                          description: "success もしくは error"
-                        errorMessage:
-                          type: string
-                          description: エラーがある場合の詳細
-              example:
-                results:
-                  - participantId: "user1"
-                    status: "success"
-                  - participantId: "user2"
-                    status: "error"
-                    errorMessage: "Invalid participant ID"
+                $ref: '#/components/schemas/qallParticipantResponse'
         '400':
           description: Bad Request
         '401':
@@ -7817,6 +7795,30 @@ components:
                 description: 発言権限
       required:
         - users
+    qallParticipantResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              participantId:
+                type: string
+                description: 対象参加者ID
+              status:
+                type: string
+                description: "success もしくは error"
+              errorMessage:
+                type: string
+                description: エラーがある場合の詳細
+      example:
+        results:
+          - participantId: "user1"
+            status: "success"
+          - participantId: "user2"
+            status: "error"
+            errorMessage: "Invalid participant ID"
     soundboardUploadRequest:
       type: object
       properties:

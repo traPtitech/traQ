@@ -3,14 +3,15 @@ package gorm
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 )
 
-func (repo *Repository) CreateSoundboardItem(soundID uuid.UUID, soundName string, stampID *uuid.UUID, creatorID uuid.UUID) error {
+func (repo *Repository) CreateSoundboardItem(args repository.CreateSoundboardItemArgs) error {
 	return repo.db.Create(&model.SoundboardItem{
-		ID:        soundID,
-		Name:      soundName,
-		StampID:   stampID,
-		CreatorID: creatorID,
+		ID:        args.SoundID,
+		Name:      args.SoundName,
+		StampID:   args.StampID,
+		CreatorID: args.CreatorID,
 	}).Error
 }
 

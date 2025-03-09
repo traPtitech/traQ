@@ -600,6 +600,67 @@ func TestRepository_GetState(t *testing.T) {
 	})
 }
 
+func TestRepository_GetRoomState(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		// テスト用のルーム状態を準備
+		roomID1 := uuid.Must(uuid.NewV7())
+		roomID2 := uuid.Must(uuid.NewV7())
+
+		roomStates := []RoomWithParticipants{
+			{
+				RoomID:       roomID1,
+				Participants: []Participant{},
+			},
+			{
+				RoomID:       roomID2,
+				Participants: []Participant{},
+			},
+		}
+
+		repo := &Repository{
+			RoomState: roomStates,
+		}
+
+		// テスト実行
+		result := repo.GetRoomState(roomID1.String())
+
+		// 検証
+		assert.NotNil(t, result)
+		assert.Equal(t, roomID1, result.RoomID)
+	})
+
+	t.Run("room_not_found", func(t *testing.T) {
+		t.Parallel()
+		// テスト用のルーム状態を準備
+		roomID1 := uuid.Must(uuid.NewV7())
+		roomID2 := uuid.Must(uuid.NewV7())
+
+		roomStates := []RoomWithParticipants{
+			{
+				RoomID:       roomID1,
+				Participants: []Participant{},
+			},
+			{
+				RoomID:       roomID2,
+				Participants: []Participant{},
+			},
+		}
+
+		repo := &Repository{
+			RoomState: roomStates,
+		}
+
+		// テスト実行
+		result := repo.GetRoomState("nonexistent_room")
+
+		// 検証
+		assert.Nil(t, result)
+	})
+}
+
 func TestNewRoomStateManager(t *testing.T) {
 	t.Parallel()
 

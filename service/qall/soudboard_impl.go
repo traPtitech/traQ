@@ -56,7 +56,15 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 		return err
 	}
 
-	err = m.repo.CreateSoundboardItem(soundID, soundName, stampID, creatorID)
+	// サウンドボードアイテムを作成
+	args := repository.CreateSoundboardItemArgs{
+		SoundID:   soundID,
+		SoundName: soundName,
+		StampID:   stampID,
+		CreatorID: creatorID,
+	}
+
+	err = m.repo.CreateSoundboardItem(args)
 	if err != nil {
 		return err
 	}

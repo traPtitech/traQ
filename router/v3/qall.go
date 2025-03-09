@@ -85,27 +85,16 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	//    もし参加していないなら 400や403を返す
 
 	// 2-1) ルームが存在するか確認
-	isExistingRoom := false
-	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomID == roomID {
-			isExistingRoom = true
-			break
-		}
-	}
-	if !isExistingRoom {
+	roomState := h.QallRepo.GetRoomState(roomID.String())
+	if roomState == nil {
 		return herror.NotFound("room not found")
 	}
 
 	// 2-2) ルームに参加しているか確認
 	isParticipant := false
-	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomID == roomID {
-			for _, participant := range roomState.Participants {
-				if *participant.Name == userID.String() {
-					isParticipant = true
-					break
-				}
-			}
+	for _, participant := range roomState.Participants {
+		if *participant.Name == userID.String() {
+			isParticipant = true
 			break
 		}
 	}
@@ -177,10 +166,9 @@ func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
 
 // PatchRoomMetadata updates the metadata of the specified room
 func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
-	type roomMetadataRequest struct {
+	var req struct {
 		Metadata string `json:"metadata"`
 	}
-	var req roomMetadataRequest
 	if err := c.Bind(&req); err != nil {
 		return herror.BadRequest(err)
 	}
@@ -194,37 +182,47 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 
 	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	roomState := h.QallRepo.GetState()
-	for _, state := range roomState {
-		if state.RoomID == roomID {
-			// Check if the user is one of the participants
-			isParticipant := false
-			for _, participant := range state.Participants {
-				if *participant.Name == userID.String() {
-					isParticipant = true
-					break
-				}
-			}
-			if !isParticipant {
-				return herror.Forbidden("you are not a participant of the room")
-			}
-
-			// Update the metadata
-			metadata := qall.Metadata{
-				Status:    req.Metadata,
-				IsWebinar: *state.IsWebinar,
-			}
-			_, err := livekitClient.UpdateRoomMetadata(c.Request().Context(), &livekit.UpdateRoomMetadataRequest{
-				Room:     state.RoomID.String(),
-				Metadata: req.Metadata,
-			})
-			if err != nil {
-				return herror.InternalServerError(err)
-			}
-
-			h.QallRepo.UpdateRoomMetadata(roomID.String(), metadata)
-			return c.NoContent(http.StatusNoContent)
+	// Find the room
+	var targetRoom *qall.RoomWithParticipants
+	for i := range roomState {
+		if roomState[i].RoomID == roomID {
+			targetRoom = &roomState[i]
+			break
 		}
 	}
+
+	if targetRoom == nil {
+		return herror.NotFound("room not found")
+	}
+
+	// Verify user is a participant
+	isParticipant := false
+	for _, participant := range targetRoom.Participants {
+		if *participant.Name == userID.String() {
+			isParticipant = true
+			break
+		}
+	}
+
+	if !isParticipant {
+		return herror.Forbidden("you are not a participant of the room")
+	}
+
+	// Update metadata
+	metadata := qall.Metadata{
+		Status:    req.Metadata,
+		IsWebinar: *targetRoom.IsWebinar,
+	}
+
+	_, err = livekitClient.UpdateRoomMetadata(c.Request().Context(), &livekit.UpdateRoomMetadataRequest{
+		Room:     roomID.String(),
+		Metadata: req.Metadata,
+	})
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	h.QallRepo.UpdateRoomMetadata(roomID.String(), metadata)
 	return herror.NotFound("room not found")
 }
 
@@ -253,40 +251,42 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 	}
 
 	// ルームが存在するか確認
-	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomID == roomID {
-			// userがcanPublishかどうかを確認
-			canPublish := false
-			for _, participant := range roomState.Participants {
-				if *participant.Name == userID.String() {
-					canPublish = *participant.CanPublish
-					break
-				}
-			}
-			if !canPublish {
-				return herror.Forbidden("you are not allowed to update participants")
-			}
-			livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
-			for _, participant := range req.Users {
-				for _, roomParticipant := range roomState.Participants {
-					if *roomParticipant.Name == participant.UserID {
-						_, err := livekitClient.UpdateParticipant(c.Request().Context(), &livekit.UpdateParticipantRequest{
-							Room:     roomID.String(),
-							Identity: *roomParticipant.Identity,
-							Permission: &livekit.ParticipantPermission{
-								CanPublish: participant.CanPublish,
-							},
-						})
-						if err != nil {
-							failedUsers[participant.UserID] = err.Error()
-						} else {
-							succeedUsers = append(succeedUsers, participant.UserID)
-							h.QallRepo.UpdateParticipantCanPublish(roomID.String(), *roomParticipant.Identity, participant.CanPublish)
-						}
-					}
-				}
-			}
+	roomState := h.QallRepo.GetRoomState(roomID.String())
+	if roomState == nil {
+		return herror.NotFound("room not found")
+	}
+
+	// userがcanPublishかどうかを確認
+	canPublish := false
+	for _, participant := range roomState.Participants {
+		if *participant.Name == userID.String() {
+			canPublish = *participant.CanPublish
 			break
+		}
+	}
+	if !canPublish {
+		return herror.Forbidden("you are not allowed to update participants")
+	}
+
+	// Update participants
+	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	for _, participant := range req.Users {
+		for _, roomParticipant := range roomState.Participants {
+			if *roomParticipant.Name == participant.UserID {
+				_, err := livekitClient.UpdateParticipant(c.Request().Context(), &livekit.UpdateParticipantRequest{
+					Room:     roomID.String(),
+					Identity: *roomParticipant.Identity,
+					Permission: &livekit.ParticipantPermission{
+						CanPublish: participant.CanPublish,
+					},
+				})
+				if err != nil {
+					failedUsers[participant.UserID] = err.Error()
+				} else {
+					succeedUsers = append(succeedUsers, participant.UserID)
+					h.QallRepo.UpdateParticipantCanPublish(roomID.String(), *roomParticipant.Identity, participant.CanPublish)
+				}
+			}
 		}
 	}
 
@@ -335,24 +335,12 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// 6-2) ルームが存在するか確認
-	isExistingRoom := false
-	for _, roomState := range h.QallRepo.GetState() {
-		if roomState.RoomID == roomID {
-			isExistingRoom = true
-			break
-		}
-	}
+	roomState := h.QallRepo.GetRoomState(roomID.String())
 
-	if isExistingRoom {
-		// ルームが存在して、webinar=true の場合はCanPublish=false
-		for _, roomState := range h.QallRepo.GetState() {
-			if roomState.RoomID.String() == room {
-				if roomState.IsWebinar != nil && *roomState.IsWebinar {
-					isWebinar = true
-				}
-				break
-			}
-		}
+	// ルームが存在して、webinar=true の場合はCanPublish=false
+	isExistingRoom := roomState != nil
+	if isExistingRoom && *roomState.IsWebinar {
+		isWebinar = true
 	}
 
 	// 7) VideoGrant にルーム名、CanPublishData=true を設定

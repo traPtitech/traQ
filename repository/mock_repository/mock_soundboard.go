@@ -7,9 +7,10 @@ package mock_repository
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/gofrs/uuid"
+	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
+	repository "github.com/traPtitech/traQ/repository"
 )
 
 // MockSoundboardRepository is a mock of SoundboardRepository interface.
@@ -36,17 +37,31 @@ func (m *MockSoundboardRepository) EXPECT() *MockSoundboardRepositoryMockRecorde
 }
 
 // CreateSoundboardItem mocks base method.
-func (m *MockSoundboardRepository) CreateSoundboardItem(soundID uuid.UUID, soundName string, stampID *uuid.UUID, creatorID uuid.UUID) error {
+func (m *MockSoundboardRepository) CreateSoundboardItem(args repository.CreateSoundboardItemArgs) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSoundboardItem", soundID, soundName, stampID, creatorID)
+	ret := m.ctrl.Call(m, "CreateSoundboardItem", args)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateSoundboardItem indicates an expected call of CreateSoundboardItem.
-func (mr *MockSoundboardRepositoryMockRecorder) CreateSoundboardItem(soundID, soundName, stampID, creatorID interface{}) *gomock.Call {
+func (mr *MockSoundboardRepositoryMockRecorder) CreateSoundboardItem(args interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSoundboardItem", reflect.TypeOf((*MockSoundboardRepository)(nil).CreateSoundboardItem), soundID, soundName, stampID, creatorID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSoundboardItem", reflect.TypeOf((*MockSoundboardRepository)(nil).CreateSoundboardItem), args)
+}
+
+// DeleteSoundboardItem mocks base method.
+func (m *MockSoundboardRepository) DeleteSoundboardItem(soundID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSoundboardItem", soundID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSoundboardItem indicates an expected call of DeleteSoundboardItem.
+func (mr *MockSoundboardRepositoryMockRecorder) DeleteSoundboardItem(soundID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSoundboardItem", reflect.TypeOf((*MockSoundboardRepository)(nil).DeleteSoundboardItem), soundID)
 }
 
 // GetAllSoundboardItems mocks base method.
@@ -91,18 +106,4 @@ func (m *MockSoundboardRepository) UpdateSoundboardCreatorID(soundID, creatorID 
 func (mr *MockSoundboardRepositoryMockRecorder) UpdateSoundboardCreatorID(soundID, creatorID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSoundboardCreatorID", reflect.TypeOf((*MockSoundboardRepository)(nil).UpdateSoundboardCreatorID), soundID, creatorID)
-}
-
-// DeleteSoundboardItem mocks base method.
-func (m *MockSoundboardRepository) DeleteSoundboardItem(soundID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSoundboardItem", soundID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSoundboardItem indicates an expected call of DeleteSoundboardItem.
-func (mr *MockSoundboardRepositoryMockRecorder) DeleteSoundboardItem(soundID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSoundboardItem", reflect.TypeOf((*MockSoundboardRepository)(nil).DeleteSoundboardItem), soundID)
 }

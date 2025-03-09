@@ -24,7 +24,7 @@ Here are some tips for configuring traQ:
 - If you want a private instance, set `allowSignUp` to `false`.
     - You can use `externalAuth.github.allowedOrganizations` to only allow signup of your GitHub organization members.
     - Otherwise, an admin or external app has to manually set accounts up via `POST /api/v3/users`.
-- For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall features, respectively.
+- For the maximum user experience, try to configure Elasticsearch, FCM, and livekit to enable message search, notification, and Qall features, respectively.
 
 The following are example configurations.
 
@@ -213,7 +213,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration (with ES, no FCM, and no Skyway)
+Minimal configuration (with ES, no FCM, and no Livekit)
 
 ```yaml
 origin: https://example.com
@@ -261,9 +261,15 @@ traQ uses `config.js` for configuring the frontend application.
       projectId: 'projectId',
       messagingSenderId: 'messagingSenderId'
     },
-    // (optional) Skyway settings.
+    // (deprecated) Skyway settings.
     skyway: {
       apiKey: 'apiKey'
+    },
+    // (optional) Livekit settings.
+    livekit: {
+      livekitHost: 'livekitHost',
+      livekitApiKey: 'livekitApiKey',
+      livekitAPISecret: 'livekitAPISecret'
     },
     // (optional) Enable search feature.
     enableSearch: true,
