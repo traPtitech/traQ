@@ -4376,19 +4376,8 @@ paths:
       tags:
         - qall
       parameters:
-        - in: query
-          name: room
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: 参加するルームのUUID
-        - in: query
-          name: isWebinar
-          schema:
-            type: boolean
-          required: false
-          description: ウェビナールームかどうか(デフォルト false)
+        - $ref: '#/components/parameters/roomIdInQuery'
+        - $ref: '#/components/parameters/isWebinarInQuery'
       responses:
         '200':
           description: 成功 - LiveKitトークンを返します
@@ -4430,13 +4419,7 @@ paths:
       tags:
         - qall
       parameters:
-        - in: path
-          name: roomId
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: ルームのUUID
+        - $ref: '#/components/parameters/roomIdInPath'
       responses:
         '200':
           description: 成功 - ルームのメタデータを取得
@@ -4456,13 +4439,7 @@ paths:
       tags:
         - qall
       parameters:
-        - in: path
-          name: roomId
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: ルームのUUID
+        - $ref: '#/components/parameters/roomIdInPath'
       requestBody:
         description: ルームのメタデータ
         required: true
@@ -4488,13 +4465,7 @@ paths:
       tags:
         - qall
       parameters:
-        - in: path
-          name: roomId
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: ルームのUUID
+        - $ref: '#/components/parameters/roomIdInPath'
       requestBody:
         description: 発言権限を変更する参加者の情報
         required: true
@@ -8027,6 +7998,29 @@ components:
       schema:
         type: string
         format: uuid
+    roomIdInPath:
+      name: roomId
+      in: path
+      required: true
+      description: ルームUUID
+      schema:
+        type: string
+        format: uuid
+    roomIdInQuery:
+      in: query
+      name: roomId
+      schema:
+        type: string
+        format: uuid
+      description: ルームUUID
+    isWebinarInQuery:
+      in: query
+      name: isWebinar
+      schema:
+        type: boolean
+      required: false
+      description: ウェビナールームかどうか(デフォルト false)
+
 tags:
   - name: user
     description: ユーザーAPI
