@@ -19,14 +19,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// GET /qall/endpoints
+// GetQallEndpoints GET /qall/endpoints
 func (h *Handlers) GetQallEndpoints(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"endpoint": h.Config.LiveKitHost,
 	})
 }
 
-// GET /qall/soundboard
+// GetSoundboardItems GET /qall/soundboard
 func (h *Handlers) GetSoundboardItems(c echo.Context) error {
 	items, err := h.Repo.GetAllSoundboardItems()
 	if err != nil {
@@ -35,7 +35,7 @@ func (h *Handlers) GetSoundboardItems(c echo.Context) error {
 	return c.JSON(http.StatusOK, items)
 }
 
-// POST /qall/soundboard
+// CreateSoundboardItem POST /qall/soundboard
 func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	src, uploadedFile, err := c.Request().FormFile("file")
 	if err != nil {
@@ -58,7 +58,7 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// POST /qall/soundboard/play
+// PlaySoundboardItem POST /qall/soundboard/play
 func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	var req struct {
 		SoundID string `json:"soundId"`
@@ -145,7 +145,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-// GET /qall/rooms
+// GetRoomState GET /qall/rooms
 func (h *Handlers) GetRoomState(c echo.Context) error {
 	// Get room state from QallRepository
 	roomState := h.QallRepo.GetState()
@@ -153,7 +153,7 @@ func (h *Handlers) GetRoomState(c echo.Context) error {
 	return c.JSON(http.StatusOK, roomState)
 }
 
-// GET /qall/rooms/:roomID/metadata
+// GetRoomMetadata GET /qall/rooms/:roomID/metadata
 func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
 	roomState := h.QallRepo.GetState()
 	for _, state := range roomState {
@@ -164,7 +164,7 @@ func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
 	return herror.NotFound("room not found")
 }
 
-// PATCH /qall/rooms/:roomID/metadata
+// PatchRoomMetadata PATCH /qall/rooms/:roomID/metadata
 func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	var req struct {
 		Metadata string `json:"metadata"`
@@ -226,7 +226,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	return herror.NotFound("room not found")
 }
 
-// DELETE /qall/rooms/:roomID/participants
+// PatchRoomParticipants DELETE /qall/rooms/:roomID/participants
 func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 	type RoomParticipantUpdate struct {
 		UserID     string `json:"userId"`
@@ -313,7 +313,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 
 }
 
-// GET /qall/token
+// GetLiveKitToken GET /qall/token
 func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	// 1) roomクエリパラメータ取得 (必須)
 	room := c.QueryParam("room")
@@ -414,7 +414,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 
 }
 
-// POST /qall/webhook
+// LiveKitWebhook POST /qall/webhook
 func (h *Handlers) LiveKitWebhook(c echo.Context) error {
 	// Authプロバイダーを初期化
 	authProvider := auth.NewSimpleKeyProvider(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
