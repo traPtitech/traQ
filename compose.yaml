@@ -43,7 +43,7 @@ services:
       - backend
 
   mysql:
-    image: mariadb:10.11.10
+    image: mariadb:10.11.11
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -82,7 +82,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:4.8.1
+    image: adminer:4.17.1
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
@@ -93,7 +93,7 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.23.5-alpine
+    image: golang:1.24.1-alpine
     restart: always
     volumes:
       - ./dev/bin:/app
