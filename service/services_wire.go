@@ -13,6 +13,7 @@ var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
 	"OnlineCounter",
 	"UnreadMessageCounter",
 	"MessageCounter",
+	"UserCounter"
 	"ChannelCounter",
 	"StampThrottler",
 	"FCM",
