@@ -180,7 +180,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 
 	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	// Find the room
-	var targetRoom *qall.RoomWithParticipants = h.QallRepo.GetRoomState(roomID.String())
+	targetRoom := h.QallRepo.GetRoomState(roomID.String())
 
 	if targetRoom == nil {
 		return herror.NotFound("room not found")
