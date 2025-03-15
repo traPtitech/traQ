@@ -28,4 +28,6 @@ var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
 	"WebRTCv3",
 	"WS",
 	"BotWS",
+	"QallRoomStateManager",
+	"QallSoundBoard",
 ))

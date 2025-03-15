@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/oidc"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
@@ -41,4 +42,6 @@ type Services struct {
 	WebRTCv3             *webrtcv3.Manager
 	WS                   *ws.Streamer
 	BotWS                *botWS.Streamer
+	QallRoomStateManager qall.RoomStateManager
+	QallSoundBoard       qall.Soundboard
 }

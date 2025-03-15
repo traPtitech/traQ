@@ -68,6 +68,9 @@ var handlerMap = map[string]eventHandler{
 	event.ClipFolderDeleted:         clipFolderDeletedHandler,
 	event.ClipFolderMessageDeleted:  clipFolderMessageDeletedHandler,
 	event.ClipFolderMessageAdded:    clipFolderMessageAddedHandler,
+	event.QallRoomStateChanged:      qallRoomStateChangedHandler,
+	event.QallSoundboardItemCreated: qallSoundboardItemCreatedHandler,
+	event.QallSoundboardItemDeleted: qallSoundboardItemDeletedHandler,
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -601,6 +604,36 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 			"user_id":    ev.Fields["user_id"].(uuid.UUID),
 			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 			"sessions":   sessions,
+		},
+	)
+}
+
+func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_ROOM_STATE_CHANGED",
+		map[string]interface{}{
+			"room_id": ev.Fields["room_id"].(uuid.UUID),
+			"state":   ev.Fields["state"],
+		},
+	)
+}
+
+func qallSoundboardItemCreatedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_SOUNDBOARD_ITEM_CREATED",
+		map[string]interface{}{
+			"sound_id":   ev.Fields["sound_id"].(uuid.UUID),
+			"name":       ev.Fields["name"].(string),
+			"creator_id": ev.Fields["creator_id"].(uuid.UUID),
+		},
+	)
+}
+
+func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_SOUNDBOARD_ITEM_DELETED",
+		map[string]interface{}{
+			"sound_id": ev.Fields["sound_id"].(uuid.UUID),
 		},
 	)
 }

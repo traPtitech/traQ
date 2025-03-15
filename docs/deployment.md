@@ -24,7 +24,7 @@ Here are some tips for configuring traQ:
 - If you want a private instance, set `allowSignUp` to `false`.
     - You can use `externalAuth.github.allowedOrganizations` to only allow signup of your GitHub organization members.
     - Otherwise, an admin or external app has to manually set accounts up via `POST /api/v3/users`.
-- For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall features, respectively.
+- For the maximum user experience, try to configure Elasticsearch, FCM, and livekit to enable message search, notification, and Qall features, respectively.
 
 The following are example configurations.
 
@@ -153,11 +153,21 @@ oauth2:
   # Access token expiration time in seconds. Default: 31536000 (1 year)
   accessTokenExp: 31536000 # 1 year
 
-# Skyway settings.
+# (deprecated) Skyway settings.
 # You must set this to enable the call ('Qall') feature.
 skyway:
   # Skyway secret key.
   secretKey: secretKey
+
+# LiveKit settings.
+# You must set these to enable the call ('Qall') feature.
+livekit:
+  # LiveKit host url
+  livekitHost: livekitHost
+  # LiveKit api key
+  livekitAPIKey: livekitAPIKey
+  # LiveKit api secret
+  livekitAPISecret: livekitAPISecret
 
 # (optional) JWT settings.
 # Used to issue QR codes to authenticate user.
@@ -203,7 +213,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration (with ES, no FCM, and no Skyway)
+Minimal configuration (with ES, no FCM, and no Livekit)
 
 ```yaml
 origin: https://example.com
@@ -251,9 +261,15 @@ traQ uses `config.js` for configuring the frontend application.
       projectId: 'projectId',
       messagingSenderId: 'messagingSenderId'
     },
-    // (optional) Skyway settings.
+    // (deprecated) Skyway settings.
     skyway: {
       apiKey: 'apiKey'
+    },
+    // (optional) Livekit settings.
+    livekit: {
+      livekitHost: 'livekitHost',
+      livekitApiKey: 'livekitApiKey',
+      livekitAPISecret: 'livekitAPISecret'
     },
     // (optional) Enable search feature.
     enableSearch: true,
