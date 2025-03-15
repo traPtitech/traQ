@@ -1,6 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.23.0
+go 1.24
 
 toolchain go1.24.1
 
@@ -43,7 +43,7 @@ require (
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
 	github.com/motoki317/go-waveform v0.0.3
-	github.com/motoki317/sc v1.8.1
+	github.com/motoki317/sc v1.8.2
 	github.com/ncw/swift/v2 v2.0.3
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/ory/dockertest/v3 v3.11.0
