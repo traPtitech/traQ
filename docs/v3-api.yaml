@@ -2782,6 +2782,40 @@ paths:
 
         + `folder_id`: メッセージが追加されたクリップフォルダーのId
         + `message_id`: クリップフォルダーに追加されたメッセージのId
+
+        ### `QALL_ROOM_STATE_CHANGED`
+        ルーム状態が変更された。
+
+        対象: 全員
+
+        + `room_id`: 変更されたルームのId
+        + `state`: 変更後のルーム状態
+          + `roomId`: ルームのID
+          + `participants`: ルーム内の参加者(配列)
+            + `identity`: ユーザーID_RandomUUID
+            + `name`: 表示名
+            + `joinedAt`: 参加した時刻
+            + `attributes`: ユーザーに関連付けられたカスタム属性
+            + `canPublish`: 発言権限
+          + `isWebinar`: ウェビナールームかどうか
+          + `metadata`: ルームに関連付けられたカスタム属性
+
+        ### `QALL_SOUNDBOARD_ITEM_CREATED`
+        サウンドボードアイテムが作成された。
+
+        対象: 全員
+
+        + `sound_id`: 作成されたサウンドのId
+        + `name`: サウンド名
+        + `creator_id`: 作成者のId
+
+        ### `QALL_SOUNDBOARD_ITEM_DELETED`
+        サウンドボードアイテムが削除された。
+
+        対象: 全員
+
+        + `sound_id`: 削除されたサウンドのId
+
   /users/me/tokens:
     get:
       summary: 有効トークンのリストを取得
@@ -4353,7 +4387,7 @@ paths:
       summary: LiveKitエンドポイントを取得
       description: >
         接続可能なLiveKitエンドポイントを取得します。
-      operationId: getEndpoints
+      operationId: getQallEndpoints
       tags:
         - qall
       responses:
@@ -6947,6 +6981,81 @@ components:
       required:
         - userId
         - channelId
+    QallRoomStateChangedEvent:
+      title: QallRoomStateChangedEvent
+      type: object
+      description: Qallのルーム状態が変更された
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: 変更されたルームのId
+        state:
+          type: object
+          description: 変更後のルーム状態
+          properties:
+          roomId:
+            type: string
+            format: uuid
+            description: ルームのID
+          participants:
+            type: array
+            items:
+            type: object
+            properties:
+              identity:
+              type: string
+              description: ユーザーID_RandomUUID
+              name:
+              type: string
+              description: 表示名
+              joinedAt:
+              type: string
+              format: date-time
+              description: 参加した時刻
+              attributes:
+              type: object
+              additionalProperties:
+                type: string
+              description: ユーザーに関連付けられたカスタム属性
+              canPublish:
+              type: boolean
+              description: 発言権限
+          isWebinar:
+            type: boolean
+            description: ウェビナールームかどうか
+          metadata:
+            type: string
+            description: ルームに関連付けられたカスタム属性
+      required:
+      - room_id
+      - state
+    QallSoundboardItemCreatedEvent:
+      title: QallSoundboardItemCreatedEvent
+      type: object
+      description: Qallのサウンドボードアイテムが作成された
+      properties:
+        soundId:
+          type: string
+          format: uuid
+          description: 作成されたサウンドボードアイテムのId
+        name:
+          type: string
+          description: 作成されたサウンドボードアイテムの名前
+        creatorId:
+          type: string
+          format: uuid
+          description: 作成者のId
+    QallSoundboardItemDeletedEvent:
+      title: QallSoundboardItemDeletedEvent
+      type: object
+      description: Qallのサウンドボードアイテムが削除された
+      properties:
+        soundId:
+          type: string
+          format: uuid
+          description: 削除されたサウンドボードアイテムのId
+        
     StampPalette:
       title: StampPalette
       type: object
