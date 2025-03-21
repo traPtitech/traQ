@@ -45,7 +45,7 @@ type RoomWithParticipants struct {
 	Participants []Participant `json:"participants"`
 
 	// RoomID ルームのID
-	RoomID uuid.UUID `json:"roomID"`
+	RoomID uuid.UUID `json:"roomId"`
 }
 
 // RoomStateManager はQallルーム状態を管理するインターフェース
