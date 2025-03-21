@@ -6994,42 +6994,42 @@ components:
           type: object
           description: 変更後のルーム状態
           properties:
-          roomId:
-            type: string
-            format: uuid
-            description: ルームのID
-          participants:
-            type: array
-            items:
-            type: object
-            properties:
-              identity:
+            roomId:
               type: string
-              description: ユーザーID_RandomUUID
-              name:
-              type: string
-              description: 表示名
-              joinedAt:
-              type: string
-              format: date-time
-              description: 参加した時刻
-              attributes:
-              type: object
-              additionalProperties:
-                type: string
-              description: ユーザーに関連付けられたカスタム属性
-              canPublish:
+              format: uuid
+              description: ルームのID
+            participants:
+              type: array
+              items:
+                type: object
+                properties:
+                  identity:
+                    type: string
+                    description: ユーザーID_RandomUUID
+                  name:
+                    type: string
+                    description: 表示名
+                  joinedAt:
+                    type: string
+                    format: date-time
+                    description: 参加した時刻
+                  attributes:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      description: ユーザーに関連付けられたカスタム属性
+                  canPublish:
+                    type: boolean
+                    description: 発言権限
+            isWebinar:
               type: boolean
-              description: 発言権限
-          isWebinar:
-            type: boolean
-            description: ウェビナールームかどうか
-          metadata:
-            type: string
-            description: ルームに関連付けられたカスタム属性
+              description: ウェビナールームかどうか
+            metadata:
+              type: string
+              description: ルームに関連付けられたカスタム属性
       required:
-      - room_id
-      - state
+        - room_id
+        - state
     QallSoundboardItemCreatedEvent:
       title: QallSoundboardItemCreatedEvent
       type: object
