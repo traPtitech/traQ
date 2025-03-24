@@ -45,20 +45,19 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 				formatChannel(channel, h.ChannelManager.PublicChannelTree().GetChildrenIDs(channel.ID)),
 			},
 		}
-	} else {
-		res = echo.Map{
-			"public": h.ChannelManager.PublicChannelTree(),
-		}
-
-		if isTrue(c.QueryParam("include-dm")) {
-			mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
-			if err != nil {
-				return herror.InternalServerError(err)
-			}
-			res["dm"] = formatDMChannels(mapping)
-		}
+		return extension.ServeJSONWithETag(c, res)
 	}
 
+	res = echo.Map{
+		"public": h.ChannelManager.PublicChannelTree(),
+	}
+	if isTrue(c.QueryParam("include-dm")) {
+		mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		res["dm"] = formatDMChannels(mapping)
+	}
 	return extension.ServeJSONWithETag(c, res)
 }
 
