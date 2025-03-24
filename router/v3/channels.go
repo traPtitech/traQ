@@ -32,8 +32,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 	var res echo.Map
 
-	if len(c.QueryParam("path")) > 0 {
-		channelPath := c.QueryParam("path")
+	if channelPath := c.QueryParam("path"); channelPath != "" {
 		channel, err := h.ChannelManager.GetChannelFromPath(channelPath)
 		if err != nil {
 			if errors.Is(err, channelService.ErrInvalidChannelPath) {
