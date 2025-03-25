@@ -292,6 +292,21 @@ func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	return ch
 }
 
+// CreateSubchannel 子チャンネルを必ず作成します
+func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name string) *model.Channel {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	ch, err := env.CM.CreatePublicChannel(name, parent.ID, uuid.Nil)
+	require.NoError(t, err)
+	// parent.ChildrenId が更新されるので, 代入しなおす
+	newParent, err := env.CM.GetChannel(parent.ID)
+	require.NoError(t, err)
+	*parent = *newParent
+	return ch
+}
+
 // AddStar 指定したチャンネルをスターします
 func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
 	t.Helper()
