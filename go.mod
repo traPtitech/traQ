@@ -38,7 +38,7 @@ require (
 	github.com/labstack/echo-contrib v0.17.2
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/livekit/protocol v1.35.0
+	github.com/livekit/protocol v1.36.1
 	github.com/livekit/server-sdk-go/v2 v2.5.0
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
