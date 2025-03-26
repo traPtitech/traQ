@@ -72,7 +72,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.File) error {
+func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository) error {
 	typeStr := c.QueryParam("type")
 	if len(typeStr) == 0 {
 		typeStr = "image"
@@ -92,7 +92,6 @@ func ServeFileThumbnail(c echo.Context, meta model.File) error {
 		// Check if the error is because the file doesn't exist in S3
 		if errors.Is(err, storage.ErrFileNotFound) {
 			// サムネイルが実際には存在しないのでDBの情報を更新する
-			repo := c.Get("repository").(repository.Repository)
 			fileID := meta.GetID()
 
 			// Delete the thumbnail record from the database by re-saving the file meta without this thumbnail
