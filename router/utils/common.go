@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -72,7 +73,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository) error {
+func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
 	typeStr := c.QueryParam("type")
 	if len(typeStr) == 0 {
 		typeStr = "image"
@@ -97,7 +98,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 			// Delete the thumbnail record from the database by re-saving the file meta without this thumbnail
 			fileMeta, err := repo.GetFileMeta(fileID)
 			if err != nil {
-				c.Logger().Warnf("failed to get file meta for thumbnail cleanup: %v", err)
+				logger.Sugar().Warnf("failed to get file meta for thumbnail cleanup: %v", err)
 			} else {
 				// Remove the thumbnail from the list
 				var newThumbnails []model.FileThumbnail
@@ -110,9 +111,9 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 
 				// Save the updated file meta
 				if err := repo.SaveFileMeta(fileMeta, []*model.FileACLEntry{}); err != nil {
-					c.Logger().Warnf("failed to update file meta for thumbnail cleanup: %v", err)
+					logger.Sugar().Warnf("failed to update file meta for thumbnail cleanup: %v", err)
 				} else {
-					c.Logger().Infof("removed non-existent thumbnail from database for file %s type %s", fileID, thumbnailType)
+					logger.Sugar().Infof("removed non-existent thumbnail from database for file %s type %s", fileID, thumbnailType)
 				}
 			}
 

@@ -23,5 +23,5 @@ func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
-	return utils.ServeFileThumbnail(c, getFileFromContext(c), h.Repo)
+	return utils.ServeFileThumbnail(c, getFileFromContext(c), h.Repo, h.Logger)
 }
