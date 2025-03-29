@@ -146,7 +146,7 @@ func (h *Handlers) GetFileMeta(c echo.Context) error {
 
 // GetThumbnailImage GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailImage(c echo.Context) error {
-	return utils.ServeFileThumbnail(c, getParamFile(c), h.Repo)
+	return utils.ServeFileThumbnail(c, getParamFile(c), h.Repo, h.Logger)
 }
 
 // GetFile GET /files/:fileID
