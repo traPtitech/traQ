@@ -134,6 +134,9 @@ func filePreloads(db *gorm.DB) *gorm.DB {
 
 // DeleteFileThumbnail implements FileRepository interface.
 func (repo *Repository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
+	if fileID == uuid.Nil {
+		return repository.ErrNilID
+	}
 	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID, Type: thumbnailType}).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return repository.ErrNotFound
