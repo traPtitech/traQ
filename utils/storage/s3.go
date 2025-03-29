@@ -76,7 +76,8 @@ func (fs *S3FileStorage) OpenFileByKey(key string, fileType model.FileType) (rea
 		file, err := fs.getObject(context.Background(), input)
 		if err != nil {
 			var nsk *types.NoSuchKey
-			if errors.As(err, &nsk) {
+			var nf *types.NotFound
+			if errors.As(err, &nsk) || errors.As(err, &nf) {
 				return nil, ErrFileNotFound
 			}
 			return nil, err
@@ -90,7 +91,8 @@ func (fs *S3FileStorage) OpenFileByKey(key string, fileType model.FileType) (rea
 		remote, err := fs.getObject(context.Background(), input)
 		if err != nil {
 			var nsk *types.NoSuchKey
-			if errors.As(err, &nsk) {
+			var nf *types.NotFound
+			if errors.As(err, &nsk) || errors.As(err, &nf) {
 				return nil, ErrFileNotFound
 			}
 			return nil, err
