@@ -61,5 +61,5 @@ type FileRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// 存在しないファイル, またはサムネイルを指定した場合, ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteFileThumbnail(fileId uuid.UUID, thumbnailType model.ThumbnailType)
+	DeleteFileThumbnail(fileId uuid.UUID, thumbnailType model.ThumbnailType) error
 }
