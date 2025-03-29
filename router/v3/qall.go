@@ -307,7 +307,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 // GetLiveKitToken GET /qall/token
 func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	// 1) roomクエリパラメータ取得 (必須)
-	room := c.QueryParam("room")
+	room := c.QueryParam("roomId")
 	if room == "" {
 		return herror.BadRequest("room query parameter is required")
 	}

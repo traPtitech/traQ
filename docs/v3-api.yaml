@@ -7046,6 +7046,10 @@ components:
           type: string
           format: uuid
           description: 作成者のId
+      required:
+        - soundId
+        - name
+        - creatorId
     QallSoundboardItemDeletedEvent:
       title: QallSoundboardItemDeletedEvent
       type: object
@@ -7055,6 +7059,8 @@ components:
           type: string
           format: uuid
           description: 削除されたサウンドボードアイテムのId
+      required:
+        - soundId
         
     StampPalette:
       title: StampPalette
