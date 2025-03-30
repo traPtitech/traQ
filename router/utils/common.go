@@ -94,29 +94,12 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 		if errors.Is(err, storage.ErrFileNotFound) {
 			// サムネイルが実際には存在しないのでDBの情報を更新する
 			fileID := meta.GetID()
-
-			// Delete the thumbnail record from the database by re-saving the file meta without this thumbnail
-			fileMeta, err := repo.GetFileMeta(fileID)
+			err := repo.DeleteFileThumbnail(fileID, thumbnailType)
 			if err != nil {
-				logger.Sugar().Warnf("failed to get file meta for thumbnail cleanup: %v", err)
-			} else {
-				// Remove the thumbnail from the list
-				var newThumbnails []model.FileThumbnail
-				for _, t := range fileMeta.Thumbnails {
-					if t.Type != thumbnailType {
-						newThumbnails = append(newThumbnails, t)
-					}
-				}
-				fileMeta.Thumbnails = newThumbnails
-
-				// Save the updated file meta
-				if err := repo.SaveFileMeta(fileMeta, []*model.FileACLEntry{}); err != nil {
-					logger.Sugar().Warnf("failed to update file meta for thumbnail cleanup: %v", err)
-				} else {
-					logger.Sugar().Infof("removed non-existent thumbnail from database for file %s type %s", fileID, thumbnailType)
-				}
+				logger.Warn("failed to delete thumbnail from database", zap.Error(err))
+				return herror.InternalServerError(err)
 			}
-
+			logger.Info("removed non-existent thumbnail from database", zap.String("fileID", fileID.String()), zap.String("thumbnailType", thumbnailType.String()))
 			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
