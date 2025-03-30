@@ -310,36 +310,36 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 	repo, _, _ := setup(t, common)
 
 	tests := map[string]struct {
-		createsFile         bool
-		deletesExistingFile bool
-		thumbnailType       model.ThumbnailType
+		createsFile           bool
+		deletesExistingFile   bool
+		thumbnailTypeToDelete model.ThumbnailType
 	}{
 		"nil id": {
-			createsFile:         false,
-			deletesExistingFile: false,
-			thumbnailType:       model.ThumbnailTypeImage,
+			createsFile:           false,
+			deletesExistingFile:   false,
+			thumbnailTypeToDelete: model.ThumbnailTypeImage,
 		},
 		"file not found": {
-			createsFile:         true,
-			deletesExistingFile: false,
-			thumbnailType:       model.ThumbnailTypeImage,
+			createsFile:           true,
+			deletesExistingFile:   false,
+			thumbnailTypeToDelete: model.ThumbnailTypeImage,
 		},
 		"thumbnail type not found": {
-			createsFile:         true,
-			deletesExistingFile: true,
-			thumbnailType:       model.ThumbnailTypeWaveform,
+			createsFile:           true,
+			deletesExistingFile:   true,
+			thumbnailTypeToDelete: model.ThumbnailTypeWaveform,
 		},
 		"success": {
-			createsFile:         true,
-			deletesExistingFile: true,
-			thumbnailType:       model.ThumbnailTypeImage,
+			createsFile:           true,
+			deletesExistingFile:   true,
+			thumbnailTypeToDelete: model.ThumbnailTypeImage,
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			if !tt.createsFile {
-				err := repo.DeleteFileThumbnail(uuid.Nil, tt.thumbnailType)
+				err := repo.DeleteFileThumbnail(uuid.Nil, tt.thumbnailTypeToDelete)
 				assert.EqualError(t, err, repository.ErrNilID.Error())
 				return
 			}
@@ -347,7 +347,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 			f := mustMakeDummyFile(t, repo)
 
 			if !tt.deletesExistingFile { // 存在しないファイルの場合, 変更なしを検証
-				err := repo.DeleteFileThumbnail(uuid.Must(uuid.NewV7()), tt.thumbnailType)
+				err := repo.DeleteFileThumbnail(uuid.Must(uuid.NewV7()), tt.thumbnailTypeToDelete)
 				assert.NoError(t, err)
 				ff, err := repo.GetFileMeta(f.ID)
 				assert.NoError(t, err)
@@ -355,9 +355,9 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 				return
 			}
 
-			err := repo.DeleteFileThumbnail(f.ID, tt.thumbnailType)
+			err := repo.DeleteFileThumbnail(f.ID, tt.thumbnailTypeToDelete)
 			assert.NoError(t, err)
-			if !slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailType)) { // f.Thumbnails が tt.thumbnailType を含まない場合, 変更なしを検証
+			if !slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete)) { // f.Thumbnails が tt.thumbnailType を含まない場合, 変更なしを検証
 				ff, err := repo.GetFileMeta(f.ID)
 				assert.NoError(t, err)
 				assert.ElementsMatch(t, f.Thumbnails, ff.Thumbnails)
@@ -365,7 +365,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 			}
 			f, err = repo.GetFileMeta(f.ID)
 			assert.NoError(t, err)
-			assert.False(t, slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailType))) // f.Thumbnails が tt.thumbnailType を含まない
+			assert.False(t, slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete))) // f.Thumbnails が tt.thumbnailType を含まない
 		})
 	}
 }
