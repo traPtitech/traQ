@@ -399,7 +399,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		h.QallRepo.AddRoomState(roomWithParticipants)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"Token": livekitToken})
+	return c.JSON(http.StatusOK, map[string]string{"token": livekitToken})
 
 }
 
