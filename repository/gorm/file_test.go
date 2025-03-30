@@ -357,7 +357,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 
 			err := repo.DeleteFileThumbnail(f.ID, tt.thumbnailTypeToDelete)
 			assert.NoError(t, err)
-			if !slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete)) { // f.Thumbnails が tt.thumbnailType を含まない場合, 変更なしを検証
+			if !slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete)) { // f.Thumbnails が tt.thumbnailTypeToDelete を含まない場合, 変更なしを検証
 				ff, err := repo.GetFileMeta(f.ID)
 				assert.NoError(t, err)
 				assert.ElementsMatch(t, f.Thumbnails, ff.Thumbnails)
@@ -365,7 +365,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 			}
 			f, err = repo.GetFileMeta(f.ID)
 			assert.NoError(t, err)
-			assert.False(t, slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete))) // f.Thumbnails が tt.thumbnailType を含まない
+			assert.False(t, slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete))) // f.Thumbnails が tt.thumbnailTypeToDelete を含まない
 		})
 	}
 }
