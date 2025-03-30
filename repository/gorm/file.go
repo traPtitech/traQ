@@ -138,9 +138,6 @@ func (repo *Repository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType mode
 		return repository.ErrNilID
 	}
 	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID, Type: thumbnailType}).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return repository.ErrNotFound
-		}
 		return err
 	}
 	return nil
