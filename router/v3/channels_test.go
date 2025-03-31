@@ -68,10 +68,11 @@ func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Objec
 
 func channelListElementEquals(t *testing.T, expect []*model.Channel, actual *httpexpect.Array) {
 	t.Helper()
+	// copy to avoid modifying `expect`
 	expectCopy := make([]*model.Channel, len(expect))
 	copy(expectCopy, expect)
-	channelCount := int(actual.Length().IsEqual(len(expect)).Raw())
 
+	channelCount := int(actual.Length().IsEqual(len(expect)).Raw())
 	// do not use `expect`, use `expectCopy` instead
 	for i := 0; i < channelCount; i++ {
 		channelObj := actual.Value(i).Object()
