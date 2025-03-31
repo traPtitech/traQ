@@ -121,10 +121,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 	})
 
 	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
@@ -139,9 +136,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -162,9 +157,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -185,9 +178,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
