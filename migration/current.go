@@ -48,6 +48,7 @@ func Migrations() []*gormigrate.Migration {
 		v35(), // OIDC実装のため、openid, profileロール、get_oidc_userinfo権限を追加
 		v36(), // delete_my_stampパーミッションを追加
 		v37(), // サウンドボードアイテム追加
+		v38(), // v37で作ったサウンドボードアイテムのテーブル名変更
 	}
 }
 
