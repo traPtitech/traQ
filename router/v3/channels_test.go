@@ -75,10 +75,10 @@ func channelListElementEquals(t *testing.T, expect []*model.Channel, actual *htt
 	// do not use `expect`, use `expectCopy` instead
 	for i := 0; i < channelCount; i++ {
 		channelObj := actual.Value(i).Object()
-		channelIdString := channelObj.Value("id").String().Raw()
+		channelIDString := channelObj.Value("id").String().Raw()
 
 		j := slices.IndexFunc(expectCopy, func(c *model.Channel) bool {
-			return c.ID.String() == channelIdString
+			return c.ID.String() == channelIDString
 		})
 		assert.NotEqual(t, -1, j, "channel not found in expect list")
 		expectObj := expectCopy[j]
