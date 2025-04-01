@@ -2,7 +2,7 @@ module github.com/traPtitech/traQ
 
 go 1.24
 
-toolchain go1.24.1
+toolchain go1.24.2
 
 require (
 	cloud.google.com/go/profiler v0.4.2
