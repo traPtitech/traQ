@@ -352,6 +352,7 @@ paths:
   '/channels/{channelId}/stats':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
+      - $ref: '#/components/parameters/excludeDeletedMessagesInQuery'
     get:
       summary: チャンネル統計情報を取得
       tags:
@@ -8135,6 +8136,13 @@ components:
         type: boolean
       required: false
       description: ウェビナールームかどうか(デフォルト false)
+    excludeDeletedMessagesInQuery:
+      in: query
+      name: excludeDeletedMessages
+      schema:
+        type: boolean
+      required: false
+      description: 削除されたメッセージを除外するかどうか(デフォルト false)
 
 tags:
   - name: user

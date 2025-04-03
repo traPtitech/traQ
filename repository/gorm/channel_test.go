@@ -137,14 +137,14 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Nil)
+		_, err := repo.GetChannelStats(uuid.Nil, false)
 		assert.Error(t, err)
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV7()))
+		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV7()), false)
 		assert.Error(t, err)
 	})
 
@@ -180,7 +180,7 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		stats, err := repo.GetChannelStats(channel.ID)
+		stats, err := repo.GetChannelStats(channel.ID, false)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 

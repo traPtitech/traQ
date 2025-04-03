@@ -445,7 +445,7 @@ func (repo *Repository) RecordChannelEvent(channelID uuid.UUID, eventType model.
 }
 
 // GetChannelStats implements ChannelRepository interface.
-func (repo *Repository) GetChannelStats(channelID uuid.UUID) (*repository.ChannelStats, error) {
+func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*repository.ChannelStats, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -457,21 +457,30 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID) (*repository.Channe
 	}
 
 	var stats repository.ChannelStats
-	if err := repo.db.Unscoped().
+	query := repo.db.Unscoped().
 		Model(&model.Message{}).
 		Select("COUNT(channel_id) AS total_message_count").
-		Where(&model.Message{ChannelID: channelID}).
-		Find(&stats.TotalMessageCount).
-		Error; err != nil {
+		Where(&model.Message{ChannelID: channelID})
+
+	if excludeDeletedMessages {
+		query = query.Where("deleted_at IS NULL")
+	}
+
+	if err := query.Find(&stats.TotalMessageCount).Error; err != nil {
 		return nil, err
 	}
 
-	if err := repo.db.
-		Unscoped().
+	query = repo.db.Unscoped().
 		Model(&model.Message{}).
 		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) As total").
 		Joins("JOIN messages_stamps ON id = messages_stamps.message_id").
-		Where(&model.Message{ChannelID: channelID}).
+		Where(&model.Message{ChannelID: channelID})
+
+	if excludeDeletedMessages {
+		query = query.Where("deleted_at IS NULL")
+	}
+
+	if err := query.
 		Group("stamp_id").
 		Order("count DESC").
 		Find(&stats.Stamps).
@@ -479,12 +488,16 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID) (*repository.Channe
 		return nil, err
 	}
 
-	if err := repo.db.
-		Unscoped().
+	query = repo.db.Unscoped().
 		Model(&model.Message{}).
 		Select("user_id AS id", "COUNT(user_id) AS message_count").
-		Where(&model.Message{ChannelID: channelID}).
-		Group("user_id").
+		Where(&model.Message{ChannelID: channelID})
+
+	if excludeDeletedMessages {
+		query = query.Where("deleted_at IS NULL")
+	}
+
+	if err := query.
 		Order("message_count DESC").
 		Find(&stats.Users).
 		Error; err != nil {
