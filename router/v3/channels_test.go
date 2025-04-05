@@ -536,9 +536,12 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
-	m := env.CreateMessage(t, user.GetID(), channel.ID, rand)
+	m1 := env.CreateMessage(t, user.GetID(), channel.ID, rand)
+	m2 := env.CreateMessage(t, user.GetID(), channel.ID, rand)
 	stamp := env.CreateStamp(t, user.GetID(), rand)
-	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, m1.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, m2.GetID(), stamp.ID, user.GetID())
+	env.DeleteMessage(t, m2.GetID())
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -558,11 +561,38 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success (exclude-deleted-messages=false)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		obj := e.GET(path, channel.ID).
 			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("totalMessageCount").Number().IsEqual(2)
+
+		stamps := obj.Value("stamps").Array()
+		stamps.Length().IsEqual(1)
+		firstStamp := stamps.Value(0).Object()
+		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
+		firstStamp.Value("count").Number().IsEqual(2)
+		firstStamp.Value("total").Number().IsEqual(2)
+
+		users := obj.Value("users").Array()
+		users.Length().IsEqual(1)
+		firstUser := users.Value(0).Object()
+		firstUser.Value("id").String().IsEqual(user.GetID().String())
+		firstUser.Value("messageCount").Number().IsEqual(2)
+	})
+
+	t.Run("success (exclude-deleted-messages=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("exclude-deleted-messages", true).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
