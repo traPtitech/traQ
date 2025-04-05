@@ -51,8 +51,7 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"room_id": roomState.RoomID,
-						"state":   &r.RoomState[i],
+						"roomState": r.RoomState,
 					},
 				})
 			}
@@ -74,8 +73,7 @@ func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID st
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -107,8 +105,7 @@ func (r *Repository) UpdateParticipant(roomID string, participant *livekit.Parti
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -133,8 +130,7 @@ func (r *Repository) RemoveParticipant(roomID string, participantID string) {
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -165,8 +161,7 @@ func (r *Repository) AddRoomState(room RoomWithParticipants) {
 		r.Hub.Publish(hub.Message{
 			Name: event.QallRoomStateChanged,
 			Fields: hub.Fields{
-				"room_id": room.RoomID,
-				"state":   &room,
+				"roomState": r.RoomState,
 			},
 		})
 	}
@@ -182,8 +177,7 @@ func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"room_id": roomState.RoomID,
-						"state":   &r.RoomState[i],
+						"roomState": r.RoomState,
 					},
 				})
 			}
@@ -200,16 +194,12 @@ func (r *Repository) RemoveRoomState(roomID string) {
 			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
 
 			if r.Hub != nil {
-				roomUUID, err := uuid.FromString(roomID)
-				if err == nil {
-					r.Hub.Publish(hub.Message{
-						Name: event.QallRoomStateChanged,
-						Fields: hub.Fields{
-							"room_id": roomUUID,
-							"state":   nil,
-						},
-					})
-				}
+				r.Hub.Publish(hub.Message{
+					Name: event.QallRoomStateChanged,
+					Fields: hub.Fields{
+						"roomState": r.RoomState,
+					},
+				})
 			}
 
 			break

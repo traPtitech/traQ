@@ -6983,17 +6983,11 @@ components:
         - channelId
     QallRoomStateChangedEvent:
       title: QallRoomStateChangedEvent
-      type: object
+      type: array
       description: Qallのルーム状態が変更された
-      properties:
-        room_id:
-          type: string
-          format: uuid
-          description: 変更されたルームのId
-        state:
-          type: object
-          description: 変更後のルーム状態
-          properties:
+      items:
+        type: object
+        properties:
             roomId:
               type: string
               format: uuid
@@ -7028,7 +7022,6 @@ components:
               type: string
               description: ルームに関連付けられたカスタム属性
       required:
-        - room_id
         - state
     QallSoundboardItemCreatedEvent:
       title: QallSoundboardItemCreatedEvent
