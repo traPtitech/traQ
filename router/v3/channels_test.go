@@ -74,7 +74,7 @@ func channelListElementEquals(t *testing.T, expect []*model.Channel, actual *htt
 
 	channelCount := int(actual.Length().IsEqual(len(expect)).Raw())
 	// do not use `expect`, use `expectCopy` instead
-	for i := 0; i < channelCount; i++ {
+	for i := range channelCount {
 		channelObj := actual.Value(i).Object()
 		channelIDString := channelObj.Value("id").String().Raw()
 
