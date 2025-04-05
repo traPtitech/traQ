@@ -2,6 +2,7 @@ package v3
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +66,29 @@ func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Objec
 	actual.Value("children").Array().ContainsOnly(childIDs...)
 }
 
+func channelListElementEquals(t *testing.T, expect []*model.Channel, actual *httpexpect.Array) {
+	t.Helper()
+	// copy to avoid modifying `expect`
+	expectCopy := make([]*model.Channel, len(expect))
+	copy(expectCopy, expect)
+
+	channelCount := int(actual.Length().IsEqual(len(expect)).Raw())
+	// do not use `expect`, use `expectCopy` instead
+	for i := range channelCount {
+		channelObj := actual.Value(i).Object()
+		channelIDString := channelObj.Value("id").String().Raw()
+
+		j := slices.IndexFunc(expectCopy, func(c *model.Channel) bool {
+			return c.ID.String() == channelIDString
+		})
+		assert.NotEqual(t, -1, j, "channel not found in expect list")
+		expectObj := expectCopy[j]
+		channelEquals(t, expectObj, channelObj)
+		expectCopy = append(expectCopy[:j], expectCopy[j+1:]...) // remove found channel from `expect`
+	}
+	assert.Empty(t, expectCopy)
+}
+
 func TestHandlers_GetChannels(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/channels"
@@ -98,10 +122,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 	})
 
 	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
@@ -116,9 +137,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -139,9 +158,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -162,9 +179,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(2)
-		channelEquals(t, channel, public.Value(0).Object())
-		channelEquals(t, subchannel, public.Value(1).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
