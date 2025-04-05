@@ -8138,7 +8138,7 @@ components:
       description: ウェビナールームかどうか(デフォルト false)
     excludeDeletedMessagesInQuery:
       in: query
-      name: excludeDeletedMessages
+      name: exclude-deleted-messages
       schema:
         type: boolean
       required: false
