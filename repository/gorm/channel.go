@@ -498,6 +498,7 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessa
 	}
 
 	if err := query.
+		Group("user_id").
 		Order("message_count DESC").
 		Find(&stats.Users).
 		Error; err != nil {
