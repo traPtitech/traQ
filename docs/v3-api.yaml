@@ -6983,46 +6983,58 @@ components:
         - channelId
     QallRoomStateChangedEvent:
       title: QallRoomStateChangedEvent
-      type: array
+      type: object
       description: Qallのルーム状態が変更された
-      items:
-        type: object
-        properties:
-            roomId:
-              type: string
-              format: uuid
-              description: ルームのID
-            participants:
-              type: array
-              items:
-                type: object
-                properties:
-                  identity:
-                    type: string
-                    description: ユーザーID_RandomUUID
-                  name:
-                    type: string
-                    description: 表示名
-                  joinedAt:
-                    type: string
-                    format: date-time
-                    description: 参加した時刻
-                  attributes:
-                    type: object
-                    additionalProperties:
+      properties:
+        roomStates:
+          type: array
+          items:
+            type: object
+            properties:
+              roomId:
+                type: string
+                format: uuid
+                description: ルームのID
+              participants:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identity:
                       type: string
-                      description: ユーザーに関連付けられたカスタム属性
-                  canPublish:
-                    type: boolean
-                    description: 発言権限
-            isWebinar:
-              type: boolean
-              description: ウェビナールームかどうか
-            metadata:
-              type: string
-              description: ルームに関連付けられたカスタム属性
+                      description: ユーザーID_RandomUUID
+                    name:
+                      type: string
+                      description: 表示名
+                    joinedAt:
+                      type: string
+                      format: date-time
+                      description: 参加した時刻
+                    attributes:
+                      type: object
+                      additionalProperties:
+                        type: string
+                        description: ユーザーに関連付けられたカスタム属性
+                    canPublish:
+                      type: boolean
+                      description: 発言権限
+                  required:
+                    - identity
+                    - name
+                    - joinedAt
+                    - canPublish
+              isWebinar:
+                type: boolean
+                description: ウェビナールームかどうか
+              metadata:
+                type: string
+                description: ルームに関連付けられたカスタム属性
+            required:
+              - roomId
+              - participants
+              - isWebinar
       required:
-        - state
+        - roomStates
     QallSoundboardItemCreatedEvent:
       title: QallSoundboardItemCreatedEvent
       type: object
