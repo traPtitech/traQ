@@ -93,7 +93,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	// 2-2) ルームに参加しているか確認
 	isParticipant := false
 	for _, participant := range roomState.Participants {
-		if *participant.Name == userID.String() {
+		if participant.Name == userID.String() {
 			isParticipant = true
 			break
 		}
@@ -189,7 +189,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	// Verify user is a participant
 	isParticipant := false
 	for _, participant := range targetRoom.Participants {
-		if *participant.Name == userID.String() {
+		if participant.Name == userID.String() {
 			isParticipant = true
 			break
 		}
@@ -202,7 +202,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 	// Update metadata
 	metadata := qall.Metadata{
 		Status:    req.Metadata,
-		IsWebinar: *targetRoom.IsWebinar,
+		IsWebinar: targetRoom.IsWebinar,
 	}
 
 	_, err = livekitClient.UpdateRoomMetadata(c.Request().Context(), &livekit.UpdateRoomMetadataRequest{
@@ -250,8 +250,8 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 	// userがcanPublishかどうかを確認
 	canPublish := false
 	for _, participant := range roomState.Participants {
-		if *participant.Name == userID.String() {
-			canPublish = *participant.CanPublish
+		if participant.Name == userID.String() {
+			canPublish = participant.CanPublish
 			break
 		}
 	}
@@ -263,10 +263,10 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
 	for _, participant := range req.Users {
 		for _, roomParticipant := range roomState.Participants {
-			if *roomParticipant.Name == participant.UserID {
+			if roomParticipant.Name == participant.UserID {
 				_, err := livekitClient.UpdateParticipant(c.Request().Context(), &livekit.UpdateParticipantRequest{
 					Room:     roomID.String(),
-					Identity: *roomParticipant.Identity,
+					Identity: roomParticipant.Identity,
 					Permission: &livekit.ParticipantPermission{
 						CanPublish: participant.CanPublish,
 					},
@@ -275,7 +275,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 					failedUsers[participant.UserID] = err.Error()
 				} else {
 					succeedUsers = append(succeedUsers, participant.UserID)
-					h.QallRepo.UpdateParticipantCanPublish(roomID.String(), *roomParticipant.Identity, participant.CanPublish)
+					h.QallRepo.UpdateParticipantCanPublish(roomID.String(), roomParticipant.Identity, participant.CanPublish)
 				}
 			}
 		}
@@ -330,7 +330,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 
 	// ルームが存在して、webinar=true の場合はCanPublish=false
 	isExistingRoom := roomState != nil
-	if isExistingRoom && *roomState.IsWebinar {
+	if isExistingRoom && roomState.IsWebinar {
 		isWebinar = true
 	}
 
@@ -341,8 +341,8 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 	isAlreadyCanPublish := false
 	if roomState != nil {
 		for _, participant := range roomState.Participants {
-			if *participant.Name == userID.String() {
-				isAlreadyCanPublish = *participant.CanPublish
+			if participant.Name == userID.String() {
+				isAlreadyCanPublish = participant.CanPublish
 				break
 			}
 		}
@@ -391,7 +391,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		// ルームが存在しない場合は新規作成
 		emptyMetadata := ""
 		roomWithParticipants := qall.RoomWithParticipants{
-			IsWebinar:    &isWebinar,
+			IsWebinar:    isWebinar,
 			Metadata:     &emptyMetadata,
 			RoomID:       roomID,
 			Participants: []qall.Participant{},
