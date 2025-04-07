@@ -135,9 +135,9 @@ func TestRepository_AddParticipantToRoomState(t *testing.T) {
 		// 検証
 		assert.Equal(t, 1, len(repo.RoomState))
 		assert.Equal(t, 1, len(repo.RoomState[0].Participants))
-		assert.Equal(t, participantID, *repo.RoomState[0].Participants[0].Identity)
-		assert.Equal(t, participantName, *repo.RoomState[0].Participants[0].Name)
-		assert.Equal(t, canPublish, *repo.RoomState[0].Participants[0].CanPublish)
+		assert.Equal(t, participantID, repo.RoomState[0].Participants[0].Identity)
+		assert.Equal(t, participantName, repo.RoomState[0].Participants[0].Name)
+		assert.Equal(t, canPublish, repo.RoomState[0].Participants[0].CanPublish)
 	})
 
 	t.Run("room_not_found", func(t *testing.T) {
@@ -196,10 +196,10 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -233,10 +233,10 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -269,10 +269,10 @@ func TestRepository_RemoveParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -312,10 +312,10 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &oldParticipantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       oldParticipantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -342,8 +342,8 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 		// 検証
 		assert.Equal(t, 1, len(repo.RoomState))
 		assert.Equal(t, 1, len(repo.RoomState[0].Participants))
-		assert.Equal(t, participantID, *repo.RoomState[0].Participants[0].Identity)
-		assert.Equal(t, newParticipantName, *repo.RoomState[0].Participants[0].Name)
+		assert.Equal(t, participantID, repo.RoomState[0].Participants[0].Identity)
+		assert.Equal(t, newParticipantName, repo.RoomState[0].Participants[0].Name)
 	})
 
 	t.Run("room_not_found", func(t *testing.T) {
@@ -362,10 +362,10 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -386,7 +386,7 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 
 		// 検証 - 何も変わらないはず
 		assert.Equal(t, 1, len(repo.RoomState))
-		assert.Equal(t, participantName, *repo.RoomState[0].Participants[0].Name)
+		assert.Equal(t, participantName, repo.RoomState[0].Participants[0].Name)
 	})
 
 	t.Run("participant_not_found", func(t *testing.T) {
@@ -404,10 +404,10 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -429,7 +429,7 @@ func TestRepository_UpdateParticipant(t *testing.T) {
 		// 検証 - 何も変わらないはず
 		assert.Equal(t, 1, len(repo.RoomState))
 		assert.Equal(t, 1, len(repo.RoomState[0].Participants))
-		assert.Equal(t, participantID, *repo.RoomState[0].Participants[0].Identity)
+		assert.Equal(t, participantID, repo.RoomState[0].Participants[0].Identity)
 	})
 }
 
@@ -453,10 +453,10 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -475,8 +475,8 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 		// 検証
 		assert.Equal(t, 1, len(repo.RoomState))
 		assert.Equal(t, 1, len(repo.RoomState[0].Participants))
-		assert.Equal(t, participantID, *repo.RoomState[0].Participants[0].Identity)
-		assert.Equal(t, newCanPublish, *repo.RoomState[0].Participants[0].CanPublish)
+		assert.Equal(t, participantID, repo.RoomState[0].Participants[0].Identity)
+		assert.Equal(t, newCanPublish, repo.RoomState[0].Participants[0].CanPublish)
 	})
 
 	t.Run("room_not_found", func(t *testing.T) {
@@ -495,10 +495,10 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -513,7 +513,7 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 
 		// 検証 - 何も変わらないはず
 		assert.Equal(t, 1, len(repo.RoomState))
-		assert.Equal(t, canPublish, *repo.RoomState[0].Participants[0].CanPublish)
+		assert.Equal(t, canPublish, repo.RoomState[0].Participants[0].CanPublish)
 	})
 
 	t.Run("participant_not_found", func(t *testing.T) {
@@ -531,10 +531,10 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 			RoomID: roomID,
 			Participants: []Participant{
 				{
-					Identity:   &participantID,
-					Name:       &participantName,
-					JoinedAt:   &joinedAt,
-					CanPublish: &canPublish,
+					Identity:   participantID,
+					Name:       participantName,
+					JoinedAt:   joinedAt,
+					CanPublish: canPublish,
 				},
 			},
 		}
@@ -549,7 +549,7 @@ func TestRepository_UpdateParticipantCanPublish(t *testing.T) {
 
 		// 検証 - 何も変わらないはず
 		assert.Equal(t, 1, len(repo.RoomState))
-		assert.Equal(t, canPublish, *repo.RoomState[0].Participants[0].CanPublish)
+		assert.Equal(t, canPublish, repo.RoomState[0].Participants[0].CanPublish)
 	})
 }
 

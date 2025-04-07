@@ -40,19 +40,18 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 		if roomState.RoomID.String() == room.Name {
 			t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
 			r.RoomState[i].Participants = append(r.RoomState[i].Participants, Participant{
-				Identity:   &participant.Identity,
-				JoinedAt:   &t,
-				Name:       &participant.Name,
+				Identity:   participant.Identity,
+				JoinedAt:   t,
+				Name:       participant.Name,
 				Attributes: &participant.Attributes,
-				CanPublish: &participant.Permission.CanPublish,
+				CanPublish: participant.Permission.CanPublish,
 			})
 
 			if r.Hub != nil {
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"room_id": roomState.RoomID,
-						"state":   &r.RoomState[i],
+						"roomState": r.RoomState,
 					},
 				})
 			}
@@ -67,15 +66,14 @@ func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID st
 	for i, roomState := range r.RoomState {
 		if roomState.RoomID.String() == roomID {
 			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantID {
-					r.RoomState[i].Participants[j].CanPublish = &canPublish
+				if participant.Identity == participantID {
+					r.RoomState[i].Participants[j].CanPublish = canPublish
 
 					if r.Hub != nil {
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -93,22 +91,21 @@ func (r *Repository) UpdateParticipant(roomID string, participant *livekit.Parti
 	for i, roomState := range r.RoomState {
 		if roomState.RoomID.String() == roomID {
 			for j, p := range roomState.Participants {
-				if *p.Identity == participant.Identity {
+				if p.Identity == participant.Identity {
 					t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
 					r.RoomState[i].Participants[j] = Participant{
-						Identity:   &participant.Identity,
-						JoinedAt:   &t,
-						Name:       &participant.Name,
+						Identity:   participant.Identity,
+						JoinedAt:   t,
+						Name:       participant.Name,
 						Attributes: &participant.Attributes,
-						CanPublish: &participant.Permission.CanPublish,
+						CanPublish: participant.Permission.CanPublish,
 					}
 
 					if r.Hub != nil {
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -126,15 +123,14 @@ func (r *Repository) RemoveParticipant(roomID string, participantID string) {
 	for i, roomState := range r.RoomState {
 		if roomState.RoomID.String() == roomID {
 			for j, participant := range roomState.Participants {
-				if *participant.Identity == participantID {
+				if participant.Identity == participantID {
 					r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
 
 					if r.Hub != nil {
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"room_id": roomState.RoomID,
-								"state":   &r.RoomState[i],
+								"roomState": r.RoomState,
 							},
 						})
 					}
@@ -165,8 +161,7 @@ func (r *Repository) AddRoomState(room RoomWithParticipants) {
 		r.Hub.Publish(hub.Message{
 			Name: event.QallRoomStateChanged,
 			Fields: hub.Fields{
-				"room_id": room.RoomID,
-				"state":   &room,
+				"roomState": r.RoomState,
 			},
 		})
 	}
@@ -182,8 +177,7 @@ func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"room_id": roomState.RoomID,
-						"state":   &r.RoomState[i],
+						"roomState": r.RoomState,
 					},
 				})
 			}
@@ -200,16 +194,12 @@ func (r *Repository) RemoveRoomState(roomID string) {
 			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
 
 			if r.Hub != nil {
-				roomUUID, err := uuid.FromString(roomID)
-				if err == nil {
-					r.Hub.Publish(hub.Message{
-						Name: event.QallRoomStateChanged,
-						Fields: hub.Fields{
-							"room_id": roomUUID,
-							"state":   nil,
-						},
-					})
-				}
+				r.Hub.Publish(hub.Message{
+					Name: event.QallRoomStateChanged,
+					Fields: hub.Fields{
+						"roomState": r.RoomState,
+					},
+				})
 			}
 
 			break
@@ -254,9 +244,9 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 		for _, p := range partResp.Participants {
 			t := time.Unix(p.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
 			Participants = append(Participants, Participant{
-				Identity:   &p.Identity,
-				JoinedAt:   &t,
-				Name:       &p.Name,
+				Identity:   p.Identity,
+				JoinedAt:   t,
+				Name:       p.Name,
 				Attributes: &p.Attributes,
 			})
 		}
@@ -275,7 +265,7 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 
 		roomWithParticipants = append(roomWithParticipants, RoomWithParticipants{
 			Metadata:     &metadata.Status,
-			IsWebinar:    &metadata.IsWebinar,
+			IsWebinar:    metadata.IsWebinar,
 			RoomID:       roomID,
 			Participants: Participants,
 		})

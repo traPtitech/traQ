@@ -23,22 +23,22 @@ type Participant struct {
 	Attributes *map[string]string `json:"attributes,omitempty"`
 
 	// CanPublish 発言権限
-	CanPublish *bool `json:"canPublish,omitempty"`
+	CanPublish bool `json:"canPublish"`
 
 	// Identity ユーザーID_RandomUUID
-	Identity *string `json:"identity,omitempty"`
+	Identity string `json:"identity"`
 
 	// JoinedAt 参加した時刻
-	JoinedAt *time.Time `json:"joinedAt,omitempty"`
+	JoinedAt time.Time `json:"joinedAt"`
 
 	// Name 表示名
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 }
 
 // RoomWithParticipants defines model for RoomWithParticipants.
 type RoomWithParticipants struct {
 	// IsWebinar ウェビナールームかどうか
-	IsWebinar *bool `json:"isWebinar,omitempty"`
+	IsWebinar bool `json:"isWebinar"`
 
 	// Metadata ルームに関連付けられたカスタム属性
 	Metadata     *string       `json:"metadata,omitempty"`
