@@ -276,9 +276,9 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 
 // GetRoomState ルーム状態を取得
 func (r *Repository) GetRoomState(roomID string) *RoomWithParticipants {
-	for _, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			return &roomState
+	for i := range r.RoomState {
+		if r.RoomState[i].RoomID.String() == roomID {
+			return &r.RoomState[i]
 		}
 	}
 	return nil
