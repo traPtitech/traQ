@@ -613,7 +613,7 @@ func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"QALL_ROOM_STATE_CHANGED",
 		map[string]interface{}{
-			"roomStates": ev.Fields["roomStates"].(qall.RoomWithParticipants),
+			"roomStates": ev.Fields["roomStates"].([]qall.RoomWithParticipants),
 		},
 	)
 }
