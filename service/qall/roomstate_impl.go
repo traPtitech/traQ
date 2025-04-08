@@ -51,7 +51,7 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"roomState": r.RoomState,
+						"roomStates": r.RoomState,
 					},
 				})
 			}
@@ -73,7 +73,7 @@ func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID st
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"roomState": r.RoomState,
+								"roomStates": r.RoomState,
 							},
 						})
 					}
@@ -105,7 +105,7 @@ func (r *Repository) UpdateParticipant(roomID string, participant *livekit.Parti
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"roomState": r.RoomState,
+								"roomStates": r.RoomState,
 							},
 						})
 					}
@@ -130,7 +130,7 @@ func (r *Repository) RemoveParticipant(roomID string, participantID string) {
 						r.Hub.Publish(hub.Message{
 							Name: event.QallRoomStateChanged,
 							Fields: hub.Fields{
-								"roomState": r.RoomState,
+								"roomStates": r.RoomState,
 							},
 						})
 					}
@@ -177,7 +177,7 @@ func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"roomState": r.RoomState,
+						"roomStates": r.RoomState,
 					},
 				})
 			}
@@ -197,7 +197,7 @@ func (r *Repository) RemoveRoomState(roomID string) {
 				r.Hub.Publish(hub.Message{
 					Name: event.QallRoomStateChanged,
 					Fields: hub.Fields{
-						"roomState": r.RoomState,
+						"roomStates": r.RoomState,
 					},
 				})
 			}
