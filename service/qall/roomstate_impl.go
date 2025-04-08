@@ -161,7 +161,7 @@ func (r *Repository) AddRoomState(room RoomWithParticipants) {
 		r.Hub.Publish(hub.Message{
 			Name: event.QallRoomStateChanged,
 			Fields: hub.Fields{
-				"roomState": r.RoomState,
+				"roomStates": r.RoomState,
 			},
 		})
 	}

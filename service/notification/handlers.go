@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/fcm"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
@@ -612,8 +613,7 @@ func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"QALL_ROOM_STATE_CHANGED",
 		map[string]interface{}{
-			"room_id": ev.Fields["room_id"].(uuid.UUID),
-			"state":   ev.Fields["state"],
+			"roomStates": ev.Fields["roomStates"].(qall.RoomWithParticipants),
 		},
 	)
 }
