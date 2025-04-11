@@ -187,7 +187,8 @@ func (h *Handlers) GetChannelViewers(c echo.Context) error {
 // GetChannelStats GET /channels/:channelID/stats
 func (h *Handlers) GetChannelStats(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
-	stats, err := h.Repo.GetChannelStats(channelID)
+	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
+	stats, err := h.Repo.GetChannelStats(channelID, excludeDeletedMessages)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
