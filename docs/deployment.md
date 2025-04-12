@@ -162,12 +162,12 @@ skyway:
 # LiveKit settings.
 # You must set these to enable the call ('Qall') feature.
 livekit:
-  # LiveKit host url
-  livekitHost: livekitHost
+  # LiveKit host url (ex: `https://...`)
+  host: livekitHost
   # LiveKit api key
-  livekitAPIKey: livekitAPIKey
+  apiKey: livekitAPIKey
   # LiveKit api secret
-  livekitAPISecret: livekitAPISecret
+  apiSecret: livekitAPISecret
 
 # (optional) JWT settings.
 # Used to issue QR codes to authenticate user.
