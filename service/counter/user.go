@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -30,11 +31,15 @@ type userCounter struct {
 	count int64
 	sync.RWMutex
 }
+
+// botStatus: keyのuuidはmodel.BotのIDです
 type usersCounterImpl struct {
 	userCounter      map[model.UserAccountStatus]*userCounter
 	botCounter       map[model.BotState]*userCounter
 	userTotalCounter userCounter
 	botTotalCounter  userCounter
+	userStatus       map[uuid.UUID]model.UserAccountStatus
+	botStatus        map[uuid.UUID]model.BotState
 	countersLock     sync.Mutex
 }
 
@@ -45,6 +50,8 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 		botCounter:       make(map[model.BotState]*userCounter),
 		userTotalCounter: userCounter{count: 0},
 		botTotalCounter:  userCounter{count: 0},
+		userStatus:       make(map[uuid.UUID]model.UserAccountStatus),
+		botStatus:        make(map[uuid.UUID]model.BotState),
 	}
 
 	if err := counter.countUsers(model.UserAccountStatusDeactivated, db); err != nil {
@@ -76,6 +83,16 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 	usersCounter.WithLabelValues("bot-paused").Set(float64(counter.botCounter[model.BotPaused].count))
 	usersCounter.WithLabelValues("bot-total").Set(float64(counter.botTotalCounter.count))
 
+	userStatus2Label := map[model.UserAccountStatus]string{
+		model.UserAccountStatusDeactivated: "user-deactivated",
+		model.UserAccountStatusActive:      "user-active",
+		model.UserAccountStatusSuspended:   "user-suspended",
+	}
+	botStatus2Label := map[model.BotState]string{
+		model.BotInactive: "bot-inactive",
+		model.BotActive:   "bot-active",
+		model.BotPaused:   "bot-paused",
+	}
 	go func() {
 		for e := range hub.Subscribe(1, event.UserCreated, event.UserUpdated, event.BotCreated, event.BotStateChanged, event.BotDeleted).Receiver {
 			switch e.Topic() {
@@ -83,96 +100,99 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.userCounter[model.UserAccountStatusActive].inc("user-active")
 				counter.userTotalCounter.inc("user-total")
 
+				userID := e.Fields["user_id"].(uuid.UUID)
+				counter.userStatus[userID] = model.UserAccountStatusActive
+
 			case event.UserUpdated:
-				deacIsIncreased, deacIsDecreased := counter.userCounter[model.UserAccountStatusDeactivated].isChangedforUser("user-deactivated", model.UserAccountStatusDeactivated, db)
-				susIsIncreased, susIsDecreased := counter.userCounter[model.UserAccountStatusSuspended].isChangedforUser("user-suspended", model.UserAccountStatusSuspended, db)
-				if !deacIsIncreased && !susIsIncreased {
-					counter.userCounter[model.UserAccountStatusActive].inc("user-active")
-				}
-				if !deacIsDecreased && !susIsDecreased {
-					counter.userCounter[model.UserAccountStatusActive].dec("user-active")
-				}
+				userID := e.Fields["user_id"].(uuid.UUID)
+				var newStatusInInt int
+				db.Model(&model.User{}).Where("id = ?", userID).Select("status").First(&newStatusInInt)
+				newStatus := model.UserAccountStatus(newStatusInInt)
+				preStatus := counter.userStatus[userID]
+
+				counter.userCounter[preStatus].dec(userStatus2Label[preStatus])
+				counter.userCounter[newStatus].inc(userStatus2Label[newStatus])
+
+				counter.userStatus[userID] = newStatus
 
 			case event.BotCreated:
 				botState := e.Fields["bot"].(*model.Bot).State
-				initialState := ""
-				if botState == model.BotActive {
-					initialState = "bot-active"
-				} else if botState == model.BotInactive {
-					initialState = "bot-inactive"
-				}
 
-				counter.botCounter[botState].inc(initialState)
+				counter.botCounter[botState].inc(botStatus2Label[botState])
 				counter.userCounter[model.UserAccountStatusActive].dec("user-active")
 				counter.botTotalCounter.inc("bot-total")
 				counter.userTotalCounter.dec("user-total")
 
+				createdBotID := e.Fields["bot_id"].(uuid.UUID)
+				counter.botStatus[createdBotID] = botState
+
 			case event.BotStateChanged:
-				status2Label := map[model.BotState]string{
-					model.BotInactive: "bot-inactive",
-					model.BotActive:   "bot-active",
-					model.BotPaused:   "bot-paused",
-				}
-				incStatus := e.Fields["state"].(model.BotState)
-				incLabel := status2Label[incStatus]
-				counter.botCounter[incStatus].inc(incLabel)
+				changedBotID := e.Fields["bot_id"].(uuid.UUID)
+				newStatus := e.Fields["state"].(model.BotState)
+				preStatus := counter.botStatus[changedBotID]
 
-				nextStatus := model.BotState((int(incStatus) + 1) % 3)
-				nextLabel := status2Label[nextStatus]
-				_, isNextStatusDecreased := counter.botCounter[nextStatus].isChangedforBot(nextLabel, nextStatus, db)
+				counter.botCounter[preStatus].dec(botStatus2Label[preStatus])
+				counter.botCounter[newStatus].inc(botStatus2Label[newStatus])
 
-				if !isNextStatusDecreased {
-					lastStatus := model.BotState((int(incStatus) + 2) % 3)
-					lastLabel := status2Label[lastStatus]
-					counter.botCounter[lastStatus].dec(lastLabel)
-				}
+				counter.botStatus[changedBotID] = newStatus
 
 			case event.BotDeleted:
+				deletedBotID := e.Fields["bot_id"].(uuid.UUID)
+				deletedBotState := counter.botStatus[deletedBotID]
+
+				counter.botCounter[deletedBotState].dec(botStatus2Label[deletedBotState])
 				counter.botTotalCounter.dec("bot-total")
-				_, isDecreased := counter.botCounter[model.BotActive].isChangedforBot("bot-active", model.BotActive, db)
-				if isDecreased {
-					break
-				}
-				_, isDecreased = counter.botCounter[model.BotInactive].isChangedforBot("bot-inactive", model.BotInactive, db)
-				if isDecreased {
-					break
-				}
-				counter.botCounter[model.BotPaused].dec("bot-paused")
+				
+				counter.botStatus[deletedBotID] = model.BotState(-1)
 			}
 		}
 	}()
 	return counter, nil
 }
 
-// countUsers 指定したステータスのユーザー数をカウントします
+// countUsers 指定したステータスのユーザーを取得し、c.userStatusに保存、c.userCounterにカウントします
 func (c *usersCounterImpl) countUsers(status model.UserAccountStatus, db *gorm.DB) error {
 	tmpUserCounter := userCounter{
 		count: 0,
 	}
+	var selectedStateUser []model.User
 	if err := db.
 		Model(&model.User{}).
 		Where("bot = ?", "0").
 		Where("status = ?", strconv.Itoa(status.Int())).
-		Count(&tmpUserCounter.count).
+		Select("id").
+		Find(&selectedStateUser).
 		Error; err != nil {
 		return fmt.Errorf("failed to load Users: %w", err)
 	}
+
+	for _, user := range selectedStateUser {
+		c.userStatus[user.ID] = status
+	}
+	tmpUserCounter.count = int64(len(selectedStateUser))
 	c.userCounter[status] = &tmpUserCounter
 	return nil
 }
 
-// countBots 指定したステータスのBot数をカウントします
+// countBots 指定したステータスのBotを取得し、c.botStatusに保存、c.botCounterにカウントします
 func (c *usersCounterImpl) countBots(status model.BotState, db *gorm.DB) error {
 	tmpUserCounter := userCounter{
 		count: 0,
 	}
+	var selectedStateBots []model.Bot
 	if err := db.
 		Model(&model.Bot{}).
 		Where("state = ?", strconv.Itoa(int(status))).
-		Count(&tmpUserCounter.count).
+		Select("id").
+		Find(&selectedStateBots).
 		Error; err != nil {
 		return fmt.Errorf("failed to load Bots: %w", err)
 	}
+
+	for _, bot := range selectedStateBots {
+		c.botStatus[bot.ID] = status
+	}
+	tmpUserCounter.count = int64(len(selectedStateBots))
 	c.botCounter[status] = &tmpUserCounter
 	return nil
 }
@@ -184,56 +204,6 @@ func (c *usersCounterImpl) Get() int64 {
 	defer c.countersLock.Unlock()
 	return c.userCounter[model.UserAccountStatusDeactivated].count + c.userCounter[model.UserAccountStatusActive].count + c.userCounter[model.UserAccountStatusSuspended].count +
 		c.botCounter[model.BotInactive].count + c.botCounter[model.BotActive].count + c.botCounter[model.BotPaused].count
-}
-
-// isChangedforUser 指定したステータスのユーザー数が変化したかを確認し、変化していた場合はカウンタを更新します
-func (counter *userCounter) isChangedforUser(label string, userStatus model.UserAccountStatus, db *gorm.DB) (isIncreased, isDecreased bool) {
-	var userCounter int64
-
-	db.Model(&model.User{}).
-		Where("bot = ?", "0").
-		Where("status = ?", strconv.Itoa(userStatus.Int())).
-		Count(&userCounter)
-
-	if userCounter < counter.count {
-		counter.dec(label)
-		isIncreased = false
-		isDecreased = true
-		return
-	}
-	if userCounter > counter.count {
-		counter.inc(label)
-		isIncreased = true
-		isDecreased = false
-		return
-	}
-	isIncreased = false
-	isDecreased = false
-	return
-}
-
-// isChangedforBot 指定したステータスのBot数が変化したかを確認し、変化していた場合はカウンタを更新します
-func (counter *userCounter) isChangedforBot(label string, botStatus model.BotState, db *gorm.DB) (isIncreased, isDecreased bool) {
-	var userCounter int64
-
-	db.Model(&model.Bot{}).
-		Where("state = ?", strconv.Itoa(int(botStatus))).
-		Count(&userCounter)
-
-	if userCounter < counter.count {
-		counter.dec(label)
-		isIncreased = false
-		isDecreased = true
-		return
-	} else if userCounter > counter.count {
-		counter.inc(label)
-		isIncreased = true
-		isDecreased = false
-		return
-	}
-	isIncreased = false
-	isDecreased = false
-	return
 }
 
 func (counter *userCounter) inc(label string) {
