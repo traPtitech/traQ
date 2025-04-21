@@ -97,9 +97,10 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 		for e := range hub.Subscribe(1, event.UserCreated, event.UserUpdated, event.BotCreated, event.BotStateChanged, event.BotDeleted).Receiver {
 			switch e.Topic() {
 			case event.UserCreated:
-				counter.userCounter[model.UserAccountStatusActive].inc("user-active")
-				counter.userTotalCounter.inc("user-total")
-
+				counter.userCounter[model.UserAccountStatusActive].inc()
+				counter.userTotalCounter.inc()
+				usersCounter.WithLabelValues("user-active").Inc()
+				usersCounter.WithLabelValues("user-total").Inc()
 				userID := e.Fields["user_id"].(uuid.UUID)
 				counter.userStatus[userID] = model.UserAccountStatusActive
 
@@ -110,18 +111,24 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				newStatus := model.UserAccountStatus(newStatusInInt)
 				preStatus := counter.userStatus[userID]
 
-				counter.userCounter[preStatus].dec(userStatus2Label[preStatus])
-				counter.userCounter[newStatus].inc(userStatus2Label[newStatus])
-
+				counter.userCounter[preStatus].dec()
+				counter.userCounter[newStatus].inc()
+				usersCounter.WithLabelValues(userStatus2Label[preStatus]).Dec()
+				usersCounter.WithLabelValues(userStatus2Label[newStatus]).Inc()
 				counter.userStatus[userID] = newStatus
 
 			case event.BotCreated:
 				botState := e.Fields["bot"].(*model.Bot).State
 
-				counter.botCounter[botState].inc(botStatus2Label[botState])
-				counter.userCounter[model.UserAccountStatusActive].dec("user-active")
-				counter.botTotalCounter.inc("bot-total")
-				counter.userTotalCounter.dec("user-total")
+				counter.botCounter[botState].inc()
+				counter.userCounter[model.UserAccountStatusActive].dec()
+				counter.botTotalCounter.inc()
+				counter.userTotalCounter.dec()
+
+				usersCounter.WithLabelValues(botStatus2Label[botState]).Inc()
+				usersCounter.WithLabelValues("user-active").Dec()
+				usersCounter.WithLabelValues("bot-total").Inc()
+				usersCounter.WithLabelValues("user-total").Dec()
 
 				createdBotID := e.Fields["bot_id"].(uuid.UUID)
 				counter.botStatus[createdBotID] = botState
@@ -131,18 +138,20 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				newStatus := e.Fields["state"].(model.BotState)
 				preStatus := counter.botStatus[changedBotID]
 
-				counter.botCounter[preStatus].dec(botStatus2Label[preStatus])
-				counter.botCounter[newStatus].inc(botStatus2Label[newStatus])
-
+				counter.botCounter[preStatus].dec()
+				counter.botCounter[newStatus].inc()
+				usersCounter.WithLabelValues(botStatus2Label[preStatus]).Dec()
+				usersCounter.WithLabelValues(botStatus2Label[newStatus]).Inc()
 				counter.botStatus[changedBotID] = newStatus
 
 			case event.BotDeleted:
 				deletedBotID := e.Fields["bot_id"].(uuid.UUID)
 				deletedBotState := counter.botStatus[deletedBotID]
 
-				counter.botCounter[deletedBotState].dec(botStatus2Label[deletedBotState])
-				counter.botTotalCounter.dec("bot-total")
-				
+				counter.botCounter[deletedBotState].dec()
+				counter.botTotalCounter.dec()
+				usersCounter.WithLabelValues(botStatus2Label[deletedBotState]).Dec()
+				usersCounter.WithLabelValues("bot-total").Dec()
 				counter.botStatus[deletedBotID] = model.BotState(-1)
 			}
 		}
@@ -206,15 +215,13 @@ func (c *usersCounterImpl) Get() int64 {
 		c.botCounter[model.BotInactive].count + c.botCounter[model.BotActive].count + c.botCounter[model.BotPaused].count
 }
 
-func (counter *userCounter) inc(label string) {
+func (counter *userCounter) inc() {
 	counter.Lock()
 	counter.count++
 	counter.Unlock()
-	usersCounter.WithLabelValues(label).Inc()
 }
-func (counter *userCounter) dec(label string) {
+func (counter *userCounter) dec() {
 	counter.Lock()
 	counter.count--
 	counter.Unlock()
-	usersCounter.WithLabelValues(label).Dec()
 }
