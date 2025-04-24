@@ -9,15 +9,20 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/utils/throttle"
 )
+
+const throttleInterval = 3 * time.Minute
 
 // Manager チャンネル閲覧者マネージャ
 type Manager struct {
-	hub      *hub.Hub
-	channels map[uuid.UUID]*viewerSet
-	users    map[uuid.UUID]*viewerSet
-	viewers  map[any]*viewer
-	mu       sync.RWMutex
+	hub             *hub.Hub
+	channels        map[uuid.UUID]*viewerSet
+	users           map[uuid.UUID]*viewerSet
+	viewers         map[any]*viewer
+	channelThrottle *throttle.ThrottleMap[uuid.UUID]
+	userThrottle    *throttle.ThrottleMap[uuid.UUID]
+	mu              sync.RWMutex
 }
 
 type viewer struct {
@@ -36,6 +41,8 @@ func NewManager(hub *hub.Hub) *Manager {
 		users:    make(map[uuid.UUID]*viewerSet),
 		viewers:  make(map[any]*viewer),
 	}
+	vm.channelThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, vm.publishChannelChanged)
+	vm.userThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, vm.publishUserViewStateChanged)
 
 	// start garbage collector
 	go func() {
@@ -68,10 +75,8 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 	if ok {
 		if v.channelID == channelID {
 			if v.state.State == state {
-				// 何も変わってない
-				return
+				return // nothing changed
 			}
-			// stateだけ変更
 			v.state.State = state
 		} else {
 			// channelとstateが変更
@@ -85,13 +90,7 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 				Time:  time.Now(),
 			}
 
-			vm.hub.Publish(hub.Message{
-				Name: event.ChannelViewersChanged,
-				Fields: hub.Fields{
-					"channel_id": previousChannelID,
-					"viewers":    calculateChannelViewers(old),
-				},
-			})
+			vm.channelThrottle.Trigger(previousChannelID)
 		}
 	} else {
 		v = &viewer{
@@ -109,20 +108,9 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 
 	cv.add(v)
 	uv.add(v)
-	vm.hub.Publish(hub.Message{
-		Name: event.UserViewStateChanged,
-		Fields: hub.Fields{
-			"user_id":     userID,
-			"view_states": calculateUserViewStates(uv),
-		},
-	})
-	vm.hub.Publish(hub.Message{
-		Name: event.ChannelViewersChanged,
-		Fields: hub.Fields{
-			"channel_id": channelID,
-			"viewers":    calculateChannelViewers(cv),
-		},
-	})
+
+	vm.channelThrottle.Trigger(channelID)
+	vm.userThrottle.Trigger(userID)
 }
 
 // RemoveViewer 指定したキーのチャンネル閲覧者状態を削除します
@@ -141,20 +129,8 @@ func (vm *Manager) RemoveViewer(key any) {
 	uv := vm.users[v.userID]
 	uv.remove(v)
 
-	vm.hub.Publish(hub.Message{
-		Name: event.UserViewStateChanged,
-		Fields: hub.Fields{
-			"user_id":     v.userID,
-			"view_states": calculateUserViewStates(uv),
-		},
-	})
-	vm.hub.Publish(hub.Message{
-		Name: event.ChannelViewersChanged,
-		Fields: hub.Fields{
-			"channel_id": v.channelID,
-			"viewers":    calculateChannelViewers(cv),
-		},
-	})
+	vm.channelThrottle.Trigger(v.channelID)
+	vm.userThrottle.Trigger(v.userID)
 }
 
 // 5分に1回呼び出される。チャンネルマップとユーザーマップのお掃除
@@ -169,6 +145,32 @@ func (vm *Manager) gc() {
 			delete(vm.users, uid)
 		}
 	}
+}
+
+func (vm *Manager) publishChannelChanged(channelID uuid.UUID) {
+	vm.mu.Lock()
+	defer vm.mu.Unlock()
+	channelViewers := vm.channels[channelID]
+	vm.hub.Publish(hub.Message{
+		Name: event.ChannelViewersChanged,
+		Fields: hub.Fields{
+			"channel_id": channelID,
+			"viewers":    calculateChannelViewers(channelViewers),
+		},
+	})
+}
+
+func (vm *Manager) publishUserViewStateChanged(userID uuid.UUID) {
+	vm.mu.Lock()
+	defer vm.mu.Unlock()
+	userViewers := vm.users[userID]
+	vm.hub.Publish(hub.Message{
+		Name: event.UserViewStateChanged,
+		Fields: hub.Fields{
+			"user_id":     userID,
+			"view_states": calculateUserViewStates(userViewers),
+		},
+	})
 }
 
 func (vm *Manager) ensureChannelViewers(channelID uuid.UUID) *viewerSet {
