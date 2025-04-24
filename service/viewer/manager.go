@@ -1,6 +1,7 @@
 package viewer
 
 import (
+	"iter"
 	"sync"
 	"time"
 
@@ -13,14 +14,14 @@ import (
 // Manager チャンネル閲覧者マネージャ
 type Manager struct {
 	hub      *hub.Hub
-	channels map[uuid.UUID]map[*viewer]struct{}
-	users    map[uuid.UUID]map[*viewer]struct{}
-	viewers  map[interface{}]*viewer
+	channels map[uuid.UUID]*viewerSet
+	users    map[uuid.UUID]*viewerSet
+	viewers  map[any]*viewer
 	mu       sync.RWMutex
 }
 
 type viewer struct {
-	key       interface{}
+	key       any
 	connKey   string
 	userID    uuid.UUID
 	channelID uuid.UUID
@@ -31,18 +32,20 @@ type viewer struct {
 func NewManager(hub *hub.Hub) *Manager {
 	vm := &Manager{
 		hub:      hub,
-		channels: map[uuid.UUID]map[*viewer]struct{}{},
-		users:    map[uuid.UUID]map[*viewer]struct{}{},
-		viewers:  map[interface{}]*viewer{},
+		channels: make(map[uuid.UUID]*viewerSet),
+		users:    make(map[uuid.UUID]*viewerSet),
+		viewers:  make(map[any]*viewer),
 	}
 
+	// start garbage collector
 	go func() {
-		for range time.NewTicker(5 * time.Minute).C {
+		for range time.Tick(5 * time.Minute) {
 			vm.mu.Lock()
 			vm.gc()
 			vm.mu.Unlock()
 		}
 	}()
+
 	return vm
 }
 
@@ -54,20 +57,12 @@ func (vm *Manager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]StateWit
 }
 
 // SetViewer 指定したキーのチャンネル閲覧者状態を設定します
-func (vm *Manager) SetViewer(key interface{}, connKey string, userID uuid.UUID, channelID uuid.UUID, state State) {
+func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelID uuid.UUID, state State) {
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
-	cv, ok := vm.channels[channelID]
-	if !ok {
-		cv = map[*viewer]struct{}{}
-		vm.channels[channelID] = cv
-	}
-	uv, ok := vm.users[userID]
-	if !ok {
-		uv = map[*viewer]struct{}{}
-		vm.users[userID] = uv
-	}
+	cv := vm.ensureChannelViewers(channelID)
+	uv := vm.ensureUserViewers(userID)
 
 	v, ok := vm.viewers[key]
 	if ok {
@@ -80,9 +75,9 @@ func (vm *Manager) SetViewer(key interface{}, connKey string, userID uuid.UUID, 
 			v.state.State = state
 		} else {
 			// channelとstateが変更
-			oldC := v.channelID
-			old := vm.channels[oldC]
-			delete(old, v)
+			previousChannelID := v.channelID
+			viewers := vm.channels[previousChannelID]
+			viewers.remove(v)
 
 			v.channelID = channelID
 			v.state = StateWithTime{
@@ -93,7 +88,7 @@ func (vm *Manager) SetViewer(key interface{}, connKey string, userID uuid.UUID, 
 			vm.hub.Publish(hub.Message{
 				Name: event.ChannelViewersChanged,
 				Fields: hub.Fields{
-					"channel_id": oldC,
+					"channel_id": previousChannelID,
 					"viewers":    calculateChannelViewers(old),
 				},
 			})
@@ -112,8 +107,8 @@ func (vm *Manager) SetViewer(key interface{}, connKey string, userID uuid.UUID, 
 		vm.viewers[key] = v
 	}
 
-	cv[v] = struct{}{}
-	uv[v] = struct{}{}
+	cv.add(v)
+	uv.add(v)
 	vm.hub.Publish(hub.Message{
 		Name: event.UserViewStateChanged,
 		Fields: hub.Fields{
@@ -131,7 +126,7 @@ func (vm *Manager) SetViewer(key interface{}, connKey string, userID uuid.UUID, 
 }
 
 // RemoveViewer 指定したキーのチャンネル閲覧者状態を削除します
-func (vm *Manager) RemoveViewer(key interface{}) {
+func (vm *Manager) RemoveViewer(key any) {
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
@@ -142,9 +137,9 @@ func (vm *Manager) RemoveViewer(key interface{}) {
 
 	delete(vm.viewers, key)
 	cv := vm.channels[v.channelID]
-	delete(cv, v)
+	cv.remove(v)
 	uv := vm.users[v.userID]
-	delete(uv, v)
+	uv.remove(v)
 
 	vm.hub.Publish(hub.Message{
 		Name: event.UserViewStateChanged,
@@ -165,21 +160,39 @@ func (vm *Manager) RemoveViewer(key interface{}) {
 // 5分に1回呼び出される。チャンネルマップとユーザーマップのお掃除
 func (vm *Manager) gc() {
 	for cid, cv := range vm.channels {
-		if len(cv) == 0 {
+		if cv.len() == 0 {
 			delete(vm.channels, cid)
 		}
 	}
 	for uid, uv := range vm.users {
-		if len(uv) == 0 {
+		if uv.len() == 0 {
 			delete(vm.users, uid)
 		}
 	}
 }
 
+func (vm *Manager) ensureChannelViewers(channelID uuid.UUID) *viewerSet {
+	cv, exists := vm.channels[channelID]
+	if !exists {
+		cv = newViewerSet()
+		vm.channels[channelID] = cv
+	}
+	return cv
+}
+
+func (vm *Manager) ensureUserViewers(userID uuid.UUID) *viewerSet {
+	uv, exists := vm.users[userID]
+	if !exists {
+		uv = newViewerSet()
+		vm.users[userID] = uv
+	}
+	return uv
+}
+
 // calculateUserViewStates ユーザーのviewerのsetからmap[conn_key]StateWithChannelを計算する
-func calculateUserViewStates(uv map[*viewer]struct{}) map[string]StateWithChannel {
-	result := make(map[string]StateWithChannel, len(uv))
-	for v := range uv {
+func calculateUserViewStates(uv *viewerSet) map[string]StateWithChannel {
+	result := make(map[string]StateWithChannel, uv.len())
+	for v := range uv.values() {
 		result[v.connKey] = StateWithChannel{
 			State:     v.state.State,
 			ChannelID: v.channelID,
@@ -188,13 +201,45 @@ func calculateUserViewStates(uv map[*viewer]struct{}) map[string]StateWithChanne
 	return result
 }
 
-func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]StateWithTime {
-	result := make(map[uuid.UUID]StateWithTime, len(vs))
-	for v := range vs {
+func calculateChannelViewers(vs *viewerSet) map[uuid.UUID]StateWithTime {
+	result := make(map[uuid.UUID]StateWithTime, vs.len())
+	for v := range vs.values() {
 		if s, ok := result[v.userID]; ok && s.State > v.state.State {
 			continue
 		}
 		result[v.userID] = v.state
 	}
 	return result
+}
+
+type viewerSet struct {
+	set map[*viewer]struct{}
+}
+
+func newViewerSet() *viewerSet {
+	return &viewerSet{
+		set: make(map[*viewer]struct{}),
+	}
+}
+
+func (vs *viewerSet) add(v *viewer) {
+	vs.set[v] = struct{}{}
+}
+
+func (vs *viewerSet) remove(v *viewer) {
+	delete(vs.set, v)
+}
+
+func (vs *viewerSet) len() int {
+	return len(vs.set)
+}
+
+func (vs *viewerSet) values() iter.Seq[*viewer] {
+	return func(yield func(*viewer) bool) {
+		for v := range vs.set {
+			if !yield(v) {
+				return
+			}
+		}
+	}
 }
