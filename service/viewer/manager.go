@@ -20,8 +20,8 @@ type Manager struct {
 	channels        map[uuid.UUID]*viewerSet
 	users           map[uuid.UUID]*viewerSet
 	viewers         map[any]*viewer
-	channelThrottle *throttle.ThrottleMap[uuid.UUID]
-	userThrottle    *throttle.ThrottleMap[uuid.UUID]
+	channelThrottle *throttle.Map[uuid.UUID]
+	userThrottle    *throttle.Map[uuid.UUID]
 	mu              sync.RWMutex
 }
 

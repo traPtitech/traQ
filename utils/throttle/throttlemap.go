@@ -7,7 +7,7 @@ import (
 	"github.com/boz/go-throttle"
 )
 
-type ThrottleMap[K comparable] struct {
+type Map[K comparable] struct {
 	throttles map[K]*throttleEntry
 	interval  time.Duration
 	ttl       time.Duration
@@ -24,8 +24,8 @@ type throttleEntry struct {
 // The callback function will be called with the key when the throttle is triggered.
 // The interval is the time period in which the callback can be triggered.
 // The ttl is the time to live for each key in the map, after which it will be removed.
-func NewThrottleMap[K comparable](interval, ttl time.Duration, callback func(K)) *ThrottleMap[K] {
-	t := &ThrottleMap[K]{
+func NewThrottleMap[K comparable](interval, ttl time.Duration, callback func(K)) *Map[K] {
+	t := &Map[K]{
 		throttles: make(map[K]*throttleEntry),
 		interval:  interval,
 		ttl:       ttl,
@@ -37,7 +37,7 @@ func NewThrottleMap[K comparable](interval, ttl time.Duration, callback func(K))
 
 // Trigger triggers the throttle for the given key.
 // The callback will be scheduled to be called after the interval.
-func (tm *ThrottleMap[K]) Trigger(key K) {
+func (tm *Map[K]) Trigger(key K) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -54,7 +54,7 @@ func (tm *ThrottleMap[K]) Trigger(key K) {
 	entry.driver.Trigger()
 }
 
-func (tm *ThrottleMap[K]) gcLoop() {
+func (tm *Map[K]) gcLoop() {
 	for range time.Tick(tm.ttl / 2) {
 		tm.mu.Lock()
 		now := time.Now()

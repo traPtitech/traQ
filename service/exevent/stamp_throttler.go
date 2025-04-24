@@ -16,7 +16,7 @@ const eventPublishInterval = 1 * time.Second
 type StampThrottler struct {
 	bus       *hub.Hub
 	mm        message.Manager
-	throttles *throttle.ThrottleMap[uuid.UUID]
+	throttles *throttle.Map[uuid.UUID]
 }
 
 func NewStampThrottler(bus *hub.Hub, mm message.Manager) *StampThrottler {
