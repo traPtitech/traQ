@@ -112,6 +112,7 @@ func (s *accessLoggerMemoryStore) ClearUnused(expiresIn time.Duration) {
 	}
 }
 
+// RateLimiterWithLogging リクエストレートを記録するミドルウェア (レートが閾値を上回った場合にログを残す)
 func RateLimiterWithLogging(rate rate.Limit, burst int, logger *zap.Logger) echo.MiddlewareFunc {
 	var (
 		rateLimit = middleware.NewRateLimiterMemoryStoreWithConfig(middleware.RateLimiterMemoryStoreConfig{
