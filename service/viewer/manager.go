@@ -1,7 +1,6 @@
 package viewer
 
 import (
-	"iter"
 	"sync"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/throttle"
 )
 
@@ -17,8 +17,8 @@ const throttleInterval = 3 * time.Minute
 // Manager チャンネル閲覧者マネージャ
 type Manager struct {
 	hub             *hub.Hub
-	channels        map[uuid.UUID]*viewerSet
-	users           map[uuid.UUID]*viewerSet
+	channels        map[uuid.UUID]*set.Set[*viewer]
+	users           map[uuid.UUID]*set.Set[*viewer]
 	viewers         map[any]*viewer
 	channelThrottle *throttle.Map[uuid.UUID]
 	userThrottle    *throttle.Map[uuid.UUID]
@@ -37,8 +37,8 @@ type viewer struct {
 func NewManager(hub *hub.Hub) *Manager {
 	vm := &Manager{
 		hub:      hub,
-		channels: make(map[uuid.UUID]*viewerSet),
-		users:    make(map[uuid.UUID]*viewerSet),
+		channels: make(map[uuid.UUID]*set.Set[*viewer]),
+		users:    make(map[uuid.UUID]*set.Set[*viewer]),
 		viewers:  make(map[any]*viewer),
 	}
 	vm.channelThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, vm.publishChannelChanged)
@@ -68,8 +68,16 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
-	cv := vm.ensureChannelViewers(channelID)
-	uv := vm.ensureUserViewers(userID)
+	cv, exists := vm.channels[channelID]
+	if !exists {
+		cv = set.New[*viewer]()
+		vm.channels[channelID] = cv
+	}
+	uv, exists := vm.users[userID]
+	if !exists {
+		uv = set.New[*viewer]()
+		vm.users[userID] = uv
+	}
 
 	v, ok := vm.viewers[key]
 	if ok {
@@ -82,7 +90,7 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 			// channelとstateが変更
 			previousChannelID := v.channelID
 			viewers := vm.channels[previousChannelID]
-			viewers.remove(v)
+			viewers.Remove(v)
 
 			v.channelID = channelID
 			v.state = StateWithTime{
@@ -106,8 +114,8 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 		vm.viewers[key] = v
 	}
 
-	cv.add(v)
-	uv.add(v)
+	cv.Add(v)
+	uv.Add(v)
 
 	vm.channelThrottle.Trigger(channelID)
 	vm.userThrottle.Trigger(userID)
@@ -125,9 +133,9 @@ func (vm *Manager) RemoveViewer(key any) {
 
 	delete(vm.viewers, key)
 	cv := vm.channels[v.channelID]
-	cv.remove(v)
+	cv.Remove(v)
 	uv := vm.users[v.userID]
-	uv.remove(v)
+	uv.Remove(v)
 
 	vm.channelThrottle.Trigger(v.channelID)
 	vm.userThrottle.Trigger(v.userID)
@@ -136,12 +144,12 @@ func (vm *Manager) RemoveViewer(key any) {
 // 5分に1回呼び出される。チャンネルマップとユーザーマップのお掃除
 func (vm *Manager) gc() {
 	for cid, cv := range vm.channels {
-		if cv.len() == 0 {
+		if cv.Len() == 0 {
 			delete(vm.channels, cid)
 		}
 	}
 	for uid, uv := range vm.users {
-		if uv.len() == 0 {
+		if uv.Len() == 0 {
 			delete(vm.users, uid)
 		}
 	}
@@ -173,28 +181,10 @@ func (vm *Manager) publishUserViewStateChanged(userID uuid.UUID) {
 	})
 }
 
-func (vm *Manager) ensureChannelViewers(channelID uuid.UUID) *viewerSet {
-	cv, exists := vm.channels[channelID]
-	if !exists {
-		cv = newViewerSet()
-		vm.channels[channelID] = cv
-	}
-	return cv
-}
-
-func (vm *Manager) ensureUserViewers(userID uuid.UUID) *viewerSet {
-	uv, exists := vm.users[userID]
-	if !exists {
-		uv = newViewerSet()
-		vm.users[userID] = uv
-	}
-	return uv
-}
-
 // calculateUserViewStates ユーザーのviewerのsetからmap[conn_key]StateWithChannelを計算する
-func calculateUserViewStates(uv *viewerSet) map[string]StateWithChannel {
-	result := make(map[string]StateWithChannel, uv.len())
-	for v := range uv.values() {
+func calculateUserViewStates(uv *set.Set[*viewer]) map[string]StateWithChannel {
+	result := make(map[string]StateWithChannel, uv.Len())
+	for v := range uv.Values() {
 		result[v.connKey] = StateWithChannel{
 			State:     v.state.State,
 			ChannelID: v.channelID,
@@ -203,45 +193,13 @@ func calculateUserViewStates(uv *viewerSet) map[string]StateWithChannel {
 	return result
 }
 
-func calculateChannelViewers(vs *viewerSet) map[uuid.UUID]StateWithTime {
-	result := make(map[uuid.UUID]StateWithTime, vs.len())
-	for v := range vs.values() {
+func calculateChannelViewers(vs *set.Set[*viewer]) map[uuid.UUID]StateWithTime {
+	result := make(map[uuid.UUID]StateWithTime, vs.Len())
+	for v := range vs.Values() {
 		if s, ok := result[v.userID]; ok && s.State > v.state.State {
 			continue
 		}
 		result[v.userID] = v.state
 	}
 	return result
-}
-
-type viewerSet struct {
-	set map[*viewer]struct{}
-}
-
-func newViewerSet() *viewerSet {
-	return &viewerSet{
-		set: make(map[*viewer]struct{}),
-	}
-}
-
-func (vs *viewerSet) add(v *viewer) {
-	vs.set[v] = struct{}{}
-}
-
-func (vs *viewerSet) remove(v *viewer) {
-	delete(vs.set, v)
-}
-
-func (vs *viewerSet) len() int {
-	return len(vs.set)
-}
-
-func (vs *viewerSet) values() iter.Seq[*viewer] {
-	return func(yield func(*viewer) bool) {
-		for v := range vs.set {
-			if !yield(v) {
-				return
-			}
-		}
-	}
 }
