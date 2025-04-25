@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/traQ/utils/throttle"
 )
 
-const throttleInterval = 3 * time.Second
+const throttleInterval = 1 * time.Second
 
 // if the number of viewers is greater than the threshold, throttle the event
 // otherwise, publish the event immediately
