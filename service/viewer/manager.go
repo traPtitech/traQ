@@ -14,6 +14,10 @@ import (
 
 const throttleInterval = 3 * time.Minute
 
+// if the number of viewers is greater than the threshold, throttle the event
+// otherwise, publish the event immediately
+const throttleThreshold = 30
+
 // Manager チャンネル閲覧者マネージャ
 type Manager struct {
 	hub             *hub.Hub
@@ -41,8 +45,16 @@ func NewManager(hub *hub.Hub) *Manager {
 		users:    make(map[uuid.UUID]*set.Set[*viewer]),
 		viewers:  make(map[any]*viewer),
 	}
-	vm.channelThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, vm.publishChannelChanged)
-	vm.userThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, vm.publishUserViewStateChanged)
+	vm.channelThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, func(cid uuid.UUID) {
+		vm.mu.Lock()
+		defer vm.mu.Unlock()
+		vm.publishChannelChanged(cid)
+	})
+	vm.userThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, func(uid uuid.UUID) {
+		vm.mu.Lock()
+		defer vm.mu.Unlock()
+		vm.publishUserViewStateChanged(uid)
+	})
 
 	// start garbage collector
 	go func() {
@@ -98,7 +110,7 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 				Time:  time.Now(),
 			}
 
-			vm.channelThrottle.Trigger(previousChannelID)
+			vm.notifyChannelViewers(previousChannelID)
 		}
 	} else {
 		v = &viewer{
@@ -117,8 +129,8 @@ func (vm *Manager) SetViewer(key any, connKey string, userID uuid.UUID, channelI
 	cv.Add(v)
 	uv.Add(v)
 
-	vm.channelThrottle.Trigger(channelID)
-	vm.userThrottle.Trigger(userID)
+	vm.notifyChannelViewers(channelID)
+	vm.notifyUserViewStateChanged(userID)
 }
 
 // RemoveViewer 指定したキーのチャンネル閲覧者状態を削除します
@@ -137,8 +149,8 @@ func (vm *Manager) RemoveViewer(key any) {
 	uv := vm.users[v.userID]
 	uv.Remove(v)
 
-	vm.channelThrottle.Trigger(v.channelID)
-	vm.userThrottle.Trigger(v.userID)
+	vm.notifyChannelViewers(v.channelID)
+	vm.notifyUserViewStateChanged(v.userID)
 }
 
 // 5分に1回呼び出される。チャンネルマップとユーザーマップのお掃除
@@ -155,9 +167,25 @@ func (vm *Manager) gc() {
 	}
 }
 
+func (vm *Manager) notifyChannelViewers(channelID uuid.UUID) {
+	cv := vm.channels[channelID]
+	if cv.Len() > throttleThreshold {
+		vm.channelThrottle.Trigger(channelID)
+	} else {
+		vm.publishChannelChanged(channelID)
+	}
+}
+
+func (vm *Manager) notifyUserViewStateChanged(userID uuid.UUID) {
+	uv := vm.users[userID]
+	if uv.Len() > throttleThreshold {
+		vm.userThrottle.Trigger(userID)
+	} else {
+		vm.publishUserViewStateChanged(userID)
+	}
+}
+
 func (vm *Manager) publishChannelChanged(channelID uuid.UUID) {
-	vm.mu.Lock()
-	defer vm.mu.Unlock()
 	channelViewers := vm.channels[channelID]
 	vm.hub.Publish(hub.Message{
 		Name: event.ChannelViewersChanged,
@@ -169,8 +197,6 @@ func (vm *Manager) publishChannelChanged(channelID uuid.UUID) {
 }
 
 func (vm *Manager) publishUserViewStateChanged(userID uuid.UUID) {
-	vm.mu.Lock()
-	defer vm.mu.Unlock()
 	userViewers := vm.users[userID]
 	vm.hub.Publish(hub.Message{
 		Name: event.UserViewStateChanged,
