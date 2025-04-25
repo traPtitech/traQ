@@ -108,7 +108,7 @@ func (s *accessLoggerMemoryStore) ClearUnused(expiresIn time.Duration) {
 		}
 	}
 	for _, id := range ids {
-		(*s)[id] = nil
+		delete(*s, id)
 	}
 }
 
