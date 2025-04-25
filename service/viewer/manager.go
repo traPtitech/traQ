@@ -172,6 +172,7 @@ func (vm *Manager) notifyChannelViewers(channelID uuid.UUID) {
 	if cv.Len() > throttleThreshold {
 		vm.channelThrottle.Trigger(channelID)
 	} else {
+		vm.channelThrottle.Stop(channelID)
 		vm.publishChannelChanged(channelID)
 	}
 }
@@ -181,6 +182,7 @@ func (vm *Manager) notifyUserViewStateChanged(userID uuid.UUID) {
 	if uv.Len() > throttleThreshold {
 		vm.userThrottle.Trigger(userID)
 	} else {
+		vm.userThrottle.Stop(userID)
 		vm.publishUserViewStateChanged(userID)
 	}
 }

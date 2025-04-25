@@ -54,6 +54,16 @@ func (tm *Map[K]) Trigger(key K) {
 	entry.driver.Trigger()
 }
 
+func (tm *Map[K]) Stop(key K) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	if entry, exists := tm.throttles[key]; exists {
+		entry.driver.Stop()
+		delete(tm.throttles, key)
+	}
+}
+
 func (tm *Map[K]) gcLoop() {
 	for range time.Tick(tm.ttl / 2) {
 		tm.mu.Lock()
