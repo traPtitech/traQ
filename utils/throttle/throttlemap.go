@@ -60,6 +60,7 @@ func (tm *Map[K]) gcLoop() {
 		now := time.Now()
 		for key, entry := range tm.throttles {
 			if now.Sub(entry.lastTriggered) > tm.ttl {
+				entry.driver.Stop()
 				delete(tm.throttles, key)
 			}
 		}
