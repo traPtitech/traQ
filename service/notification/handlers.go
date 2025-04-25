@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/fcm"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
@@ -68,6 +69,9 @@ var handlerMap = map[string]eventHandler{
 	event.ClipFolderDeleted:         clipFolderDeletedHandler,
 	event.ClipFolderMessageDeleted:  clipFolderMessageDeletedHandler,
 	event.ClipFolderMessageAdded:    clipFolderMessageAddedHandler,
+	event.QallRoomStateChanged:      qallRoomStateChangedHandler,
+	event.QallSoundboardItemCreated: qallSoundboardItemCreatedHandler,
+	event.QallSoundboardItemDeleted: qallSoundboardItemDeletedHandler,
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -601,6 +605,35 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 			"user_id":    ev.Fields["user_id"].(uuid.UUID),
 			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 			"sessions":   sessions,
+		},
+	)
+}
+
+func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_ROOM_STATE_CHANGED",
+		map[string]interface{}{
+			"roomStates": ev.Fields["roomStates"].([]qall.RoomWithParticipants),
+		},
+	)
+}
+
+func qallSoundboardItemCreatedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_SOUNDBOARD_ITEM_CREATED",
+		map[string]interface{}{
+			"sound_id":   ev.Fields["sound_id"].(uuid.UUID),
+			"name":       ev.Fields["name"].(string),
+			"creator_id": ev.Fields["creator_id"].(uuid.UUID),
+		},
+	)
+}
+
+func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns,
+		"QALL_SOUNDBOARD_ITEM_DELETED",
+		map[string]interface{}{
+			"sound_id": ev.Fields["sound_id"].(uuid.UUID),
 		},
 	)
 }

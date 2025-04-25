@@ -42,6 +42,7 @@ func TestFileType_Value(t *testing.T) {
 			{FileTypeIcon, "icon"},
 			{FileTypeStamp, "stamp"},
 			{FileTypeThumbnail, "thumbnail"},
+			{FileTypeSoundboardItem, "soundboard_item"},
 		}
 
 		for _, c := range cases {
@@ -63,6 +64,7 @@ func TestFileType_Scan(t *testing.T) {
 		{"icon", FileTypeIcon},
 		{"stamp", FileTypeStamp},
 		{"thumbnail", FileTypeThumbnail},
+		{"soundboard_item", FileTypeSoundboardItem},
 	}
 
 	t.Run("error (string)", func(t *testing.T) {

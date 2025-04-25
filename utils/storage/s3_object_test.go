@@ -113,7 +113,7 @@ func tests3ObjectSeek(t *testing.T) {
 		name       string
 		setupFunc  func(t *testing.T) *s3Object
 		args       args
-		wantNewPos func(len, pos, offset int64) int64
+		wantNewPos func(length, pos, offset int64) int64
 		wantErr    bool
 	}{
 		{
@@ -173,8 +173,8 @@ func tests3ObjectSeek(t *testing.T) {
 				offset: -1024,
 				whence: 2,
 			},
-			wantNewPos: func(len, _, offset int64) int64 {
-				return len + offset
+			wantNewPos: func(length, _, offset int64) int64 {
+				return length + offset
 			},
 		},
 	}

@@ -55,4 +55,10 @@ type FileRepository interface {
 	// ファイルもしくはユーザーが存在しない場合は、falseを返します。
 	// DBによるエラーを返すことがあります。
 	IsFileAccessible(fileID, userID uuid.UUID) (bool, error)
+	// DeleteFileThumbnail サムネイル情報を削除します
+	//
+	// 成功した場合、nilを返します。
+	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error
 }

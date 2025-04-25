@@ -132,9 +132,9 @@ Command:
 	}
 }
 
-func (s *session) sendErrorMessage(error string) {
+func (s *session) sendErrorMessage(messeage string) {
 	_ = s.WriteMessage(&rawMessage{
 		t:    websocket.TextMessage,
-		data: makeMessage("ERROR", error).toJSON(),
+		data: makeMessage("ERROR", messeage).toJSON(),
 	})
 }

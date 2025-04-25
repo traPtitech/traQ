@@ -1,10 +1,8 @@
 package v3
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -22,14 +20,10 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		return herror.BadRequest("invalid url")
 	}
 
-	res, expiresAt, err := h.OGP.GetMeta(u)
+	// キャッシュの削除に対応するために Cache-Control でのキャッシュはしない
+	res, _, err := h.OGP.GetMeta(u)
 	if err != nil {
 		return herror.InternalServerError(err)
-	}
-
-	expiresIn := time.Until(expiresAt)
-	if expiresIn > 0 {
-		c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", expiresIn/time.Second))
 	}
 
 	if res == nil {

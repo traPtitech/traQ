@@ -2,6 +2,7 @@ package v3
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +66,29 @@ func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Objec
 	actual.Value("children").Array().ContainsOnly(childIDs...)
 }
 
+func channelListElementEquals(t *testing.T, expect []*model.Channel, actual *httpexpect.Array) {
+	t.Helper()
+	// copy to avoid modifying `expect`
+	expectCopy := make([]*model.Channel, len(expect))
+	copy(expectCopy, expect)
+
+	channelCount := int(actual.Length().IsEqual(len(expect)).Raw())
+	// do not use `expect`, use `expectCopy` instead
+	for i := range channelCount {
+		channelObj := actual.Value(i).Object()
+		channelIDString := channelObj.Value("id").String().Raw()
+
+		j := slices.IndexFunc(expectCopy, func(c *model.Channel) bool {
+			return c.ID.String() == channelIDString
+		})
+		assert.NotEqual(t, -1, j, "channel not found in expect list")
+		expectObj := expectCopy[j]
+		channelEquals(t, expectObj, channelObj)
+		expectCopy = append(expectCopy[:j], expectCopy[j+1:]...) // remove found channel from `expect`
+	}
+	assert.Empty(t, expectCopy)
+}
+
 func TestHandlers_GetChannels(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/channels"
@@ -73,6 +97,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
+	subchannel := env.CreateSubchannel(t, channel, rand)
 	dm := env.CreateDMChannel(t, user1.GetID(), user2.GetID())
 	user1Session := env.S(t, user1.GetID())
 	user2Session := env.S(t, user2.GetID())
@@ -97,9 +122,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
-
-		channelEquals(t, channel, public.Value(0).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 	})
 
 	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
@@ -114,8 +137,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.Value(0).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -136,8 +158,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.Value(0).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(1)
@@ -158,11 +179,52 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Object()
 
 		public := obj.Value("public").Array()
-		public.Length().IsEqual(1)
-		channelEquals(t, channel, public.Value(0).Object())
+		channelListElementEquals(t, []*model.Channel{channel, subchannel}, public)
 
 		dms := obj.Value("dm").Array()
 		dms.Length().IsEqual(0)
+	})
+
+	t.Run("success (path=*, user1)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", env.CM.GetChannelPathFromID(channel.ID)).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().IsEqual(1)
+		channelEquals(t, channel, public.Value(0).Object())
+	})
+
+	t.Run("success (path=*/*, user1)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", env.CM.GetChannelPathFromID(subchannel.ID)).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().IsEqual(1)
+		channelEquals(t, subchannel, public.Value(0).Object())
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		_ = e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("path", "invalid-channel-path").
+			Expect().
+			Status(http.StatusNotFound)
 	})
 }
 
@@ -489,9 +551,12 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
-	m := env.CreateMessage(t, user.GetID(), channel.ID, rand)
+	m1 := env.CreateMessage(t, user.GetID(), channel.ID, rand)
+	m2 := env.CreateMessage(t, user.GetID(), channel.ID, rand)
 	stamp := env.CreateStamp(t, user.GetID(), rand)
-	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, m1.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, m2.GetID(), stamp.ID, user.GetID())
+	env.DeleteMessage(t, m2.GetID())
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -511,11 +576,38 @@ func TestHandlers_GetChannelStats(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success (exclude-deleted-messages=false)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		obj := e.GET(path, channel.ID).
 			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("totalMessageCount").Number().IsEqual(2)
+
+		stamps := obj.Value("stamps").Array()
+		stamps.Length().IsEqual(1)
+		firstStamp := stamps.Value(0).Object()
+		firstStamp.Value("id").String().IsEqual(stamp.ID.String())
+		firstStamp.Value("count").Number().IsEqual(2)
+		firstStamp.Value("total").Number().IsEqual(2)
+
+		users := obj.Value("users").Array()
+		users.Length().IsEqual(1)
+		firstUser := users.Value(0).Object()
+		firstUser.Value("id").String().IsEqual(user.GetID().String())
+		firstUser.Value("messageCount").Number().IsEqual(2)
+	})
+
+	t.Run("success (exclude-deleted-messages=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("exclude-deleted-messages", true).
 			Expect().
 			Status(http.StatusOK).
 			JSON().

@@ -21,4 +21,5 @@ type Repository interface {
 	BotRepository
 	ClipRepository
 	OgpCacheRepository
+	SoundboardRepository
 }

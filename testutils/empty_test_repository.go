@@ -24,4 +24,5 @@ type EmptyTestRepository struct {
 	repository.BotRepository
 	repository.ClipRepository
 	repository.OgpCacheRepository
+	repository.SoundboardRepository
 }

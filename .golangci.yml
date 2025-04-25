@@ -12,4 +12,5 @@ linters:
 
 linters-settings:
   errcheck:
-    exclude: dev/errcheck-exclude.txt
+    exclude-functions:
+      - (*go.uber.org/zap.Logger).Sync

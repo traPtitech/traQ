@@ -116,7 +116,7 @@ type ChannelRepository interface {
 	// GetChannelStats 指定したチャンネルの統計情報を取得します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	GetChannelStats(channelID uuid.UUID) (*ChannelStats, error)
+	GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
 	// RecordChannelEvent チャンネルイベントを記録します
 	RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
 }
