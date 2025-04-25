@@ -21,8 +21,8 @@ const throttleThreshold = 30
 // Manager チャンネル閲覧者マネージャ
 type Manager struct {
 	hub             *hub.Hub
-	channels        map[uuid.UUID]*set.Set[*viewer]
-	users           map[uuid.UUID]*set.Set[*viewer]
+	channels        map[uuid.UUID]set.Set[*viewer]
+	users           map[uuid.UUID]set.Set[*viewer]
 	viewers         map[any]*viewer
 	channelThrottle *throttle.Map[uuid.UUID]
 	userThrottle    *throttle.Map[uuid.UUID]
@@ -41,8 +41,8 @@ type viewer struct {
 func NewManager(hub *hub.Hub) *Manager {
 	vm := &Manager{
 		hub:      hub,
-		channels: make(map[uuid.UUID]*set.Set[*viewer]),
-		users:    make(map[uuid.UUID]*set.Set[*viewer]),
+		channels: make(map[uuid.UUID]set.Set[*viewer]),
+		users:    make(map[uuid.UUID]set.Set[*viewer]),
 		viewers:  make(map[any]*viewer),
 	}
 	vm.channelThrottle = throttle.NewThrottleMap(throttleInterval, 5*time.Minute, func(cid uuid.UUID) {
@@ -210,7 +210,7 @@ func (vm *Manager) publishUserViewStateChanged(userID uuid.UUID) {
 }
 
 // calculateUserViewStates ユーザーのviewerのsetからmap[conn_key]StateWithChannelを計算する
-func calculateUserViewStates(uv *set.Set[*viewer]) map[string]StateWithChannel {
+func calculateUserViewStates(uv set.Set[*viewer]) map[string]StateWithChannel {
 	result := make(map[string]StateWithChannel, uv.Len())
 	for v := range uv.Values() {
 		result[v.connKey] = StateWithChannel{
@@ -221,7 +221,7 @@ func calculateUserViewStates(uv *set.Set[*viewer]) map[string]StateWithChannel {
 	return result
 }
 
-func calculateChannelViewers(vs *set.Set[*viewer]) map[uuid.UUID]StateWithTime {
+func calculateChannelViewers(vs set.Set[*viewer]) map[uuid.UUID]StateWithTime {
 	result := make(map[uuid.UUID]StateWithTime, vs.Len())
 	for v := range vs.Values() {
 		if s, ok := result[v.userID]; ok && s.State > v.state.State {

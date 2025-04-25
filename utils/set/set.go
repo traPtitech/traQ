@@ -6,8 +6,8 @@ type Set[T comparable] struct {
 	set map[T]struct{}
 }
 
-func New[T comparable]() *Set[T] {
-	return &Set[T]{
+func New[T comparable]() Set[T] {
+	return Set[T]{
 		set: make(map[T]struct{}),
 	}
 }
