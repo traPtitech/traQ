@@ -83,7 +83,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), rateLimit(10, 10, h.Logger))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), rateLimit(20, 20, h.Logger))
 	{
 		apiUsers := api.Group("/users")
 		{
