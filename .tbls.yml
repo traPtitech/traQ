@@ -360,6 +360,12 @@ comments:
       folder_id: クリップフォルダーID
       message_id: メッセージID
       created_at: クリップされた日時
+  - table: soundboard_items
+    tableComment: サウンドボードアイテムテーブル
+    columnComments:
+      name: アイテム名
+      stamp_id: スタンプUUID
+      creator_id: アイテム作成者UUID
   - table: external_provider_users
     tableComment: 外部認証ユーザーテーブル
     columnComments:
