@@ -121,7 +121,7 @@ comments:
       channel_id: チャンネルUUID
       message_id: メッセージUUID
       noticeable: 注目メッセージかどうか
-      created_at: 未読日時
+      message_created_at: 未読日時
   - table: users_tags
     tableComment: ユーザータグテーブル
     columnComments:
