@@ -1,15 +1,18 @@
-# migrations
+# soundboard_items
 
 ## Description
 
-gormigrate用のデータベースバージョンテーブル
+サウンドボードアイテムテーブル
 
 <details>
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE `migrations` (
-  `id` varchar(190) NOT NULL,
+CREATE TABLE `soundboard_items` (
+  `id` char(36) NOT NULL,
+  `name` varchar(32) NOT NULL,
+  `stamp_id` char(36) DEFAULT NULL,
+  `creator_id` char(36) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -20,7 +23,10 @@ CREATE TABLE `migrations` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(190) |  | false |  |  |  |
+| id | char(36) |  | false |  |  |  |
+| name | varchar(32) |  | false |  |  | アイテム名 |
+| stamp_id | char(36) | NULL | true |  |  | スタンプUUID |
+| creator_id | char(36) |  | false |  |  | アイテム作成者UUID |
 
 ## Constraints
 
@@ -40,8 +46,11 @@ CREATE TABLE `migrations` (
 erDiagram
 
 
-"migrations" {
-  varchar_190_ id PK
+"soundboard_items" {
+  char_36_ id PK
+  varchar_32_ name
+  char_36_ stamp_id
+  char_36_ creator_id
 }
 ```
 

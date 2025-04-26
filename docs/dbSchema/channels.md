@@ -136,7 +136,7 @@ erDiagram
   char_36_ channel_id PK
   char_36_ message_id PK
   tinyint_1_ noticeable
-  datetime_6_ created_at
+  datetime_6_ message_created_at
 }
 "users_private_channels" {
   char_36_ user_id PK

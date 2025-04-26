@@ -25,8 +25,8 @@ CREATE TABLE `bots` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `bot_user_id` (`bot_user_id`),
-  UNIQUE KEY `bot_code` (`bot_code`),
+  UNIQUE KEY `uni_bots_bot_user_id` (`bot_user_id`),
+  UNIQUE KEY `uni_bots_bot_code` (`bot_code`),
   KEY `bots_creator_id_users_id_foreign` (`creator_id`),
   CONSTRAINT `bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `bots_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -61,9 +61,9 @@ CREATE TABLE `bots` (
 | ---- | ---- | ---------- |
 | bots_bot_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (bot_user_id) REFERENCES users (id) |
 | bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
-| bot_code | UNIQUE | UNIQUE KEY bot_code (bot_code) |
-| bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_bots_bot_code | UNIQUE | UNIQUE KEY uni_bots_bot_code (bot_code) |
+| uni_bots_bot_user_id | UNIQUE | UNIQUE KEY uni_bots_bot_user_id (bot_user_id) |
 
 ## Indexes
 
@@ -71,8 +71,8 @@ CREATE TABLE `bots` (
 | ---- | ---------- |
 | bots_creator_id_users_id_foreign | KEY bots_creator_id_users_id_foreign (creator_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| bot_code | UNIQUE KEY bot_code (bot_code) USING BTREE |
-| bot_user_id | UNIQUE KEY bot_user_id (bot_user_id) USING BTREE |
+| uni_bots_bot_code | UNIQUE KEY uni_bots_bot_code (bot_code) USING BTREE |
+| uni_bots_bot_user_id | UNIQUE KEY uni_bots_bot_user_id (bot_user_id) USING BTREE |
 
 ## Relations
 

@@ -21,8 +21,8 @@ CREATE TABLE `oauth2_tokens` (
   `created_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `access_token` (`access_token`),
-  UNIQUE KEY `refresh_token` (`refresh_token`)
+  UNIQUE KEY `uni_oauth2_tokens_access_token` (`access_token`),
+  UNIQUE KEY `uni_oauth2_tokens_refresh_token` (`refresh_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -48,17 +48,17 @@ CREATE TABLE `oauth2_tokens` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| access_token | UNIQUE | UNIQUE KEY access_token (access_token) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
-| refresh_token | UNIQUE | UNIQUE KEY refresh_token (refresh_token) |
+| uni_oauth2_tokens_access_token | UNIQUE | UNIQUE KEY uni_oauth2_tokens_access_token (access_token) |
+| uni_oauth2_tokens_refresh_token | UNIQUE | UNIQUE KEY uni_oauth2_tokens_refresh_token (refresh_token) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| access_token | UNIQUE KEY access_token (access_token) USING BTREE |
-| refresh_token | UNIQUE KEY refresh_token (refresh_token) USING BTREE |
+| uni_oauth2_tokens_access_token | UNIQUE KEY uni_oauth2_tokens_access_token (access_token) USING BTREE |
+| uni_oauth2_tokens_refresh_token | UNIQUE KEY uni_oauth2_tokens_refresh_token (refresh_token) USING BTREE |
 
 ## Relations
 
