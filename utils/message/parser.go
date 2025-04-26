@@ -33,7 +33,7 @@ type ParseResult struct {
 // NotificationText PlainTextを通知用に処理したものを返します
 func (pr *ParseResult) NotificationText() string {
 	filled := FillSpoiler(pr.PlainText)
-	return strings.Replace(filled, "\n", " ", -1)
+	return strings.ReplaceAll(filled, "\n", " ")
 }
 
 // Parse メッセージをパースし、埋め込み情報を抽出します

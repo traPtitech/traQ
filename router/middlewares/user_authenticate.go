@@ -26,7 +26,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 
 				// Authorizationスキーム検証
 				l := len(authScheme)
-				if !(len(ah) > l+1 && ah[:l] == authScheme) {
+				if len(ah) <= l+1 || ah[:l] != authScheme {
 					return herror.Unauthorized("invalid authorization scheme")
 				}
 

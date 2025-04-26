@@ -119,8 +119,8 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 
 	m, err := h.MessageManager.Get(req.MessageID)
 	if err != nil {
-		switch {
-		case err == message.ErrNotFound:
+		switch err {
+		case message.ErrNotFound:
 			return herror.BadRequest("invalid messageId")
 		default:
 			return herror.InternalServerError(err)
@@ -137,8 +137,8 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	var cfm *model.ClipFolderMessage
 	cfm, err = h.Repo.AddClipFolderMessage(cf.ID, req.MessageID)
 	if err != nil {
-		switch {
-		case err == repository.ErrAlreadyExists:
+		switch err {
+		case repository.ErrAlreadyExists:
 			return herror.Conflict("clip folder message conflicts")
 		default:
 			return herror.InternalServerError(err)

@@ -45,7 +45,7 @@ func (o *s3Object) Seek(offset int64, whence int) (newPos int64, err error) {
 		newPos = o.pos + offset
 	case io.SeekEnd:
 		if !o.lengthOk {
-			return o.pos, fmt.Errorf("Length of file unknown")
+			return o.pos, fmt.Errorf("length of file unknown")
 		}
 		newPos = o.length + offset
 		if offset >= 0 {
