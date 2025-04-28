@@ -42,7 +42,10 @@ func SetupSigner(privRaw []byte) error {
 	}
 	keyID = base64.RawURLEncoding.EncodeToString(thumb)
 
-	j.Set(j.KeyID(), keyID)
+	err = j.Set(j.KeyID(), keyID)
+	if err != nil {
+		return err
+	}
 
 	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{
 		Metadata: jwkset.JWKMetadataOptions{
