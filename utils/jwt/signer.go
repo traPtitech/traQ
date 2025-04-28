@@ -10,7 +10,7 @@ import (
 
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
 var (
@@ -31,7 +31,7 @@ func SetupSigner(privRaw []byte) error {
 	}
 	priv = _priv
 
-	j, err := jwk.New(priv.Public().(*ecdsa.PublicKey))
+	j, err := jwk.Import(priv.Public().(*ecdsa.PublicKey))
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func SetupSigner(privRaw []byte) error {
 	}
 	keyID = base64.RawURLEncoding.EncodeToString(thumb)
 
-	err = j.Set(j.KeyID(), keyID)
+	err = j.Set("kid", keyID)
 	if err != nil {
 		return err
 	}
