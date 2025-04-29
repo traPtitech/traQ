@@ -152,7 +152,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.botTotalCounter.dec()
 				usersCounter.WithLabelValues(botStatus2Label[deletedBotState]).Dec()
 				usersCounter.WithLabelValues("bot-total").Dec()
-				counter.botStatus[deletedBotID] = model.BotState(-1)
+				delete(counter.botStatus, deletedBotId)
 			}
 		}
 	}()
