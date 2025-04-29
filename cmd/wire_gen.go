@@ -53,6 +53,10 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	if err != nil {
 		return nil, err
 	}
+	userCounter, err := counter.NewUserCounter(db, hub2)
+	if err != nil {
+		return nil, err
+	}
 	channelCounter, err := counter.NewChannelCounter(db, hub2)
 	if err != nil {
 		return nil, err
@@ -102,6 +106,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
 		MessageCounter:       messageCounter,
+		UserCounter:          userCounter,
 		ChannelCounter:       channelCounter,
 		StampThrottler:       stampThrottler,
 		FCM:                  client,
