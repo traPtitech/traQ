@@ -130,7 +130,6 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				createdBotID := e.Fields["bot_id"].(uuid.UUID)
 				counter.botStatus[createdBotID] = botState
 
-
 			case event.BotStateChanged:
 				changedBotID := e.Fields["bot_id"].(uuid.UUID)
 				newStatus := e.Fields["state"].(model.BotState)
