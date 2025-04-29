@@ -2,7 +2,6 @@ package counter
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 
 	"github.com/gofrs/uuid"
@@ -164,8 +163,7 @@ func (c *usersCounterImpl) countUsers(status model.UserAccountStatus, db *gorm.D
 	var selectedStateUser []model.User
 	if err := db.
 		Model(&model.User{}).
-		Where("bot = ?", "0").
-		Where("status = ?", strconv.Itoa(status.Int())).
+		Where("bot = ? AND status = ?", false, status.Int()).
 		Select("id").
 		Find(&selectedStateUser).
 		Error; err != nil {
@@ -188,7 +186,7 @@ func (c *usersCounterImpl) countBots(status model.BotState, db *gorm.DB) error {
 	var selectedStateBots []model.Bot
 	if err := db.
 		Model(&model.Bot{}).
-		Where("state = ?", strconv.Itoa(int(status))).
+		Where("state = ?", int(status)).
 		Select("id").
 		Find(&selectedStateBots).
 		Error; err != nil {
