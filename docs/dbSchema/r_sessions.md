@@ -15,7 +15,7 @@ CREATE TABLE `r_sessions` (
   `data` longblob DEFAULT NULL,
   `created` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`token`),
-  UNIQUE KEY `reference_id` (`reference_id`),
+  UNIQUE KEY `uni_r_sessions_reference_id` (`reference_id`),
   KEY `idx_r_sessions_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -37,7 +37,7 @@ CREATE TABLE `r_sessions` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (token) |
-| reference_id | UNIQUE | UNIQUE KEY reference_id (reference_id) |
+| uni_r_sessions_reference_id | UNIQUE | UNIQUE KEY uni_r_sessions_reference_id (reference_id) |
 
 ## Indexes
 
@@ -45,7 +45,7 @@ CREATE TABLE `r_sessions` (
 | ---- | ---------- |
 | idx_r_sessions_user_id | KEY idx_r_sessions_user_id (user_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (token) USING BTREE |
-| reference_id | UNIQUE KEY reference_id (reference_id) USING BTREE |
+| uni_r_sessions_reference_id | UNIQUE KEY uni_r_sessions_reference_id (reference_id) USING BTREE |
 
 ## Relations
 

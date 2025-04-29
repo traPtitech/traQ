@@ -29,6 +29,7 @@
 | [ogp_cache](ogp_cache.md) | 6 | OGPキャッシュテーブルr | BASE TABLE |
 | [pins](pins.md) | 4 | ピンテーブル | BASE TABLE |
 | [r_sessions](r_sessions.md) | 5 | traQ API HTTPセッションテーブル | BASE TABLE |
+| [soundboard_items](soundboard_items.md) | 4 | サウンドボードアイテムテーブル | BASE TABLE |
 | [stamps](stamps.md) | 8 | スタンプテーブル | BASE TABLE |
 | [stamp_palettes](stamp_palettes.md) | 7 | スタンプパレットテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
@@ -313,6 +314,12 @@ erDiagram
   longblob data
   datetime_6_ created
 }
+"soundboard_items" {
+  char_36_ id PK
+  varchar_32_ name
+  char_36_ stamp_id
+  char_36_ creator_id
+}
 "stamps" {
   char_36_ id PK
   varchar_32_ name
@@ -347,7 +354,7 @@ erDiagram
   char_36_ channel_id PK
   char_36_ message_id PK
   tinyint_1_ noticeable
-  datetime_6_ created_at
+  datetime_6_ message_created_at
 }
 "users" {
   char_36_ id PK

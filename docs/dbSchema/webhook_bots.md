@@ -19,9 +19,9 @@ CREATE TABLE `webhook_bots` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `bot_user_id` (`bot_user_id`),
-  KEY `webhook_bots_creator_id_users_id_foreign` (`creator_id`),
+  UNIQUE KEY `uni_webhook_bots_bot_user_id` (`bot_user_id`),
   KEY `webhook_bots_channel_id_channels_id_foreign` (`channel_id`),
+  KEY `webhook_bots_creator_id_users_id_foreign` (`creator_id`),
   CONSTRAINT `webhook_bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `webhook_bots_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `webhook_bots_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -48,8 +48,8 @@ CREATE TABLE `webhook_bots` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_webhook_bots_bot_user_id | UNIQUE | UNIQUE KEY uni_webhook_bots_bot_user_id (bot_user_id) |
 | webhook_bots_bot_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (bot_user_id) REFERENCES users (id) |
 | webhook_bots_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
 | webhook_bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
@@ -61,7 +61,7 @@ CREATE TABLE `webhook_bots` (
 | webhook_bots_channel_id_channels_id_foreign | KEY webhook_bots_channel_id_channels_id_foreign (channel_id) USING BTREE |
 | webhook_bots_creator_id_users_id_foreign | KEY webhook_bots_creator_id_users_id_foreign (creator_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| bot_user_id | UNIQUE KEY bot_user_id (bot_user_id) USING BTREE |
+| uni_webhook_bots_bot_user_id | UNIQUE KEY uni_webhook_bots_bot_user_id (bot_user_id) USING BTREE |
 
 ## Relations
 
