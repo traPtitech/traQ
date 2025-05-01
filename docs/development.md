@@ -14,7 +14,7 @@ If you want to contribute to traQ, then follow this section.
 ### Setup Local Server with Docker
 
 #### First Up (or entirely rebuild)
-`make update-frontend && make up`
+`make up`
 
 Now you can access to
 + `http://localhost:3000` for traQ
@@ -29,9 +29,6 @@ Now you can access to
 
 #### Rebuild traQ
 `make up`
-
-#### Update frontend
-`make update-frontend` or `make reset-frontend`
 
 #### Destroy Containers
 `make down`

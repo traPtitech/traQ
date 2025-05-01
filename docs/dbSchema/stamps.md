@@ -18,7 +18,7 @@ CREATE TABLE `stamps` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `uni_stamps_name` (`name`),
   KEY `idx_stamps_is_unicode` (`is_unicode`),
   KEY `stamps_file_id_files_id_foreign` (`file_id`),
   CONSTRAINT `stamps_file_id_files_id_foreign` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
@@ -44,9 +44,9 @@ CREATE TABLE `stamps` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 | stamps_file_id_files_id_foreign | FOREIGN KEY | FOREIGN KEY (file_id) REFERENCES files (id) |
+| uni_stamps_name | UNIQUE | UNIQUE KEY uni_stamps_name (name) |
 
 ## Indexes
 
@@ -55,7 +55,7 @@ CREATE TABLE `stamps` (
 | idx_stamps_is_unicode | KEY idx_stamps_is_unicode (is_unicode) USING BTREE |
 | stamps_file_id_files_id_foreign | KEY stamps_file_id_files_id_foreign (file_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_stamps_name | UNIQUE KEY uni_stamps_name (name) USING BTREE |
 
 ## Relations
 

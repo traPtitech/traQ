@@ -11,7 +11,7 @@ gormigrate用のデータベースバージョンテーブル
 CREATE TABLE `migrations` (
   `id` varchar(190) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
 </details>

@@ -31,7 +31,9 @@ services:
       - app:/app/storage
 
   frontend:
-    image: caddy:2.8.4-alpine
+    build:
+      context: ./dev
+      dockerfile: Dockerfile-frontend
     restart: always
     expose:
       - "80"
@@ -39,12 +41,9 @@ services:
       - "3000:80"
     depends_on:
       - backend
-    volumes:
-      - ./dev/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./dev/frontend:/usr/share/caddy:ro
 
   mysql:
-    image: mariadb:10.11.9
+    image: mariadb:10.11.11
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -83,7 +82,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:4.8.1
+    image: adminer:5.2.1
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
@@ -94,7 +93,7 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.23.2-alpine
+    image: golang:1.24.2-alpine
     restart: always
     volumes:
       - ./dev/bin:/app

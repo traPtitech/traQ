@@ -14,7 +14,7 @@ CREATE TABLE `pins` (
   `user_id` char(36) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `message_id` (`message_id`),
+  UNIQUE KEY `uni_pins_message_id` (`message_id`),
   KEY `pins_user_id_users_id_foreign` (`user_id`),
   CONSTRAINT `pins_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `pins_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -36,10 +36,10 @@ CREATE TABLE `pins` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| message_id | UNIQUE | UNIQUE KEY message_id (message_id) |
 | pins_message_id_messages_id_foreign | FOREIGN KEY | FOREIGN KEY (message_id) REFERENCES messages (id) |
 | pins_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_pins_message_id | UNIQUE | UNIQUE KEY uni_pins_message_id (message_id) |
 
 ## Indexes
 
@@ -47,7 +47,7 @@ CREATE TABLE `pins` (
 | ---- | ---------- |
 | pins_user_id_users_id_foreign | KEY pins_user_id_users_id_foreign (user_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| message_id | UNIQUE KEY message_id (message_id) USING BTREE |
+| uni_pins_message_id | UNIQUE KEY uni_pins_message_id (message_id) USING BTREE |
 
 ## Relations
 

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -17,6 +19,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/storage"
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
@@ -70,7 +73,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.File) error {
+func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
 	typeStr := c.QueryParam("type")
 	if len(typeStr) == 0 {
 		typeStr = "image"
@@ -87,6 +90,18 @@ func ServeFileThumbnail(c echo.Context, meta model.File) error {
 
 	file, err := meta.OpenThumbnail(thumbnailType)
 	if err != nil {
+		// Check if the error is because the file doesn't exist in S3
+		if errors.Is(err, storage.ErrFileNotFound) {
+			// サムネイルが実際には存在しないのでDBの情報を更新する
+			fileID := meta.GetID()
+			err := repo.DeleteFileThumbnail(fileID, thumbnailType)
+			if err != nil {
+				logger.Warn("failed to delete thumbnail from database", zap.Error(err))
+				return herror.InternalServerError(err)
+			}
+			logger.Info("removed non-existent thumbnail from database", zap.String("fileID", fileID.String()), zap.String("thumbnailType", thumbnailType.String()))
+			return herror.NotFound()
+		}
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()

@@ -14,6 +14,7 @@ var (
 	ErrChannelNotFound      = errors.New("channel not found")
 	ErrChannelNameConflicts = errors.New("channel name conflicts")
 	ErrInvalidChannelName   = errors.New("invalid channel name")
+	ErrInvalidChannelPath   = errors.New("invalid channel path")
 	ErrInvalidParentChannel = errors.New("invalid parent channel")
 	ErrTooDeepChannel       = errors.New("too deep channel")
 	ErrChannelArchived      = errors.New("channel archived")
@@ -23,6 +24,8 @@ var (
 
 type Manager interface {
 	GetChannel(id uuid.UUID) (*model.Channel, error)
+	GetChannelPathFromID(id uuid.UUID) string
+	GetChannelFromPath(path string) (*model.Channel, error)
 	CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error)
 	UpdateChannel(id uuid.UUID, args repository.UpdateChannelArgs) error
 	PublicChannelTree() Tree

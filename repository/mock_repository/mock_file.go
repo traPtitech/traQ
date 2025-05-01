@@ -50,6 +50,20 @@ func (mr *MockFileRepositoryMockRecorder) DeleteFileMeta(fileID interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileMeta", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileMeta), fileID)
 }
 
+// DeleteFileThumbnail mocks base method.
+func (m *MockFileRepository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFileThumbnail", fileID, thumbnailType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFileThumbnail indicates an expected call of DeleteFileThumbnail.
+func (mr *MockFileRepositoryMockRecorder) DeleteFileThumbnail(fileID, thumbnailType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileThumbnail", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileThumbnail), fileID, thumbnailType)
+}
+
 // GetFileMeta mocks base method.
 func (m *MockFileRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
 	m.ctrl.T.Helper()

@@ -17,10 +17,10 @@ CREATE TABLE `messages` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_messages_deleted_at_updated_at` (`deleted_at`,`updated_at`),
   KEY `idx_messages_channel_id_deleted_at_created_at` (`channel_id`,`deleted_at`,`created_at`),
   KEY `idx_messages_created_at` (`created_at`),
   KEY `idx_messages_deleted_at_created_at` (`deleted_at`,`created_at`),
+  KEY `idx_messages_deleted_at_updated_at` (`deleted_at`,`updated_at`),
   KEY `messages_user_id_users_id_foreign` (`user_id`),
   CONSTRAINT `messages_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messages_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -105,7 +105,7 @@ erDiagram
   char_36_ channel_id PK
   char_36_ message_id PK
   tinyint_1_ noticeable
-  datetime_6_ created_at
+  datetime_6_ message_created_at
 }
 "users" {
   char_36_ id PK

@@ -119,14 +119,18 @@ paths:
           name: in
           description: メッセージが投稿されたチャンネル
         - schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
           in: query
           name: to
           description: メンションされたユーザー
         - schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
           in: query
           name: from
           description: メッセージを投稿したユーザー
@@ -348,6 +352,7 @@ paths:
   '/channels/{channelId}/stats':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
+      - $ref: '#/components/parameters/excludeDeletedMessagesInQuery'
     get:
       summary: チャンネル統計情報を取得
       tags:
@@ -1086,13 +1091,36 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGroupMember'
+              oneOf:
+                - $ref: '#/components/schemas/UserGroupMember'
+                - $ref: '#/components/schemas/UserGroupMembers'
         description: ''
       tags:
         - group
       operationId: addUserGroupMember
       description: |-
         指定したグループにメンバーを追加します。
+        対象のユーザーグループの管理者権限が必要です。
+    delete:
+      summary: グループメンバーを一括削除
+      responses:
+        '204':
+          description: |-
+            No Content
+            グループから全てのユーザーが削除されました。
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      tags:
+        - group
+      operationId: removeUserGroupMembers
+      description: |-
+        指定したグループから全てのメンバーを削除します。
         対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members/{userId}':
     parameters:
@@ -1984,6 +2012,11 @@ paths:
           in: query
           name: include-dm
           description: ダイレクトメッセージチャンネルをレスポンスに含めるかどうか
+        - schema:
+            type: string
+          in: query
+          name: path
+          description: パスが一致するチャンネルのみを取得する
   '/users/{userId}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -2750,6 +2783,40 @@ paths:
 
         + `folder_id`: メッセージが追加されたクリップフォルダーのId
         + `message_id`: クリップフォルダーに追加されたメッセージのId
+
+        ### `QALL_ROOM_STATE_CHANGED`
+        ルーム状態が変更された。
+
+        対象: 全員
+
+        + `room_id`: 変更されたルームのId
+        + `state`: 変更後のルーム状態
+          + `roomId`: ルームのID
+          + `participants`: ルーム内の参加者(配列)
+            + `identity`: ユーザーID_RandomUUID
+            + `name`: 表示名
+            + `joinedAt`: 参加した時刻
+            + `attributes`: ユーザーに関連付けられたカスタム属性
+            + `canPublish`: 発言権限
+          + `isWebinar`: ウェビナールームかどうか
+          + `metadata`: ルームに関連付けられたカスタム属性
+
+        ### `QALL_SOUNDBOARD_ITEM_CREATED`
+        サウンドボードアイテムが作成された。
+
+        対象: 全員
+
+        + `sound_id`: 作成されたサウンドのId
+        + `name`: サウンド名
+        + `creator_id`: 作成者のId
+
+        ### `QALL_SOUNDBOARD_ITEM_DELETED`
+        サウンドボードアイテムが削除された。
+
+        対象: 全員
+
+        + `sound_id`: 削除されたサウンドのId
+
   /users/me/tokens:
     get:
       summary: 有効トークンのリストを取得
@@ -4299,6 +4366,261 @@ paths:
         - me
       operationId: changeMyNotifyCitation
       description: メッセージ引用通知の設定情報を変更します
+  '/channels/{channelId}/path':
+    parameters:
+      - $ref: '#/components/parameters/channelIdInPath'
+    get:
+      summary: 指定したチャンネルパスを取得
+      tags:
+        - channel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelPath'
+        '404':
+          description: Not Found
+      operationId: getChannelPath
+  /qall/endpoints:
+    get:
+      summary: LiveKitエンドポイントを取得
+      description: >
+        接続可能なLiveKitエンドポイントを取得します。
+      operationId: getQallEndpoints
+      tags:
+        - qall
+      responses:
+        '200':
+          description: 成功 - LiveKitエンドポイントの取得
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallEndpointResponse'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+  /qall/token:
+    get:
+      summary: LiveKitトークンを取得
+      description: >
+        指定したルームに参加するためのLiveKitトークンを取得します。  
+      operationId: getLiveKitToken
+      tags:
+        - qall
+      parameters:
+        - $ref: '#/components/parameters/roomIdInQuery'
+        - $ref: '#/components/parameters/isWebinarInQuery'
+      responses:
+        '200':
+          description: 成功 - LiveKitトークンを返します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallTokenResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /qall/rooms:
+    get:
+      summary: ルームと参加者の一覧を取得
+      description: >
+        現在存在する(またはアクティブな)ルームと、そのルームに所属している参加者情報を取得します。
+      operationId: getRooms
+      tags:
+        - qall
+      responses:
+        '200':
+          description: 成功 - ルームと参加者一覧の取得
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallRoomsListResponse'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+  /qall/rooms/{roomId}/metadata:
+    get:
+      summary: ルームのメタデータを取得
+      description: >
+        ルームのメタデータを取得します。
+      operationId: getRoomMetadata
+      tags:
+        - qall
+      parameters:
+        - $ref: '#/components/parameters/roomIdInPath'
+      responses:
+        '200':
+          description: 成功 - ルームのメタデータを取得
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallMetadataResponse'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+    patch:
+      summary: ルームのメタデータを更新
+      description: >
+        ルームのメタデータを更新します。
+      operationId: updateRoomMetadata
+      tags:
+        - qall
+      parameters:
+        - $ref: '#/components/parameters/roomIdInPath'
+      requestBody:
+        description: ルームのメタデータ
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/qallMetadataRequest'
+      responses:
+        '200':
+          description: 成功 - ルームのメタデータを更新
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /qall/rooms/{roomId}/participants:
+    patch:
+      summary: ルームでの発言権限を変更
+      description: >
+        ルーム内の参加者の発言権限を変更します。
+      operationId: changeParticipantRole
+      tags:
+        - qall
+      parameters:
+        - $ref: '#/components/parameters/roomIdInPath'
+      requestBody:
+        description: 発言権限を変更する参加者の情報
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/qallParticipantRequest'
+      responses:
+        '200':
+          description: 成功 - 発言権限を変更（部分的成功含む）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/qallParticipantResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /qall/webhook:
+    post:
+      summary: LiveKit Webhook受信
+      description: >
+        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
+        参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
+      operationId: liveKitWebhook
+      tags:
+        - qall
+      requestBody:
+        required: true
+        content:
+          application/webhook+json:
+            schema:
+              type: object
+              description: LiveKit Webhook イベントのペイロード
+      responses:
+        '200':
+          description: Webhookを正常に受信
+        '400':
+          description: Invalid payload
+        '500':
+          description: Internal Server Error
+  /qall/soundboard:
+    get:
+      summary: サウンドボード用の音声一覧を取得
+      description: >
+        DBに保存されたサウンドボード情報を取得します。  
+        各アイテムには soundId, soundName, stampId が含まれます。
+      operationId: getSoundboardList
+      tags:
+        - qall
+      responses:
+        '200':
+          description: サウンド一覧の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/soundboardListResponse'
+        '500':
+          description: サーバエラー
+
+    post:
+      summary: サウンドボード用の短い音声ファイルをアップロード
+      description: >
+        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
+        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
+        また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
+      operationId: postSoundboard
+      tags:
+        - qall
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/soundboardUploadRequest'
+      responses:
+        '200':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/soundboardUploadResponse'
+        '400':
+          description: ファイルが提供されていない等
+        '500':
+          description: アップロードエラーなどのサーバエラー
+
+  /qall/soundboard/play:
+    post:
+      summary: アップロード済み音声を LiveKit ルームで再生
+      description: >
+        S3上にある音声ファイルの署名付きURLを生成し、  
+        Ingressを介して指定ルームに音声を流します。    
+        該当ルームに参加しているユーザであれば再生可能とします。
+      operationId: postSoundboardPlay
+      tags:
+        - qall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/soundboardPlayRequest'
+      responses:
+        '200':
+          description: Ingressの作成に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/soundboardPlayResponse'
+        '400':
+          description: パラメータ不足 or ユーザが部屋にいない等
+        '401':
+          description: 認証エラー
+        '500':
+          description: Ingress作成失敗などのサーバエラー
 
 components:
   securitySchemes:
@@ -5115,6 +5437,12 @@ components:
       required:
         - id
         - role
+    UserGroupMembers:
+      title: UserGroupMembers
+      type: array
+      description: ユーザーグループメンバーの配列
+      items:
+        $ref: '#/components/schemas/UserGroupMember'
     UserStats:
       title: UserStats
       type: object
@@ -6654,6 +6982,92 @@ components:
       required:
         - userId
         - channelId
+    QallRoomStateChangedEvent:
+      title: QallRoomStateChangedEvent
+      type: object
+      description: Qallのルーム状態が変更された
+      properties:
+        roomStates:
+          type: array
+          items:
+            type: object
+            properties:
+              roomId:
+                type: string
+                format: uuid
+                description: ルームのID
+              participants:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identity:
+                      type: string
+                      description: ユーザーID_RandomUUID
+                    name:
+                      type: string
+                      description: 表示名
+                    joinedAt:
+                      type: string
+                      format: date-time
+                      description: 参加した時刻
+                    attributes:
+                      type: object
+                      additionalProperties:
+                        type: string
+                        description: ユーザーに関連付けられたカスタム属性
+                    canPublish:
+                      type: boolean
+                      description: 発言権限
+                  required:
+                    - identity
+                    - name
+                    - joinedAt
+                    - canPublish
+              isWebinar:
+                type: boolean
+                description: ウェビナールームかどうか
+              metadata:
+                type: string
+                description: ルームに関連付けられたカスタム属性
+            required:
+              - roomId
+              - participants
+              - isWebinar
+      required:
+        - roomStates
+    QallSoundboardItemCreatedEvent:
+      title: QallSoundboardItemCreatedEvent
+      type: object
+      description: Qallのサウンドボードアイテムが作成された
+      properties:
+        soundId:
+          type: string
+          format: uuid
+          description: 作成されたサウンドボードアイテムのId
+        name:
+          type: string
+          description: 作成されたサウンドボードアイテムの名前
+        creatorId:
+          type: string
+          format: uuid
+          description: 作成者のId
+      required:
+        - soundId
+        - name
+        - creatorId
+    QallSoundboardItemDeletedEvent:
+      title: QallSoundboardItemDeletedEvent
+      type: object
+      description: Qallのサウンドボードアイテムが削除された
+      properties:
+        soundId:
+          type: string
+          format: uuid
+          description: 削除されたサウンドボードアイテムのId
+      required:
+        - soundId
+        
     StampPalette:
       title: StampPalette
       type: object
@@ -7316,6 +7730,19 @@ components:
           description: メッセージ引用通知の設定情報
       required:
         - notifyCitation
+    ChannelPath:
+      title: ChannelPath
+      type: object
+      description: チャンネルパス
+      properties:
+        path:
+          type: string
+          description: チャンネルパス
+          pattern: '^(\/[a-zA-Z0-9-_]+)+$'
+      required:
+        - path
+      example:
+        path: '/general'
     Session:
       type: object
       properties:
@@ -7328,6 +7755,195 @@ components:
       required:
         - state
         - sessionId
+    soundboardPlayResponse:
+      type: object
+      properties:
+        ingressId:
+          type: string
+          description: 作成された Ingress のID
+        url:
+          type: string
+          description: 作成された Ingress のストリームURL等
+        streamKey:
+          type: string
+          description: RTMP配信の場合のstream key
+      required:
+        - ingressId
+    qallEndpointResponse:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          description: LiveKitのエンドポイント
+      required:
+        - endpoint
+    soundboardListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/soundboardItem'
+    soundboardItem:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: サーバが発行したサウンドID
+        soundName:
+          type: string
+          description: ユーザが指定した表示用のサウンド名
+        stampId:
+          type: string
+          description: 任意のスタンプID等、サウンドに紐づく拡張情報
+        creatorId:
+          type: string
+          description: 作成者のユーザID
+      required:
+        - soundId
+        - soundName
+        - stampId
+        - creatorId
+    soundboardUploadResponse:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: 登録されたサウンドID (ファイル名)
+      required:
+        - soundId
+    qallRoomsListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/qallRoomWithParticipants'
+    qallTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: LiveKit用のJWTトークン
+      required:
+        - token
+    qallRoomWithParticipants:
+      type: object
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: ルームのID
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/qallParticipant'
+        isWebinar:
+          type: boolean
+          description: ウェビナールームかどうか
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
+      required:
+        - roomId
+        - participants
+    qallParticipant:
+      description: ルーム内の参加者一覧
+      type: object
+      properties:
+        identity:
+          type: string
+          description: ユーザーID_RandomUUID
+        name:
+          type: string
+          description: 表示名
+        joinedAt:
+          type: string
+          format: date-time
+          description: 参加した時刻
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: ユーザーに関連付けられたカスタム属性
+        canPublish:
+          type: boolean
+          description: 発言権限
+    qallParticipantRequest:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                description: ユーザーID
+              canPublish:
+                type: boolean
+                description: 発言権限
+      required:
+        - users
+    qallMetadataRequest:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
+    qallMetadataResponse:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: ルームに関連付けられたカスタム属性
+    qallParticipantResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              participantId:
+                type: string
+                description: 対象参加者ID
+              status:
+                type: string
+                description: "success もしくは error"
+              errorMessage:
+                type: string
+                description: エラーがある場合の詳細
+      example:
+        results:
+          - participantId: "user1"
+            status: "success"
+          - participantId: "user2"
+            status: "error"
+            errorMessage: "Invalid participant ID"
+    soundboardUploadRequest:
+      type: object
+      properties:
+        audio:
+          type: string
+          format: binary
+          description: アップロードする音声ファイル(20秒以内)
+        soundName:
+          type: string
+          description: ユーザが自由につけるサウンド名
+        stampId:
+          type: string
+          description: アイコンスタンプID
+      required:
+        - audio
+        - soundName
+    soundboardPlayRequest:
+      type: object
+      properties:
+        soundId:
+          type: string
+          description: サウンドID (DB登録済み)
+        roomName:
+          type: string
+          format: uuid
+          description: 再生させたいルームのUUID
+      required:
+        - soundId
+        - roomName
   headers:
     X-TRAQ-MORE:
       schema:
@@ -7503,6 +8119,36 @@ components:
       schema:
         type: string
         format: uuid
+    roomIdInPath:
+      name: roomId
+      in: path
+      required: true
+      description: ルームUUID
+      schema:
+        type: string
+        format: uuid
+    roomIdInQuery:
+      in: query
+      name: roomId
+      schema:
+        type: string
+        format: uuid
+      description: ルームUUID
+    isWebinarInQuery:
+      in: query
+      name: isWebinar
+      schema:
+        type: boolean
+      required: false
+      description: ウェビナールームかどうか(デフォルト false)
+    excludeDeletedMessagesInQuery:
+      in: query
+      name: exclude-deleted-messages
+      schema:
+        type: boolean
+      required: false
+      description: 削除されたメッセージを除外するかどうか(デフォルト false)
+
 tags:
   - name: user
     description: ユーザーAPI
@@ -7544,6 +8190,8 @@ tags:
     description: クリップAPI
   - name: ogp
     description: OGP API
+  - name: qall
+    description: Qall API
 security:
   - OAuth2: []
   - bearerAuth: []

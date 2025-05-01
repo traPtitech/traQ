@@ -116,18 +116,18 @@ func (mr *MockChannelRepositoryMockRecorder) GetChannelEvents(query interface{})
 }
 
 // GetChannelStats mocks base method.
-func (m *MockChannelRepository) GetChannelStats(channelID uuid.UUID) (*repository.ChannelStats, error) {
+func (m *MockChannelRepository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*repository.ChannelStats, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelStats", channelID)
+	ret := m.ctrl.Call(m, "GetChannelStats", channelID, excludeDeletedMessages)
 	ret0, _ := ret[0].(*repository.ChannelStats)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetChannelStats indicates an expected call of GetChannelStats.
-func (mr *MockChannelRepositoryMockRecorder) GetChannelStats(channelID interface{}) *gomock.Call {
+func (mr *MockChannelRepositoryMockRecorder) GetChannelStats(channelID, excludeDeletedMessages interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelStats", reflect.TypeOf((*MockChannelRepository)(nil).GetChannelStats), channelID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelStats", reflect.TypeOf((*MockChannelRepository)(nil).GetChannelStats), channelID, excludeDeletedMessages)
 }
 
 // GetChannelSubscriptions mocks base method.

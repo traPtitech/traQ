@@ -17,7 +17,7 @@ CREATE TABLE `user_groups` (
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `uni_user_groups_name` (`name`),
   KEY `user_group_icon_files_id_foreign` (`icon`),
   CONSTRAINT `user_group_icon_files_id_foreign` FOREIGN KEY (`icon`) REFERENCES `files` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -41,8 +41,8 @@ CREATE TABLE `user_groups` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_user_groups_name | UNIQUE | UNIQUE KEY uni_user_groups_name (name) |
 | user_group_icon_files_id_foreign | FOREIGN KEY | FOREIGN KEY (icon) REFERENCES files (id) |
 
 ## Indexes
@@ -51,7 +51,7 @@ CREATE TABLE `user_groups` (
 | ---- | ---------- |
 | user_group_icon_files_id_foreign | KEY user_group_icon_files_id_foreign (icon) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_user_groups_name | UNIQUE KEY uni_user_groups_name (name) USING BTREE |
 
 ## Relations
 

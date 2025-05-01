@@ -2,9 +2,9 @@ SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go
 
 TEST_DB_PORT := 3100
 # renovate:image-tag imageName=ghcr.io/k1low/tbls
-TBLS_VERSION := "v1.78.1"
+TBLS_VERSION := "v1.85.2"
 # renovate:image-tag imageName=index.docker.io/stoplight/spectral
-SPECTRAL_VERSION := "6.13.1"
+SPECTRAL_VERSION := "6.15.1"
 
 .DEFAULT_GOAL := help
 
@@ -65,21 +65,6 @@ db-diff-docs: ## List diff of db docs
 db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
 	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint -c .tbls.yml
-
-.PHONY: goreleaser-snapshot
-goreleaser-snapshot: ## Release dry-run
-	@docker run --rm -it -v $$PWD:/src -w /src goreleaser/goreleaser --snapshot --skip-publish --rm-dist
-
-.PHONY: update-frontend
-update-frontend: ## Update frontend files in dev/frontend
-	@mkdir -p ./dev/frontend
-# renovate:github-url
-	@curl -L -Ss https://github.com/traPtitech/traQ_S-UI/releases/download/v3.21.0/dist.tar.gz | tar zxv -C ./dev/frontend/ --strip-components=2
-
-.PHONY: reset-frontend
-reset-frontend: ## Completely replace frontend files in dev/frontend
-	rm -rf ./dev/frontend
-	@make update-frontend
 
 .PHONY: up
 up: ## Build and start the app containers

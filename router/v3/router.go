@@ -17,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/oidc"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/search"
@@ -45,6 +46,8 @@ type Handlers struct {
 	MessageManager message.Manager
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
+	Soundboard     qall.Soundboard
+	QallRepo       qall.RoomStateManager
 	Config
 }
 
@@ -54,6 +57,15 @@ type Config struct {
 
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+
+	// LiveKitHost LiveKitホスト
+	LiveKitHost string
+
+	// LiveKitAPIKey LiveKit APIキー
+	LiveKitAPIKey string
+
+	// LiveKitAPISecret LiveKit APIシークレットキー
+	LiveKitAPISecret string
 
 	// AllowSignUp ユーザーが自分自身で登録できるかどうか
 	AllowSignUp bool
@@ -194,6 +206,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.PATCH("/subscribers", h.EditChannelSubscribers, requires(permission.EditChannelSubscription))
 				apiChannelsCID.GET("/bots", h.GetChannelBots, requires(permission.GetChannel))
 				apiChannelsCID.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
+				apiChannelsCID.GET("/path", h.GetChannelPath, requires(permission.GetChannel))
 			}
 		}
 		apiMessages := api.Group("/messages")
@@ -290,6 +303,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
 					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDMembers.DELETE("", h.RemoveUserGroupMembers, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
 						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
@@ -374,6 +388,19 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiOgp.GET("", h.GetOgp)
 			apiOgp.DELETE("/cache", h.DeleteOgpCache)
 		}
+
+		apiQall := api.Group("/qall")
+		{
+			apiQall.GET("/endpoints", h.GetQallEndpoints, requires(permission.WebRTC))
+			apiQall.GET("/soundboard", h.GetSoundboardItems, requires(permission.WebRTC))
+			apiQall.POST("/soundboard", h.CreateSoundboardItem, requires(permission.WebRTC))
+			apiQall.POST("/soundboard/play", h.PlaySoundboardItem, requires(permission.WebRTC))
+			apiQall.GET("/rooms", h.GetRoomState, requires(permission.WebRTC))
+			apiQall.GET("/token", h.GetLiveKitToken, requires(permission.WebRTC))
+			apiQall.PATCH(("rooms/:roomID/metadata"), h.PatchRoomMetadata, requires(permission.WebRTC))
+			apiQall.PATCH(("/rooms/:roomID/participants"), h.PatchRoomParticipants, requires(permission.WebRTC))
+		}
+
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
 	}
 
@@ -387,6 +414,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
