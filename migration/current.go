@@ -49,6 +49,7 @@ func Migrations() []*gormigrate.Migration {
 		v36(), // delete_my_stampパーミッションを追加
 		v37(), // サウンドボードアイテム追加
 		v38(), // v37で作ったサウンドボードアイテムのテーブル名変更
+		v39(), // OAuth Client Credentials Grantの対応のため、clientロールを追加
 	}
 }
 
