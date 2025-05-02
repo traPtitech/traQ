@@ -649,9 +649,10 @@ func TestManagerImpl_ChangeChannelSubscriptions(t *testing.T) {
 				on := make([]uuid.UUID, 0)
 				off := make([]uuid.UUID, 0)
 				for u, level := range c.Subscriptions {
-					if level == model.ChannelSubscribeLevelMarkAndNotify {
+					switch level {
+					case model.ChannelSubscribeLevelMarkAndNotify:
 						on = append(on, u)
-					} else if level == model.ChannelSubscribeLevelNone {
+					case model.ChannelSubscribeLevelNone:
 						off = append(off, u)
 					}
 				}

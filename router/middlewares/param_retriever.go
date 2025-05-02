@@ -77,13 +77,14 @@ func (pr *ParamRetriever) error(err error) error {
 	case *herror.InternalError:
 		return err
 	default:
-		if err == repository.ErrNotFound {
+		switch err {
+		case repository.ErrNotFound:
 			return herror.NotFound()
-		} else if err == channel.ErrChannelNotFound {
+		case channel.ErrChannelNotFound:
 			return herror.NotFound()
-		} else if err == file.ErrNotFound {
+		case file.ErrNotFound:
 			return herror.NotFound()
-		} else if err == message.ErrNotFound {
+		case message.ErrNotFound:
 			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)

@@ -22,7 +22,7 @@ import (
 // GetQallEndpoints GET /qall/endpoints
 func (h *Handlers) GetQallEndpoints(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
-		"endpoint": h.Config.LiveKitHost,
+		"endpoint": h.LiveKitHost,
 	})
 }
 
@@ -112,7 +112,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 	}
 
 	// 4) Ingressクライアント
-	ingressClient := lksdk.NewIngressClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	ingressClient := lksdk.NewIngressClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 
 	// 5) Ingress リクエスト作成
 	ingReq := &livekit.CreateIngressRequest{
@@ -178,7 +178,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 
 	userID := getRequestUserID(c)
 
-	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 	// Find the room
 	targetRoom := h.QallRepo.GetRoomState(roomID.String())
 
@@ -260,7 +260,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 	}
 
 	// Update participants
-	livekitClient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 	for _, participant := range req.Users {
 		for _, roomParticipant := range roomState.Participants {
 			if roomParticipant.Name == participant.UserID {
@@ -348,11 +348,11 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		}
 	}
 
-	at := auth.NewAccessToken(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	at := auth.NewAccessToken(h.LiveKitAPIKey, h.LiveKitAPISecret)
 	grant := &auth.VideoGrant{
 		RoomJoin:             true,
 		Room:                 room,
-		CanPublish:           func(b bool) *bool { return &b }(!(isWebinar && isExistingRoom) || isAlreadyCanPublish),
+		CanPublish:           func(b bool) *bool { return &b }((!isWebinar || !isExistingRoom) || isAlreadyCanPublish),
 		CanPublishData:       func(b bool) *bool { return &b }(true),
 		CanUpdateOwnMetadata: func(b bool) *bool { return &b }(true),
 	}
@@ -380,7 +380,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
-		lkclient := lksdk.NewRoomServiceClient(h.Config.LiveKitHost, h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+		lkclient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 		_, err = lkclient.CreateRoom(c.Request().Context(), &livekit.CreateRoomRequest{
 			Name:     room,
 			Metadata: string(metadataStr),
@@ -406,7 +406,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 // LiveKitWebhook POST /qall/webhook
 func (h *Handlers) LiveKitWebhook(c echo.Context) error {
 	// Authプロバイダーを初期化
-	authProvider := auth.NewSimpleKeyProvider(h.Config.LiveKitAPIKey, h.Config.LiveKitAPISecret)
+	authProvider := auth.NewSimpleKeyProvider(h.LiveKitAPIKey, h.LiveKitAPISecret)
 
 	// Webhookイベントを受け取る
 	event, err := webhook.ReceiveWebhookEvent(c.Request(), authProvider)

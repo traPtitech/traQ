@@ -7,8 +7,8 @@ import (
 )
 
 func convertError(err error) error {
-	switch {
-	case err == gorm.ErrRecordNotFound:
+	switch err {
+	case gorm.ErrRecordNotFound:
 		return repository.ErrNotFound
 	default:
 		return err

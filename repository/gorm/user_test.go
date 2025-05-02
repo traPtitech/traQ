@@ -90,14 +90,16 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 			}
 
 			q := repository.UsersQuery{}
-			if v.bot == 0 {
+			switch v.bot {
+			case 0:
 				q.IsBot = optional.From(false)
-			} else if v.bot == 1 {
+			case 1:
 				q.IsBot = optional.From(true)
 			}
-			if v.active == 0 {
+			switch v.active {
+			case 0:
 				q.IsActive = optional.From(false)
-			} else if v.active == 1 {
+			case 1:
 				q.IsActive = optional.From(true)
 			}
 			if v.g1 == 1 {

@@ -30,5 +30,5 @@ func ExtractEmbedding(m string) (res []*EmbeddedInfo, plain string) {
 		}
 		return info.Raw
 	})
-	return res, strings.Replace(tmp, "\n", " ", -1)
+	return res, strings.ReplaceAll(tmp, "\n", " ")
 }
