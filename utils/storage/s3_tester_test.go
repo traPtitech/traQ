@@ -22,13 +22,16 @@ func init() {
 
 func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 	return func() error {
-		cfg, err := s3TestConfig(context.Background(), resource.GetPort("9000/tcp"))
+		cfg, err := s3TestConfig(context.Background())
+		ep := fmt.Sprintf("http://localhost:%s", resource.GetPort("9000/tcp"))
+
 		if err != nil {
 			return err
 		}
 
 		t.client = s3.NewFromConfig(cfg, func(opt *s3.Options) {
 			opt.UsePathStyle = true // virtual host styleだと名前解決ができない(bucket.localhost~~になるため)
+			opt.BaseEndpoint = aws.String(ep)
 		})
 
 		return minioHealthCheck(resource.GetPort("9000/tcp"))
@@ -52,20 +55,9 @@ func (t *s3Tester) getClient() *s3.Client {
 	return t.client
 }
 
-func s3TestConfig(ctx context.Context, port string) (aws.Config, error) {
-	ep := fmt.Sprintf("http://localhost:%s", port)
+func s3TestConfig(ctx context.Context) (aws.Config, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("ap-northeast-1"),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{
-						URL:           ep,
-						SigningRegion: region,
-					}, nil
-				},
-			),
-		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("ROOT", "PASSWORD", "")),
 	)
 
