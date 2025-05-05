@@ -289,12 +289,6 @@ func (r *userRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs
 			changed = true
 			count += len(changes)
 		}
-		// 凍結の際は未読を削除
-		// if deactivate {
-		// 	if err := tx.Delete(&model.Unread{}, "user_id = ?", id).Error; err != nil {
-		// 		return err
-		// 	}
-		// }
 		return nil
 	})
 	if err != nil {
