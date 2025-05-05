@@ -177,7 +177,9 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		}
 		// ユーザーアカウント状態を確認
 		if !u.IsActive() {
-			return herror.Forbidden("this account is currently suspended")
+			q.Set("error", errAccessDenied)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
 

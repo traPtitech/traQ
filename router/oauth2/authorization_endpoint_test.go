@@ -500,8 +500,9 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		res.Header("Pragma").IsEqual("no-cache")
 	})
 
-	t.Run("Forbidden (valid session but deactivated account)", func(t *testing.T) {
+	t.Run("Found (valid session but deactivated account)", func(t *testing.T) {
 		t.Parallel()
+		assert := assert.New(t)
 		user := env.CreateUser(t, rand)
 		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
@@ -517,8 +518,13 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithQuery("nonce", "nonce").
 			WithCookie(session.CookieName, s).
 			Expect()
-
-		res.Status(http.StatusForbidden)
+		res.Status(http.StatusFound)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		loc, err := res.Raw().Location()
+		if assert.NoError(err) {
+			assert.Equal(errAccessDenied, loc.Query().Get("error"))
+		}
 	})
 }
 
