@@ -42,6 +42,11 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 		wellKnown.GET("/openid-configuration", func(c echo.Context) error {
 			return c.Redirect(http.StatusFound, "/api/v3/oauth2/oidc/discovery")
 		})
+		wellKnown.GET("/security.txt", func(c echo.Context) error {
+			return c.String(http.StatusOK, `Contact: mailto:info@trap.jp
+Expires: 2026-03-31T23:59:59+09:00
+Preferred-Languages: ja,en`)
+		})
 	}
 
 	api := r.e.Group("/api")
