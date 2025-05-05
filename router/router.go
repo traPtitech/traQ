@@ -43,6 +43,8 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 			return c.Redirect(http.StatusFound, "/api/v3/oauth2/oidc/discovery")
 		})
 		wellKnown.GET("/security.txt", func(c echo.Context) error {
+			// Contactなどの情報が古くなっていないかを定期的に確認し、Expiresを*手動で*更新すること
+			// See: https://www.rfc-editor.org/rfc/rfc9116.html#section-5.3
 			return c.String(http.StatusOK, `Contact: mailto:info@trap.jp
 Contact: https://trap.jp/request
 Expires: 2026-03-31T23:59:59+09:00
