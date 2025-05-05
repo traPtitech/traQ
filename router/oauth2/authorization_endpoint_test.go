@@ -11,7 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 )
 
@@ -496,6 +498,27 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		res.Status(http.StatusForbidden)
 		res.Header("Cache-Control").IsEqual("no-store")
 		res.Header("Pragma").IsEqual("no-cache")
+	})
+
+	t.Run("Forbidden (valid session but deactivated account)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
+		require.NoError(t, err)
+
+		env.IssueToken(t, client, user.GetID(), false)
+		s := env.S(t, user.GetID())
+		e := env.R(t)
+		res := e.GET("/oauth2/authorize").
+			WithQuery("client_id", client.ID).
+			WithQuery("response_type", "code").
+			WithQuery("state", "state").
+			WithQuery("scope", "read write").
+			WithQuery("nonce", "nonce").
+			WithCookie(session.CookieName, s).
+			Expect()
+
+		res.Status(http.StatusForbidden)
 	})
 }
 
