@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -160,11 +161,26 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	// セッション確認
 	se, err := h.SessStore.GetSession(c)
-	if err != nil && err != session.ErrSessionNotFound {
+	if err != nil && !errors.Is(err, session.ErrSessionNotFound) {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		q.Set("error", errServerError)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
+	if se != nil {
+		u, err := h.Repo.GetUser(se.UserID(), false)
+		if err != nil {
+			h.L(c).Error(err.Error(), zap.Error(err))
+			q.Set("error", errServerError)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
+		}
+		// ユーザーアカウント状態を確認
+		if !u.IsActive() {
+			q.Set("error", errAccessDenied)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
+		}
 	}
 
 	switch req.Prompt {
@@ -177,15 +193,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		u, err := h.Repo.GetUser(se.UserID(), false)
-		if err != nil {
-			h.L(c).Error(err.Error(), zap.Error(err))
-			q.Set("error", errServerError)
-			redirectURI.RawQuery = q.Encode()
-			return c.Redirect(http.StatusFound, redirectURI.String())
-		}
-
-		tokens, err := h.Repo.GetTokensByUser(u.GetID())
+		tokens, err := h.Repo.GetTokensByUser(se.UserID())
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
