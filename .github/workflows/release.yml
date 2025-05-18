@@ -5,7 +5,7 @@ on:
     tags:
       - v*.*.*
     branches-ignore:
-      - '**'
+      - "**"
 
 env:
   IMAGE_NAME: traq
@@ -56,3 +56,15 @@ jobs:
       - run: gh release create ${{ github.ref_name }} --generate-notes --repo ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  run-manifest-renovate:
+    name: Run Renovate on manifest
+    runs-on: ubuntu-latest
+    needs: [image]
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - run: 'gh api --method POST -H "Accept: application/vnd.github+json" /repos/traPtitech/manifest/actions/workflows/renovate.yaml/dispatches -f "ref=main"'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
