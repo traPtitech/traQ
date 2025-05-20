@@ -47,8 +47,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.48.1/go.mod h1:0wEl7vrAD8mehJyohS9HZy+WyEOaQO2mJx86Cvh93kM=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.1 h1:8nn+rsCvTq9axyEh382S0PFLBeaFwNsT43IrPWzctRU=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.1/go.mod h1:viRWSEhtMZqz1rhwmOVKkWl6SwmVowfL9O2YR5gI2PE=
-github.com/MicahParks/jwkset v0.9.5 h1:/baA2n7RhO7nRIe1rx4ZX1Opeq+mwDuuWi2myDZwqnA=
-github.com/MicahParks/jwkset v0.9.5/go.mod h1:U2oRhRaLgDCLjtpGL2GseNKGmZtLs/3O7p+OZaL5vo0=
+github.com/MicahParks/jwkset v0.9.6 h1:Tf8l2/MOby5Kh3IkrqzThPQKfLytMERoAsGZKlyYZxg=
+github.com/MicahParks/jwkset v0.9.6/go.mod h1:U2oRhRaLgDCLjtpGL2GseNKGmZtLs/3O7p+OZaL5vo0=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
