@@ -1,0 +1,357 @@
+syntax = "proto3";
+
+package v4;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+import "v4/stamp.proto";
+import "v4/user.proto";
+import "v4/channel.proto";
+import "v4/notification.proto"; // Added import for notification.proto
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+// 自分のユーザー詳細情報
+message MyUserDetail {
+  // ユーザーUUID
+  string id = 1;
+  // traQ ID
+  string name = 2;
+  // 表示名
+  string display_name = 3;
+  // アイコンファイルUUID
+  string icon_file_id = 4;
+  // BOTかどうか
+  bool bot = 5;
+  // アカウント状態
+  UserAccountState state = 6;
+  // オンラインかどうか
+  bool online = 7;
+  // 自己紹介(biography)
+  string bio = 8;
+  // 所属グループのUUIDの配列
+  repeated string groups = 9;
+  // タグリスト
+  repeated UserTag tags = 10; // Changed tag from 6 to 10
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 11;
+  // 最終オンライン日時
+  google.protobuf.Timestamp last_online = 12;
+  // ホームチャンネル
+  optional string home_channel = 13; // Added optional
+}
+
+// ユーザー設定
+message UserSettings {
+  // ユーザーUUID
+  string id = 1;
+  // 未読チャンネルの通知を抑制するかどうか
+  bool suppress_notify_sound = 2;
+}
+
+// 自分のタグ編集リクエスト
+message PatchMeRequest {
+  // 表示名
+  optional string display_name = 1;
+  // Twitter ID
+  optional string twitter_id = 2;
+  // 自己紹介(biography)
+  optional string bio = 3;
+  // ホームチャンネル
+  optional string home_channel = 4;
+}
+
+// 自分のパスワード変更リクエスト
+message PutPasswordRequest {
+  // 新しいパスワード
+  string new_password = 1;
+  // 現在のパスワード
+  string password = 2;
+}
+
+// 自分のアイコン変更リクエスト
+message PutUserIconRequest {
+  // アイコン画像ファイルUUID
+  string file_id = 1;
+}
+
+// 自分のタグ追加リクエスト
+message PostUserTagRequest {
+  // タグ文字列
+  string tag = 1;
+}
+
+// 自分のタグ編集リクエスト
+message PatchUserTagRequest {
+  // タグがロックされているか
+  bool is_locked = 1;
+}
+
+// 自分の通知ストリーム接続ユーザー情報
+message MyStream {
+  // チャンネルUUID
+  string channel_id = 1;
+  // ウィンドウ識別子
+  string window_id = 2;
+}
+
+// 自分のトークン情報
+message MyToken {
+  // OAuth2アクセストークン
+  string access_token = 1;
+  // OAuth2トークンスコープ
+  repeated string scopes = 2;
+  //
+}
+
+// 自分のセッション情報
+message MySession {
+  // セッションID
+  string id = 1;
+  // 発行日時
+  google.protobuf.Timestamp issued_at = 2;
+  // 最終利用日時
+  google.protobuf.Timestamp last_used = 3;
+  // デバイス名
+  string device = 4;
+  // OS名
+  string os = 5;
+  // OSバージョン
+  string os_version = 6;
+  // ブラウザ名
+  string browser = 7;
+  // ブラウザバージョン
+  string browser_version = 8;
+}
+
+// 自分の外部アカウント連携情報
+message ExternalProviderUser {
+  // 外部サービス名
+  string provider_name = 1;
+  // 連携した日時
+  google.protobuf.Timestamp linked_at = 2;
+  // 外部アカウント名など
+  string external_name = 3;
+}
+
+// 自分の通知デバイス登録リクエスト
+message PostMyFCMDeviceRequest {
+  // FCMのデバイストークン
+  string token = 1;
+}
+
+// QRコードログイン用セッション情報
+message LoginSession {
+  // セッションID
+  string id = 1;
+  // 発行日時
+  google.protobuf.Timestamp issued_at = 2;
+}
+
+// チャンネル購読レベル変更リクエスト
+message PutChannelSubscribeLevelRequest {
+  // 通知レベル
+  ChannelSubscribeLevel level = 1; // common. を削除
+}
+
+// チャンネル購読レベル
+// enum ChannelSubscribeLevel { // Defined in notification.proto
+//   CHANNEL_SUBSCRIBE_LEVEL_NONE = 0; // 0：無し
+//   CHANNEL_SUBSCRIBE_LEVEL_SUBSCRIBED = 1; // 1：購読
+//   CHANNEL_SUBSCRIBE_LEVEL_NOTIFIED = 2; // 2：未読管理と通知
+// }
+
+service Me {
+  // 自分のユーザー詳細情報を取得
+  rpc GetMe (GetMeRequest) returns (MyUserDetail);
+  // 自分のユーザー情報を変更
+  rpc EditMe (PatchMeRequest) returns (EmptyResponse); // common. を削除
+  // 自分のパスワードを変更
+  rpc ChangeMyPassword (PutPasswordRequest) returns (EmptyResponse); // common. を削除
+  // 自分のアイコン画像を変更
+  rpc ChangeMyIcon (PutUserIconRequest) returns (EmptyResponse); // common. を削除
+  // 自分のユーザー設定を取得
+  rpc GetMySettings (GetMySettingsRequest) returns (UserSettings);
+  // 自分のユーザー設定を変更
+  rpc ChangeMySettings (UserSettings) returns (EmptyResponse); // common. を削除
+  // 自分のタグリストを取得
+  rpc GetMyUserTags (GetMyUserTagsRequest) returns (GetMyUserTagsResponse);
+  // 自分にタグを追加
+  rpc AddMyUserTag (PostUserTagRequest) returns (UserTag) {
+    option (google.api.http) = {
+      post: "/users/me/tags"
+      body: "tag" // Changed from "payload" to "tag"
+    };
+  }
+  // 自分の指定したタグの情報を編集
+  rpc EditMyUserTag (EditMyUserTagRpcRequest) returns (EmptyResponse); // common. を削除
+  // 自分からタグを削除
+  rpc RemoveMyUserTag (RemoveMyUserTagRequest) returns (EmptyResponse); // common. を削除
+  // 自分の通知ストリームのリストを取得
+  rpc GetMyStreams (GetMyStreamsRequest) returns (GetMyStreamsResponse);
+  // 自分の未読チャンネルのリストを取得
+  rpc GetMyUnreadChannels(GetMyUnreadChannelsRequest) returns (GetMyUnreadChannelsResponse) {
+    option (google.api.http) = {
+      get: "/users/me/unread"
+    };
+  }
+  // チャンネルの未読状態を解消
+  rpc ReadMyChannel (ReadMyChannelRequest) returns (EmptyResponse); // common. を削除
+  // 自分のチャンネル購読状態を取得
+  rpc GetMyChannelSubscriptions(GetMyChannelSubscriptionsRequest) returns (GetMyChannelSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/users/me/subscriptions"
+    };
+  }
+  // チャンネルを購読
+  rpc SetMyChannelSubscribeLevel (SetMyChannelSubscribeLevelRpcRequest) returns (EmptyResponse); // common. を削除
+  // 自分のスタンプ履歴を取得
+  rpc GetMyStampHistory(GetMyStampHistoryRequest) returns (GetMyStampHistoryResponse) {
+    option (google.api.http) = {
+      get: "/users/me/stamp-history"
+    };
+  }
+  // 自分のトークンリストを取得
+  rpc GetMyTokens (GetMyTokensRequest) returns (GetMyTokensResponse);
+  // 自分のトークンを取り消す
+  rpc RevokeMyToken (RevokeMyTokenRequest) returns (EmptyResponse); // common. を削除
+  // 自分のセッションリストを取得
+  rpc GetMySessions (GetMySessionsRequest) returns (GetMySessionsResponse);
+  // 自分のセッションを無効化
+  rpc RevokeMySession (RevokeMySessionRequest) returns (EmptyResponse); // common. を削除
+  // 自分の外部アカウント連携のリストを取得
+  rpc GetMyExternalAccounts (GetMyExternalAccountsRequest) returns (GetMyExternalAccountsResponse);
+  // 自分の外部アカウント連携を解除
+  rpc UnlinkMyExternalAccount (UnlinkMyExternalAccountRequest) returns (EmptyResponse); // common. を削除
+  // 自分のFCMデバイスリストを取得
+  rpc GetMyFCMDevices (GetMyFCMDevicesRequest) returns (GetMyFCMDevicesResponse);
+  // FCMデバイスを登録
+  rpc RegisterMyFCMDevice (PostMyFCMDeviceRequest) returns (EmptyResponse); // common. を削除
+  // FCMデバイスを削除
+  rpc DeleteMyFCMDevice (DeleteMyFCMDeviceRequest) returns (EmptyResponse); // common. を削除
+  // 自分のスタンプパレットのリストを取得
+  rpc GetMyStampPalettes (GetMyStampPalettesRequest) returns (GetMyStampPalettesResponse); // stamp. を削除
+  // QRコードログイン用のセッション情報を取得
+  rpc GetMySessionsForQRCode (GetMySessionsForQRCodeRequest) returns (GetMySessionsForQRCodeResponse);
+  // QRコードログインセッションを無効化
+  rpc RevokeMySessionForQRCode (RevokeMySessionForQRCodeRequest) returns (EmptyResponse); // common. を削除
+  // 自分のユーザー情報を取得 (v1互換)
+  rpc GetMyProfile (GetMyProfileRequest) returns (MyUserDetail); // Same as GetMe
+}
+
+message GetMeRequest {
+  // No parameters
+}
+
+message GetMySettingsRequest {
+  // No parameters
+}
+
+message GetMyUserTagsRequest {
+  // No parameters
+}
+
+message GetMyUserTagsResponse {
+  repeated UserTag tags = 1;
+}
+
+message EditMyUserTagRpcRequest {
+  string tag_id = 1;
+  PatchUserTagRequest payload = 2;
+}
+
+message RemoveMyUserTagRequest {
+  string tag_id = 1;
+}
+
+message GetMyStreamsRequest {
+  // No parameters
+}
+
+message GetMyStreamsResponse {
+  repeated MyStream streams = 1;
+}
+
+message ReadMyChannelRequest {
+  string channel_id = 1;
+}
+
+message SetMyChannelSubscribeLevelRpcRequest {
+  string channel_id = 1;
+  PutChannelSubscribeLevelRequest payload = 2;
+}
+
+message GetMyTokensRequest {
+  // No parameters
+}
+
+message GetMyTokensResponse {
+  repeated MyToken tokens = 1;
+}
+
+message RevokeMyTokenRequest {
+  string tokenId = 1;
+}
+
+message GetMySessionsRequest {
+  // No parameters
+}
+
+message GetMySessionsResponse {
+  repeated MySession sessions = 1;
+}
+
+message RevokeMySessionRequest {
+  string session_id = 1;
+}
+
+message GetMyExternalAccountsRequest {
+  // No parameters
+}
+
+message GetMyExternalAccountsResponse {
+  repeated ExternalProviderUser accounts = 1;
+}
+
+message UnlinkMyExternalAccountRequest {
+  // 外部サービス名
+  string provider_name = 1;
+}
+
+message GetMyFCMDevicesRequest {
+  // No parameters
+}
+
+message GetMyFCMDevicesResponse {
+  repeated string fcm_device_ids = 1; // OpenAPIでは`device_id`の配列
+}
+
+message DeleteMyFCMDeviceRequest {
+  string token = 1; // device token
+}
+
+message GetMyStampPalettesRequest {
+  // No parameters
+}
+
+message GetMyStampPalettesResponse {
+  repeated StampPalette palettes = 1; // Changed from stamp.StampPalette to StampPalette
+}
+
+message GetMySessionsForQRCodeRequest {
+  // No parameters
+}
+
+message GetMySessionsForQRCodeResponse {
+  repeated LoginSession sessions = 1;
+}
+
+message RevokeMySessionForQRCodeRequest {
+  string session_id = 1;
+}
+
+message GetMyProfileRequest {
+  // No parameters
+}

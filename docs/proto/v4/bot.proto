@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+
+// BOT情報
+message Bot {
+  // BOT UUID
+  string id = 1;
+  // BOTユーザーUUID
+  string bot_user_id = 2;
+  // BOTの説明
+  string description = 3;
+  // BOT開発者UUID
+  string developer_id = 4;
+  // BOTが購読しているイベントの配列
+  repeated string subscribe_events = 5;
+  // BOTモード
+  BotMode mode = 6; // Removed common.
+  // BOTが作成された日時
+  google.protobuf.Timestamp created_at = 7;
+  // BOTが更新された日時
+  google.protobuf.Timestamp updated_at = 8;
+  // BOT状態
+  UserAccountState state = 9; // Removed common.
+}
+
+// BOT詳細情報
+message BotDetail {
+  // BOT UUID
+  string id = 1;
+  // BOTユーザーUUID
+  string bot_user_id = 2;
+  // BOTの説明
+  string description = 3;
+  // BOT開発者UUID
+  string developer_id = 4;
+  // BOTが購読しているイベントの配列
+  repeated string subscribe_events = 5;
+  // BOTモード
+  BotMode mode = 7; // Removed common.
+  // 特権BOTかどうか
+  bool privileged = 8;
+  // BOTサーバーエンドポイント
+  string endpoint = 9;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 10;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 11;
+  // BOT状態
+  UserAccountState state = 12; // Removed common.
+  // BOTが参加しているチャンネルのUUID配列
+  repeated string channel_ids = 13;
+  // BOTのアイコンファイルUUID
+  string icon_file_id = 14;
+  // BOTの現在のセッションのWebhook Sigmund ID
+  string current_webhook_id = 15;
+}
+
+// BOT作成リクエスト
+message PostBotRequest {
+  // BOT名
+  string name = 1;
+  // BOT表示名
+  string display_name = 2;
+  // BOTの説明
+  string description = 3;
+  // BOTモード
+  BotMode mode = 4; // Removed common.
+  // BOTサーバーエンドポイント
+  string endpoint = 5;
+}
+
+// BOT情報編集リクエスト
+message PatchBotRequest {
+  // BOT表示名
+  optional string display_name = 1;
+  // BOTの説明
+  optional string description = 2;
+  // 特権BOTかどうか
+  optional bool privileged = 3;
+  // BOTモード
+  optional BotMode mode = 4; // Removed common.
+  // BOTサーバーエンドポイント
+  optional string endpoint = 5;
+  // BOT開発者UUID
+  optional string developer_id = 6;
+  // BOTが購読するイベントの配列
+  repeated string subscribe_events = 7;
+}
+
+// BOTイベントログ
+message BotEventLog {
+  // BOT UUID
+  string bot_id = 1;
+  // リクエストUUID
+  string request_id = 2;
+  // イベントタイプ
+  BotEvent event = 3; // Removed common.
+  // ステータスコード
+  int32 status_code = 4;
+  // イベント日時
+  google.protobuf.Timestamp datetime = 5;
+}
+
+// BOT参加チャンネル情報
+message BotJoinChannel {
+  // チャンネルUUID
+  string channel_id = 1;
+}
+
+// BOT退出チャンネル情報
+message BotLeaveChannel {
+  // チャンネルUUID
+  string channel_id = 1;
+}
+
+// BOTのトークン再発行リクエスト
+message ReissueBotTokenRequest {
+  // No parameters
+}
+
+// BOTのトークン情報
+message BotTokens {
+  // Verification Token
+  string verification_token = 1;
+  // BOTアクセストークン
+  string access_token = 2;
+}
+
+service BotService {
+  // BOTのリストを取得
+  rpc GetBots (GetBotsRequest) returns (GetBotsResponse);
+  // BOTを作成
+  rpc CreateBot (PostBotRequest) returns (BotDetail);
+  // BOT情報を取得
+  rpc GetBot (GetBotRequest) returns (BotDetail);
+  // BOT情報を変更
+  rpc EditBot(EditBotRpcRequest) returns (EmptyResponse); // Removed common.
+  // BOTを削除
+  rpc DeleteBot (DeleteBotRequest) returns (EmptyResponse);
+  // BOTを有効化
+  rpc ActivateBot (ActivateBotRequest) returns (EmptyResponse);
+  // BOTを無効化
+  rpc InactivateBot (InactivateBotRequest) returns (EmptyResponse);
+  // BOTをチャンネルに参加させる
+  rpc LetBotJoinChannel (LetBotJoinChannelRequest) returns (EmptyResponse);
+  // BOTをチャンネルから退出させる
+  rpc LetBotLeaveChannel (LetBotLeaveChannelRequest) returns (EmptyResponse);
+  // BOTのアイコン画像を変更
+  rpc ChangeBotIcon (ChangeBotIconRequest) returns (EmptyResponse);
+  // BOTのイベントログを取得
+  rpc GetBotLogs (GetBotLogsRequest) returns (GetBotLogsResponse);
+  // BOTのトークンを再発行
+  rpc ReissueBot (ReissueBotRpcRequest) returns (BotTokens);
+}
+
+message GetBotsRequest {
+  // 全てのBOTを取得するかどうか
+  optional bool all = 1;
+}
+
+message GetBotsResponse {
+  repeated Bot bots = 1;
+}
+
+message GetBotRequest {
+  string bot_id = 1;
+  // 詳細情報を取得するかどうか
+  optional bool detail = 2;
+}
+
+message EditBotRpcRequest {
+  string bot_id = 1;
+  PatchBotRequest payload = 2;
+}
+
+message DeleteBotRequest {
+  string bot_id = 1;
+}
+
+message ActivateBotRequest {
+  string bot_id = 1;
+}
+
+message InactivateBotRequest {
+  string bot_id = 1;
+}
+
+message GetBotChannelsRequest {
+  string bot_id = 1;
+}
+
+message GetBotChannelsResponse {
+  repeated BotJoinChannel channels = 1; // OpenAPIでは`ids`だが、ここでは構造体を使用
+}
+
+message LetBotJoinChannelRequest {
+  string bot_id = 1;
+  // チャンネルUUID
+  string channel_id = 2; // OpenAPIではPostBotActionJoinRequestだが、ここでは直接指定
+}
+
+message LetBotLeaveChannelRequest {
+  string bot_id = 1;
+  // チャンネルUUID
+  string channel_id = 2; // OpenAPIではPostBotActionLeaveRequestだが、ここでは直接指定
+}
+
+message ChangeBotIconRequest {
+  string bot_id = 1;
+  // アイコン画像ファイルUUID
+  string file_id = 2;
+}
+
+message GetBotLogsRequest {
+  string bot_id = 1;
+  // 取得する件数
+  optional int32 limit = 2;
+  // 取得するオフセット
+  optional int32 offset = 3;
+}
+
+message GetBotLogsResponse {
+  repeated BotEventLog logs = 1;
+}
+
+message ReissueBotRpcRequest {
+  string bot_id = 1;
+  // ReissueBotTokenRequest payload = 2; // No payload in OpenAPI
+}
+
+message GetBotIconRequest {
+  string botId = 1;
+}

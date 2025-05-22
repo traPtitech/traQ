@@ -1,0 +1,170 @@
+syntax = "proto3";
+
+package v4; // traq.v4 から v4 に変更
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4"; // パスを修正
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+
+// Webhook情報
+message Webhook {
+  // WebhookUUID
+  string id = 1;
+  // WebhookユーザーUUID
+  string bot_user_id = 2;
+  // Webhook表示名
+  string display_name = 3;
+  // Webhook説明
+  string description = 4;
+  // Webhookを送信するチャンネルのUUID
+  string channel_id = 5;
+  // Webhookの所有者UUID
+  string owner_id = 6;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 7;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Webhook作成リクエスト
+message PostWebhookRequest {
+  // Webhook表示名
+  string name = 1;
+  // Webhook説明
+  string description = 2;
+  // Webhookを送信するチャンネルのUUID
+  string channel_id = 3;
+  // Webhookのシークレット
+  string secret = 4;
+}
+
+// Webhook情報変更リクエスト
+message PatchWebhookRequest {
+  // Webhook表示名
+  optional string name = 1;
+  // Webhook説明
+  optional string description = 2;
+  // Webhookを送信するチャンネルのUUID
+  optional string channel_id = 3;
+  // Webhookのシークレット
+  optional string secret = 4;
+  // Webhookの所有者UUID
+  optional string owner_id = 5;
+}
+
+// Webhookメッセージ投稿リクエスト
+message PostWebhookMessageRequest {
+  // メッセージ本文
+  string content = 1;
+  // 埋め込みコンテンツの配列
+  repeated string embeds = 2; // Assuming embeds are strings for simplicity, could be more complex
+  // プレーンテキストでない場合に指定
+  optional bool plain = 3;
+  // スレッドID (投稿先のメッセージID)
+  optional string thread_id = 4;
+}
+
+service WebhookService {
+  // Webhookのリストを取得します。
+  rpc GetWebhooks (GetWebhooksRequest) returns (GetWebhooksResponse);
+  // Webhookを新規作成します。
+  rpc CreateWebhook (PostWebhookRequest) returns (Webhook);
+  // 指定したWebhookの情報を取得します。
+  rpc GetWebhook (GetWebhookRequest) returns (Webhook);
+  // 指定したWebhookの情報を変更します。
+  rpc EditWebhook (EditWebhookRpcRequest) returns (EmptyResponse); // PatchWebhookRequest から EditWebhookRpcRequest に変更、common.EmptyResponse から EmptyResponse に変更
+  // 指定したWebhookを削除します。
+  rpc DeleteWebhook (DeleteWebhookRequest) returns (EmptyResponse); // common.EmptyResponse から EmptyResponse に変更
+  // Webhookのアイコンを変更します。
+  rpc ChangeWebhookIcon (ChangeWebhookIconRequest) returns (EmptyResponse); // common.EmptyResponse から EmptyResponse に変更
+  // Webhookのシークレットを取得します。
+  rpc GetWebhookSecret (GetWebhookSecretRequest) returns (GetWebhookSecretResponse);
+  // Webhookのシークレットを再発行します。
+  rpc ReissueWebhookSecret (ReissueWebhookSecretRequest) returns (EmptyResponse); // common.EmptyResponse から EmptyResponse に変更
+  // Webhookメッセージを投稿します。
+  rpc PostWebhookMessage (PostWebhookMessageRpcRequest) returns (EmptyResponse); // common.EmptyResponse から EmptyResponse に変更
+  // Webhookの統計情報を取得します。
+  rpc GetWebhookStatistics (GetWebhookStatisticsRequest) returns (GetWebhookStatisticsResponse);
+}
+
+message GetWebhooksRequest {
+  // 全てのWebhookを取得するかどうか
+  optional bool all = 1;
+  // Webhookの所有者UUID
+  optional string owner_id = 2;
+}
+
+message GetWebhooksResponse {
+  repeated Webhook webhooks = 1;
+}
+
+message GetWebhookRequest {
+  string webhook_id = 1;
+}
+
+message EditWebhookRpcRequest {
+  string webhook_id = 1;
+  PatchWebhookRequest payload = 2;
+}
+
+message DeleteWebhookRequest {
+  string webhook_id = 1;
+}
+
+message ChangeWebhookIconRequest {
+  string webhook_id = 1;
+  // アイコン画像ファイルUUID
+  string file_id = 2;
+}
+
+message GetWebhookSecretRequest {
+  string webhook_id = 1;
+}
+
+message GetWebhookSecretResponse {
+  string secret = 1;
+}
+
+message ReissueWebhookSecretRequest {
+  string webhook_id = 1;
+}
+
+message PostWebhookMessageRpcRequest {
+  string webhook_id = 1;
+  // X-TRAQ-Signatureヘッダーの値
+  optional string x_traq_signature = 2;
+  // embed query parameter
+  optional bool embed = 3; // embed query parameter
+  PostWebhookMessageRequest payload = 4;
+}
+
+// Webhook統計情報
+message WebhookStatistics {
+  // Webhook UUID
+  string webhook_id = 1;
+  // Webhook名
+  string name = 2;
+  // Webhook説明
+  string description = 3;
+  // チャンネルUUID
+  string channel_id = 4;
+  // 所有者UUID
+  string owner_id = 5;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 6;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 7;
+  // メッセージ数
+  int64 message_count = 8;
+  // 最終メッセージ日時
+  google.protobuf.Timestamp last_message_at = 9;
+}
+
+message GetWebhookStatisticsRequest {
+  string webhook_id = 1;
+}
+
+message GetWebhookStatisticsResponse {
+  WebhookStatistics statistics = 1;
+}

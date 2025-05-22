@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package v4; // Changed from traq.v4
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4"; // Standardized go_package
+
+import "google/protobuf/timestamp.proto";
+import "v4/user.proto"; // For User
+import "v4/common.proto"; // For EmptyResponse
+
+// ユーザーグループ
+message UserGroup {
+  // グループUUID
+  string id = 1;
+  // グループ名
+  string name = 2;
+  // グループ説明
+  string description = 3;
+  // グループタイプ
+  string type = 4;
+  // グループアイコンファイルUUID
+  string icon_file_id = 5;
+  // グループメンバーの配列
+  repeated UserGroupMember members = 6;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 7;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 8;
+  // グループ管理者のUUID
+  string admin_user_id = 9;
+}
+
+// ユーザーグループメンバー
+message UserGroupMember {
+  // ユーザーUUID
+  string id = 1;
+  // ユーザーの役割
+  string role = 2;
+}
+
+// ユーザーグループ作成リクエスト
+message PostUserGroupRequest {
+  // グループ名
+  string name = 1;
+  // 説明
+  string description = 2;
+  // グループタイプ
+  string type = 3;
+}
+
+// ユーザーグループ編集リクエスト
+message PatchUserGroupRequest {
+  // グループ名
+  optional string name = 1;
+  // 説明
+  optional string description = 2;
+  // グループタイプ
+  optional string type = 3;
+  // グループ管理者UUID
+  optional string admin_user_id = 4;
+}
+
+// グループメンバー編集リクエスト
+message PatchUserGroupMemberRequest {
+  // ユーザーの役割
+  string role = 1;
+}
+
+// グループメンバー追加リクエスト
+message PostUserGroupMemberRequest {
+  // ユーザーUUID
+  string id = 1;
+  // ユーザーの役割
+  string role = 2;
+}
+
+service UserGroupService {
+  // ユーザーグループのリストを取得
+  rpc GetUserGroups (GetUserGroupsRequest) returns (GetUserGroupsResponse);
+  // ユーザーグループを作成
+  rpc CreateUserGroup (PostUserGroupRequest) returns (UserGroup);
+  // ユーザーグループ情報を取得
+  rpc GetUserGroup (GetUserGroupRequest) returns (UserGroup);
+  // ユーザーグループ情報を編集
+  rpc EditUserGroup (EditUserGroupRpcRequest) returns (EmptyResponse); // Removed common.
+  // ユーザーグループを削除
+  rpc DeleteUserGroup (DeleteUserGroupRequest) returns (EmptyResponse);
+  // ユーザーグループのアイコンを変更
+  rpc ChangeUserGroupIcon (ChangeUserGroupIconRequest) returns (EmptyResponse);
+  // ユーザーグループのメンバーのリストを取得
+  rpc GetUserGroupMembers (GetUserGroupMembersRequest) returns (GetUserGroupMembersResponse);
+  // ユーザーグループにメンバーを追加
+  rpc AddUserGroupMember (AddUserGroupMemberRpcRequest) returns (EmptyResponse);
+  // ユーザーグループのメンバー情報を編集
+  rpc EditUserGroupMember (EditUserGroupMemberRpcRequest) returns (EmptyResponse);
+  // ユーザーグループからメンバーを削除
+  rpc RemoveUserGroupMember (RemoveUserGroupMemberRequest) returns (EmptyResponse);
+  // ユーザーグループの管理者を取得
+  rpc GetUserGroupAdmins (GetUserGroupAdminsRequest) returns (GetUserGroupAdminsResponse);
+  // ユーザーグループに管理者を追加
+  rpc AddUserGroupAdmin (AddUserGroupAdminRequest) returns (EmptyResponse);
+  // ユーザーグループの管理者から指定したユーザーを削除
+  rpc RemoveUserGroupAdmin (RemoveUserGroupAdminRequest) returns (EmptyResponse);
+}
+
+message GetUserGroupsRequest {
+  // No parameters
+}
+
+message GetUserGroupsResponse {
+  repeated UserGroup groups = 1;
+}
+
+message GetUserGroupRequest {
+  string group_id = 1;
+}
+
+message EditUserGroupRpcRequest {
+  string group_id = 1;
+  PatchUserGroupRequest payload = 2;
+}
+
+message DeleteUserGroupRequest {
+  string group_id = 1;
+}
+
+message ChangeUserGroupIconRequest {
+  string group_id = 1;
+  // アイコン画像ファイルUUID
+  string file_id = 2;
+}
+
+message GetUserGroupMembersRequest {
+  string group_id = 1;
+}
+
+message GetUserGroupMembersResponse {
+  repeated UserGroupMember members = 1;
+}
+
+message AddUserGroupMemberRpcRequest {
+  string group_id = 1;
+  PostUserGroupMemberRequest payload = 2;
+}
+
+message EditUserGroupMemberRpcRequest {
+  string group_id = 1;
+  string user_id = 2;
+  PatchUserGroupMemberRequest payload = 3;
+}
+
+message RemoveUserGroupMemberRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message GetUserGroupAdminsRequest {
+  string group_id = 1;
+}
+
+message GetUserGroupAdminsResponse {
+  repeated string admin_ids = 1;
+}
+
+message AddUserGroupAdminRequest {
+  string group_id = 1;
+  // ユーザーUUID
+  string user_id = 2; 
+}
+
+message RemoveUserGroupAdminRequest {
+  string group_id = 1;
+  string user_id = 2;
+}

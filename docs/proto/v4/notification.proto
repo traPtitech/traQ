@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+
+// 通知サービスは主にWebSocketを介してクライアントにプッシュされますが、
+// APIエンドポイントも存在するため、ここで定義します。
+
+// デバイス登録リクエスト (me.protoのPostMyFCMDeviceRequestと重複する可能性があるため注意)
+message RegisterDeviceRequest {
+  // FCMのデバイストークン
+  string token = 1;
+}
+
+// 未読チャンネルのリストを取得するリクエスト (me.protoのGetMyUnreadChannelsRequestと重複)
+message GetMyUnreadChannelsRequest {
+  // No parameters
+}
+
+// 未読チャンネル情報 (me.protoのUnreadChannelと重複)
+message UnreadChannel {
+  string channel_id = 1;
+  int32 count = 2;
+  bool noticeable = 3;
+  google.protobuf.Timestamp since = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  string newest_message_id = 6;
+}
+
+message GetMyUnreadChannelsResponse {
+  repeated UnreadChannel unread_channels = 1;
+}
+
+// チャンネルの未読状態を解消するリクエスト (me.protoのReadMyChannelRequestと重複)
+message ReadChannelRequest {
+  string channel_id = 1;
+}
+
+// チャンネル購読レベル設定リクエスト (me.protoのPutChannelSubscribeLevelRequestと重複)
+message SetChannelSubscribeLevelRequest {
+  string channel_id = 1; // path parameter
+  ChannelSubscribeLevel level = 2; // Removed common.
+}
+
+// チャンネル購読情報 (me.protoのChannelSubscriptionと重複)
+message ChannelSubscription {
+  string channel_id = 1;
+  ChannelSubscribeLevel level = 2; // Removed common.
+}
+
+message GetChannelSubscriptionsRequest {
+  // No parameters
+}
+
+message GetChannelSubscriptionsResponse {
+  repeated ChannelSubscription subscriptions = 1;
+}
+
+message GetMyChannelSubscriptionsRequest {}
+
+message GetMyChannelSubscriptionsResponse {
+  repeated ChannelSubscription subscriptions = 1;
+}
+
+service NotificationService {
+  // 自分の未読チャンネルのリストを取得します。
+  rpc GetMyUnreadChannels (GetMyUnreadChannelsRequest) returns (GetMyUnreadChannelsResponse); // GET /users/me/unread
+  // チャンネルを既読にします。
+  rpc ReadMyChannel(ReadChannelRequest) returns (EmptyResponse); // Removed common. // POST /users/me/unread/{channelId}
+  // チャンネルの通知購読レベルを設定します。
+  rpc SetMyChannelSubscribeLevel(SetChannelSubscribeLevelRequest) returns (EmptyResponse);
+  // FCMデバイスを登録します。
+  rpc RegisterFCMDevice(RegisterDeviceRequest) returns (EmptyResponse); // POST /users/me/fcm-device
+  // 自分のチャンネル購読状態を取得します。
+  rpc GetMyChannelSubscriptions (GetChannelSubscriptionsRequest) returns (GetMyChannelSubscriptionsResponse); // GET /users/me/subscriptions
+  // RSSフィードのWebSocketに接続します。
+  // rpc ConnectRSS (stream RSSMessage) returns (stream RSSMessage); // This is a WebSocket endpoint, special handling
+  // 通知のWebSocketに接続します。
+  // rpc ConnectNotification (stream NotificationMessage) returns (stream NotificationMessage); // This is a WebSocket endpoint, special handling
+}

@@ -1,0 +1,3431 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "v4/common.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ChannelService"
+    },
+    {
+      "name": "MessageService"
+    },
+    {
+      "name": "ClipService"
+    },
+    {
+      "name": "FileService"
+    },
+    {
+      "name": "StampService"
+    },
+    {
+      "name": "UserService"
+    },
+    {
+      "name": "UserGroupService"
+    },
+    {
+      "name": "AdminService"
+    },
+    {
+      "name": "BotService"
+    },
+    {
+      "name": "NotificationService"
+    },
+    {
+      "name": "Me"
+    },
+    {
+      "name": "MessageReportService"
+    },
+    {
+      "name": "OAuth2Service"
+    },
+    {
+      "name": "PinService"
+    },
+    {
+      "name": "WebhookService"
+    },
+    {
+      "name": "WebSocketService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/channels/{channelId}": {
+      "get": {
+        "summary": "指定したチャンネルの情報を取得します。",
+        "operationId": "AdminService_GetChannel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4Channel"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "channelId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/groups/{groupId}": {
+      "get": {
+        "summary": "指定したユーザーグループの情報を取得します。",
+        "operationId": "AdminService_GetUserGroupAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4UserGroup"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "description": "Changed from groupId to group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/users/me/stamp-history": {
+      "get": {
+        "summary": "自分のスタンプ履歴を取得",
+        "operationId": "Me_GetMyStampHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4GetMyStampHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "description": "取得する件数",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/users/me/subscriptions": {
+      "get": {
+        "summary": "自分のチャンネル購読状態を取得",
+        "operationId": "Me_GetMyChannelSubscriptions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4GetMyChannelSubscriptionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/users/me/tags": {
+      "post": {
+        "summary": "自分にタグを追加",
+        "operationId": "Me_AddMyUserTag",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4UserTag"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tag",
+            "description": "タグ文字列",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/users/me/unread": {
+      "get": {
+        "summary": "自分の未読チャンネルのリストを取得",
+        "operationId": "Me_GetMyUnreadChannels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4GetMyUnreadChannelsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "summary": "指定したユーザーの情報を取得します。",
+        "operationId": "AdminService_GetUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v4UserDetail"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v4AddUserGroupAdminRequest": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        }
+      }
+    },
+    "v4AdminServerConfig": {
+      "type": "object",
+      "properties": {
+        "skywayApiKey": {
+          "type": "string",
+          "title": "SkyWay APIキー"
+        },
+        "turnServer": {
+          "$ref": "#/definitions/v4TurnServer",
+          "title": "TURNサーバー情報"
+        },
+        "externalLogin": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v4ExternalLoginProvider"
+          },
+          "title": "外部ログイン設定"
+        },
+        "signUpAllowed": {
+          "type": "boolean",
+          "title": "新規登録許可"
+        },
+        "termsOfServiceText": {
+          "type": "string",
+          "title": "利用規約 (プレーンテキスト)"
+        }
+      },
+      "title": "サーバー設定"
+    },
+    "v4Bot": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "BOT UUID"
+        },
+        "botUserId": {
+          "type": "string",
+          "title": "BOTユーザーUUID"
+        },
+        "description": {
+          "type": "string",
+          "title": "BOTの説明"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "BOT開発者UUID"
+        },
+        "subscribeEvents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "BOTが購読しているイベントの配列"
+        },
+        "mode": {
+          "$ref": "#/definitions/v4BotMode",
+          "description": "Removed common.",
+          "title": "BOTモード"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "BOTが作成された日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "BOTが更新された日時"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "description": "Removed common.",
+          "title": "BOT状態"
+        }
+      },
+      "title": "BOT情報"
+    },
+    "v4BotDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "BOT UUID"
+        },
+        "botUserId": {
+          "type": "string",
+          "title": "BOTユーザーUUID"
+        },
+        "description": {
+          "type": "string",
+          "title": "BOTの説明"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "BOT開発者UUID"
+        },
+        "subscribeEvents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "BOTが購読しているイベントの配列"
+        },
+        "mode": {
+          "$ref": "#/definitions/v4BotMode",
+          "description": "Removed common.",
+          "title": "BOTモード"
+        },
+        "privileged": {
+          "type": "boolean",
+          "title": "特権BOTかどうか"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "BOTサーバーエンドポイント"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "description": "Removed common.",
+          "title": "BOT状態"
+        },
+        "channelIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "BOTが参加しているチャンネルのUUID配列"
+        },
+        "iconFileId": {
+          "type": "string",
+          "title": "BOTのアイコンファイルUUID"
+        },
+        "currentWebhookId": {
+          "type": "string",
+          "title": "BOTの現在のセッションのWebhook Sigmund ID"
+        }
+      },
+      "title": "BOT詳細情報"
+    },
+    "v4BotEvent": {
+      "type": "string",
+      "enum": [
+        "BOT_EVENT_UNSPECIFIED",
+        "BOT_EVENT_PING",
+        "BOT_EVENT_JOINED",
+        "BOT_EVENT_LEFT",
+        "BOT_EVENT_MESSAGE_CREATED",
+        "BOT_EVENT_MESSAGE_UPDATED",
+        "BOT_EVENT_MESSAGE_DELETED",
+        "BOT_EVENT_BOT_MESSAGE_STAMPS_UPDATED",
+        "BOT_EVENT_DIRECT_MESSAGE_CREATED",
+        "BOT_EVENT_DIRECT_MESSAGE_UPDATED",
+        "BOT_EVENT_DIRECT_MESSAGE_DELETED",
+        "BOT_EVENT_CHANNEL_CREATED",
+        "BOT_EVENT_CHANNEL_UPDATED",
+        "BOT_EVENT_CHANNEL_DELETED",
+        "BOT_EVENT_CHANNEL_STAMPED",
+        "BOT_EVENT_USER_CREATED",
+        "BOT_EVENT_USER_UPDATED",
+        "BOT_EVENT_USER_TAGS_UPDATED",
+        "BOT_EVENT_STAMP_CREATED",
+        "BOT_EVENT_TAG_CREATED",
+        "BOT_EVENT_TAG_UPDATED",
+        "BOT_EVENT_USER_GROUP_CREATED",
+        "BOT_EVENT_USER_GROUP_UPDATED",
+        "BOT_EVENT_USER_GROUP_DELETED",
+        "BOT_EVENT_USER_GROUP_MEMBER_ADDED",
+        "BOT_EVENT_USER_GROUP_MEMBER_UPDATED",
+        "BOT_EVENT_USER_GROUP_MEMBER_REMOVED",
+        "BOT_EVENT_USER_GROUP_ADMIN_ADDED",
+        "BOT_EVENT_USER_GROUP_ADMIN_REMOVED"
+      ],
+      "default": "BOT_EVENT_UNSPECIFIED",
+      "description": "- BOT_EVENT_UNSPECIFIED: 未指定\n - BOT_EVENT_PING: PING\n - BOT_EVENT_JOINED: チャンネル参加\n - BOT_EVENT_LEFT: チャンネル退出\n - BOT_EVENT_MESSAGE_CREATED: メッセージ作成\n - BOT_EVENT_MESSAGE_UPDATED: メッセージ編集\n - BOT_EVENT_MESSAGE_DELETED: メッセージ削除\n - BOT_EVENT_BOT_MESSAGE_STAMPS_UPDATED: BOTメッセージスタンプ更新\n - BOT_EVENT_DIRECT_MESSAGE_CREATED: ダイレクトメッセージ作成\n - BOT_EVENT_DIRECT_MESSAGE_UPDATED: ダイレクトメッセージ編集\n - BOT_EVENT_DIRECT_MESSAGE_DELETED: ダイレクトメッセージ削除\n - BOT_EVENT_CHANNEL_CREATED: チャンネル作成\n - BOT_EVENT_CHANNEL_UPDATED: チャンネル編集\n - BOT_EVENT_CHANNEL_DELETED: チャンネル削除\n - BOT_EVENT_CHANNEL_STAMPED: チャンネルスタンプ追加・削除\n - BOT_EVENT_USER_CREATED: ユーザー作成\n - BOT_EVENT_USER_UPDATED: ユーザー情報編集\n - BOT_EVENT_USER_TAGS_UPDATED: ユーザータグ編集\n - BOT_EVENT_STAMP_CREATED: スタンプ作成\n - BOT_EVENT_TAG_CREATED: タグ作成\n - BOT_EVENT_TAG_UPDATED: タグ編集\n - BOT_EVENT_USER_GROUP_CREATED: ユーザーグループ作成\n - BOT_EVENT_USER_GROUP_UPDATED: ユーザーグループ編集\n - BOT_EVENT_USER_GROUP_DELETED: ユーザーグループ削除\n - BOT_EVENT_USER_GROUP_MEMBER_ADDED: ユーザーグループメンバー追加\n - BOT_EVENT_USER_GROUP_MEMBER_UPDATED: ユーザーグループメンバー編集\n - BOT_EVENT_USER_GROUP_MEMBER_REMOVED: ユーザーグループメンバー削除\n - BOT_EVENT_USER_GROUP_ADMIN_ADDED: ユーザーグループ管理者追加\n - BOT_EVENT_USER_GROUP_ADMIN_REMOVED: ユーザーグループ管理者削除",
+      "title": "BOTイベントタイプ"
+    },
+    "v4BotEventLog": {
+      "type": "object",
+      "properties": {
+        "botId": {
+          "type": "string",
+          "title": "BOT UUID"
+        },
+        "requestId": {
+          "type": "string",
+          "title": "リクエストUUID"
+        },
+        "event": {
+          "$ref": "#/definitions/v4BotEvent",
+          "description": "Removed common.",
+          "title": "イベントタイプ"
+        },
+        "statusCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "ステータスコード"
+        },
+        "datetime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "イベント日時"
+        }
+      },
+      "title": "BOTイベントログ"
+    },
+    "v4BotJoinedEvent": {
+      "type": "object",
+      "properties": {
+        "botId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4BotLeftEvent": {
+      "type": "object",
+      "properties": {
+        "botId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4BotMessageStamp": {
+      "type": "object",
+      "properties": {
+        "stampId": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "--- Bot Event Payloads ---"
+    },
+    "v4BotMessageStampsUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "stamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4BotMessageStamp"
+          }
+        }
+      }
+    },
+    "v4BotMode": {
+      "type": "string",
+      "enum": [
+        "BOT_MODE_UNSPECIFIED",
+        "BOT_MODE_HTTP",
+        "BOT_MODE_WEBSOCKET"
+      ],
+      "default": "BOT_MODE_UNSPECIFIED",
+      "description": "- BOT_MODE_UNSPECIFIED: 未指定\n - BOT_MODE_HTTP: HTTP Mode\n - BOT_MODE_WEBSOCKET: WebSocket Mode",
+      "title": "BOT動作モード"
+    },
+    "v4BotPingRequestEvent": {
+      "type": "object",
+      "title": "No body in OpenAPI spec"
+    },
+    "v4BotStatusChangedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "title": "Changed from BotState to UserAccountState"
+        }
+      }
+    },
+    "v4BotTokens": {
+      "type": "object",
+      "properties": {
+        "verificationToken": {
+          "type": "string",
+          "title": "Verification Token"
+        },
+        "accessToken": {
+          "type": "string",
+          "title": "BOTアクセストークン"
+        }
+      },
+      "title": "BOTのトークン情報"
+    },
+    "v4BotUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "bot": {
+          "$ref": "#/definitions/v4Bot"
+        }
+      }
+    },
+    "v4CacheConfig": {
+      "type": "object",
+      "properties": {
+        "maxAgeSeconds": {
+          "type": "integer",
+          "format": "int32",
+          "title": "キャッシュ有効期限 (秒)"
+        }
+      },
+      "title": "アセットのキャッシュ設定"
+    },
+    "v4ChangeClipFolderOwnerRequest": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string"
+        }
+      },
+      "title": "クリップフォルダの所有者を変更するリクエスト"
+    },
+    "v4ChangeFileChannelRequest": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        }
+      },
+      "title": "ファイルのチャンネルID変更リクエスト"
+    },
+    "v4ChangeStampCreatorRequest": {
+      "type": "object",
+      "properties": {
+        "creatorId": {
+          "type": "string"
+        }
+      },
+      "title": "スタンプの作成者変更リクエスト"
+    },
+    "v4ChangeUserAccountStateRequest": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "title": "common. を削除"
+        }
+      },
+      "title": "ユーザーアカウント状態変更リクエスト"
+    },
+    "v4ChangeUserIconRequestAdmin": {
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string"
+        }
+      },
+      "title": "ユーザーのアイコンを変更するリクエスト (file.protoのPutUserIconRequestと重複の可能性あり)"
+    },
+    "v4ChangeUserPasswordRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "path parameter",
+          "title": "OpenAPI: #/components/schemas/PutUserPasswordRequest"
+        },
+        "newPassword": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "v4Channel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "チャンネルUUID"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "nullable in OpenAPI, proto3 strings are implicitly optional",
+          "title": "親チャンネルUUID"
+        },
+        "archived": {
+          "type": "boolean",
+          "title": "アーカイブされているかどうか"
+        },
+        "force": {
+          "type": "boolean",
+          "title": "強制通知チャンネルかどうか"
+        },
+        "topic": {
+          "type": "string",
+          "title": "チャンネルトピック"
+        },
+        "name": {
+          "type": "string",
+          "title": "チャンネル名"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "子チャンネルのUUID配列"
+        },
+        "visibility": {
+          "$ref": "#/definitions/v4ChannelVisibility",
+          "title": "チャンネル可視性"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        }
+      },
+      "title": "Channel はチャンネル情報を表します。\nOpenAPI: #/components/schemas/Channel"
+    },
+    "v4ChannelCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "channel": {
+          "$ref": "#/definitions/v4Channel"
+        }
+      },
+      "title": "--- Channel Event Payloads ---"
+    },
+    "v4ChannelDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4ChannelStaledEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4ChannelSubscribeLevel": {
+      "type": "string",
+      "enum": [
+        "CHANNEL_SUBSCRIBE_LEVEL_UNSPECIFIED",
+        "CHANNEL_SUBSCRIBE_LEVEL_NONE",
+        "CHANNEL_SUBSCRIBE_LEVEL_SUBSCRIBED",
+        "CHANNEL_SUBSCRIBE_LEVEL_NOTIFIED"
+      ],
+      "default": "CHANNEL_SUBSCRIBE_LEVEL_UNSPECIFIED",
+      "description": "- CHANNEL_SUBSCRIBE_LEVEL_UNSPECIFIED: Default value\n - CHANNEL_SUBSCRIBE_LEVEL_NONE: なし\n - CHANNEL_SUBSCRIBE_LEVEL_SUBSCRIBED: 購読のみ\n - CHANNEL_SUBSCRIBE_LEVEL_NOTIFIED: 通知あり",
+      "title": "チャンネル購読レベル"
+    },
+    "v4ChannelSubscribersChangedEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "subscriberIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v4ChannelSubscription": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/definitions/v4ChannelSubscribeLevel",
+          "description": "Removed common."
+        }
+      },
+      "title": "チャンネル購読情報 (me.protoのChannelSubscriptionと重複)"
+    },
+    "v4ChannelTopicChangedEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "updaterId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4ChannelUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "channel": {
+          "$ref": "#/definitions/v4Channel"
+        }
+      }
+    },
+    "v4ChannelViewersChangedEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "viewers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "user_id list"
+        },
+        "datetime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v4ChannelVisibility": {
+      "type": "string",
+      "enum": [
+        "CHANNEL_VISIBILITY_UNSPECIFIED",
+        "CHANNEL_VISIBILITY_PUBLIC",
+        "CHANNEL_VISIBILITY_PRIVATE",
+        "CHANNEL_VISIBILITY_DM"
+      ],
+      "default": "CHANNEL_VISIBILITY_UNSPECIFIED",
+      "description": "- CHANNEL_VISIBILITY_UNSPECIFIED: 未指定\n - CHANNEL_VISIBILITY_PUBLIC: 公開チャンネル\n - CHANNEL_VISIBILITY_PRIVATE: 非公開チャンネル (招待制)\n - CHANNEL_VISIBILITY_DM: DMチャンネル",
+      "title": "チャンネル可視性"
+    },
+    "v4ClientConfig": {
+      "type": "object",
+      "properties": {
+        "brandName": {
+          "type": "string",
+          "title": "ブランド名"
+        },
+        "faviconUrl": {
+          "type": "string",
+          "title": "Favicon URL"
+        },
+        "themeColor": {
+          "type": "string",
+          "title": "テーマカラー"
+        },
+        "customCss": {
+          "type": "string",
+          "title": "カスタムCSS"
+        }
+      },
+      "title": "クライアント設定情報"
+    },
+    "v4ClipFolder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "クリップフォルダUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "クリップフォルダ名"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "ownerId": {
+          "type": "string",
+          "title": "所有者UUID"
+        },
+        "description": {
+          "type": "string",
+          "title": "説明"
+        }
+      },
+      "title": "クリップフォルダ情報"
+    },
+    "v4ClipFolderCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "folder": {
+          "$ref": "#/definitions/v4ClipFolder"
+        }
+      },
+      "title": "--- ClipFolder Event Payloads ---"
+    },
+    "v4ClipFolderDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "folderId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4ClipFolderMessageClippedEvent": {
+      "type": "object",
+      "properties": {
+        "folderId": {
+          "type": "string"
+        },
+        "clippedMessage": {
+          "$ref": "#/definitions/v4ClippedMessage"
+        }
+      }
+    },
+    "v4ClipFolderMessageUnclippedEvent": {
+      "type": "object",
+      "properties": {
+        "folderId": {
+          "type": "string"
+        },
+        "messageId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4ClipFolderUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "folder": {
+          "$ref": "#/definitions/v4ClipFolder"
+        }
+      }
+    },
+    "v4ClippedMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "$ref": "#/definitions/v4Message",
+          "title": "Corrected: Removed 'message.' prefix, assuming Message is in v4 package (imported from message.proto)"
+        },
+        "clippedAt": {
+          "type": "string"
+        }
+      },
+      "title": "クリップされたメッセージの情報"
+    },
+    "v4DecideOAuth2AuthorizeResponse": {
+      "type": "object",
+      "properties": {
+        "redirectUri": {
+          "type": "string"
+        },
+        "errorMessage": {
+          "type": "string"
+        }
+      },
+      "title": "認可判定レスポンス。通常はリダイレクトURLを返すか、エラー。\ngRPCでは直接リダイレクトを表現できないため、リダイレクト先のURLを返すなど工夫が必要。"
+    },
+    "v4EditStampRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "スタンプ名"
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "OpenAPIにはないが、管理操作としてありえるか？ v4-api.yamlではnameのみ",
+          "title": "作成者UUID"
+        }
+      },
+      "title": "スタンプ編集リクエスト"
+    },
+    "v4EditUserRolesRequest": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "ユーザーロール更新リクエスト"
+    },
+    "v4EditUserTagRequestAdmin": {
+      "type": "object",
+      "properties": {
+        "tagId": {
+          "type": "string"
+        },
+        "isLocked": {
+          "type": "boolean"
+        }
+      },
+      "title": "ユーザーのタグを編集するリクエスト (user.protoのEditUserTagRequestと重複の可能性あり)"
+    },
+    "v4EmptyResponse": {
+      "type": "object",
+      "title": "空のレスポンスを表すメッセージ"
+    },
+    "v4ExternalLoginProvider": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "clientSecret": {
+          "type": "string"
+        },
+        "issuerUrl": {
+          "type": "string",
+          "title": "For OpenID Connect"
+        },
+        "teamId": {
+          "type": "string",
+          "title": "For Sign in with Apple"
+        },
+        "keyId": {
+          "type": "string",
+          "title": "For Sign in with Apple"
+        },
+        "privateKey": {
+          "type": "string",
+          "title": "For Sign in with Apple"
+        }
+      },
+      "title": "外部ログインプロバイダ設定"
+    },
+    "v4ExternalProviderUser": {
+      "type": "object",
+      "properties": {
+        "providerName": {
+          "type": "string",
+          "title": "外部サービス名"
+        },
+        "linkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "連携した日時"
+        },
+        "externalName": {
+          "type": "string",
+          "title": "外部アカウント名など"
+        }
+      },
+      "title": "自分の外部アカウント連携情報"
+    },
+    "v4FileInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ファイルUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "ファイル名"
+        },
+        "mimeType": {
+          "type": "string",
+          "title": "MIMEタイプ"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64",
+          "title": "ファイルサイズ (バイト単位)"
+        },
+        "md5Hash": {
+          "type": "string",
+          "title": "MD5ハッシュ"
+        },
+        "hasThumbnail": {
+          "type": "boolean",
+          "title": "サムネイルが存在するかどうか"
+        },
+        "thumbnailType": {
+          "$ref": "#/definitions/v4ThumbnailType",
+          "title": "サムネイルの種類 (存在する場合)"
+        },
+        "channelId": {
+          "type": "string",
+          "description": "nullable",
+          "title": "チャンネルUUID (アップロードされたチャンネル)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "アップロード日時"
+        }
+      },
+      "title": "FileInfo はファイル情報を表します。\nOpenAPI: #/components/schemas/FileInfo"
+    },
+    "v4Flags": {
+      "type": "object",
+      "properties": {
+        "externalLoginEnabled": {
+          "type": "boolean",
+          "title": "外部ログインが有効か"
+        },
+        "signUpAllowed": {
+          "type": "boolean",
+          "title": "新規登録が有効か"
+        },
+        "skywayApiKey": {
+          "type": "string",
+          "title": "SkyWay APIキー"
+        },
+        "turnServer": {
+          "$ref": "#/definitions/v4TurnServer",
+          "title": "TURNサーバー情報"
+        }
+      },
+      "title": "traQフラグ"
+    },
+    "v4GetBotLogsResponse": {
+      "type": "object",
+      "properties": {
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4BotEventLog"
+          }
+        }
+      }
+    },
+    "v4GetBotsResponse": {
+      "type": "object",
+      "properties": {
+        "bots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Bot"
+          }
+        }
+      }
+    },
+    "v4GetChannelsAdminResponse": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Channel"
+          }
+        }
+      }
+    },
+    "v4GetChannelsResponse": {
+      "type": "object",
+      "properties": {
+        "publicChannels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Channel"
+          },
+          "title": "Name implies public, consider if all channels or needs filtering"
+        }
+      }
+    },
+    "v4GetClientsResponse": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4OAuth2Client"
+          }
+        }
+      }
+    },
+    "v4GetClipFoldersAdminResponse": {
+      "type": "object",
+      "properties": {
+        "clipFolders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4ClipFolder"
+          }
+        }
+      }
+    },
+    "v4GetClipFoldersResponse": {
+      "type": "object",
+      "properties": {
+        "folders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4ClipFolder"
+          }
+        }
+      }
+    },
+    "v4GetFileResponse": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "title": "From Content-Disposition or FileInfo"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "format": "byte",
+          "title": "or stream bytes"
+        }
+      },
+      "title": "GetFileResponse はファイルダウンロードレスポンスです。\nファイル内容はストリーミングかbytesで送信"
+    },
+    "v4GetFilesAdminResponse": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4FileInfo"
+          },
+          "title": "file. を削除"
+        }
+      }
+    },
+    "v4GetMessageReportsResponse": {
+      "type": "object",
+      "properties": {
+        "reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4MessageReport"
+          }
+        },
+        "totalHits": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v4GetMessagesInClipFolderResponse": {
+      "type": "object",
+      "properties": {
+        "clips": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4ClippedMessage"
+          }
+        },
+        "totalHits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "総クリップ数"
+        }
+      }
+    },
+    "v4GetMessagesResponse": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Message"
+          }
+        },
+        "hasMore": {
+          "type": "boolean",
+          "title": "To indicate pagination"
+        }
+      }
+    },
+    "v4GetMyChannelSubscriptionsResponse": {
+      "type": "object",
+      "properties": {
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4ChannelSubscription"
+          }
+        }
+      }
+    },
+    "v4GetMyExternalAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4ExternalProviderUser"
+          }
+        }
+      }
+    },
+    "v4GetMyFCMDevicesResponse": {
+      "type": "object",
+      "properties": {
+        "fcmDeviceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "OpenAPIでは`device_id`の配列"
+        }
+      }
+    },
+    "v4GetMySessionsForQRCodeResponse": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4LoginSession"
+          }
+        }
+      }
+    },
+    "v4GetMySessionsResponse": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4MySession"
+          }
+        }
+      }
+    },
+    "v4GetMyStampHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4StampHistoryEntry"
+          }
+        }
+      }
+    },
+    "v4GetMyStampPalettesResponse": {
+      "type": "object",
+      "properties": {
+        "palettes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4StampPalette"
+          },
+          "title": "Changed from stamp.StampPalette to StampPalette"
+        }
+      }
+    },
+    "v4GetMyStreamsResponse": {
+      "type": "object",
+      "properties": {
+        "streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4MyStream"
+          }
+        }
+      }
+    },
+    "v4GetMyTokensResponse": {
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4MyToken"
+          }
+        }
+      }
+    },
+    "v4GetMyUnreadChannelsResponse": {
+      "type": "object",
+      "properties": {
+        "unreadChannels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UnreadChannel"
+          }
+        }
+      }
+    },
+    "v4GetMyUserTagsResponse": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserTag"
+          }
+        }
+      }
+    },
+    "v4GetPaletteStampsResponse": {
+      "type": "object",
+      "properties": {
+        "stampIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v4GetPinsResponse": {
+      "type": "object",
+      "properties": {
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Pin"
+          }
+        }
+      }
+    },
+    "v4GetStampPalettesResponse": {
+      "type": "object",
+      "properties": {
+        "palettes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4StampPalette"
+          }
+        }
+      }
+    },
+    "v4GetStampsAdminResponse": {
+      "type": "object",
+      "properties": {
+        "stamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Stamp"
+          },
+          "title": "Changed from stamp.Stamp to Stamp"
+        }
+      }
+    },
+    "v4GetStampsResponse": {
+      "type": "object",
+      "properties": {
+        "publicStamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4StampWithThumbnail"
+          },
+          "title": "repeated StampWithThumbnail unicode_stamps = 2; // OpenAPIでは区別なし、フラグで制御"
+        }
+      }
+    },
+    "v4GetUserGroupAdminsResponse": {
+      "type": "object",
+      "properties": {
+        "adminIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v4GetUserGroupMembersResponse": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserGroupMember"
+          }
+        }
+      }
+    },
+    "v4GetUserGroupsAdminResponse": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserGroup"
+          }
+        }
+      }
+    },
+    "v4GetUserGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserGroup"
+          }
+        }
+      }
+    },
+    "v4GetUsersAdminResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserDetail"
+          }
+        }
+      }
+    },
+    "v4GetUsersResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4User"
+          }
+        }
+      }
+    },
+    "v4GetWebhookSecretResponse": {
+      "type": "object",
+      "properties": {
+        "secret": {
+          "type": "string"
+        }
+      }
+    },
+    "v4GetWebhookStatisticsResponse": {
+      "type": "object",
+      "properties": {
+        "statistics": {
+          "$ref": "#/definitions/v4WebhookStatistics"
+        }
+      }
+    },
+    "v4GetWebhooksResponse": {
+      "type": "object",
+      "properties": {
+        "webhooks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4Webhook"
+          }
+        }
+      }
+    },
+    "v4ImportedMessage": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "ユーザー名 (traQ ID)"
+        },
+        "text": {
+          "type": "string",
+          "title": "本文"
+        },
+        "datetime": {
+          "type": "string",
+          "title": "投稿日時 (ISO 8601 format)"
+        }
+      },
+      "title": "インポートされるメッセージ"
+    },
+    "v4LoginSession": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "セッションID"
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "発行日時"
+        }
+      },
+      "title": "QRコードログイン用セッション情報"
+    },
+    "v4Message": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "メッセージUUID"
+        },
+        "userId": {
+          "type": "string",
+          "title": "投稿者UUID"
+        },
+        "channelId": {
+          "type": "string",
+          "title": "チャンネルUUID"
+        },
+        "content": {
+          "type": "string",
+          "title": "メッセージ本文"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "投稿日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "編集日時"
+        },
+        "pinned": {
+          "type": "boolean",
+          "title": "ピン留めされているかどうか"
+        },
+        "stamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4MessageStamp"
+          },
+          "title": "メッセージに付いているスタンプのリスト"
+        },
+        "threadId": {
+          "type": "string",
+          "description": "nullable in OpenAPI",
+          "title": "スレッドUUID"
+        }
+      },
+      "title": "Message はメッセージ情報を表します。\nOpenAPI: #/components/schemas/Message"
+    },
+    "v4MessageCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/definitions/v4Message"
+        }
+      },
+      "title": "--- Message Event Payloads ---"
+    },
+    "v4MessageDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4MessagePinnedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string",
+          "title": "Pin object might be redundant if message_id is enough"
+        }
+      }
+    },
+    "v4MessageReadEvent": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4MessageReport": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "通報UUID"
+        },
+        "messageId": {
+          "type": "string",
+          "title": "通報されたメッセージのUUID"
+        },
+        "reporterId": {
+          "type": "string",
+          "title": "通報者UUID"
+        },
+        "reason": {
+          "type": "string",
+          "title": "通報理由"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "assigneeId": {
+          "type": "string",
+          "title": "対応者UUID"
+        },
+        "status": {
+          "type": "string",
+          "title": "対応状態 (例: \"open\", \"closed\", \"rejected\")"
+        }
+      },
+      "title": "通報情報"
+    },
+    "v4MessageStamp": {
+      "type": "object",
+      "properties": {
+        "stampId": {
+          "type": "string",
+          "title": "スタンプUUID"
+        },
+        "userId": {
+          "type": "string",
+          "title": "スタンプを押したユーザーUUID"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "このユーザーによってこのメッセージに押されたこのスタンプの数"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最初にスタンプが押された日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最後にスタンプが押された日時"
+        }
+      },
+      "title": "MessageStamp はメッセージに付けられたスタンプ情報を表します。\nOpenAPI: #/components/schemas/MessageStamp"
+    },
+    "v4MessageStampedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "stampId": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v4MessageUnpinnedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4MessageUnstampedEvent": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string"
+        },
+        "channelId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "stampId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4MessageUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/definitions/v4Message"
+        }
+      }
+    },
+    "v4MySession": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "セッションID"
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "発行日時"
+        },
+        "lastUsed": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最終利用日時"
+        },
+        "device": {
+          "type": "string",
+          "title": "デバイス名"
+        },
+        "os": {
+          "type": "string",
+          "title": "OS名"
+        },
+        "osVersion": {
+          "type": "string",
+          "title": "OSバージョン"
+        },
+        "browser": {
+          "type": "string",
+          "title": "ブラウザ名"
+        },
+        "browserVersion": {
+          "type": "string",
+          "title": "ブラウザバージョン"
+        }
+      },
+      "title": "自分のセッション情報"
+    },
+    "v4MyStream": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string",
+          "title": "チャンネルUUID"
+        },
+        "windowId": {
+          "type": "string",
+          "title": "ウィンドウ識別子"
+        }
+      },
+      "title": "自分の通知ストリーム接続ユーザー情報"
+    },
+    "v4MyToken": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "title": "OAuth2アクセストークン"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "OAuth2トークンスコープ"
+        }
+      },
+      "title": "自分のトークン情報"
+    },
+    "v4MyUserDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "traQ ID"
+        },
+        "displayName": {
+          "type": "string",
+          "title": "表示名"
+        },
+        "iconFileId": {
+          "type": "string",
+          "title": "アイコンファイルUUID"
+        },
+        "bot": {
+          "type": "boolean",
+          "title": "BOTかどうか"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "title": "アカウント状態"
+        },
+        "online": {
+          "type": "boolean",
+          "title": "オンラインかどうか"
+        },
+        "bio": {
+          "type": "string",
+          "title": "自己紹介(biography)"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "所属グループのUUIDの配列"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserTag"
+          },
+          "description": "Changed tag from 6 to 10",
+          "title": "タグリスト"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "lastOnline": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最終オンライン日時"
+        },
+        "homeChannel": {
+          "type": "string",
+          "description": "Added optional",
+          "title": "ホームチャンネル"
+        }
+      },
+      "title": "自分のユーザー詳細情報"
+    },
+    "v4OAuth2Client": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "クライアントUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "クライアント名"
+        },
+        "description": {
+          "type": "string",
+          "title": "説明"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "クライアント開発者UUID"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OAuth2Scope enum could be used if defined",
+          "title": "要求スコープの配列"
+        }
+      },
+      "title": "OAuth2クライアント情報"
+    },
+    "v4OAuth2ClientDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "クライアントUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "クライアント名"
+        },
+        "description": {
+          "type": "string",
+          "title": "説明"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "クライアント開発者UUID"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "要求スコープの配列"
+        },
+        "redirectUris": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "リダイレクトURIの配列"
+        },
+        "secret": {
+          "type": "string",
+          "title": "クライアントシークレット"
+        },
+        "grantTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OAuth2GrantType enum could be used",
+          "title": "グラントタイプ"
+        },
+        "responseTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OAuth2ResponseType enum could be used",
+          "title": "レスポンスタイプ"
+        }
+      },
+      "title": "OAuth2クライアント詳細情報"
+    },
+    "v4OAuth2PromptType": {
+      "type": "string",
+      "enum": [
+        "OAUTH2_PROMPT_TYPE_UNSPECIFIED",
+        "OAUTH2_PROMPT_TYPE_NONE"
+      ],
+      "default": "OAUTH2_PROMPT_TYPE_UNSPECIFIED",
+      "description": "- OAUTH2_PROMPT_TYPE_UNSPECIFIED: 未指定\n - OAUTH2_PROMPT_TYPE_NONE: なし",
+      "title": "OAuth2 Promptタイプ"
+    },
+    "v4OAuth2Token": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "title": "アクセストークン"
+        },
+        "tokenType": {
+          "type": "string",
+          "title": "トークンタイプ"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int32",
+          "title": "有効期間(秒)"
+        },
+        "refreshToken": {
+          "type": "string",
+          "title": "リフレッシュトークン"
+        },
+        "scope": {
+          "type": "string",
+          "description": "space-separated string of scopes",
+          "title": "スコープ"
+        },
+        "idToken": {
+          "type": "string",
+          "title": "IDトークン (OpenID Connect)"
+        }
+      },
+      "title": "OAuth2トークン"
+    },
+    "v4PatchBotRequest": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "title": "BOT表示名"
+        },
+        "description": {
+          "type": "string",
+          "title": "BOTの説明"
+        },
+        "privileged": {
+          "type": "boolean",
+          "title": "特権BOTかどうか"
+        },
+        "mode": {
+          "$ref": "#/definitions/v4BotMode",
+          "description": "Removed common.",
+          "title": "BOTモード"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "BOTサーバーエンドポイント"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "BOT開発者UUID"
+        },
+        "subscribeEvents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "BOTが購読するイベントの配列"
+        }
+      },
+      "title": "BOT情報編集リクエスト"
+    },
+    "v4PatchClientRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "クライアント名"
+        },
+        "description": {
+          "type": "string",
+          "title": "説明"
+        },
+        "callbackUrl": {
+          "type": "string",
+          "title": "コールバックURL"
+        },
+        "developerId": {
+          "type": "string",
+          "title": "開発者UUID"
+        }
+      },
+      "title": "OAuth2クライアント編集リクエスト"
+    },
+    "v4PatchStampPaletteRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "パレット名"
+        },
+        "description": {
+          "type": "string",
+          "title": "パレット説明"
+        },
+        "stamps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OpenAPIではPUTで全置き換えだが、PATCHでは部分更新も考慮",
+          "title": "パレット内のスタンプのUUIDの配列"
+        }
+      },
+      "title": "スタンプパレット編集リクエスト"
+    },
+    "v4PatchUserGroupMemberRequest": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "title": "ユーザーの役割"
+        }
+      },
+      "title": "グループメンバー編集リクエスト"
+    },
+    "v4PatchUserGroupRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "グループ名"
+        },
+        "description": {
+          "type": "string",
+          "title": "説明"
+        },
+        "type": {
+          "type": "string",
+          "title": "グループタイプ"
+        },
+        "adminUserId": {
+          "type": "string",
+          "title": "グループ管理者UUID"
+        }
+      },
+      "title": "ユーザーグループ編集リクエスト"
+    },
+    "v4PatchUserTagRequest": {
+      "type": "object",
+      "properties": {
+        "isLocked": {
+          "type": "boolean",
+          "title": "タグがロックされているか"
+        }
+      },
+      "title": "自分のタグ編集リクエスト"
+    },
+    "v4PatchWebhookRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Webhook表示名"
+        },
+        "description": {
+          "type": "string",
+          "title": "Webhook説明"
+        },
+        "channelId": {
+          "type": "string",
+          "title": "Webhookを送信するチャンネルのUUID"
+        },
+        "secret": {
+          "type": "string",
+          "title": "Webhookのシークレット"
+        },
+        "ownerId": {
+          "type": "string",
+          "title": "Webhookの所有者UUID"
+        }
+      },
+      "title": "Webhook情報変更リクエスト"
+    },
+    "v4Pin": {
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "title": "ピン留めされたメッセージのUUID"
+        },
+        "userId": {
+          "type": "string",
+          "title": "ピン留めしたユーザーのUUID"
+        },
+        "pinnedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "ピン留めされた日時"
+        },
+        "message": {
+          "$ref": "#/definitions/v4Message",
+          "description": "Corrected: Removed 'message.' prefix",
+          "title": "ピン留めされたメッセージ"
+        }
+      },
+      "title": "ピン情報"
+    },
+    "v4PostUserGroupMemberRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "role": {
+          "type": "string",
+          "title": "ユーザーの役割"
+        }
+      },
+      "title": "グループメンバー追加リクエスト"
+    },
+    "v4PostWebhookMessageRequest": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "メッセージ本文"
+        },
+        "embeds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Assuming embeds are strings for simplicity, could be more complex",
+          "title": "埋め込みコンテンツの配列"
+        },
+        "plain": {
+          "type": "boolean",
+          "title": "プレーンテキストでない場合に指定"
+        },
+        "threadId": {
+          "type": "string",
+          "title": "スレッドID (投稿先のメッセージID)"
+        }
+      },
+      "title": "Webhookメッセージ投稿リクエスト"
+    },
+    "v4PutChannelSubscribeLevelRequest": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/definitions/v4ChannelSubscribeLevel",
+          "description": "common. を削除",
+          "title": "通知レベル"
+        }
+      },
+      "title": "チャンネル購読レベル変更リクエスト"
+    },
+    "v4ReplacePaletteStampsRequest": {
+      "type": "object",
+      "properties": {
+        "stamps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "スタンプUUIDの配列"
+        }
+      },
+      "title": "スタンプパレット内スタンプ編集リクエスト"
+    },
+    "v4ServerInfo": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "title": "サーバーバージョン"
+        },
+        "revision": {
+          "type": "string",
+          "title": "サーバーリビジョン"
+        },
+        "bootTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "サーバー起動時刻"
+        }
+      },
+      "title": "サーバー情報"
+    },
+    "v4Stamp": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "スタンプUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "スタンプ名"
+        },
+        "creatorId": {
+          "type": "string",
+          "title": "作成者UUID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "fileId": {
+          "type": "string",
+          "title": "スタンプ画像ファイルUUID"
+        },
+        "isUnicode": {
+          "type": "boolean",
+          "title": "Unicode絵文字か否か"
+        }
+      },
+      "title": "スタンプ情報"
+    },
+    "v4StampCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "creatorId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "isUnicode": {
+          "type": "boolean"
+        },
+        "stamp": {
+          "$ref": "#/definitions/v4Stamp",
+          "title": "Changed from stamp.Stamp to Stamp"
+        }
+      },
+      "title": "--- Stamp Event Payloads ---"
+    },
+    "v4StampDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "stampId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4StampHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "stampId": {
+          "type": "string",
+          "title": "スタンプUUID"
+        },
+        "datetime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "使用日時"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "title": "使用回数"
+        }
+      },
+      "title": "スタンプ履歴のアイテム"
+    },
+    "v4StampPalette": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "スタンプパレットUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "スタンプパレット名"
+        },
+        "description": {
+          "type": "string",
+          "title": "スタンプパレットの説明"
+        },
+        "stamps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "パレット内のスタンプのUUID配列"
+        },
+        "creatorId": {
+          "type": "string",
+          "title": "作成者UUID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        }
+      },
+      "title": "スタンプパレット情報"
+    },
+    "v4StampPaletteCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "palette": {
+          "$ref": "#/definitions/v4StampPalette",
+          "title": "Changed from stamp.StampPalette to StampPalette"
+        }
+      }
+    },
+    "v4StampPaletteDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ID of the deleted stamp palette"
+        }
+      }
+    },
+    "v4StampPaletteUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "palette": {
+          "$ref": "#/definitions/v4StampPalette",
+          "title": "Changed from stamp.StampPalette to StampPalette"
+        }
+      }
+    },
+    "v4StampStats": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "string",
+          "format": "int64",
+          "title": "スタンプ使用回数"
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "スタンプ合計使用回数"
+        },
+        "datetime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "OpenAPIでは `lastUsed` だが、ここでは一般的な名前に",
+          "title": "スタンプ使用日時"
+        }
+      },
+      "title": "スタンプ統計情報"
+    },
+    "v4StampUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "stamp": {
+          "$ref": "#/definitions/v4Stamp",
+          "title": "Changed from stamp.Stamp to Stamp"
+        }
+      }
+    },
+    "v4StampWithThumbnail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "スタンプUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "スタンプ名"
+        },
+        "creatorId": {
+          "type": "string",
+          "title": "作成者UUID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "fileId": {
+          "type": "string",
+          "title": "スタンプ画像ファイルUUID"
+        },
+        "isUnicode": {
+          "type": "boolean",
+          "title": "Unicode絵文字か否か"
+        },
+        "hasThumbnail": {
+          "type": "boolean",
+          "title": "サムネイルの有無"
+        }
+      },
+      "title": "スタンプ情報とサムネイルの有無"
+    },
+    "v4ThumbnailType": {
+      "type": "string",
+      "enum": [
+        "THUMBNAIL_TYPE_UNSPECIFIED",
+        "THUMBNAIL_TYPE_IMAGE",
+        "THUMBNAIL_TYPE_WAVEFORM"
+      ],
+      "default": "THUMBNAIL_TYPE_UNSPECIFIED",
+      "description": "- THUMBNAIL_TYPE_UNSPECIFIED: 未指定\n - THUMBNAIL_TYPE_IMAGE: 画像サムネイル\n - THUMBNAIL_TYPE_WAVEFORM: 波形画像サムネイル",
+      "title": "サムネイル種類"
+    },
+    "v4TurnServer": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "credential": {
+          "type": "string"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "TURNサーバー情報"
+    },
+    "v4UnreadChannel": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "noticeable": {
+          "type": "boolean"
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "newestMessageId": {
+          "type": "string"
+        }
+      },
+      "title": "未読チャンネル情報 (me.protoのUnreadChannelと重複)"
+    },
+    "v4User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "ユーザー名"
+        },
+        "displayName": {
+          "type": "string",
+          "title": "表示名"
+        },
+        "iconFileId": {
+          "type": "string",
+          "title": "アイコンファイルUUID"
+        },
+        "bot": {
+          "type": "boolean",
+          "title": "BOTかどうか"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "title": "アカウント状態"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        }
+      },
+      "title": "User はユーザー情報を表します。\nOpenAPI: #/components/schemas/User"
+    },
+    "v4UserAccountState": {
+      "type": "string",
+      "enum": [
+        "USER_ACCOUNT_STATE_UNSPECIFIED",
+        "USER_ACCOUNT_STATE_DEACTIVATED",
+        "USER_ACCOUNT_STATE_ACTIVE",
+        "USER_ACCOUNT_STATE_SUSPENDED"
+      ],
+      "default": "USER_ACCOUNT_STATE_UNSPECIFIED",
+      "description": "- USER_ACCOUNT_STATE_UNSPECIFIED: デフォルト値、バリデーションで使用しないでください\n - USER_ACCOUNT_STATE_DEACTIVATED: 利用規約未同意・凍結\n - USER_ACCOUNT_STATE_ACTIVE: 有効\n - USER_ACCOUNT_STATE_SUSPENDED: 凍結",
+      "title": "ユーザーアカウント状態"
+    },
+    "v4UserDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "state": {
+          "$ref": "#/definitions/v4UserAccountState",
+          "title": "アカウント状態"
+        },
+        "bot": {
+          "type": "boolean",
+          "title": "BOTかどうか"
+        },
+        "iconFileId": {
+          "type": "string",
+          "title": "アイコンファイルUUID"
+        },
+        "displayName": {
+          "type": "string",
+          "title": "表示名"
+        },
+        "name": {
+          "type": "string",
+          "title": "ユーザー名"
+        },
+        "twitterId": {
+          "type": "string",
+          "title": "Twitter ID"
+        },
+        "lastOnline": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最終オンライン日時 (null許容)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "所属グループのUUIDの配列"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserTag"
+          },
+          "title": "タグリスト"
+        },
+        "homeChannel": {
+          "type": "string",
+          "title": "ホームチャンネル (null許容)"
+        }
+      },
+      "title": "UserDetail はユーザー詳細情報を表します。\nOpenAPI: #/components/schemas/UserDetail"
+    },
+    "v4UserGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "グループUUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "グループ名"
+        },
+        "description": {
+          "type": "string",
+          "title": "グループ説明"
+        },
+        "type": {
+          "type": "string",
+          "title": "グループタイプ"
+        },
+        "iconFileId": {
+          "type": "string",
+          "title": "グループアイコンファイルUUID"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserGroupMember"
+          },
+          "title": "グループメンバーの配列"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "adminUserId": {
+          "type": "string",
+          "title": "グループ管理者のUUID"
+        }
+      },
+      "title": "ユーザーグループ"
+    },
+    "v4UserGroupAdminAddedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserGroupAdminRemovedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserGroupCreatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "group": {
+          "$ref": "#/definitions/v4UserGroup"
+        }
+      },
+      "title": "--- UserGroup Event Payloads ---"
+    },
+    "v4UserGroupDeletedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserGroupMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "role": {
+          "type": "string",
+          "title": "ユーザーの役割"
+        }
+      },
+      "title": "ユーザーグループメンバー"
+    },
+    "v4UserGroupMemberAddedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "member": {
+          "$ref": "#/definitions/v4UserGroupMember"
+        }
+      }
+    },
+    "v4UserGroupMemberRemovedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserGroupMemberUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "member": {
+          "$ref": "#/definitions/v4UserGroupMember"
+        }
+      }
+    },
+    "v4UserGroupUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "group": {
+          "$ref": "#/definitions/v4UserGroup"
+        }
+      }
+    },
+    "v4UserIconUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "iconFileId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserJoinedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/v4User"
+        }
+      },
+      "title": "--- User Event Payloads ---"
+    },
+    "v4UserLeftEvent": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserOfflineEvent": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserOnlineEvent": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "v4UserSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ユーザーUUID"
+        },
+        "suppressNotifySound": {
+          "type": "boolean",
+          "title": "未読チャンネルの通知を抑制するかどうか"
+        }
+      },
+      "title": "ユーザー設定"
+    },
+    "v4UserStats": {
+      "type": "object",
+      "properties": {
+        "totalMessageCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "stamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserStatsStamp"
+          }
+        },
+        "datetime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "UserStats はユーザーステータス情報を表します。\nOpenAPI: #/components/schemas/UserStats"
+    },
+    "v4UserStatsStamp": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "UserStatsStamp はユーザーステータススタンプ情報を表します。\nOpenAPI: #/components/schemas/UserStatsStamp"
+    },
+    "v4UserTag": {
+      "type": "object",
+      "properties": {
+        "tagId": {
+          "type": "string",
+          "title": "タグUUID"
+        },
+        "tag": {
+          "type": "string",
+          "title": "タグ文字列"
+        },
+        "isLocked": {
+          "type": "boolean",
+          "title": "タグがロックされているか"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "タグがつけられた日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "タグが更新された日時"
+        }
+      },
+      "title": "UserTag はユーザータグ情報を表します。\nOpenAPI: #/components/schemas/UserTag"
+    },
+    "v4UserTagUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "tagId": {
+          "type": "string"
+        },
+        "tag": {
+          "$ref": "#/definitions/v4UserTag"
+        }
+      }
+    },
+    "v4UserUpdatedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/v4User"
+        }
+      }
+    },
+    "v4UserWebRTCState": {
+      "type": "object",
+      "properties": {
+        "channelId": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "session_id list"
+        }
+      }
+    },
+    "v4UserWebRTCStateChangedEvent": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v4UserWebRTCState"
+          }
+        }
+      }
+    },
+    "v4Version": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "title": "traQバージョン"
+        },
+        "version": {
+          "type": "string",
+          "title": "traQバージョンセマンティックバージョン"
+        },
+        "flags": {
+          "$ref": "#/definitions/v4Flags",
+          "title": "traQフラグ"
+        }
+      },
+      "title": "サーバーバージョン情報"
+    },
+    "v4Webhook": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "WebhookUUID"
+        },
+        "botUserId": {
+          "type": "string",
+          "title": "WebhookユーザーUUID"
+        },
+        "displayName": {
+          "type": "string",
+          "title": "Webhook表示名"
+        },
+        "description": {
+          "type": "string",
+          "title": "Webhook説明"
+        },
+        "channelId": {
+          "type": "string",
+          "title": "Webhookを送信するチャンネルのUUID"
+        },
+        "ownerId": {
+          "type": "string",
+          "title": "Webhookの所有者UUID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        }
+      },
+      "title": "Webhook情報"
+    },
+    "v4WebhookStatistics": {
+      "type": "object",
+      "properties": {
+        "webhookId": {
+          "type": "string",
+          "title": "Webhook UUID"
+        },
+        "name": {
+          "type": "string",
+          "title": "Webhook名"
+        },
+        "description": {
+          "type": "string",
+          "title": "Webhook説明"
+        },
+        "channelId": {
+          "type": "string",
+          "title": "チャンネルUUID"
+        },
+        "ownerId": {
+          "type": "string",
+          "title": "所有者UUID"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "作成日時"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "更新日時"
+        },
+        "messageCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "メッセージ数"
+        },
+        "lastMessageAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "最終メッセージ日時"
+        }
+      },
+      "title": "Webhook統計情報"
+    },
+    "v4WsEvent": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v4WsEventType"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userJoined": {
+          "$ref": "#/definitions/v4UserJoinedEvent"
+        },
+        "userLeft": {
+          "$ref": "#/definitions/v4UserLeftEvent"
+        },
+        "userOnline": {
+          "$ref": "#/definitions/v4UserOnlineEvent"
+        },
+        "userOffline": {
+          "$ref": "#/definitions/v4UserOfflineEvent"
+        },
+        "userUpdated": {
+          "$ref": "#/definitions/v4UserUpdatedEvent"
+        },
+        "userIconUpdated": {
+          "$ref": "#/definitions/v4UserIconUpdatedEvent"
+        },
+        "userTagUpdated": {
+          "$ref": "#/definitions/v4UserTagUpdatedEvent"
+        },
+        "userWebrtcStateChanged": {
+          "$ref": "#/definitions/v4UserWebRTCStateChangedEvent"
+        },
+        "channelCreated": {
+          "$ref": "#/definitions/v4ChannelCreatedEvent"
+        },
+        "channelUpdated": {
+          "$ref": "#/definitions/v4ChannelUpdatedEvent"
+        },
+        "channelDeleted": {
+          "$ref": "#/definitions/v4ChannelDeletedEvent"
+        },
+        "channelStaled": {
+          "$ref": "#/definitions/v4ChannelStaledEvent"
+        },
+        "channelViewersChanged": {
+          "$ref": "#/definitions/v4ChannelViewersChangedEvent"
+        },
+        "channelSubscribersChanged": {
+          "$ref": "#/definitions/v4ChannelSubscribersChangedEvent"
+        },
+        "channelTopicChanged": {
+          "$ref": "#/definitions/v4ChannelTopicChangedEvent"
+        },
+        "messageCreated": {
+          "$ref": "#/definitions/v4MessageCreatedEvent"
+        },
+        "messageUpdated": {
+          "$ref": "#/definitions/v4MessageUpdatedEvent"
+        },
+        "messageDeleted": {
+          "$ref": "#/definitions/v4MessageDeletedEvent"
+        },
+        "messageRead": {
+          "$ref": "#/definitions/v4MessageReadEvent"
+        },
+        "messageStamped": {
+          "$ref": "#/definitions/v4MessageStampedEvent"
+        },
+        "messageUnstamped": {
+          "$ref": "#/definitions/v4MessageUnstampedEvent"
+        },
+        "messagePinned": {
+          "$ref": "#/definitions/v4MessagePinnedEvent"
+        },
+        "messageUnpinned": {
+          "$ref": "#/definitions/v4MessageUnpinnedEvent"
+        },
+        "botMessageStampsUpdated": {
+          "$ref": "#/definitions/v4BotMessageStampsUpdatedEvent"
+        },
+        "botJoined": {
+          "$ref": "#/definitions/v4BotJoinedEvent"
+        },
+        "botLeft": {
+          "$ref": "#/definitions/v4BotLeftEvent"
+        },
+        "botUpdated": {
+          "$ref": "#/definitions/v4BotUpdatedEvent"
+        },
+        "botPingRequest": {
+          "$ref": "#/definitions/v4BotPingRequestEvent"
+        },
+        "botStatusChanged": {
+          "$ref": "#/definitions/v4BotStatusChangedEvent"
+        },
+        "userGroupCreated": {
+          "$ref": "#/definitions/v4UserGroupCreatedEvent"
+        },
+        "userGroupUpdated": {
+          "$ref": "#/definitions/v4UserGroupUpdatedEvent"
+        },
+        "userGroupDeleted": {
+          "$ref": "#/definitions/v4UserGroupDeletedEvent"
+        },
+        "userGroupMemberAdded": {
+          "$ref": "#/definitions/v4UserGroupMemberAddedEvent"
+        },
+        "userGroupMemberUpdated": {
+          "$ref": "#/definitions/v4UserGroupMemberUpdatedEvent"
+        },
+        "userGroupMemberRemoved": {
+          "$ref": "#/definitions/v4UserGroupMemberRemovedEvent"
+        },
+        "userGroupAdminAdded": {
+          "$ref": "#/definitions/v4UserGroupAdminAddedEvent"
+        },
+        "userGroupAdminRemoved": {
+          "$ref": "#/definitions/v4UserGroupAdminRemovedEvent"
+        },
+        "clipFolderCreated": {
+          "$ref": "#/definitions/v4ClipFolderCreatedEvent"
+        },
+        "clipFolderUpdated": {
+          "$ref": "#/definitions/v4ClipFolderUpdatedEvent"
+        },
+        "clipFolderDeleted": {
+          "$ref": "#/definitions/v4ClipFolderDeletedEvent"
+        },
+        "clipFolderMessageClipped": {
+          "$ref": "#/definitions/v4ClipFolderMessageClippedEvent"
+        },
+        "clipFolderMessageUnclipped": {
+          "$ref": "#/definitions/v4ClipFolderMessageUnclippedEvent"
+        },
+        "stampCreated": {
+          "$ref": "#/definitions/v4StampCreatedEvent"
+        },
+        "stampUpdated": {
+          "$ref": "#/definitions/v4StampUpdatedEvent"
+        },
+        "stampDeleted": {
+          "$ref": "#/definitions/v4StampDeletedEvent"
+        },
+        "stampPaletteCreated": {
+          "$ref": "#/definitions/v4StampPaletteCreatedEvent"
+        },
+        "stampPaletteUpdated": {
+          "$ref": "#/definitions/v4StampPaletteUpdatedEvent"
+        },
+        "stampPaletteDeleted": {
+          "$ref": "#/definitions/v4StampPaletteDeletedEvent"
+        }
+      },
+      "title": "Base WebSocket Event structure"
+    },
+    "v4WsEventType": {
+      "type": "string",
+      "enum": [
+        "WS_EVENT_TYPE_UNKNOWN",
+        "WS_EVENT_TYPE_USER_JOINED",
+        "WS_EVENT_TYPE_USER_LEFT",
+        "WS_EVENT_TYPE_USER_ONLINE",
+        "WS_EVENT_TYPE_USER_OFFLINE",
+        "WS_EVENT_TYPE_USER_UPDATED",
+        "WS_EVENT_TYPE_USER_ICON_UPDATED",
+        "WS_EVENT_TYPE_USER_TAG_UPDATED",
+        "WS_EVENT_TYPE_USER_WEBRTC_STATE_CHANGED",
+        "WS_EVENT_TYPE_CHANNEL_CREATED",
+        "WS_EVENT_TYPE_CHANNEL_UPDATED",
+        "WS_EVENT_TYPE_CHANNEL_DELETED",
+        "WS_EVENT_TYPE_CHANNEL_STALED",
+        "WS_EVENT_TYPE_CHANNEL_VIEWERS_CHANGED",
+        "WS_EVENT_TYPE_CHANNEL_SUBSCRIBERS_CHANGED",
+        "WS_EVENT_TYPE_CHANNEL_TOPIC_CHANGED",
+        "WS_EVENT_TYPE_MESSAGE_CREATED",
+        "WS_EVENT_TYPE_MESSAGE_UPDATED",
+        "WS_EVENT_TYPE_MESSAGE_DELETED",
+        "WS_EVENT_TYPE_MESSAGE_READ",
+        "WS_EVENT_TYPE_MESSAGE_STAMPED",
+        "WS_EVENT_TYPE_MESSAGE_UNSTAMPED",
+        "WS_EVENT_TYPE_MESSAGE_PINNED",
+        "WS_EVENT_TYPE_MESSAGE_UNPINNED",
+        "WS_EVENT_TYPE_BOT_MESSAGE_STAMPS_UPDATED",
+        "WS_EVENT_TYPE_BOT_JOINED",
+        "WS_EVENT_TYPE_BOT_LEFT",
+        "WS_EVENT_TYPE_BOT_UPDATED",
+        "WS_EVENT_TYPE_BOT_PING_REQUEST",
+        "WS_EVENT_TYPE_BOT_STATUS_CHANGED",
+        "WS_EVENT_TYPE_USER_GROUP_CREATED",
+        "WS_EVENT_TYPE_USER_GROUP_UPDATED",
+        "WS_EVENT_TYPE_USER_GROUP_DELETED",
+        "WS_EVENT_TYPE_USER_GROUP_MEMBER_ADDED",
+        "WS_EVENT_TYPE_USER_GROUP_MEMBER_UPDATED",
+        "WS_EVENT_TYPE_USER_GROUP_MEMBER_REMOVED",
+        "WS_EVENT_TYPE_USER_GROUP_ADMIN_ADDED",
+        "WS_EVENT_TYPE_USER_GROUP_ADMIN_REMOVED",
+        "WS_EVENT_TYPE_CLIP_FOLDER_CREATED",
+        "WS_EVENT_TYPE_CLIP_FOLDER_UPDATED",
+        "WS_EVENT_TYPE_CLIP_FOLDER_DELETED",
+        "WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_CLIPPED",
+        "WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_UNCLIPPED",
+        "WS_EVENT_TYPE_STAMP_CREATED",
+        "WS_EVENT_TYPE_STAMP_UPDATED",
+        "WS_EVENT_TYPE_STAMP_DELETED",
+        "WS_EVENT_TYPE_STAMP_PALETTE_CREATED",
+        "WS_EVENT_TYPE_STAMP_PALETTE_UPDATED",
+        "WS_EVENT_TYPE_STAMP_PALETTE_DELETED"
+      ],
+      "default": "WS_EVENT_TYPE_UNKNOWN",
+      "description": "- WS_EVENT_TYPE_USER_JOINED: User events\n - WS_EVENT_TYPE_USER_TAG_UPDATED: Added based on common needs\n - WS_EVENT_TYPE_CHANNEL_CREATED: Channel events\n - WS_EVENT_TYPE_CHANNEL_SUBSCRIBERS_CHANGED: Added based on common needs\n - WS_EVENT_TYPE_MESSAGE_CREATED: Message events\n - WS_EVENT_TYPE_BOT_MESSAGE_STAMPS_UPDATED: Bot events\n - WS_EVENT_TYPE_BOT_STATUS_CHANGED: Added for bot state changes\n - WS_EVENT_TYPE_USER_GROUP_CREATED: UserGroup events\n - WS_EVENT_TYPE_CLIP_FOLDER_CREATED: ClipFolder events\n - WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_CLIPPED: Renamed from _ADDED\n - WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_UNCLIPPED: Renamed from _DELETED\n - WS_EVENT_TYPE_STAMP_CREATED: Stamp events",
+      "title": "WebSocketイベントタイプ"
+    }
+  }
+}

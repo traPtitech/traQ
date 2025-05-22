@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto"; // For UserAccountState if needed, or other common types
+// import "v4/file.proto"; // If StampWithThumbnail directly embeds FileInfo or similar
+
+// スタンプ情報
+message Stamp {
+  // スタンプUUID
+  string id = 1;
+  // スタンプ名
+  string name = 2;
+  // 作成者UUID
+  string creator_id = 3;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 4;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 5;
+  // スタンプ画像ファイルUUID
+  string file_id = 6;
+  // Unicode絵文字か否か
+  bool is_unicode = 7;
+}
+
+// スタンプ情報とサムネイルの有無
+message StampWithThumbnail {
+  // スタンプUUID
+  string id = 1;
+  // スタンプ名
+  string name = 2;
+  // 作成者UUID
+  string creator_id = 3;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 4;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 5;
+  // スタンプ画像ファイルUUID
+  string file_id = 6;
+  // Unicode絵文字か否か
+  bool is_unicode = 7;
+  // サムネイルの有無
+  bool has_thumbnail = 8;
+}
+
+// スタンプ履歴のアイテム
+message StampHistoryEntry {
+  // スタンプUUID
+  string stamp_id = 1;
+  // 使用日時
+  google.protobuf.Timestamp datetime = 2;
+  // 使用回数
+  int32 count = 3;
+}
+
+// スタンプパレット情報
+message StampPalette {
+  // スタンプパレットUUID
+  string id = 1;
+  // スタンプパレット名
+  string name = 2;
+  // スタンプパレットの説明
+  string description = 3;
+  // パレット内のスタンプのUUID配列
+  repeated string stamps = 4;
+  // 作成者UUID
+  string creator_id = 5;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 6;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// スタンプ統計情報
+message StampStats {
+  // スタンプ使用回数
+  int64 count = 1;
+  // スタンプ合計使用回数
+  int64 total_count = 2;
+  // スタンプ使用日時
+  google.protobuf.Timestamp datetime = 3; // OpenAPIでは `lastUsed` だが、ここでは一般的な名前に
+}
+
+// スタンプ作成リクエスト
+message CreateStampRequest {
+  // スタンプ名
+  string name = 1;
+  // スタンプ画像ファイルUUID
+  string file_id = 2;
+}
+
+// スタンプ編集リクエスト
+message EditStampRequest {
+  // スタンプ名
+  optional string name = 1;
+  // 作成者UUID
+  optional string creator_id = 2; // OpenAPIにはないが、管理操作としてありえるか？ v4-api.yamlではnameのみ
+}
+
+// スタンプパレット作成リクエスト
+message PostStampPaletteRequest {
+  // パレット名
+  string name = 1;
+  // パレット説明
+  string description = 2;
+  // パレット内のスタンプのUUIDの配列
+  repeated string stamps = 3;
+}
+
+// スタンプパレット編集リクエスト
+message PatchStampPaletteRequest {
+  // パレット名
+  optional string name = 1;
+  // パレット説明
+  optional string description = 2;
+  // パレット内のスタンプのUUIDの配列
+  repeated string stamps = 3; // OpenAPIではPUTで全置き換えだが、PATCHでは部分更新も考慮
+}
+
+// スタンプパレット内スタンプ編集リクエスト
+message ReplacePaletteStampsRequest {
+  // スタンプUUIDの配列
+  repeated string stamps = 1;
+}
+
+service StampService {
+  // スタンプリストを取得
+  rpc GetStamps (GetStampsRequest) returns (GetStampsResponse);
+  // スタンプを作成
+  rpc CreateStamp (CreateStampRequest) returns (Stamp);
+  // スタンプ情報を取得
+  rpc GetStamp (GetStampRequest) returns (StampWithThumbnail);
+  // スタンプ情報を編集
+  rpc EditStamp (EditStampRpcRequest) returns (EmptyResponse); // EditStampRequest is body
+  // スタンプを削除
+  rpc DeleteStamp (DeleteStampRequest) returns (EmptyResponse);
+  // スタンプの統計情報を取得
+  rpc GetStampStats (GetStampStatsRequest) returns (StampStats);
+  // スタンプ履歴を取得
+  rpc GetMyStampHistory (GetMyStampHistoryRequest) returns (GetMyStampHistoryResponse);
+  // スタンプパレットのリストを取得
+  rpc GetStampPalettes (GetStampPalettesRequest) returns (GetStampPalettesResponse);
+  // スタンプパレットを作成
+  rpc CreateStampPalette (PostStampPaletteRequest) returns (StampPalette);
+  // スタンプパレット情報を取得
+  rpc GetStampPalette (GetStampPaletteRequest) returns (StampPalette);
+  // スタンプパレットを編集
+  rpc EditStampPalette (EditStampPaletteRpcRequest) returns (EmptyResponse); // PatchStampPaletteRequest is body
+  // スタンプパレットを削除
+  rpc DeleteStampPalette (DeleteStampPaletteRequest) returns (EmptyResponse);
+  // スタンプパレットのスタンプリストを取得
+  rpc GetPaletteStamps (GetPaletteStampsRequest) returns (GetPaletteStampsResponse);
+  // スタンプパレットのスタンプのリストを編集
+  rpc ReplacePaletteStamps (ReplacePaletteStampsRpcRequest) returns (EmptyResponse); // ReplacePaletteStampsRequest is body
+  // スタンプパレットからスタンプを削除
+  rpc RemovePaletteStamp (RemovePaletteStampRequest) returns (EmptyResponse);
+}
+
+message GetStampsRequest {
+  // サムネイルを含めるかどうか
+  optional bool include_unicode = 1;
+}
+
+message GetStampsResponse {
+  repeated StampWithThumbnail public_stamps = 1;
+  // repeated StampWithThumbnail unicode_stamps = 2; // OpenAPIでは区別なし、フラグで制御
+}
+
+message GetStampRequest {
+  string stamp_id = 1;
+}
+
+message EditStampRpcRequest {
+  string stamp_id = 1;
+  EditStampRequest payload = 2;
+}
+
+message DeleteStampRequest {
+  string stamp_id = 1;
+}
+
+message GetStampStatsRequest {
+  string stamp_id = 1;
+}
+
+message GetMyStampHistoryRequest {
+  // 取得する件数
+  optional int32 limit = 1;
+}
+
+message GetMyStampHistoryResponse {
+  repeated StampHistoryEntry history = 1;
+}
+
+message GetStampPalettesRequest {
+  // No parameters
+}
+
+message GetStampPalettesResponse {
+  repeated StampPalette palettes = 1;
+}
+
+message GetStampPaletteRequest {
+  string palette_id = 1;
+}
+
+message EditStampPaletteRpcRequest {
+  string palette_id = 1;
+  PatchStampPaletteRequest payload = 2;
+}
+
+message DeleteStampPaletteRequest {
+  string palette_id = 1;
+}
+
+message GetPaletteStampsRequest {
+  string palette_id = 1;
+}
+
+message GetPaletteStampsResponse {
+  repeated string stamp_ids = 1;
+}
+
+message ReplacePaletteStampsRpcRequest {
+  string palette_id = 1;
+  ReplacePaletteStampsRequest payload = 2;
+}
+
+message RemovePaletteStampRequest {
+  string palette_id = 1;
+  string stamp_id = 2;
+}

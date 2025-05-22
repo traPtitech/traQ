@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "v4/common.proto";
+import "v4/file.proto"; // For GetFileResponse
+
+// User はユーザー情報を表します。
+// OpenAPI: #/components/schemas/User
+message User {
+  // ユーザーUUID
+  string id = 1;
+  // ユーザー名
+  string name = 2;
+  // 表示名
+  string display_name = 3;
+  // アイコンファイルUUID
+  string icon_file_id = 4;
+  // BOTかどうか
+  bool bot = 5;
+  // アカウント状態
+  UserAccountState state = 6;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// UserTag はユーザータグ情報を表します。
+// OpenAPI: #/components/schemas/UserTag
+message UserTag {
+  // タグUUID
+  string tag_id = 1;
+  // タグ文字列
+  string tag = 2;
+  // タグがロックされているか
+  bool is_locked = 3;
+  // タグがつけられた日時
+  google.protobuf.Timestamp created_at = 4;
+  // タグが更新された日時
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// UserDetail はユーザー詳細情報を表します。
+// OpenAPI: #/components/schemas/UserDetail
+message UserDetail {
+  // ユーザーUUID
+  string id = 1;
+  // アカウント状態
+  UserAccountState state = 2;
+  // BOTかどうか
+  bool bot = 3;
+  // アイコンファイルUUID
+  string icon_file_id = 4;
+  // 表示名
+  string display_name = 5;
+  // ユーザー名
+  string name = 6;
+  // Twitter ID
+  string twitter_id = 7;
+  // 最終オンライン日時 (null許容)
+  optional google.protobuf.Timestamp last_online = 8;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 9;
+  // 所属グループのUUIDの配列
+  repeated string groups = 10;
+  // タグリスト
+  repeated UserTag tags = 11;
+  // ホームチャンネル (null許容)
+  optional string home_channel = 12;
+}
+
+// UserStatsStamp はユーザーステータススタンプ情報を表します。
+// OpenAPI: #/components/schemas/UserStatsStamp
+message UserStatsStamp {
+  string id = 1;
+  int64 count = 2;
+  int64 total = 3;
+}
+
+// UserStats はユーザーステータス情報を表します。
+// OpenAPI: #/components/schemas/UserStats
+message UserStats {
+  int64 total_message_count = 1;
+  repeated UserStatsStamp stamps = 2;
+  google.protobuf.Timestamp datetime = 3;
+}
+
+// --- UserService Messages ---
+message GetUserRequest {
+  string user_id = 1; // path parameter
+}
+
+message GetUsersRequest {
+  optional bool include_bots = 1; // query parameter
+  optional string name = 2;       // query parameter, prefix match
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+}
+
+message CreateUserRequest {
+  // OpenAPI: #/components/schemas/PostUserRequest
+  string name = 1;
+  string password = 2;
+}
+
+message EditUserRequest {
+  // OpenAPI: #/components/schemas/PatchUserRequest
+  string user_id = 1; // path parameter
+  optional string display_name = 2;
+  optional string twitter_id = 3;
+  optional string home_channel = 4; // nullable
+}
+
+message ChangeUserPasswordRequest {
+  // OpenAPI: #/components/schemas/PutUserPasswordRequest
+  string user_id = 1; // path parameter
+  string new_password = 2;
+  string password = 3;
+}
+
+message GetUserIconRequest {
+  string user_id = 1; // path parameter
+}
+
+message ChangeUserIconRequest {
+  string user_id = 1; // path parameter
+  string file_id = 2; // ID of an uploaded file
+}
+
+message GetUserStatsRequest {
+  string user_id = 1; // path parameter
+}
+
+message AddUserTagRequest {
+  string userId = 1;
+  string tagId = 2;
+}
+
+message RemoveUserTagRequest {
+  string userId = 1;
+  string tagId = 2;
+}
+
+// UserService はユーザー関連の操作を提供します。
+// OpenAPI tags: user, permissions
+service UserService {
+  // 指定したユーザーの情報を取得します。
+  rpc GetUser (GetUserRequest) returns (UserDetail);
+  // ユーザーのリストを取得します。
+  rpc GetUsers (GetUsersRequest) returns (GetUsersResponse);
+  // 新しいユーザーを作成します。
+  rpc CreateUser (CreateUserRequest) returns (UserDetail);
+  // 指定したユーザーの情報を編集します。
+  rpc EditUser (EditUserRequest) returns (google.protobuf.Empty);
+  // 指定したユーザーのパスワードを変更します。
+  rpc ChangeUserPassword (ChangeUserPasswordRequest) returns (google.protobuf.Empty);
+  // 指定したユーザーのアイコン画像を取得します。
+  rpc GetUserIcon (GetUserIconRequest) returns (GetFileResponse); // GetFileResponse from v4/file.proto
+  // 指定したユーザーのアイコン画像を変更します。
+  rpc ChangeUserIcon (ChangeUserIconRequest) returns (google.protobuf.Empty);
+  // 指定したユーザーの統計情報を取得します。
+  rpc GetUserStats (GetUserStatsRequest) returns (UserStats);
+
+  // TODO: Add user tag operations
+  // GET /users/{userId}/tags
+  // POST /users/{userId}/tags
+  // PUT /users/{userId}/tags/{tagId}
+  // DELETE /users/{userId}/tags/{tagId}
+
+  // TODO: Add permission operations if they are distinct from general admin tasks
+}

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "v4/common.proto";
+
+// Channel はチャンネル情報を表します。
+// OpenAPI: #/components/schemas/Channel
+message Channel {
+  // チャンネルUUID
+  string id = 1;
+  // 親チャンネルUUID
+  string parent_id = 2; // nullable in OpenAPI, proto3 strings are implicitly optional
+  // アーカイブされているかどうか
+  bool archived = 3;
+  // 強制通知チャンネルかどうか
+  bool force = 4;
+  // チャンネルトピック
+  string topic = 5;
+  // チャンネル名
+  string name = 6;
+  // 子チャンネルのUUID配列
+  repeated string children = 7;
+  // チャンネル可視性
+  ChannelVisibility visibility = 8;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 9;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// --- ChannelService Messages ---
+message PostChannelRequest {
+  // OpenAPI: #/components/schemas/PostChannelRequest
+  string name = 1;
+  string parent = 2; // nullable in OpenAPI
+}
+
+message GetChannelRequest {
+  string channel_id = 1; // path parameter
+}
+
+message GetChannelsResponse {
+  repeated Channel public_channels = 1; // Name implies public, consider if all channels or needs filtering
+}
+
+// EditChannelRequest はチャンネル編集リクエストです。
+// OpenAPI: #/components/schemas/PatchChannelRequest
+message EditChannelRequest {
+  string channel_id = 1; // path parameter
+  optional string name = 2;
+  optional string parent_id = 3;
+  optional string topic = 4;
+  optional bool archived = 5;
+  optional bool force = 6;
+  optional ChannelVisibility visibility = 7;
+}
+
+message GetChannelSubscribersRequest {
+  string channelId = 1;
+}
+
+// ChannelService はチャンネル関連の操作を提供します。
+// OpenAPI tags: channel
+service ChannelService {
+  // チャンネルのリストを取得します。
+  // Corresponds to GET /channels
+  // OpenAPI operationId: getChannels
+  rpc GetChannels (google.protobuf.Empty) returns (GetChannelsResponse);
+
+  // 新しいチャンネルを作成します。
+  // Corresponds to POST /channels
+  // OpenAPI operationId: createChannel
+  rpc CreateChannel (PostChannelRequest) returns (Channel);
+
+  // 指定したチャンネルの情報を取得します。
+  // Corresponds to GET /channels/{channelId}
+  // OpenAPI operationId: getChannel
+  rpc GetChannel (GetChannelRequest) returns (Channel);
+
+  // 指定したチャンネルの情報を編集します。
+  // Corresponds to PATCH /channels/{channelId}
+  // OpenAPI operationId: editChannel
+  rpc EditChannel (EditChannelRequest) returns (google.protobuf.Empty);
+
+  // TODO: Add other channel operations (getChannelSubscribers, setChannelSubscribers, etc.)
+  // GET /channels/{channelId}/subscribers
+  // PUT /channels/{channelId}/subscribers
+  // DELETE /channels/{channelId}/subscribers
+  // POST /channels/{channelId}/viewers
+  // DELETE /channels/{channelId}/viewers
+  // GET /channels/{channelId}/stats
+}

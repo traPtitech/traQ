@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+
+// MessageStamp はメッセージに付けられたスタンプ情報を表します。
+// OpenAPI: #/components/schemas/MessageStamp
+message MessageStamp {
+  // スタンプUUID
+  string stamp_id = 1;
+  // スタンプを押したユーザーUUID
+  string user_id = 2;
+  // このユーザーによってこのメッセージに押されたこのスタンプの数
+  int32 count = 3;
+  // 最初にスタンプが押された日時
+  google.protobuf.Timestamp created_at = 4;
+  // 最後にスタンプが押された日時
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// Message はメッセージ情報を表します。
+// OpenAPI: #/components/schemas/Message
+message Message {
+  // メッセージUUID
+  string id = 1;
+  // 投稿者UUID
+  string user_id = 2;
+  // チャンネルUUID
+  string channel_id = 3;
+  // メッセージ本文
+  string content = 4;
+  // 投稿日時
+  google.protobuf.Timestamp created_at = 5;
+  // 編集日時
+  google.protobuf.Timestamp updated_at = 6;
+  // ピン留めされているかどうか
+  bool pinned = 7;
+  // メッセージに付いているスタンプのリスト
+  repeated MessageStamp stamps = 8;
+  // スレッドUUID
+  string thread_id = 9; // nullable in OpenAPI
+}
+
+// --- MessageService Messages ---
+message PostMessageRequest {
+  // OpenAPI: #/components/schemas/PostMessageRequest
+  string channel_id = 1; // Path parameter in REST, part of request body in gRPC often
+  string content = 2;
+  bool embed = 3;
+}
+
+message GetMessageRequest {
+  string message_id = 1; // path parameter
+}
+
+message EditMessageRequest {
+  string message_id = 1; // path parameter
+  string content = 2;
+  bool embed = 3;
+}
+
+message DeleteMessageRequest {
+  string message_id = 1; // path parameter
+}
+
+message GetMessagesRequest {
+  // Corresponds to GET /channels/{channelId}/messages
+  string channel_id = 1; // path parameter
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+  optional google.protobuf.Timestamp until = 4;
+  optional google.protobuf.Timestamp since = 5;
+  optional bool asc = 6;
+  optional bool include_dms = 7; // Not in original, but useful for /messages endpoint
+}
+
+message GetMessagesResponse {
+  repeated Message messages = 1;
+  bool has_more = 2; // To indicate pagination
+}
+
+message AddMessageStampRequest {
+  string message_id = 1; // path parameter
+  string stamp_id = 2;   // path parameter
+  // OpenAPI: #/components/schemas/PostMessageStampRequest (count)
+  optional int32 count = 3;
+}
+
+message RemoveMessageStampRequest {
+  string message_id = 1; // path parameter
+  string stamp_id = 2;   // path parameter
+}
+
+// MessageService はメッセージ関連の操作を提供します。
+// OpenAPI tags: message
+service MessageService {
+  // メッセージのリストを取得します。
+  // Corresponds to GET /channels/{channelId}/messages or GET /messages
+  // OpenAPI operationId: getMessages (from channel), searchMessages (general)
+  rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse);
+
+  // 指定したチャンネルにメッセージを投稿します。
+  // Corresponds to POST /channels/{channelId}/messages
+  // OpenAPI operationId: postMessage
+  rpc PostMessage (PostMessageRequest) returns (Message);
+
+  // 指定したメッセージを取得します。
+  // Corresponds to GET /messages/{messageId}
+  // OpenAPI operationId: getMessage
+  rpc GetMessage (GetMessageRequest) returns (Message);
+
+  // 指定したメッセージを編集します。
+  // Corresponds to PUT /messages/{messageId}
+  // OpenAPI operationId: editMessage
+  rpc EditMessage (EditMessageRequest) returns (EmptyResponse);
+
+  // 指定したメッセージを削除します。
+  // Corresponds to DELETE /messages/{messageId}
+  // OpenAPI operationId: deleteMessage
+  rpc DeleteMessage (DeleteMessageRequest) returns (EmptyResponse);
+
+  // 指定したメッセージにスタンプを追加します。
+  // Corresponds to POST /messages/{messageId}/stamps/{stampId}
+  // OpenAPI operationId: addMessageStamp
+  rpc AddMessageStamp (AddMessageStampRequest) returns (EmptyResponse);
+
+  // 指定したメッセージからスタンプを削除します。
+  // Corresponds to DELETE /messages/{messageId}/stamps/{stampId}
+  // OpenAPI operationId: removeMessageStamp
+  rpc RemoveMessageStamp (RemoveMessageStampRequest) returns (EmptyResponse);
+
+  // TODO: Add direct message operations if not covered by general message operations with DM channel IDs
+  // GET /users/{userId}/messages
+  // POST /users/{userId}/messages
+
+  // TODO: Add message search if needed (GET /search/messages)
+}

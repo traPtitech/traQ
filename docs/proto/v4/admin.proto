@@ -1,0 +1,372 @@
+syntax = "proto3";
+
+package v4;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "v4/channel.proto";
+import "v4/clip.proto";
+import "v4/common.proto";
+import "v4/file.proto";
+import "v4/stamp.proto";
+import "v4/user_group.proto";
+import "v4/user.proto";
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+// サーバーバージョン情報
+message Version {
+  // traQバージョン
+  string revision = 1;
+  // traQバージョンセマンティックバージョン
+  string version = 2;
+  // traQフラグ
+  Flags flags = 3;
+}
+
+// traQフラグ
+message Flags {
+  // 外部ログインが有効か
+  bool external_login_enabled = 1;
+  // 新規登録が有効か
+  bool sign_up_allowed = 2;
+  // SkyWay APIキー
+  string skyway_api_key = 3;
+  // TURNサーバー情報
+  TurnServer turn_server = 4;
+}
+
+// TURNサーバー情報
+message TurnServer {
+  string username = 1;
+  string credential = 2;
+  repeated string urls = 3;
+}
+
+// サーバー情報
+message ServerInfo {
+  // サーバーバージョン
+  string version = 1;
+  // サーバーリビジョン
+  string revision = 2;
+  // サーバー起動時刻
+  google.protobuf.Timestamp boot_time = 3;
+}
+
+// クライアント設定情報
+message ClientConfig {
+  // ブランド名
+  string brand_name = 1;
+  // Favicon URL
+  string favicon_url = 2;
+  // テーマカラー
+  string theme_color = 3;
+  // カスタムCSS
+  string custom_css = 4;
+}
+
+// アセットのキャッシュ設定
+message CacheConfig {
+  // キャッシュ有効期限 (秒)
+  int32 max_age_seconds = 1;
+}
+
+// インポートメッセージリクエスト
+message ImportMessagesRequest {
+  // チャンネルID
+  string channel_id = 1;
+  // メッセージの配列
+  repeated ImportedMessage messages = 2;
+}
+
+// インポートされるメッセージ
+message ImportedMessage {
+  // ユーザー名 (traQ ID)
+  string username = 1;
+  // 本文
+  string text = 2;
+  // 投稿日時 (ISO 8601 format)
+  string datetime = 3;
+}
+
+// グループ管理者追加リクエスト (user_group.protoのPostUserGroupAdminRequestと重複の可能性あり)
+message AddUserToGroupAdminRequest {
+  // ユーザーUUID
+  string user_id = 1;
+}
+
+// ユーザーアカウント状態変更リクエスト
+message ChangeUserAccountStateRequest {
+  UserAccountState state = 2; // common. を削除
+}
+
+// ユーザーロール更新リクエスト
+message EditUserRolesRequest {
+  repeated string roles = 1;
+}
+
+// ユーザーのアイコンを変更するリクエスト (file.protoのPutUserIconRequestと重複の可能性あり)
+message ChangeUserIconRequestAdmin {
+  string file_id = 1;
+}
+
+// ユーザーのタグを編集するリクエスト (user.protoのEditUserTagRequestと重複の可能性あり)
+message EditUserTagRequestAdmin {
+  string tag_id = 1;
+  bool is_locked = 2;
+}
+
+// クリップフォルダの所有者を変更するリクエスト
+message ChangeClipFolderOwnerRequest {
+  string owner_id = 1;
+}
+
+// スタンプの作成者変更リクエスト
+message ChangeStampCreatorRequest {
+  string creator_id = 1;
+}
+
+// ファイルのチャンネルID変更リクエスト
+message ChangeFileChannelRequest {
+  string channel_id = 1;
+}
+
+// サーバー設定
+message AdminServerConfig {
+  // SkyWay APIキー
+  optional string skyway_api_key = 1;
+  // TURNサーバー情報
+  optional TurnServer turn_server = 2;
+  // 外部ログイン設定
+  map<string, ExternalLoginProvider> external_login = 3;
+  // 新規登録許可
+  optional bool sign_up_allowed = 4;
+  // 利用規約 (プレーンテキスト)
+  optional string terms_of_service_text = 5;
+}
+
+// 外部ログインプロバイダ設定
+message ExternalLoginProvider {
+  bool enabled = 1;
+  string client_id = 2;
+  string client_secret = 3;
+  string issuer_url = 4; // For OpenID Connect
+  string team_id = 5;    // For Sign in with Apple
+  string key_id = 6;     // For Sign in with Apple
+  string private_key = 7; // For Sign in with Apple
+}
+
+
+service AdminService {
+  // サーバーのバージョン情報を取得します。
+  rpc GetVersion (GetVersionRequest) returns (Version);
+  // サーバーの情報を取得します。
+  rpc GetServerInfo (GetServerInfoRequest) returns (ServerInfo);
+  // クライアント設定を取得します。
+  rpc GetClientConfig (GetClientConfigRequest) returns (ClientConfig);
+  // アセットのキャッシュ設定を取得します。
+  rpc GetCacheConfig (GetCacheConfigRequest) returns (CacheConfig);
+  // 全てのユーザーのリストを取得します。
+  rpc GetUsers (GetUsersAdminRequest) returns (GetUsersAdminResponse);
+  // 指定したユーザーの情報を取得します。
+  rpc GetUser(GetUserAdminRequest) returns (UserDetail) {
+    option (google.api.http) = {
+      get: "/users/{user_id}"
+    };
+  }
+  // ユーザーのアカウント状態を変更します。
+  rpc SetUserAccountState(SetUserAccountStateAdminRequest) returns (EmptyResponse);
+  // ユーザーのパスワードを変更します。
+  rpc SetUserPassword(SetUserPasswordAdminRequest) returns (EmptyResponse);
+  // ユーザーのロールを更新します。
+  rpc EditUserRoles(EditUserRolesAdminRequest) returns (EmptyResponse);
+  // ユーザーのアイコンを変更します。
+  rpc ChangeUserIconAdmin(ChangeUserIconAdminRequest) returns (EmptyResponse);
+  // ユーザーのタグを編集します。
+  rpc EditUserTagAdmin(EditUserTagAdminRequest) returns (EmptyResponse);
+  // 全てのチャンネルのリストを取得します。
+  rpc GetChannels (GetChannelsAdminRequest) returns (GetChannelsAdminResponse);
+  // 指定したチャンネルの情報を取得します。
+  rpc GetChannel(GetChannelAdminRequest) returns (Channel) {
+    option (google.api.http) = {
+      get: "/channels/{channel_id}"
+    };
+  }
+  // チャンネルのトピックを更新します。
+  rpc SetChannelTopic (SetChannelTopicAdminRequest) returns (EmptyResponse);
+  // 全てのユーザーグループのリストを取得します。
+  rpc GetUserGroupsAdmin (GetUserGroupsAdminRequest) returns (GetUserGroupsAdminResponse);
+  // 指定したユーザーグループの情報を取得します。
+  rpc GetUserGroupAdmin(GetUserGroupAdminRequest) returns (UserGroup) {
+    option (google.api.http) = {
+      get: "/groups/{group_id}" // Changed from {groupId} to {group_id}
+    };
+  }
+  // ユーザーグループに管理者を追加します。
+  rpc AddUserGroupAdmin(AddUserGroupAdminAdminRequest) returns (EmptyResponse);
+  // ユーザーグループの管理者から指定したユーザーを削除します。
+  rpc RemoveUserGroupAdmin(RemoveUserGroupAdminAdminRequest) returns (EmptyResponse);
+  // 全てのクリップフォルダのリストを取得します。
+  rpc GetClipFoldersAdmin (GetClipFoldersAdminRequest) returns (GetClipFoldersAdminResponse);
+  // クリップフォルダの所有者を変更します。
+  rpc ChangeClipFolderOwner(ChangeClipFolderOwnerAdminRequest) returns (EmptyResponse);
+  // 全てのスタンプのリストを取得します。
+  rpc GetStampsAdmin (GetStampsAdminRequest) returns (GetStampsAdminResponse);
+  // スタンプの作成者を変更します。
+  rpc ChangeStampCreator(ChangeStampCreatorAdminRequest) returns (EmptyResponse);
+  // 全てのファイルのリストを取得します。
+  rpc GetFilesAdmin (GetFilesAdminRequest) returns (GetFilesAdminResponse);
+  // ファイルのチャンネルIDを変更します。
+  rpc ChangeFileChannel(ChangeFileChannelAdminRequest) returns (EmptyResponse);
+  // メッセージをインポートします。
+  rpc ImportMessages(ImportMessagesAdminRequest) returns (EmptyResponse);
+  // サーバー設定を取得します。
+  rpc GetServerConfigAdmin (GetServerConfigAdminRequest) returns (AdminServerConfig);
+  // サーバー設定を変更します。
+  rpc SetServerConfigAdmin (SetServerConfigAdminRequest) returns (EmptyResponse);
+}
+
+message GetVersionRequest {}
+message GetServerInfoRequest {}
+message GetClientConfigRequest {}
+message GetCacheConfigRequest {}
+
+message GetUsersAdminRequest {
+  optional string name = 1;
+  optional bool include_suspended = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+}
+message GetUsersAdminResponse {
+  repeated UserDetail users = 1;
+}
+
+message GetUserAdminRequest {
+  string user_id = 1;
+}
+
+message SetUserAccountStateAdminRequest { // SetUserAccountStateRequest から SetUserAccountStateAdminRequest に名称変更
+  string user_id = 1;
+  ChangeUserAccountStateRequest payload = 2;
+}
+
+message SetUserPasswordAdminRequest { // SetUserPasswordRequest から SetUserPasswordAdminRequest に名称変更
+  ChangeUserPasswordRequest payload = 1;
+}
+
+message EditUserRolesAdminRequest {
+  string user_id = 1;
+  EditUserRolesRequest payload = 2;
+}
+
+message ChangeUserIconAdminRequest {
+  string user_id = 1;
+  ChangeUserIconRequestAdmin payload = 2;
+}
+
+message EditUserTagAdminRequest {
+  string user_id = 1;
+  string tag_id = 2;
+  EditUserTagRequestAdmin payload = 3;
+}
+
+message GetChannelsAdminRequest {
+  optional string parent_id = 1;
+  optional string name = 2;
+  optional bool include_archived = 3;
+  optional int32 limit = 4;
+  optional int32 offset = 5;
+}
+message GetChannelsAdminResponse {
+  repeated Channel channels = 1;
+}
+
+message GetChannelAdminRequest {
+  string channel_id = 1;
+}
+
+message SetChannelTopicAdminRequest {
+  string channel_id = 1;
+  string topic = 2;
+}
+
+message GetUserGroupsAdminRequest {
+  optional string name = 1;
+  optional string type = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+}
+message GetUserGroupsAdminResponse {
+  repeated UserGroup groups = 1;
+}
+
+message GetUserGroupAdminRequest {
+  string group_id = 1; // Changed from groupId to group_id
+}
+
+message AddUserGroupAdminAdminRequest { // AddUserGroupAdminRequest から AddUserGroupAdminAdminRequest に名称変更
+  AddUserGroupAdminRequest payload = 1;
+}
+
+message RemoveUserGroupAdminAdminRequest { // RemoveUserGroupAdminRequest から RemoveUserGroupAdminAdminRequest に名称変更
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message GetClipFoldersAdminRequest {
+  optional string owner_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+}
+message GetClipFoldersAdminResponse {
+  repeated ClipFolder clip_folders = 1;
+}
+
+message ChangeClipFolderOwnerAdminRequest {
+  string folder_id = 1;
+  ChangeClipFolderOwnerRequest payload = 2;
+}
+
+message GetStampsAdminRequest {
+  optional bool include_unicode = 1;
+}
+
+message GetStampsAdminResponse {
+  repeated Stamp stamps = 1; // Changed from stamp.Stamp to Stamp
+}
+
+message ChangeStampCreatorAdminRequest {
+  string stamp_id = 1;
+  ChangeStampCreatorRequest payload = 2;
+}
+
+message GetFilesAdminRequest {
+  optional string channel_id = 1;
+  optional string uploader_id = 2;
+  optional string type = 3; // MIME type
+  optional int32 limit = 4;
+  optional int32 offset = 5;
+  optional string order = 6; // "asc" or "desc"
+  optional string sort = 7; // "createdAt", "name", "size"
+}
+message GetFilesAdminResponse {
+  repeated FileInfo files = 1; // file. を削除
+}
+
+message ChangeFileChannelAdminRequest {
+  string file_id = 1;
+  ChangeFileChannelRequest payload = 2;
+}
+
+message GetServerConfigAdminRequest {}
+
+message ImportMessagesAdminRequest {
+  string channel_id = 1;
+  repeated ImportedMessage messages = 2;
+}
+
+message SetServerConfigAdminRequest {
+  AdminServerConfig payload = 1;
+}

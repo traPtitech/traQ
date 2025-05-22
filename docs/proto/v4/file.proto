@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "v4/common.proto";
+
+// FileInfo はファイル情報を表します。
+// OpenAPI: #/components/schemas/FileInfo
+message FileInfo {
+  // ファイルUUID
+  string id = 1;
+  // ファイル名
+  string name = 2;
+  // MIMEタイプ
+  string mime_type = 3;
+  // ファイルサイズ (バイト単位)
+  int64 size = 4;
+  // MD5ハッシュ
+  string md5_hash = 5;
+  // サムネイルが存在するかどうか
+  bool has_thumbnail = 6;
+  // サムネイルの種類 (存在する場合)
+  ThumbnailType thumbnail_type = 7;
+  // チャンネルUUID (アップロードされたチャンネル)
+  string channel_id = 8; // nullable
+  // アップロード日時
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// UploadFileRequest はファイルアップロードリクエストです。
+// Corresponds to POST /files
+// ファイル内容はストリーミングかbytesで送信
+message UploadFileRequest {
+  string filename = 1;
+  bytes content = 2; // or stream bytes
+  string channel_id = 3; // query parameter
+}
+
+// GetFileMetaRequest はファイルメタデータ取得リクエストです。
+// Corresponds to GET /files/{fileId}/meta
+message GetFileMetaRequest {
+  string file_id = 1; // path parameter
+}
+
+// GetFileRequest はファイルダウンロードリクエストです。
+// Corresponds to GET /files/{fileId}
+message GetFileRequest {
+  string file_id = 1; // path parameter
+  // bool download = 2; // query parameter 'dl'
+}
+
+// GetFileResponse はファイルダウンロードレスポンスです。
+// ファイル内容はストリーミングかbytesで送信
+message GetFileResponse {
+  string filename = 1; // From Content-Disposition or FileInfo
+  string mime_type = 2;
+  bytes content = 3; // or stream bytes
+}
+
+// FileService はファイル関連の操作を提供します。
+// OpenAPI tags: file
+service FileService {
+  // ファイルをアップロードします。
+  // Corresponds to POST /files
+  // OpenAPI operationId: uploadFile
+  rpc UploadFile (UploadFileRequest) returns (FileInfo); // Consider streaming for request
+
+  // 指定したファイルのメタデータを取得します。
+  // Corresponds to GET /files/{fileId}/meta
+  // OpenAPI operationId: getFileMeta
+  rpc GetFileMeta (GetFileMetaRequest) returns (FileInfo);
+
+  // 指定したファイルをダウンロードします。
+  // Corresponds to GET /files/{fileId}
+  // OpenAPI operationId: downloadFile
+  rpc DownloadFile (GetFileRequest) returns (GetFileResponse); // Consider streaming for response
+
+  // 指定したファイルを削除します。
+  // Corresponds to DELETE /files/{fileId} (or /files/{fileId}/meta in some interpretations)
+  // OpenAPI operationId: deleteFile
+  rpc DeleteFile (GetFileMetaRequest) returns (google.protobuf.Empty);
+
+  // TODO: Add thumbnail operations
+  // GET /files/{fileId}/thumbnail -> GetThumbnail(GetThumbnailRequest) returns (GetThumbnailResponse)
+}

@@ -1,0 +1,424 @@
+syntax = "proto3";
+
+package v4;
+
+import "google/protobuf/timestamp.proto";
+import "v4/bot.proto";
+import "v4/channel.proto";
+import "v4/clip.proto";
+import "v4/common.proto";
+import "v4/message.proto";
+import "v4/stamp.proto";
+import "v4/user_group.proto";
+import "v4/user.proto";
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+// WebSocketイベントタイプ
+enum WsEventType {
+  WS_EVENT_TYPE_UNKNOWN = 0;
+
+  // User events
+  WS_EVENT_TYPE_USER_JOINED = 1;
+  WS_EVENT_TYPE_USER_LEFT = 2;
+  WS_EVENT_TYPE_USER_ONLINE = 3;
+  WS_EVENT_TYPE_USER_OFFLINE = 4;
+  WS_EVENT_TYPE_USER_UPDATED = 5;
+  WS_EVENT_TYPE_USER_ICON_UPDATED = 6;
+  WS_EVENT_TYPE_USER_TAG_UPDATED = 7; // Added based on common needs
+  WS_EVENT_TYPE_USER_WEBRTC_STATE_CHANGED = 8;
+
+  // Channel events
+  WS_EVENT_TYPE_CHANNEL_CREATED = 20;
+  WS_EVENT_TYPE_CHANNEL_UPDATED = 21;
+  WS_EVENT_TYPE_CHANNEL_DELETED = 22;
+  WS_EVENT_TYPE_CHANNEL_STALED = 23;
+  WS_EVENT_TYPE_CHANNEL_VIEWERS_CHANGED = 24;
+  WS_EVENT_TYPE_CHANNEL_SUBSCRIBERS_CHANGED = 25; // Added based on common needs
+  WS_EVENT_TYPE_CHANNEL_TOPIC_CHANGED = 26;
+
+  // Message events
+  WS_EVENT_TYPE_MESSAGE_CREATED = 40;
+  WS_EVENT_TYPE_MESSAGE_UPDATED = 41;
+  WS_EVENT_TYPE_MESSAGE_DELETED = 42;
+  WS_EVENT_TYPE_MESSAGE_READ = 43;
+  WS_EVENT_TYPE_MESSAGE_STAMPED = 44;
+  WS_EVENT_TYPE_MESSAGE_UNSTAMPED = 45;
+  WS_EVENT_TYPE_MESSAGE_PINNED = 46;
+  WS_EVENT_TYPE_MESSAGE_UNPINNED = 47;
+
+  // Bot events
+  WS_EVENT_TYPE_BOT_MESSAGE_STAMPS_UPDATED = 60;
+  WS_EVENT_TYPE_BOT_JOINED = 61;
+  WS_EVENT_TYPE_BOT_LEFT = 62;
+  WS_EVENT_TYPE_BOT_UPDATED = 63;
+  WS_EVENT_TYPE_BOT_PING_REQUEST = 64;
+  WS_EVENT_TYPE_BOT_STATUS_CHANGED = 65; // Added for bot state changes
+
+  // UserGroup events
+  WS_EVENT_TYPE_USER_GROUP_CREATED = 80;
+  WS_EVENT_TYPE_USER_GROUP_UPDATED = 81;
+  WS_EVENT_TYPE_USER_GROUP_DELETED = 82;
+  WS_EVENT_TYPE_USER_GROUP_MEMBER_ADDED = 83;
+  WS_EVENT_TYPE_USER_GROUP_MEMBER_UPDATED = 84;
+  WS_EVENT_TYPE_USER_GROUP_MEMBER_REMOVED = 85;
+  WS_EVENT_TYPE_USER_GROUP_ADMIN_ADDED = 86;
+  WS_EVENT_TYPE_USER_GROUP_ADMIN_REMOVED = 87;
+
+  // ClipFolder events
+  WS_EVENT_TYPE_CLIP_FOLDER_CREATED = 100;
+  WS_EVENT_TYPE_CLIP_FOLDER_UPDATED = 101;
+  WS_EVENT_TYPE_CLIP_FOLDER_DELETED = 102;
+  WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_CLIPPED = 103;   // Renamed from _ADDED
+  WS_EVENT_TYPE_CLIP_FOLDER_MESSAGE_UNCLIPPED = 104; // Renamed from _DELETED
+
+  // Stamp events
+  WS_EVENT_TYPE_STAMP_CREATED = 120;
+  WS_EVENT_TYPE_STAMP_UPDATED = 121;
+  WS_EVENT_TYPE_STAMP_DELETED = 122;
+  WS_EVENT_TYPE_STAMP_PALETTE_CREATED = 123;
+  WS_EVENT_TYPE_STAMP_PALETTE_UPDATED = 124;
+  WS_EVENT_TYPE_STAMP_PALETTE_DELETED = 125;
+
+  // WebRTC events (specific to WebRTC signaling, might be separate)
+  // WS_EVENT_TYPE_WEBRTC_AUTHENTICATE = 140; // This seems like a request, not an event from server
+  // WS_EVENT_TYPE_WEBRTC_STATE_CHANGED = 141; // Covered by USER_WEBRTC_STATE_CHANGED
+}
+
+// Base WebSocket Event structure
+message WsEvent {
+  WsEventType type = 1;
+  google.protobuf.Timestamp event_time = 2;
+  oneof body {
+    UserJoinedEvent user_joined = 3;
+    UserLeftEvent user_left = 4;
+    UserOnlineEvent user_online = 5;
+    UserOfflineEvent user_offline = 6;
+    UserUpdatedEvent user_updated = 7;
+    UserIconUpdatedEvent user_icon_updated = 8;
+    UserTagUpdatedEvent user_tag_updated = 9;
+    UserWebRTCStateChangedEvent user_webrtc_state_changed = 10;
+
+    ChannelCreatedEvent channel_created = 20;
+    ChannelUpdatedEvent channel_updated = 21;
+    ChannelDeletedEvent channel_deleted = 22;
+    ChannelStaledEvent channel_staled = 23;
+    ChannelViewersChangedEvent channel_viewers_changed = 24;
+    ChannelSubscribersChangedEvent channel_subscribers_changed = 25;
+    ChannelTopicChangedEvent channel_topic_changed = 26;
+
+    MessageCreatedEvent message_created = 40;
+    MessageUpdatedEvent message_updated = 41;
+    MessageDeletedEvent message_deleted = 42;
+    MessageReadEvent message_read = 43;
+    MessageStampedEvent message_stamped = 44;
+    MessageUnstampedEvent message_unstamped = 45;
+    MessagePinnedEvent message_pinned = 46;
+    MessageUnpinnedEvent message_unpinned = 47;
+
+    BotMessageStampsUpdatedEvent bot_message_stamps_updated = 60;
+    BotJoinedEvent bot_joined = 61;
+    BotLeftEvent bot_left = 62;
+    BotUpdatedEvent bot_updated = 63;
+    BotPingRequestEvent bot_ping_request = 64;
+    BotStatusChangedEvent bot_status_changed = 65;
+
+    UserGroupCreatedEvent user_group_created = 80;
+    UserGroupUpdatedEvent user_group_updated = 81;
+    UserGroupDeletedEvent user_group_deleted = 82;
+    UserGroupMemberAddedEvent user_group_member_added = 83;
+    UserGroupMemberUpdatedEvent user_group_member_updated = 84;
+    UserGroupMemberRemovedEvent user_group_member_removed = 85;
+    UserGroupAdminAddedEvent user_group_admin_added = 86;
+    UserGroupAdminRemovedEvent user_group_admin_removed = 87;
+
+    ClipFolderCreatedEvent clip_folder_created = 100;
+    ClipFolderUpdatedEvent clip_folder_updated = 101;
+    ClipFolderDeletedEvent clip_folder_deleted = 102;
+    ClipFolderMessageClippedEvent clip_folder_message_clipped = 103;
+    ClipFolderMessageUnclippedEvent clip_folder_message_unclipped = 104;
+
+    StampCreatedEvent stamp_created = 120;
+    StampUpdatedEvent stamp_updated = 121;
+    StampDeletedEvent stamp_deleted = 122;
+    StampPaletteCreatedEvent stamp_palette_created = 123;
+    StampPaletteUpdatedEvent stamp_palette_updated = 124;
+    StampPaletteDeletedEvent stamp_palette_deleted = 125;
+  }
+}
+
+// --- User Event Payloads ---
+message UserJoinedEvent {
+  string id = 1;
+  User user = 2;
+}
+
+message UserLeftEvent {
+  string user_id = 1;
+}
+
+message UserOnlineEvent {
+  string user_id = 1;
+}
+
+message UserOfflineEvent {
+  string user_id = 1;
+}
+
+message UserUpdatedEvent {
+  string id = 1;
+  User user = 2;
+}
+
+message UserIconUpdatedEvent {
+  string user_id = 1;
+  string icon_file_id = 2;
+}
+
+message UserTagUpdatedEvent {
+  string tag_id = 1;
+  UserTag tag = 2;
+}
+
+message UserWebRTCState {
+  string channel_id = 1;
+  repeated string sessions = 2; // session_id list
+}
+
+message UserWebRTCStateChangedEvent {
+  string user_id = 1;
+  repeated UserWebRTCState states = 2;
+}
+
+// --- Channel Event Payloads ---
+message ChannelCreatedEvent {
+  string id = 1;
+  Channel channel = 2;
+}
+
+message ChannelUpdatedEvent {
+  string id = 1;
+  Channel channel = 2;
+}
+
+message ChannelDeletedEvent {
+  string channel_id = 1;
+}
+
+message ChannelStaledEvent {
+  string channel_id = 1;
+}
+
+message ChannelViewersChangedEvent {
+  string channel_id = 1;
+  repeated string viewers = 2; // user_id list
+  google.protobuf.Timestamp datetime = 3;
+}
+
+message ChannelSubscribersChangedEvent {
+  string channel_id = 1;
+  repeated string subscriber_ids = 2;
+}
+
+message ChannelTopicChangedEvent {
+  string channel_id = 1;
+  string topic = 2;
+  string updater_id = 3;
+}
+
+// --- Message Event Payloads ---
+message MessageCreatedEvent {
+  string id = 1;
+  Message message = 2;
+}
+
+message MessageUpdatedEvent {
+  string id = 1;
+  Message message = 2;
+}
+
+message MessageDeletedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+}
+
+message MessageReadEvent {
+  string channel_id = 1;
+}
+
+message MessageStampedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+  string user_id = 3;
+  string stamp_id = 4;
+  int32 count = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message MessageUnstampedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+  string user_id = 3;
+  string stamp_id = 4;
+}
+
+message MessagePinnedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+  // Pin object might be redundant if message_id is enough
+}
+
+message MessageUnpinnedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+}
+
+// --- Bot Event Payloads ---
+message BotMessageStamp {
+  string stamp_id = 1;
+  int32 count = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message BotMessageStampsUpdatedEvent {
+  string message_id = 1;
+  repeated BotMessageStamp stamps = 2;
+}
+
+message BotJoinedEvent {
+  string bot_id = 1;
+  string channel_id = 2;
+}
+
+message BotLeftEvent {
+  string bot_id = 1;
+  string channel_id = 2;
+}
+
+message BotUpdatedEvent {
+  string id = 1;
+  Bot bot = 2;
+}
+
+message BotPingRequestEvent {
+  // No body in OpenAPI spec
+}
+
+message BotStatusChangedEvent {
+  string id = 1;
+  UserAccountState state = 2; // Changed from BotState to UserAccountState
+}
+
+// --- UserGroup Event Payloads ---
+message UserGroupCreatedEvent {
+  string id = 1;
+  UserGroup group = 2;
+}
+
+message UserGroupUpdatedEvent {
+  string id = 1;
+  UserGroup group = 2;
+}
+
+message UserGroupDeletedEvent {
+  string group_id = 1;
+}
+
+message UserGroupMemberAddedEvent {
+  string group_id = 1;
+  UserGroupMember member = 2;
+}
+
+message UserGroupMemberUpdatedEvent {
+  string group_id = 1;
+  UserGroupMember member = 2;
+}
+
+message UserGroupMemberRemovedEvent {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message UserGroupAdminAddedEvent {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message UserGroupAdminRemovedEvent {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+// --- ClipFolder Event Payloads ---
+message ClipFolderCreatedEvent {
+  string id = 1;
+  ClipFolder folder = 2;
+}
+
+message ClipFolderUpdatedEvent {
+  string id = 1;
+  ClipFolder folder = 2;
+}
+
+message ClipFolderDeletedEvent {
+  string folder_id = 1;
+}
+
+message ClipFolderMessageClippedEvent {
+  string folder_id = 1;
+  ClippedMessage clipped_message = 2;
+}
+
+message ClipFolderMessageUnclippedEvent {
+  string folder_id = 1;
+  string message_id = 2;
+}
+
+// --- Stamp Event Payloads ---
+message StampCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string creator_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  string file_id = 6;
+  bool is_unicode = 7;
+  Stamp stamp = 8; // Changed from stamp.Stamp to Stamp
+}
+
+message StampUpdatedEvent {
+  string id = 1;
+  Stamp stamp = 2; // Changed from stamp.Stamp to Stamp
+}
+
+message StampDeletedEvent {
+  string stamp_id = 1;
+}
+
+message StampPaletteCreatedEvent {
+  string id = 1;
+  StampPalette palette = 2; // Changed from stamp.StampPalette to StampPalette
+}
+
+message StampPaletteUpdatedEvent {
+  string id = 1;
+  StampPalette palette = 2; // Changed from stamp.StampPalette to StampPalette
+}
+
+message StampPaletteDeletedEvent {
+  string id = 1; // ID of the deleted stamp palette
+}
+
+// WebSocket Service
+service WebSocketService {
+  // Connect to the WebSocket stream
+  // Client can send initial parameters if needed (e.g. auth token in metadata)
+  rpc Connect (ConnectRequest) returns (stream WsEvent);
+}
+
+message ConnectRequest {
+  // Could include things like desired event types, though traQ WS is usually all-or-nothing once connected.
+  // Auth is typically handled via headers/metadata in gRPC.
+  optional string access_token = 1; // Example: if token is passed in request body
+}

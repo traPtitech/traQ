@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto"; // For EmptyResponse and OAuth2PromptType
+
+// OAuth2クライアント情報
+message OAuth2Client {
+  // クライアントUUID
+  string id = 1;
+  // クライアント名
+  string name = 2;
+  // 説明
+  string description = 3;
+  // クライアント開発者UUID
+  string developer_id = 4;
+  // 要求スコープの配列
+  repeated string scopes = 5; // OAuth2Scope enum could be used if defined
+}
+
+// OAuth2クライアント詳細情報
+message OAuth2ClientDetail {
+  // クライアントUUID
+  string id = 1;
+  // クライアント名
+  string name = 2;
+  // 説明
+  string description = 3;
+  // クライアント開発者UUID
+  string developer_id = 4;
+  // 要求スコープの配列
+  repeated string scopes = 5;
+  // リダイレクトURIの配列
+  repeated string redirect_uris = 6;
+  // クライアントシークレット
+  string secret = 7;
+  // グラントタイプ
+  repeated string grant_types = 8; // OAuth2GrantType enum could be used
+  // レスポンスタイプ
+  repeated string response_types = 9; // OAuth2ResponseType enum could be used
+}
+
+// OAuth2トークン
+message OAuth2Token {
+  // アクセストークン
+  string access_token = 1;
+  // トークンタイプ
+  string token_type = 2;
+  // 有効期間(秒)
+  int32 expires_in = 3;
+  // リフレッシュトークン
+  optional string refresh_token = 4;
+  // スコープ
+  string scope = 5; // space-separated string of scopes
+  // IDトークン (OpenID Connect)
+  optional string id_token = 6;
+}
+
+// OAuth2クライアント作成リクエスト
+message PostClientRequest {
+  // クライアント名
+  string name = 1;
+  // 説明
+  string description = 2;
+  // リダイレクトURI
+  string redirect_uri = 3; // OpenAPIでは配列だが、POST時は単数か？ v4-api.yamlでは単数
+  // 要求スコープの配列
+  repeated string scopes = 4;
+  // confidential client なら true
+  bool confidential = 5;
+}
+
+// OAuth2クライアント編集リクエスト
+message PatchClientRequest {
+  // クライアント名
+  optional string name = 1;
+  // 説明
+  optional string description = 2;
+  // コールバックURL
+  optional string callback_url = 3;
+  // 開発者UUID
+  optional string developer_id = 4;
+}
+
+// OAuth2認可リクエスト (Form)
+message PostOAuth2AuthorizeRequest {
+  // クライアントID
+  string client_id = 1;
+  // レスポンスタイプ
+  string response_type = 2;
+  // リダイレクトURI
+  optional string redirect_uri = 3;
+  // スコープ
+  optional string scope = 4;
+  // state
+  optional string state = 5;
+  // code_challenge
+  optional string code_challenge = 6;
+  // code_challenge_method
+  optional string code_challenge_method = 7;
+  // nonce
+  optional string nonce = 8;
+  // prompt
+  optional OAuth2PromptType prompt = 9; // Removed common.
+}
+
+// OAuth2トークンリクエスト (Form)
+message PostOAuth2TokenRequest {
+  // グラントタイプ
+  string grant_type = 1;
+  // 認可コード (authorization_code grant)
+  optional string code = 2;
+  // リダイレクトURI (authorization_code grant)
+  optional string redirect_uri = 3;
+  // クライアントID
+  string client_id = 4;
+  // リフレッシュトークン (refresh_token grant)
+  optional string refresh_token = 5;
+  // code_verifier (PKCE)
+  optional string code_verifier = 6;
+  // クライアントシークレット (confidential client)
+  optional string client_secret = 7;
+  // スコープ (client_credentials grant)
+  optional string scope = 8;
+}
+
+// OAuth2トークン失効リクエスト (Form)
+message PostOAuth2RevokeTokenRequest {
+  // 失効させるトークン
+  string token = 1;
+}
+
+service OAuth2Service {
+  // OAuth2クライアントのリストを取得
+  rpc GetClients (GetClientsRequest) returns (GetClientsResponse);
+  // OAuth2クライアントを作成
+  rpc CreateClient (PostClientRequest) returns (OAuth2ClientDetail);
+  // OAuth2クライアント情報を取得
+  rpc GetClient (GetClientRequest) returns (OAuth2ClientDetail);
+  // OAuth2クライアント情報を編集
+  rpc EditClient (EditClientRpcRequest) returns (EmptyResponse); // Removed common.
+  // OAuth2クライアントを削除
+  rpc DeleteClient (DeleteClientRequest) returns (EmptyResponse);
+  // OAuth2クライアントのシークレットを再発行
+  rpc ReissueClientSecret (ReissueClientSecretRequest) returns (OAuth2ClientDetail);
+  // OAuth2 認可エンドポイント (GET)
+  // GETリクエストはgRPCで直接表現しづらいため、ここでは省略。通常ブラウザリダイレクト。
+  // rpc Authorize (AuthorizeRequest) returns (AuthorizeResponse); // Placeholder
+
+  // OAuth2 認可エンドポイント (POST)
+  rpc DecideOAuth2Authorize (DecideOAuth2AuthorizeRequest) returns (DecideOAuth2AuthorizeResponse);
+
+  // OAuth2 トークンエンドポイント
+  rpc GetOAuth2Token (PostOAuth2TokenRequest) returns (OAuth2Token);
+  // OAuth2 トークン失効エンドポイント
+  rpc RevokeOAuth2Token (PostOAuth2RevokeTokenRequest) returns (EmptyResponse);
+}
+
+message GetClientsRequest {
+  // 全てのクライアントを取得するかどうか
+  optional bool all = 1;
+  // 開発者UUID
+  optional string developer_id = 2;
+}
+
+message GetClientsResponse {
+  repeated OAuth2Client clients = 1;
+}
+
+message GetClientRequest {
+  string client_id = 1;
+}
+
+message EditClientRpcRequest {
+  string client_id = 1;
+  PatchClientRequest payload = 2;
+}
+
+message DeleteClientRequest {
+  string client_id = 1;
+}
+
+message ReissueClientSecretRequest {
+  string client_id = 1;
+}
+
+// 認可判定リクエスト (POST /oauth2/authorize)
+message DecideOAuth2AuthorizeRequest {
+  // クライアントID (query)
+  string client_id_query = 1;
+  // レスポンスタイプ (query)
+  string response_type_query = 2;
+  // リダイレクトURI (query)
+  optional string redirect_uri_query = 3;
+  // スコープ (query)
+  optional string scope_query = 4;
+  // state (query)
+  optional string state_query = 5;
+  // code_challenge (query)
+  optional string code_challenge_query = 6;
+  // code_challenge_method (query)
+  optional string code_challenge_method_query = 7;
+  // nonce (query)
+  optional string nonce_query = 8;
+  // prompt (query)
+  optional OAuth2PromptType prompt_query = 9; // Removed common.
+  // ユーザーID (implicit, from session)
+  // string user_id = 10; 
+  // 承認されたスコープ (form data)
+  // repeated string scopes_form = 11;
+  // 拒否されたスコープ (form data)
+  // repeated string rejected_scopes_form = 12;
+  // 決定 (form data: "approve" or "deny")
+  string decision = 13;
+}
+
+// 認可判定レスポンス。通常はリダイレクトURLを返すか、エラー。
+// gRPCでは直接リダイレクトを表現できないため、リダイレクト先のURLを返すなど工夫が必要。
+message DecideOAuth2AuthorizeResponse {
+  optional string redirect_uri = 1;
+  optional string error_message = 2;
+}

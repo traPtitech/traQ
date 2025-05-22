@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4"; // Standardized go_package
+
+// 空のレスポンスを表すメッセージ
+message EmptyResponse {}
+
+// ユーザーアカウント状態
+enum UserAccountState {
+  USER_ACCOUNT_STATE_UNSPECIFIED = 0; // デフォルト値、バリデーションで使用しないでください
+  USER_ACCOUNT_STATE_DEACTIVATED = 1; // 利用規約未同意・凍結
+  USER_ACCOUNT_STATE_ACTIVE = 2;      // 有効
+  USER_ACCOUNT_STATE_SUSPENDED = 3;   // 凍結
+}
+
+// チャンネル可視性
+enum ChannelVisibility {
+  CHANNEL_VISIBILITY_UNSPECIFIED = 0; // 未指定
+  CHANNEL_VISIBILITY_PUBLIC = 1;      // 公開チャンネル
+  CHANNEL_VISIBILITY_PRIVATE = 2;     // 非公開チャンネル (招待制)
+  CHANNEL_VISIBILITY_DM = 3;          // DMチャンネル
+}
+
+// サムネイル種類
+enum ThumbnailType {
+  THUMBNAIL_TYPE_UNSPECIFIED = 0; // 未指定
+  THUMBNAIL_TYPE_IMAGE = 1;       // 画像サムネイル
+  THUMBNAIL_TYPE_WAVEFORM = 2;    // 波形画像サムネイル
+}
+
+// BOT動作モード
+enum BotMode {
+  BOT_MODE_UNSPECIFIED = 0; // 未指定
+  BOT_MODE_HTTP = 1;        // HTTP Mode
+  BOT_MODE_WEBSOCKET = 2;   // WebSocket Mode
+}
+
+// OAuth2 Promptタイプ
+enum OAuth2PromptType {
+  OAUTH2_PROMPT_TYPE_UNSPECIFIED = 0; // 未指定
+  OAUTH2_PROMPT_TYPE_NONE = 1;        // なし
+}
+
+// BOTイベントタイプ
+enum BotEvent {
+  BOT_EVENT_UNSPECIFIED = 0;                  // 未指定
+  BOT_EVENT_PING = 1;                         // PING
+  BOT_EVENT_JOINED = 2;                       // チャンネル参加
+  BOT_EVENT_LEFT = 3;                         // チャンネル退出
+  BOT_EVENT_MESSAGE_CREATED = 4;              // メッセージ作成
+  BOT_EVENT_MESSAGE_UPDATED = 5;              // メッセージ編集
+  BOT_EVENT_MESSAGE_DELETED = 6;              // メッセージ削除
+  BOT_EVENT_BOT_MESSAGE_STAMPS_UPDATED = 7;   // BOTメッセージスタンプ更新
+  BOT_EVENT_DIRECT_MESSAGE_CREATED = 8;       // ダイレクトメッセージ作成
+  BOT_EVENT_DIRECT_MESSAGE_UPDATED = 9;       // ダイレクトメッセージ編集
+  BOT_EVENT_DIRECT_MESSAGE_DELETED = 10;      // ダイレクトメッセージ削除
+  BOT_EVENT_CHANNEL_CREATED = 11;             // チャンネル作成
+  BOT_EVENT_CHANNEL_UPDATED = 12;             // チャンネル編集
+  BOT_EVENT_CHANNEL_DELETED = 13;             // チャンネル削除
+  BOT_EVENT_CHANNEL_STAMPED = 14;             // チャンネルスタンプ追加・削除
+  BOT_EVENT_USER_CREATED = 15;                // ユーザー作成
+  BOT_EVENT_USER_UPDATED = 16;                // ユーザー情報編集
+  BOT_EVENT_USER_TAGS_UPDATED = 17;           // ユーザータグ編集
+  BOT_EVENT_STAMP_CREATED = 18;               // スタンプ作成
+  BOT_EVENT_TAG_CREATED = 19;                 // タグ作成
+  BOT_EVENT_TAG_UPDATED = 20;                 // タグ編集
+  BOT_EVENT_USER_GROUP_CREATED = 21;          // ユーザーグループ作成
+  BOT_EVENT_USER_GROUP_UPDATED = 22;          // ユーザーグループ編集
+  BOT_EVENT_USER_GROUP_DELETED = 23;          // ユーザーグループ削除
+  BOT_EVENT_USER_GROUP_MEMBER_ADDED = 24;     // ユーザーグループメンバー追加
+  BOT_EVENT_USER_GROUP_MEMBER_UPDATED = 25;   // ユーザーグループメンバー編集
+  BOT_EVENT_USER_GROUP_MEMBER_REMOVED = 26;   // ユーザーグループメンバー削除
+  BOT_EVENT_USER_GROUP_ADMIN_ADDED = 27;      // ユーザーグループ管理者追加
+  BOT_EVENT_USER_GROUP_ADMIN_REMOVED = 28;    // ユーザーグループ管理者削除
+}
+
+// チャンネル購読レベル
+enum ChannelSubscribeLevel {
+  CHANNEL_SUBSCRIBE_LEVEL_UNSPECIFIED = 0; // Default value
+  CHANNEL_SUBSCRIBE_LEVEL_NONE = 1;        // なし
+  CHANNEL_SUBSCRIBE_LEVEL_SUBSCRIBED = 2;  // 購読のみ
+  CHANNEL_SUBSCRIBE_LEVEL_NOTIFIED = 3;    // 通知あり
+}

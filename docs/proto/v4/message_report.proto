@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto"; // common.proto をインポート
+
+// 通報情報
+message MessageReport {
+  // 通報UUID
+  string id = 1;
+  // 通報されたメッセージのUUID
+  string message_id = 2;
+  // 通報者UUID
+  string reporter_id = 3;
+  // 通報理由
+  string reason = 4;
+  // 作成日時
+  google.protobuf.Timestamp created_at = 5;
+  // 更新日時
+  google.protobuf.Timestamp updated_at = 6;
+  // 対応者UUID
+  optional string assignee_id = 7;
+  // 対応状態 (例: "open", "closed", "rejected")
+  optional string status = 8;
+}
+
+// メッセージを通報するリクエスト
+message PostMessageReportRequest {
+  // 通報理由
+  string reason = 1;
+}
+
+service MessageReportService {
+  // 通報のリストを取得
+  rpc GetMessageReports(GetMessageReportsRequest) returns (GetMessageReportsResponse);
+  // 通報を作成
+  rpc ReportMessage(PostMessageReportRequest) returns (MessageReport);
+  // 通報を削除
+  rpc DeleteMessageReport(DeleteMessageReportRequest) returns (EmptyResponse); // Removed common.
+}
+
+message GetMessageReportsRequest {
+  // 未対応の通報のみを取得するか
+  optional bool unresolved = 1;
+  // 通報されたメッセージのチャンネルUUID
+  optional string channel_id = 2;
+  // 通報者UUID
+  optional string reporter_id = 3;
+  // 対応者UUID
+  optional string assignee_id = 4;
+  // 取得件数
+  optional int32 limit = 5;
+  // 取得オフセット
+  optional int32 offset = 6;
+}
+
+message GetMessageReportsResponse {
+  repeated MessageReport reports = 1;
+  int32 total_hits = 2;
+}
+
+message ReportMessageRpcRequest {
+  string message_id = 1;
+  PostMessageReportRequest payload = 2;
+}
+
+message GetMessageReportRequest {
+  string report_id = 1;
+}
+
+message DeleteMessageReportRequest {
+  string reportId = 1;
+}

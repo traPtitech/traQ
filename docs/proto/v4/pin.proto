@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package v4; // Changed from traq.v4
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4"; // Standardized go_package
+
+import "google/protobuf/timestamp.proto";
+import "v4/message.proto"; // For Message
+import "v4/common.proto"; // For EmptyResponse
+
+// ピン情報
+message Pin {
+  // ピン留めされたメッセージのUUID
+  string message_id = 1;
+  // ピン留めしたユーザーのUUID
+  string user_id = 2; 
+  // ピン留めされた日時
+  google.protobuf.Timestamp pinned_at = 3;
+  // ピン留めされたメッセージ
+  Message message = 4; // Corrected: Removed 'message.' prefix
+}
+
+service PinService {
+  // 指定したチャンネルのピン留めのリストを取得
+  rpc GetPins (GetPinsRequest) returns (GetPinsResponse);
+  // メッセージをピン留め
+  rpc CreatePin (CreatePinRequest) returns (Pin);
+  // ピン情報を取得
+  rpc GetPin (GetPinRequest) returns (Pin);
+  // メッセージのピン留めを解除
+  rpc DeletePin (DeletePinRequest) returns (EmptyResponse); // Removed common.
+}
+
+message GetPinsRequest {
+  string channel_id = 1;
+}
+
+message GetPinsResponse {
+  repeated Pin pins = 1;
+}
+
+message CreatePinRequest {
+  string channel_id = 1; // Path parameter, not in body of original API
+  string message_id = 2;
+}
+
+message GetPinRequest {
+  string pin_id = 1; // In API, this is messageId, but path is /pins/{pinId}
+}
+
+message DeletePinRequest {
+  string pin_id = 1;
+}
