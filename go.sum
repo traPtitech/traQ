@@ -159,7 +159,6 @@ github.com/elastic/elastic-transport-go/v8 v8.7.0 h1:OgTneVuXP2uip4BA658Xi6Hfw+P
 github.com/elastic/elastic-transport-go/v8 v8.7.0/go.mod h1:YLHer5cj0csTzNFXoNQ8qhtGY1GTvSqPnKWKaqQE3Hk=
 github.com/elastic/go-elasticsearch/v8 v8.18.0 h1:ANNq1h7DEiPUaALb8+5w3baQzaS08WfHV0DNzp0VG4M=
 github.com/elastic/go-elasticsearch/v8 v8.18.0/go.mod h1:WLqwXsJmQoYkoA9JBFeEwPkQhCfAZuUvfpdU/NvSSf0=
-github.com/elastic/go-elasticsearch/v9 v9.0.0/go.mod h1:2PB5YQPpY5tWbF65MRqzEXA31PZOdXCkloQSOZtU14I=
 github.com/envoyproxy/go-control-plane v0.13.4 h1:zEqyPVyku6IvWCFwux4x9RxkLOMUL+1vC9xUFv5l2/M=
 github.com/envoyproxy/go-control-plane v0.13.4/go.mod h1:kDfuBlDVsSj2MjrLEtRWtHlsWIFcGyB2RMO44Dc5GZA=
 github.com/envoyproxy/go-control-plane/envoy v1.32.4 h1:jb83lalDRZSpPWW2Z7Mck/8kXZ5CQAFYVjQcdVIr83A=
@@ -337,8 +336,8 @@ github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 h1:9x+U2HGLrSw5AT
 github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731/go.mod h1:Rs3MhFwutWhGwmY1VQsygw28z5bWcnEYmS1OG9OxjOQ=
 github.com/livekit/mediatransportutil v0.0.0-20250511054114-5f8c73435f62 h1:ooMExsbtVSrv0A/I47XDZ6sS7hhs31Ds5KV7JLNkMOA=
 github.com/livekit/mediatransportutil v0.0.0-20250511054114-5f8c73435f62/go.mod h1:wD1D23CU9z/WWoHrcd0mwVMayzYtRpkUgtOrgwk4m3c=
-github.com/livekit/protocol v1.38.1-0.20250521234404-0e51bd404a1f h1:p3DJqKJi9wXeWAjiFRRt3HwxSS/h0QYd1C0l9FpJYUI=
-github.com/livekit/protocol v1.38.1-0.20250521234404-0e51bd404a1f/go.mod h1:6HPISM0bkTXTk9RIaQTCe0IDbomBPz7Jwp+N3w5sqL0=
+github.com/livekit/protocol v1.38.1-0.20250523170657-fa4bb37c0caf h1:2SLBiZN/lf9+YSawyAvI/v5c09dfcv2uEOgl0RF40HY=
+github.com/livekit/protocol v1.38.1-0.20250523170657-fa4bb37c0caf/go.mod h1:6HPISM0bkTXTk9RIaQTCe0IDbomBPz7Jwp+N3w5sqL0=
 github.com/livekit/psrpc v0.6.1-0.20250511053145-465289d72c3c h1:WwEr0YBejYbKzk8LSaO9h8h0G9MnE7shyDu8yXQWmEc=
 github.com/livekit/psrpc v0.6.1-0.20250511053145-465289d72c3c/go.mod h1:kmD+AZPkWu0MaXIMv57jhNlbiSZZ/Jx4bzlxBDVmJes=
 github.com/livekit/server-sdk-go/v2 v2.8.2 h1:1sYeo9Jl6egPawE4AcC5ptua9AZ61eiKwJNRvbcWcr0=
