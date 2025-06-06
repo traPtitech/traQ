@@ -76,7 +76,7 @@ func (repo *Repository) UpdateStampPalette(id uuid.UUID, args repository.UpdateS
 		}
 
 		if args.Name.Valid {
-			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
+			if err := vd.Validate(args.Name.V, validator.StampPaletteNameRuleRequired...); err != nil {
 				return repository.ArgError("args.Name", "Name must be 1-30")
 			}
 			changes["name"] = args.Name.V
