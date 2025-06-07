@@ -45,6 +45,8 @@ jobs:
             TRAQ_REVISION=${{ env.TRAQ_REVISION }}
           tags: |
             ghcr.io/traptitech/${{ env.IMAGE_NAME }}:master
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   scan:
     name: Scan Image Vulnerability
     runs-on: ubuntu-latest
