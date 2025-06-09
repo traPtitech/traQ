@@ -49,6 +49,8 @@ jobs:
           tags: |
             ghcr.io/traptitech/${{ env.IMAGE_NAME }}:latest
             ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   release:
     name: Create Release
     runs-on: ubuntu-latest
