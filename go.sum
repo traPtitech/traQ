@@ -341,8 +341,8 @@ github.com/livekit/protocol v1.39.0 h1:xmpkEr0+29xiAu+Z/m7CmsGuLKHf5ba5+5rkGdMdZ
 github.com/livekit/protocol v1.39.0/go.mod h1:6HPISM0bkTXTk9RIaQTCe0IDbomBPz7Jwp+N3w5sqL0=
 github.com/livekit/psrpc v0.6.1-0.20250511053145-465289d72c3c h1:WwEr0YBejYbKzk8LSaO9h8h0G9MnE7shyDu8yXQWmEc=
 github.com/livekit/psrpc v0.6.1-0.20250511053145-465289d72c3c/go.mod h1:kmD+AZPkWu0MaXIMv57jhNlbiSZZ/Jx4bzlxBDVmJes=
-github.com/livekit/server-sdk-go/v2 v2.9.0 h1:Kan/15kh/aT0Pz8d/YEltp7Sgbpmb4VhHVgCi9Pg6Rw=
-github.com/livekit/server-sdk-go/v2 v2.9.0/go.mod h1:rDH1cleKLzbH1N/Pve8CGq2MsvQEQJUzEEEaMQTpkmc=
+github.com/livekit/server-sdk-go/v2 v2.9.1 h1:m7XcZGAp93R3qqXIKxf2DkhrRDlMot3fxtupIWhyP5g=
+github.com/livekit/server-sdk-go/v2 v2.9.1/go.mod h1:WwAZUKnkHsKC6oYw1JFTKOvqxKg82sOI9Nfe1hQRoSY=
 github.com/lthibault/jitterbug/v2 v2.2.2 h1:v4+0tqryaI/TlYzgYE0Vhz7ha6Jtz4yRjmBP+PcqWPQ=
 github.com/lthibault/jitterbug/v2 v2.2.2/go.mod h1:evaHKX+60nFbFnEvGNPybQMJ5vXay9auziApDGo47Sw=
 github.com/magefile/mage v1.15.0 h1:BvGheCMAsG3bWUDbZ8AyXXpCNwU9u5CB6sM+HNb9HYg=
