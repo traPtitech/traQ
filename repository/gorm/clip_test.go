@@ -219,7 +219,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 		otherUser := mustMakeUser(t, repo, rand)
 
 		n := 10
-		for i := 0; i < 10; i++ {
+		for range n {
 			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
 		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)
@@ -297,7 +297,7 @@ func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
 		createdMessages := make([]*model.Message, 10)
 
 		n := 10
-		for i := 0; i < 10; i++ {
+		for i := range n {
 			createdMessages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
 			createdClipFolderMessages[i] = mustMakeClipFolderMessage(t, repo, createdClipFolder.ID, createdMessages[i].ID)
 		}

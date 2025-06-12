@@ -160,22 +160,22 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		u1Messages := make([]*model.Message, 13)
 		u2Messages := make([]*model.Message, 14)
 
-		for i := 0; i < 13; i++ {
+		for i := range 13 {
 			u1Messages[i] = mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 		}
 
-		for i := 0; i < 14; i++ {
+		for i := range 14 {
 			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
 		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
 		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
 
-		for i := 0; i < 7; i++ {
+		for i := range 7 {
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user2.GetID())
 		}
 
-		for i := 0; i < 12; i++ {
+		for i := range 12 {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}

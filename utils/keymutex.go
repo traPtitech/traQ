@@ -28,7 +28,7 @@ func (m *KeyMutex) Unlock(key string) {
 
 func elfHash(key string) uint {
 	h := uint(0)
-	for i := 0; i < len(key); i++ {
+	for i := range len(key) {
 		h = (h << 4) + uint(key[i])
 		g := h & 0xF0000000
 		if g != 0 {

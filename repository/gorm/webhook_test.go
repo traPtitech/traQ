@@ -238,7 +238,7 @@ func TestRepositoryImpl_GetAllWebhooks(t *testing.T) {
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, ex3)
 
 	n := 10
-	for i := 0; i < n; i++ {
+	for range n {
 		mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 	}
 
@@ -253,7 +253,7 @@ func TestRepositoryImpl_GetWebhooksByCreator(t *testing.T) {
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
 
 	n := 10
-	for i := 0; i < n; i++ {
+	for range n {
 		mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 	}
 	user2 := mustMakeUser(t, repo, rand)
