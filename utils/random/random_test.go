@@ -10,7 +10,7 @@ func TestRandAlphabetAndNumberString(t *testing.T) {
 	t.Parallel()
 
 	set := make(map[string]bool, 1000)
-	for i := 0; i < 1000; i++ {
+	for _ = range 1000 {
 		s := AlphaNumeric(10)
 		if set[s] {
 			t.FailNow()
@@ -23,7 +23,7 @@ func TestSecureRandAlphabetAndNumberString(t *testing.T) {
 	t.Parallel()
 
 	set := make(map[string]bool, 1000)
-	for i := 0; i < 1000; i++ {
+	for _ = range 1000 {
 		s := SecureAlphaNumeric(10)
 		if set[s] {
 			t.FailNow()

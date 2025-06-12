@@ -35,7 +35,7 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[contentStartIndex:i]})
 				}
 
-				for j := 0; j < c/2; j++ {
+				for _ = range c / 2 {
 					result = append(result, spoilerToken{tType: spoilerTokenExclamation, body: msgRunes[i : i+2]})
 				}
 				i += c - 1
@@ -107,13 +107,13 @@ func tokensToString(tokens []spoilerToken) string {
 		}
 
 		// newSpoilerStartPosの順番を逆転
-		for i := 0; i < len(newSpoilerStartPos)/2; i++ {
+		for i := range len(newSpoilerStartPos) / 2 {
 			newSpoilerStartPos[i], newSpoilerStartPos[len(newSpoilerStartPos)-i-1] = newSpoilerStartPos[len(newSpoilerStartPos)-i-1], newSpoilerStartPos[i]
 		}
 		spoilerStartPos = newSpoilerStartPos
 	}
 
-	for i := 0; i < len(spoilerStartPos); i++ {
+	for i := range len(spoilerStartPos) {
 		s := spoilerStartPos[i]
 		e := spoilerEndPos[i]
 		tokens[s].body = nil

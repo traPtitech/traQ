@@ -273,19 +273,19 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 
 		messages := make([]*model.Message, 15)
 
-		for i := 0; i < 15; i++ {
+		for i := range 15 {
 			messages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		}
 		require.NoError(t, repo.DeleteMessage(messages[14].ID))
 		require.NoError(t, repo.DeleteMessage(messages[13].ID))
 
-		for i := 0; i < 5; i++ {
-			for j := 0; j < 3; j++ {
+		for i := range 5 {
+			for _ = range 3 {
 				mustAddMessageStamp(t, repo, messages[i].ID, stamp1.ID, user.GetID())
 			}
 		}
 
-		for i := 0; i < 12; i++ {
+		for i := range 12 {
 			mustAddMessageStamp(t, repo, messages[i].ID, stamp2.ID, user.GetID())
 		}
 
