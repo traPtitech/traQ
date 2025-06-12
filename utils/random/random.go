@@ -3,7 +3,7 @@ package random
 import (
 	crand "crypto/rand"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"unsafe"
 )
 
@@ -18,10 +18,10 @@ const (
 // この関数はmath/randが生成する擬似乱数を使用します
 func AlphaNumeric(n int) string {
 	b := make([]byte, n)
-	cache, remain := rand.Int63(), rs6LetterIdxMax
+	cache, remain := rand.Int64(), rs6LetterIdxMax
 	for i := n - 1; i >= 0; {
 		if remain == 0 {
-			cache, remain = rand.Int63(), rs6LetterIdxMax
+			cache, remain = rand.Int64(), rs6LetterIdxMax
 		}
 		idx := int(cache & rs6LetterIdxMask)
 		if idx < len(rs6Letters) {
