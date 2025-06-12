@@ -43,7 +43,7 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) MessageCounter {
 		counter.Unlock()
 	}()
 	go func() {
-		for range hub.Subscribe(1, event.MessageCreated).Receiver {
+		for range hub.Subscribe(100, event.MessageCreated).Receiver {
 			counter.inc()
 		}
 	}()
