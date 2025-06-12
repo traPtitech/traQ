@@ -31,7 +31,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		description := random2.AlphaNumeric(100)
 		stamps := make([]uuid.UUID, 0)
 		n := 100
-		for _ = range n {
+		for range n {
 			s := mustMakeStamp(t, repo, rand, user.GetID())
 			stamps = append(stamps, s.ID)
 		}
@@ -167,7 +167,7 @@ func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	otherUser := mustMakeUser(t, repo, rand)
 
 	n := 10
-	for _ = range 10 {
+	for range 10 {
 		mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 	}
 	mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), otherUser.GetID())

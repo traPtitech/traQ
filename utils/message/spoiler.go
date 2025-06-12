@@ -35,7 +35,7 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 					result = append(result, spoilerToken{tType: spoilerTokenContent, body: msgRunes[contentStartIndex:i]})
 				}
 
-				for _ = range c / 2 {
+				for range c / 2 {
 					result = append(result, spoilerToken{tType: spoilerTokenExclamation, body: msgRunes[i : i+2]})
 				}
 				i += c - 1

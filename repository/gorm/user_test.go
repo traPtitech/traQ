@@ -280,7 +280,7 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		require.NoError(t, repo.DeleteMessage(messages[13].ID))
 
 		for i := range 5 {
-			for _ = range 3 {
+			for range 3 {
 				mustAddMessageStamp(t, repo, messages[i].ID, stamp1.ID, user.GetID())
 			}
 		}

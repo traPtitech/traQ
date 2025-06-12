@@ -203,10 +203,10 @@ func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 
 	n := 10
 
-	for _ = range 10 {
+	for range 10 {
 		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
-	for _ = range 10 {
+	for range 10 {
 		stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
 		err := repo.DeleteFileMeta(stamp.FileID)
 		require.NoError(err)
@@ -284,7 +284,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 	stampIDs := make([]uuid.UUID, 0, 10)
 
-	for _ = range 10 {
+	for range 10 {
 		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		stampIDs = append(stampIDs, s.ID)
 	}
@@ -383,7 +383,7 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		}
 
 		for i := range 15 {
-			for _ = range 3 {
+			for range 3 {
 				mustAddMessageStamp(t, repo, messages[i].ID, stamp.ID, user.GetID())
 			}
 		}

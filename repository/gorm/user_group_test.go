@@ -256,7 +256,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		wg := sync.WaitGroup{}
-		for _ = range 3 {
+		for range 3 {
 			wg.Add(1)
 			go func(t *testing.T) {
 				defer wg.Done()

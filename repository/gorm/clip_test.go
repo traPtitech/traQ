@@ -219,7 +219,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 		otherUser := mustMakeUser(t, repo, rand)
 
 		n := 10
-		for _ = range n {
+		for range n {
 			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
 		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)

@@ -138,7 +138,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	})
 	require.NoError(err)
 
-	for _ = range 5 {
+	for range 5 {
 		mustMakeMessage(t, repo, user.GetID(), ch1.ID)
 	}
 	m6 := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
@@ -246,7 +246,7 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
 
-	for _ = range 10 {
+	for range 10 {
 		mustMakeMessageUnread(t, repo, user.GetID(), mustMakeMessage(t, repo, user.GetID(), channel.ID).ID)
 	}
 
@@ -330,7 +330,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		if i < 5 {
 			mustChangeChannelSubscription(t, repo, ch.ID, user.GetID())
 		}
-		for _ = range 10 {
+		for range 10 {
 			mustMakeMessage(t, repo, user.GetID(), ch.ID)
 		}
 		latests = append(latests, mustMakeMessage(t, repo, user.GetID(), ch.ID).ID)

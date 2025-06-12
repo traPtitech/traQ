@@ -75,7 +75,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 	repo, _, _, user := setupWithUser(t, common2)
 
 	var createdTags []string
-	for _ = range 10 {
+	for range 10 {
 		tag := mustMakeTag(t, repo, rand)
 		mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 		createdTags = append(createdTags, tag.Name)
@@ -142,7 +142,7 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 	repo, _, _ := setup(t, common2)
 
 	tag := mustMakeTag(t, repo, rand)
-	for _ = range 10 {
+	for range 10 {
 		mustAddTagToUser(t, repo, mustMakeUser(t, repo, rand).GetID(), tag.ID)
 	}
 

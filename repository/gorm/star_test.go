@@ -44,7 +44,7 @@ func TestRepositoryImpl_GetStaredChannels(t *testing.T) {
 	repo, assert, require, user, _ := setupWithUserAndChannel(t, common2)
 
 	n := 5
-	for _ = range n {
+	for range n {
 		ch := mustMakeChannel(t, repo, rand)
 		require.NoError(repo.AddStar(user.GetID(), ch.ID))
 	}
