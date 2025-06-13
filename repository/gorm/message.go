@@ -316,6 +316,9 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 			return repository.ErrNilID
 		}
 	}
+	if noticeable == nil {
+		noticeable = set.UUID{}
+	}
 
 	// 流れ
 	// unreadテーブルにuserID, messageIDが存在するか確認
