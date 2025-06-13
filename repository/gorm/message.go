@@ -321,16 +321,16 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 	}
 
 	// 流れ
-	// unreadテーブルにuserID, messageIDが存在するか確認
+	// unreadテーブルにuserID, messageIDが存在するか確認する
 	// 存在しないユーザーについて
 	//   - messageIDのメッセージが存在するか確認
 	//   - 存在する場合、unreadテーブルにuserID, messageID, channelID, noticeable, messageCreatedAtを登録
 	//   - 存在しない場合、エラーを返す
-	//   - update フラグは立てない
+	//   - created フラグを立てる
 	// 存在するユーザーについて
 	//   - noticeableを更新
-	//   - update フラグを立てる
-	// !update のユーザーだけイベントを発行する
+	//   - created フラグを立てない
+	// created フラグが立っているユーザーだけイベントを発行する
 
 	created := make(map[uuid.UUID]bool, len(userIDs))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
