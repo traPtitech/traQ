@@ -12,6 +12,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
+	set "github.com/traPtitech/traQ/utils/set"
 )
 
 // MockMessageRepository is a mock of MessageRepository interface.
@@ -50,6 +51,20 @@ func (m *MockMessageRepository) AddStampToMessage(messageID, stampID, userID uui
 func (mr *MockMessageRepositoryMockRecorder) AddStampToMessage(messageID, stampID, userID, count interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStampToMessage", reflect.TypeOf((*MockMessageRepository)(nil).AddStampToMessage), messageID, stampID, userID, count)
+}
+
+// BulkSetMessageUnread mocks base method.
+func (m *MockMessageRepository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, noticeable set.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkSetMessageUnread", userIDs, messageID, noticeable)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BulkSetMessageUnread indicates an expected call of BulkSetMessageUnread.
+func (mr *MockMessageRepositoryMockRecorder) BulkSetMessageUnread(userIDs, messageID, noticeable interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkSetMessageUnread", reflect.TypeOf((*MockMessageRepository)(nil).BulkSetMessageUnread), userIDs, messageID, noticeable)
 }
 
 // CreateMessage mocks base method.
