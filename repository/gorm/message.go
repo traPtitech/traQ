@@ -1,7 +1,9 @@
 package gorm
 
 import (
+	"errors"
 	"fmt"
+	"github.com/traPtitech/traQ/utils/set"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -294,35 +296,111 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
+	s := set.UUID{}
+	if noticeable {
+		s.Add(userID)
+	}
+	return repo.BulkSetMessageUnread([]uuid.UUID{userID}, messageID, s)
+}
 
-	var update bool
+// BulkSetMessageUnread implements MessageRepository interface.
+func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, noticeable set.UUID) error {
+	if userIDs == nil || messageID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	if len(userIDs) == 0 {
+		return nil
+	}
+	for _, id := range userIDs {
+		if id == uuid.Nil {
+			return repository.ErrNilID
+		}
+	}
+
+	// 流れ
+	// unreadテーブルにuserID, messageIDが存在するか確認
+	// 存在しないユーザーについて
+	//   - messageIDのメッセージが存在するか確認
+	//   - 存在する場合、unreadテーブルにuserID, messageID, channelID, noticeable, messageCreatedAtを登録
+	//   - 存在しない場合、エラーを返す
+	//   - update フラグは立てない
+	// 存在するユーザーについて
+	//   - noticeableを更新
+	//   - update フラグを立てる
+	// !update のユーザーだけイベントを発行する
+
+	created := make(map[uuid.UUID]bool, len(userIDs))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var u model.Unread
-		if err := tx.First(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				var m model.Message
-				err := tx.First(&m, &model.Message{ID: messageID}).Error
-				if err != nil {
-					return err
-				}
-
-				return tx.Create(&model.Unread{
-					UserID:           userID,
-					ChannelID:        m.ChannelID,
-					MessageID:        messageID,
-					Noticeable:       noticeable,
-					MessageCreatedAt: m.CreatedAt,
-				}).Error
-			}
+		var msg model.Message
+		err := tx.First(&msg, &model.Message{ID: messageID}).Error
+		if err != nil {
 			return err
 		}
-		update = true
-		return tx.Model(&u).Update("noticeable", noticeable).Error
+
+		var unreadList []model.Unread
+		if err := tx.Where("user_id IN (?) AND message_id = ?", userIDs, messageID).Find(&unreadList).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+
+		hasUnreadRecord := make(map[uuid.UUID]bool, len(unreadList))
+		for _, u := range unreadList {
+			hasUnreadRecord[u.UserID] = true
+		}
+
+		insertList := make([]*model.Unread, 0, len(userIDs))
+		for _, userID := range userIDs {
+			if !hasUnreadRecord[userID] {
+				insertList = append(insertList, &model.Unread{
+					UserID:           userID,
+					ChannelID:        msg.ChannelID,
+					MessageID:        messageID,
+					Noticeable:       noticeable.Contains(userID),
+					MessageCreatedAt: msg.CreatedAt,
+				})
+			}
+			created[userID] = true
+		}
+
+		unreadListToBeNoticeable := make([]*model.Unread, 0, len(unreadList))
+		unreadListToBeUnnoticeable := make([]*model.Unread, 0, len(unreadList))
+		for _, u := range unreadList {
+			if noticeable.Contains(u.UserID) {
+				if !u.Noticeable {
+					unreadListToBeNoticeable = append(unreadListToBeNoticeable, &u)
+				}
+			} else {
+				if u.Noticeable {
+					unreadListToBeUnnoticeable = append(unreadListToBeUnnoticeable, &u)
+				}
+			}
+		}
+
+		if len(insertList) != 0 {
+			if err := tx.Create(&insertList).Error; err != nil {
+				return err
+			}
+		}
+
+		if len(unreadListToBeNoticeable) != 0 {
+			if err := tx.Model(&unreadListToBeNoticeable).Update("noticeable", true).Error; err != nil {
+				return err
+			}
+		}
+
+		if len(unreadListToBeUnnoticeable) != 0 {
+			if err := tx.Model(&unreadListToBeUnnoticeable).Update("noticeable", false).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
 	}
-	if !update {
+	for userID := range created {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnread,
 			Fields: hub.Fields{
@@ -332,6 +410,7 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 			},
 		})
 	}
+
 	return nil
 }
 
