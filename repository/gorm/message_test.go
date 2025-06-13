@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/traPtitech/traQ/utils/set"
 	"testing"
 	"time"
 
@@ -240,6 +241,38 @@ func TestRepositoryImpl_SetMessageUnread(t *testing.T) {
 		assert.Equal(true, m.CreatedAt.Equal(messageCreatedAt))
 	}
 	assert.NoError(repo.SetMessageUnread(user.GetID(), m.ID, true))
+}
+
+func TestRepositoryImpl_BulkSetMessageUnread(t *testing.T) {
+	t.Parallel()
+	repo, assert, _, user1, channel := setupWithUserAndChannel(t, common3)
+	user2 := mustMakeUser(t, repo, rand)
+
+	m := mustMakeMessage(t, repo, user1.GetID(), channel.ID)
+
+	emptySet := set.UUID{}
+
+	noticeableSet := set.UUID{}
+	noticeableSet.Add(user1.GetID())
+
+	assert.Error(repo.BulkSetMessageUnread(nil, m.ID, emptySet))
+	assert.Error(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID(), user2.GetID()}, uuid.Nil, emptySet))
+	if assert.NoError(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID(), user2.GetID()}, m.ID, noticeableSet)) {
+		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()})))
+		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()})))
+		var messageCreatedAt time.Time
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()}).Select("message_created_at").Row().Scan(&messageCreatedAt))
+		assert.Equal(true, m.CreatedAt.Equal(messageCreatedAt))
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()}).Select("message_created_at").Row().Scan(&messageCreatedAt))
+		assert.Equal(true, m.CreatedAt.Equal(messageCreatedAt))
+		var noticeable bool
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()}).Select("noticeable").Row().Scan(&noticeable))
+		assert.Equal(true, noticeable)
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()}).Select("noticeable").Row().Scan(&noticeable))
+		assert.Equal(false, noticeable)
+
+	}
+	assert.NoError(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID()}, m.ID, noticeableSet))
 }
 
 func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
