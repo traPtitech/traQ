@@ -32,18 +32,22 @@ type messageCounterImpl struct {
 }
 
 // NewMessageCounter 全メッセージ数カウンタを生成します
-func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
+func NewMessageCounter(db *gorm.DB, hub *hub.Hub) MessageCounter {
 	counter := &messageCounterImpl{}
-	if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
-		return nil, fmt.Errorf("failed to load total messages count: %w", err)
-	}
-	messagesCounter.Add(float64(counter.count))
+	counter.Lock()
 	go func() {
-		for range hub.Subscribe(1, event.MessageCreated).Receiver {
+		if err := db.Unscoped().Model(&model.Message{}).Count(&counter.count).Error; err != nil {
+			panic(fmt.Errorf("failed to load total messages count: %w", err))
+		}
+		messagesCounter.Add(float64(counter.count))
+		counter.Unlock()
+	}()
+	go func() {
+		for range hub.Subscribe(100, event.MessageCreated).Receiver {
 			counter.inc()
 		}
 	}()
-	return counter, nil
+	return counter
 }
 
 func (c *messageCounterImpl) Get() int64 {
