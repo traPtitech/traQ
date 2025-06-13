@@ -247,11 +247,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	// 未読追加
 	markedUsers.Remove(m.UserID)
-	for id := range markedUsers {
-		err := ns.repo.SetMessageUnread(id, m.ID, noticeable.Contains(id))
-		if err != nil {
-			logger.Error("failed to SetMessageUnread", zap.Error(err), zap.Stringer("user_id", id)) // 失敗
-		}
+	if err := ns.repo.BulkSetMessageUnread(markedUsers.Array(), m.ID, noticeable); err != nil {
+		logger.Error("failed to SetMessageUnread", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
 	}
 
 	// WS送信
