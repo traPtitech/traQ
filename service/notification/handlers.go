@@ -248,7 +248,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	// 未読追加
 	markedUsers.Remove(m.UserID)
 	if err := ns.repo.BulkSetMessageUnread(markedUsers.Array(), m.ID, noticeable); err != nil {
-		logger.Error("failed to SetMessageUnread", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
+		logger.Error("failed to BulkSetMessageUnread", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
 	}
 
 	// WS送信
