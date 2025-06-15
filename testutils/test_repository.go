@@ -1127,6 +1127,26 @@ func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool
 	return nil
 }
 
+func (repo *TestRepository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, _ set.UUID) error {
+	if userIDs == nil || messageID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	if len(userIDs) == 0 {
+		return nil
+	}
+	repo.MessageUnreadsLock.Lock()
+	for _, userID := range userIDs {
+		mMap, ok := repo.MessageUnreads[userID]
+		if !ok {
+			mMap = make(map[uuid.UUID]bool)
+		}
+		mMap[messageID] = true
+		repo.MessageUnreads[userID] = mMap
+	}
+	repo.MessageUnreadsLock.Unlock()
+	return nil
+}
+
 func (repo *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error) {
 	result := make([]*model.Message, 0)
 	repo.MessageUnreadsLock.RLock()
