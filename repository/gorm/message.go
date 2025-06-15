@@ -3,7 +3,6 @@ package gorm
 import (
 	"errors"
 	"fmt"
-	"github.com/traPtitech/traQ/utils/set"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 // CreateMessage implements MessageRepository interface.
