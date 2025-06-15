@@ -331,7 +331,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 	//   - created フラグを立てない
 	// created フラグが立っているユーザーだけイベントを発行する
 
-	created := make(map[uuid.UUID]bool, len(userIDs))
+	unreadListToInsert := make([]*model.Unread, 0, len(userIDs))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var msg model.Message
 		err := tx.First(&msg, &model.Message{ID: messageID}).Error
@@ -351,10 +351,9 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 			hasUnreadRecord[u.UserID] = true
 		}
 
-		insertList := make([]*model.Unread, 0, len(userIDs))
 		for _, userID := range userIDs {
 			if !hasUnreadRecord[userID] {
-				insertList = append(insertList, &model.Unread{
+				unreadListToInsert = append(unreadListToInsert, &model.Unread{
 					UserID:           userID,
 					ChannelID:        msg.ChannelID,
 					MessageID:        messageID,
@@ -362,7 +361,6 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 					MessageCreatedAt: msg.CreatedAt,
 				})
 			}
-			created[userID] = true
 		}
 
 		unreadListToBeNoticeable := make([]*model.Unread, 0, len(unreadList))
@@ -379,8 +377,8 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 			}
 		}
 
-		if len(insertList) != 0 {
-			if err := tx.Create(&insertList).Error; err != nil {
+		if len(unreadListToInsert) != 0 {
+			if err := tx.Create(&unreadListToInsert).Error; err != nil {
 				return err
 			}
 		}
@@ -402,12 +400,12 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 	if err != nil {
 		return err
 	}
-	for userID := range created {
+	for _, unread := range unreadListToInsert {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnread,
 			Fields: hub.Fields{
 				"message_id": messageID,
-				"user_id":    userID,
+				"user_id":    unread.UserID,
 				"noticeable": noticeable,
 			},
 		})
