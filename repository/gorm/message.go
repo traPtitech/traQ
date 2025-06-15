@@ -3,6 +3,7 @@ package gorm
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -311,10 +312,8 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 	if len(userIDs) == 0 {
 		return nil
 	}
-	for _, id := range userIDs {
-		if id == uuid.Nil {
-			return repository.ErrNilID
-		}
+	if slices.Contains(userIDs, uuid.Nil) {
+		return repository.ErrNilID
 	}
 	if noticeable == nil {
 		noticeable = set.UUID{}
