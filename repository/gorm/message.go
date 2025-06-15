@@ -406,7 +406,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 			Fields: hub.Fields{
 				"message_id": messageID,
 				"user_id":    unread.UserID,
-				"noticeable": noticeable,
+				"noticeable": noticeable.Contains(unread.UserID),
 			},
 		})
 	}
