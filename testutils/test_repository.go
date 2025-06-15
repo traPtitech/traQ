@@ -1128,7 +1128,7 @@ func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool
 }
 
 func (repo *TestRepository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, _ set.UUID) error {
-	if userIDs == nil || messageID == uuid.Nil {
+	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	if len(userIDs) == 0 {

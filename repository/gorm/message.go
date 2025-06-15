@@ -305,7 +305,7 @@ func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable
 
 // BulkSetMessageUnread implements MessageRepository interface.
 func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, noticeable set.UUID) error {
-	if userIDs == nil || messageID == uuid.Nil {
+	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	if len(userIDs) == 0 {
