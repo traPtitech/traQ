@@ -323,8 +323,8 @@ github.com/lestrrat-go/httpcc v1.0.1 h1:ydWCStUeJLkpYyjLDHihupbn2tYmZ7m22BGkcvZZ
 github.com/lestrrat-go/httpcc v1.0.1/go.mod h1:qiltp3Mt56+55GPVCbTdM9MlqhvzyuL6W/NMDA8vA5E=
 github.com/lestrrat-go/httprc/v3 v3.0.0 h1:nZUx/zFg5uc2rhlu1L1DidGr5Sj02JbXvGSpnY4LMrc=
 github.com/lestrrat-go/httprc/v3 v3.0.0/go.mod h1:k2U1QIiyVqAKtkffbg+cUmsyiPGQsb9aAfNQiNFuQ9Q=
-github.com/lestrrat-go/jwx/v3 v3.0.6 h1:aWM4fQxCncasWolc67qfv6YKo53QBcW6cee2CmT35Qg=
-github.com/lestrrat-go/jwx/v3 v3.0.6/go.mod h1:7bi1u/M8ZoyDH4UCTcIMO8l42ETaO4ULYckKRkEWe8Y=
+github.com/lestrrat-go/jwx/v3 v3.0.7 h1:bsPDc+430I0yT+F5a6PmAb5UlhzkV1U+BVThkxhKnBQ=
+github.com/lestrrat-go/jwx/v3 v3.0.7/go.mod h1:0P9rjqNMDOspNSetpKX86Go54jLSEwCh8ax4jQRGYL0=
 github.com/lestrrat-go/option v1.0.1 h1:oAzP2fvZGQKWkvHa1/SAcFolBEca1oN+mQ7eooNBEYU=
 github.com/lestrrat-go/option v1.0.1/go.mod h1:5ZHFbivi4xwXxhxY9XHDe2FHo6/Z7WWmtT7T5nBBp3I=
 github.com/lestrrat-go/option/v2 v2.0.0 h1:XxrcaJESE1fokHy3FpaQ/cXW8ZsIdWcdFzzLOcID3Ss=
@@ -515,6 +515,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasthttp v1.40.0 h1:CRq/00MfruPGFLTQKY8b+8SfdK60TxNztjRMnH0t1Yc=
 github.com/valyala/fasthttp v1.40.0/go.mod h1:t/G+3rLek+CyY9bnIE+YlMRddxVAAGjhxndDB4i4C0I=
+github.com/valyala/fastjson v1.6.4 h1:uAUNq9Z6ymTgGhcm0UynUAB6tlbakBrz6CQFax3BXVQ=
+github.com/valyala/fastjson v1.6.4/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
