@@ -86,7 +86,7 @@ type MessageRepository interface {
 	//
 	// 成功した場合、nilを返します。
 	// noticeableMap には、unread レコードを作成するユーザーのIDと、そのユーザーに対して Noticeable フラグを設定するかどうかを指定してください。
-	// 引数にuuid.Nilを指定するもしくは引数中の要素にuuid.Nilが含まれるものを指定するととErrNilIDを返します。
+	// 引数にuuid.Nilを指定するもしくは引数中の要素にuuid.Nilが含まれるものを指定すると ErrNilID を返します。
 	// DBによるエラーを返すことがあります。
 	SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error
 	// GetUnreadMessagesByUserID 指定したユーザーの未読メッセージをすべて取得します
