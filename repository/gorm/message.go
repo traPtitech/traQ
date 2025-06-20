@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -334,13 +335,13 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 			}
 		}
 
-		hasUnreadRecord := make(map[uuid.UUID]bool, len(unreadList))
+		hasUnreadRecord := set.UUID{}
 		for _, u := range unreadList {
-			hasUnreadRecord[u.UserID] = true
+			hasUnreadRecord.Add(u.UserID)
 		}
 
 		for _, userID := range userIDs {
-			if !hasUnreadRecord[userID] {
+			if !hasUnreadRecord.Contains(userID) {
 				unreadListToInsert = append(unreadListToInsert, &model.Unread{
 					UserID:           userID,
 					ChannelID:        msg.ChannelID,
