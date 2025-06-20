@@ -3,7 +3,6 @@ package gorm
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
-	"github.com/traPtitech/traQ/utils/set"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -292,31 +290,21 @@ func (repo *Repository) GetDeletedMessagesAfter(after time.Time, limit int) (mes
 	return
 }
 
-// SetMessageUnread implements MessageRepository interface.
-func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
-	if userID == uuid.Nil || messageID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	s := set.UUID{}
-	if noticeable {
-		s.Add(userID)
-	}
-	return repo.BulkSetMessageUnread([]uuid.UUID{userID}, messageID, s)
-}
-
-// BulkSetMessageUnread implements MessageRepository interface.
-func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, noticeable set.UUID) error {
+// SetMessageUnreads implements MessageRepository interface.
+func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if len(userIDs) == 0 {
+	if len(userNoticeableMap) == 0 {
 		return nil
 	}
-	if slices.Contains(userIDs, uuid.Nil) {
-		return repository.ErrNilID
-	}
-	if noticeable == nil {
-		noticeable = set.UUID{}
+
+	userIDs := make([]uuid.UUID, 0, len(userNoticeableMap))
+	for userID := range userNoticeableMap {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
+		userIDs = append(userIDs, userID)
 	}
 
 	// 流れ
@@ -331,7 +319,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 	//   - created フラグを立てない
 	// created フラグが立っているユーザーだけイベントを発行する
 
-	unreadListToInsert := make([]*model.Unread, 0, len(userIDs))
+	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var msg model.Message
 		err := tx.First(&msg, &model.Message{ID: messageID}).Error
@@ -357,7 +345,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 					UserID:           userID,
 					ChannelID:        msg.ChannelID,
 					MessageID:        messageID,
-					Noticeable:       noticeable.Contains(userID),
+					Noticeable:       userNoticeableMap[userID],
 					MessageCreatedAt: msg.CreatedAt,
 				})
 			}
@@ -366,7 +354,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 		unreadListToBeNoticeable := make([]*model.Unread, 0, len(unreadList))
 		unreadListToBeUnnoticeable := make([]*model.Unread, 0, len(unreadList))
 		for _, u := range unreadList {
-			if noticeable.Contains(u.UserID) {
+			if userNoticeableMap[u.UserID] {
 				if !u.Noticeable {
 					unreadListToBeNoticeable = append(unreadListToBeNoticeable, &u)
 				}
@@ -406,7 +394,7 @@ func (repo *Repository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid
 			Fields: hub.Fields{
 				"message_id": messageID,
 				"user_id":    unread.UserID,
-				"noticeable": noticeable.Contains(unread.UserID),
+				"noticeable": unread.Noticeable,
 			},
 		})
 	}

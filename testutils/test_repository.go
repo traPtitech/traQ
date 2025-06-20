@@ -1112,30 +1112,21 @@ func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) 
 	return
 }
 
-func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool) error {
-	if userID == uuid.Nil || messageID == uuid.Nil {
-		return repository.ErrNilID
+func (repo *TestRepository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
+	if userNoticeableMap == nil {
+		return nil
 	}
-	repo.MessageUnreadsLock.Lock()
-	mMap, ok := repo.MessageUnreads[userID]
-	if !ok {
-		mMap = make(map[uuid.UUID]bool)
-	}
-	mMap[messageID] = true
-	repo.MessageUnreads[userID] = mMap
-	repo.MessageUnreadsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) BulkSetMessageUnread(userIDs []uuid.UUID, messageID uuid.UUID, _ set.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if len(userIDs) == 0 {
-		return nil
+	for userID := range userNoticeableMap {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
 	}
+
 	repo.MessageUnreadsLock.Lock()
-	for _, userID := range userIDs {
+	for userID := range userNoticeableMap {
 		mMap, ok := repo.MessageUnreads[userID]
 		if !ok {
 			mMap = make(map[uuid.UUID]bool)

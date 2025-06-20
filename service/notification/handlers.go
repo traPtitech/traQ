@@ -247,7 +247,16 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	// 未読追加
 	markedUsers.Remove(m.UserID)
-	if err := ns.repo.BulkSetMessageUnread(markedUsers.Array(), m.ID, noticeable); err != nil {
+
+	userNoticeableMap := map[uuid.UUID]bool{}
+	for uid := range markedUsers {
+		if noticeable.Contains(uid) {
+			userNoticeableMap[uid] = true
+		} else {
+			userNoticeableMap[uid] = false
+		}
+	}
+	if err := ns.repo.SetMessageUnreads(userNoticeableMap, m.ID); err != nil {
 		logger.Error("failed to BulkSetMessageUnread", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
 	}
 

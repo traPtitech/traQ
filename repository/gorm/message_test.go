@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"github.com/traPtitech/traQ/utils/set"
 	"testing"
 	"time"
 
@@ -226,38 +225,16 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_SetMessageUnread(t *testing.T) {
-	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
-
-	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-
-	assert.Error(repo.SetMessageUnread(uuid.Nil, m.ID, true))
-	assert.Error(repo.SetMessageUnread(user.GetID(), uuid.Nil, true))
-	if assert.NoError(repo.SetMessageUnread(user.GetID(), m.ID, true)) {
-		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user.GetID()})))
-		var messageCreatedAt time.Time
-		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user.GetID()}).Select("message_created_at").Row().Scan(&messageCreatedAt))
-		assert.Equal(true, m.CreatedAt.Equal(messageCreatedAt))
-	}
-	assert.NoError(repo.SetMessageUnread(user.GetID(), m.ID, true))
-}
-
-func TestRepositoryImpl_BulkSetMessageUnread(t *testing.T) {
+func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user1, channel := setupWithUserAndChannel(t, common3)
 	user2 := mustMakeUser(t, repo, rand)
 
 	m := mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 
-	emptySet := set.UUID{}
-
-	noticeableSet := set.UUID{}
-	noticeableSet.Add(user1.GetID())
-
-	assert.Error(repo.BulkSetMessageUnread(nil, m.ID, emptySet))
-	assert.Error(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID(), user2.GetID()}, uuid.Nil, emptySet))
-	if assert.NoError(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID(), user2.GetID()}, m.ID, noticeableSet)) {
+	assert.NoError(repo.SetMessageUnreads(nil, m.ID))
+	assert.Error(repo.SetMessageUnreads(map[uuid.UUID]bool{uuid.Nil: true}, uuid.Nil))
+	if assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): true, user2.GetID(): false}, m.ID)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()})))
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()})))
 		var messageCreatedAt time.Time
@@ -272,7 +249,7 @@ func TestRepositoryImpl_BulkSetMessageUnread(t *testing.T) {
 		assert.Equal(false, noticeable)
 
 	}
-	assert.NoError(repo.BulkSetMessageUnread([]uuid.UUID{user1.GetID()}, m.ID, noticeableSet))
+	assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): true}, m.ID))
 }
 
 func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
