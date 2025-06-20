@@ -341,7 +341,7 @@ func (env *Env) DeleteMessage(t *testing.T, messageID uuid.UUID) {
 // MakeMessageUnread 指定したメッセージを未読にします
 func (env *Env) MakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.SetMessageUnread(userID, messageID, false))
+	require.NoError(t, env.Repository.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
 }
 
 // CreateStamp スタンプを必ず作成します
