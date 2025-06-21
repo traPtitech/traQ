@@ -229,6 +229,7 @@ func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user1, channel := setupWithUserAndChannel(t, common3)
 	user2 := mustMakeUser(t, repo, rand)
+	user3 := mustMakeUser(t, repo, rand)
 
 	m := mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 
@@ -249,7 +250,15 @@ func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 		assert.Equal(false, noticeable)
 
 	}
-	assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): true}, m.ID))
+	if assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): false, user2.GetID(): true, user3.GetID(): false}, m.ID)) {
+		var noticeable bool
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()}).Select("noticeable").Row().Scan(&noticeable))
+		assert.Equal(false, noticeable)
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()}).Select("noticeable").Row().Scan(&noticeable))
+		assert.Equal(true, noticeable)
+		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user3.GetID()}).Select("noticeable").Row().Scan(&noticeable))
+		assert.Equal(false, noticeable)
+	}
 }
 
 func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
