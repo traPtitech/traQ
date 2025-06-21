@@ -217,18 +217,18 @@ func (mr *MockMessageRepositoryMockRecorder) RemoveStampFromMessage(messageID, s
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveStampFromMessage", reflect.TypeOf((*MockMessageRepository)(nil).RemoveStampFromMessage), messageID, stampID, userID)
 }
 
-// SetMessageUnread mocks base method.
-func (m *MockMessageRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
+// SetMessageUnreads mocks base method.
+func (m *MockMessageRepository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetMessageUnread", userID, messageID, noticeable)
+	ret := m.ctrl.Call(m, "SetMessageUnreads", userNoticeableMap, messageID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetMessageUnread indicates an expected call of SetMessageUnread.
-func (mr *MockMessageRepositoryMockRecorder) SetMessageUnread(userID, messageID, noticeable interface{}) *gomock.Call {
+// SetMessageUnreads indicates an expected call of SetMessageUnreads.
+func (mr *MockMessageRepositoryMockRecorder) SetMessageUnreads(userNoticeableMap, messageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMessageUnread", reflect.TypeOf((*MockMessageRepository)(nil).SetMessageUnread), userID, messageID, noticeable)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMessageUnreads", reflect.TypeOf((*MockMessageRepository)(nil).SetMessageUnreads), userNoticeableMap, messageID)
 }
 
 // UpdateMessage mocks base method.
