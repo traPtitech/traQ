@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ const (
 type attributes struct {
 	To             []uuid.UUID
 	Citation       []uuid.UUID
+	OgpContent	   []string
 	HasURL         bool
 	HasAttachments bool
 	HasImage       bool
@@ -48,7 +50,10 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		isBot = user.IsBot()
 	}
 
-	attr := e.getAttributes(m, parseResult)
+	attr, err := e.getAttributes(m, parseResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get attributes: %w", err)
+	}
 
 	return &esMessageDoc{
 		UserID:         m.UserID,
@@ -60,6 +65,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		UpdatedAt:      m.UpdatedAt,
 		To:             attr.To,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
@@ -69,28 +75,55 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 }
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
-func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
-	attr := e.getAttributes(m, parseResult)
+func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) (*esMessageDocUpdate, error) {
+	attr, err := e.getAttributes(m, parseResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get attributes: %w", err)
+	}
 	// Updateする項目のみ
 	return &esMessageDocUpdate{
 		Text:           m.Text,
 		UpdatedAt:      m.UpdatedAt,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
-	}
+	}, nil
 }
 
-func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
+func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) (*attributes, error) {
 	attr := &attributes{}
 
 	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
 	attr.Citation = parseResult.Citation
 	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
 	attr.HasAttachments = len(parseResult.Attachments) != 0
+
+	re, err := regexp.Compile(`https?://[\w,.?=&#%~/-]+`)
+	if err != nil {
+		// エラー処理整える
+		return nil, fmt.Errorf("failed to compile URL regex: %w", err)
+	}
+	urls := re.FindAllString(m.Text, -1)
+
+	ogpCache := make([]string, 0, len(urls))
+	for _, url := range urls {
+		tmp, err := e.repo.GetOgpCache(url)
+		if err != nil {
+			if err != repository.ErrNotFound {
+				// エラー処理整える
+				e.l.Warn("failed to get ogp cache", zap.String("url", url), zap.Error(err))
+			}
+			continue
+		}
+		if tmp.Valid {
+			ogpCache = append(ogpCache, tmp.Content.Title + "\n" + tmp.Content.Description)
+		}
+	}
+	attr.OgpContent = ogpCache
 
 	for _, attachmentID := range parseResult.Attachments {
 		meta, err := e.repo.GetFileMeta(attachmentID)
@@ -107,7 +140,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 		}
 	}
 
-	return attr
+	return attr,  nil
 }
 
 func (e *esEngine) syncLoop(done <-chan struct{}) {
@@ -255,7 +288,10 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 		} else {
-			doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+			doc, err := e.convertMessageUpdated(v, message.Parse(v.Text))
+			if err != nil {
+				return err
+			}
 
 			data, err := json.Marshal(map[string]any{"doc": *doc})
 			if err != nil {
