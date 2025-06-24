@@ -314,11 +314,10 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 	//   - messageIDのメッセージが存在するか確認
 	//   - 存在する場合、unreadテーブルにuserID, messageID, channelID, noticeable, messageCreatedAtを登録
 	//   - 存在しない場合、エラーを返す
-	//   - created フラグを立てる
 	// 存在するユーザーについて
 	//   - noticeableを更新
 	//   - created フラグを立てない
-	// created フラグが立っているユーザーだけイベントを発行する
+	// DB 更新後、 unread テーブルにレコードが存在しなかったユーザーだけイベントを発行する
 
 	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
