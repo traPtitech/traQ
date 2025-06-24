@@ -1113,7 +1113,7 @@ func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) 
 }
 
 func (repo *TestRepository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
-	if userNoticeableMap == nil {
+	if len(userNoticeableMap) == 0 {
 		return nil
 	}
 	if messageID == uuid.Nil {
