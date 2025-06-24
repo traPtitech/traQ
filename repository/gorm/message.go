@@ -361,14 +361,15 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 		userIDListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
 
 		for _, u := range unreadList {
-			if userNoticeableMap[u.UserID] {
-				if !u.Noticeable {
-					userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
-				}
+			toBeNoticeable := userNoticeableMap[u.UserID]
+			if toBeNoticeable == u.Noticeable {
+				continue
+			}
+
+			if toBeNoticeable {
+				userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
 			} else {
-				if u.Noticeable {
-					userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
-				}
+				userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
 			}
 		}
 
