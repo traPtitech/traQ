@@ -357,28 +357,28 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 			}
 		}
 
-		userIdListToBeNoticeable := make([]uuid.UUID, 0, len(unreadList))
-		userIdListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
+		userIDListToBeNoticeable := make([]uuid.UUID, 0, len(unreadList))
+		userIDListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
 
 		for _, u := range unreadList {
 			if userNoticeableMap[u.UserID] {
 				if !u.Noticeable {
-					userIdListToBeNoticeable = append(userIdListToBeNoticeable, u.UserID)
+					userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
 				}
 			} else {
 				if u.Noticeable {
-					userIdListToBeUnnoticeable = append(userIdListToBeUnnoticeable, u.UserID)
+					userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
 				}
 			}
 		}
 
-		if len(userIdListToBeNoticeable) != 0 {
-			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIdListToBeNoticeable).Update("noticeable", true).Error; err != nil {
+		if len(userIDListToBeNoticeable) != 0 {
+			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIDListToBeNoticeable).Update("noticeable", true).Error; err != nil {
 				return err
 			}
 		}
-		if len(userIdListToBeUnnoticeable) != 0 {
-			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIdListToBeUnnoticeable).Update("noticeable", false).Error; err != nil {
+		if len(userIDListToBeUnnoticeable) != 0 {
+			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIDListToBeUnnoticeable).Update("noticeable", false).Error; err != nil {
 				return err
 			}
 		}
