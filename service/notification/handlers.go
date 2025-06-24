@@ -250,11 +250,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	userNoticeableMap := map[uuid.UUID]bool{}
 	for uid := range markedUsers {
-		if noticeable.Contains(uid) {
-			userNoticeableMap[uid] = true
-		} else {
-			userNoticeableMap[uid] = false
-		}
+		userNoticeableMap[uid] = noticeable.Contains(uid)
 	}
 	if err := ns.repo.SetMessageUnreads(userNoticeableMap, m.ID); err != nil {
 		logger.Error("failed to SetMessageUnreads", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
