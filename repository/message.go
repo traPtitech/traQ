@@ -85,7 +85,7 @@ type MessageRepository interface {
 	// SetMessageUnreads ユーザーの集合について、指定したメッセージを未読にします
 	//
 	// 成功した場合、nilを返します。
-	// userNoticeableMap の各キーに対して指定したメッセージを未読にします。各要素が true の場合 noticeable な未読として扱います。
+	// userNoticeableMap には、未読を追加するユーザーと、指定した各ユーザーに対しそのメッセージが noticeable (自分宛のメッセージが含まれているか) かどうかのマッピングを指定します。
 	// 引数にuuid.Nilを指定するもしくは引数中の要素にuuid.Nilが含まれるものを指定すると ErrNilID を返します。
 	// DBによるエラーを返すことがあります。
 	SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error

@@ -316,7 +316,6 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 	//   - 存在しない場合、エラーを返す
 	// 存在するユーザーについて
 	//   - noticeableを更新
-	//   - created フラグを立てない
 	// DB 更新後、 unread テーブルにレコードが存在しなかったユーザーだけイベントを発行する
 
 	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
