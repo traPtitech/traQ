@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
-	"github.com/traPtitech/traQ/utils/set"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -308,16 +307,6 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 		userIDs = append(userIDs, userID)
 	}
 
-	// 流れ
-	// unreadテーブルにuserID, messageIDが存在するか確認する
-	// 存在しないユーザーについて
-	//   - messageIDのメッセージが存在するか確認
-	//   - 存在する場合、unreadテーブルにuserID, messageID, channelID, noticeable, messageCreatedAtを登録
-	//   - 存在しない場合、エラーを返す
-	// 存在するユーザーについて
-	//   - noticeableを更新
-	// DB 更新後、 unread テーブルにレコードが存在しなかったユーザーだけイベントを発行する
-
 	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var msg model.Message
@@ -333,13 +322,27 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 			}
 		}
 
-		hasUnreadRecord := set.UUID{}
+		unreadRecordMap := make(map[uuid.UUID]model.Unread, len(unreadList))
 		for _, u := range unreadList {
-			hasUnreadRecord.Add(u.UserID)
+			unreadRecordMap[u.UserID] = u
 		}
 
+		userIDListToBeNoticeable := make([]uuid.UUID, 0, len(unreadList))
+		userIDListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
+
 		for userID, noticeable := range userNoticeableMap {
-			if !hasUnreadRecord.Contains(userID) {
+			if u, ok := unreadRecordMap[userID]; ok {
+				toBeNoticeable := userNoticeableMap[u.UserID]
+				if toBeNoticeable == u.Noticeable {
+					continue
+				}
+
+				if toBeNoticeable {
+					userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
+				} else {
+					userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
+				}
+			} else {
 				unreadListToInsert = append(unreadListToInsert, &model.Unread{
 					UserID:           userID,
 					ChannelID:        msg.ChannelID,
@@ -353,22 +356,6 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 		if len(unreadListToInsert) != 0 {
 			if err := tx.Create(&unreadListToInsert).Error; err != nil {
 				return err
-			}
-		}
-
-		userIDListToBeNoticeable := make([]uuid.UUID, 0, len(unreadList))
-		userIDListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
-
-		for _, u := range unreadList {
-			toBeNoticeable := userNoticeableMap[u.UserID]
-			if toBeNoticeable == u.Noticeable {
-				continue
-			}
-
-			if toBeNoticeable {
-				userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
-			} else {
-				userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
 			}
 		}
 
