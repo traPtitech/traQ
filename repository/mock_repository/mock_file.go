@@ -59,7 +59,7 @@ func (m *MockFileRepository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType
 }
 
 // DeleteFileThumbnail indicates an expected call of DeleteFileThumbnail.
-func (mr *MockFileRepositoryMockRecorder) DeleteFileThumbnail(fileID, thumbnailType any) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) DeleteFileThumbnail(fileID, thumbnailType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileThumbnail", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileThumbnail), fileID, thumbnailType)
 }
