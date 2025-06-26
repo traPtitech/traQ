@@ -54,7 +54,7 @@ func v40() *gormigrate.Migration {
 					}
 				}
 				if count > 0 {
-					return fmt.Errorf("Failed to generate a unique name for group %s after 10 attempts", record.Name)
+					return fmt.Errorf("failed to generate a unique name for group %s after 10 attempts", record.Name)
 				}
 				// グループ名を書き換え
 				if err := db.Table(v40GroupRecord{}.TableName()).Model(&v40GroupRecord{}).Where("id = ?", record.ID).Update("name", newName).Error; err != nil {
