@@ -35,7 +35,7 @@ func v40() *gormigrate.Migration {
 				if err := db.Table(v40GroupRecord{}.TableName()).Where("name = ?", newName).Model(&v40GroupRecord{}).Count(&count).Error; err != nil {
 					return err
 				}
-				// 先頭20文字を残してランダムな英数字を付け加える
+				// 先頭１５文字を残してランダムな英数字を付け加える
 				for attempt := 0; count > 0 && attempt < 10; attempt++ {
 					uniqueName := newName
 					if len(uniqueName) > 15 {
