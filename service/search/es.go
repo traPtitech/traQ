@@ -309,7 +309,6 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	var musts []searchQuery
 
 	if q.Word.Valid && q.Ogp.Valid && q.Ogp.V {
-		// q.ogpを出力
 		wordBody := simpleQueryString{
 			Query:           q.Word.V,
 			Fields:          []string{"text"},
@@ -327,14 +326,12 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"bool": boolQuery{Should: orQueries}})
 
 	} else if q.Word.Valid {
-
 		body := simpleQueryString{
 			Query:           q.Word.V,
 			Fields:          []string{"text"},
 			DefaultOperator: "AND",
 		}
 		musts = append(musts, searchQuery{"simple_query_string": body})
-
 	}
 
 	switch {

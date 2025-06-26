@@ -5,13 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -50,10 +50,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		isBot = user.IsBot()
 	}
 
-	attr, err := e.getAttributes(m, parseResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get attributes: %w", err)
-	}
+	attr := e.getAttributes(m, parseResult)
 
 	return &esMessageDoc{
 		UserID:         m.UserID,
@@ -75,11 +72,8 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 }
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
-func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) (*esMessageDocUpdate, error) {
-	attr, err := e.getAttributes(m, parseResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get attributes: %w", err)
-	}
+func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
+	attr := e.getAttributes(m, parseResult)
 	// Updateする項目のみ
 	return &esMessageDocUpdate{
 		Text:           m.Text,
@@ -91,10 +85,10 @@ func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.
 		HasImage:       attr.HasImage,
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
-	}, nil
+	}
 }
 
-func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) (*attributes, error) {
+func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
 	attr := &attributes{}
 
 	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
@@ -102,25 +96,19 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
 	attr.HasAttachments = len(parseResult.Attachments) != 0
 
-	re, err := regexp.Compile(`https?://[\w,.?=&#%~/-]+`)
-	if err != nil {
-		// エラー処理整える
-		return nil, fmt.Errorf("failed to compile URL regex: %w", err)
-	}
-	urls := re.FindAllString(m.Text, -1)
+	urls := lo.Filter(strings.Fields(m.Text), func(s string, _ int) bool {
+		return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+	})
 
 	ogpCache := make([]string, 0, len(urls))
 	for _, url := range urls {
-		tmp, err := e.repo.GetOgpCache(url)
+		urlCache, err := e.repo.GetOgpCache(url)
 		if err != nil {
-			if err != repository.ErrNotFound {
-				// エラー処理整える
-				e.l.Warn("failed to get ogp cache", zap.String("url", url), zap.Error(err))
-			}
+			e.l.Warn(err.Error(), zap.Error(err))
 			continue
 		}
-		if tmp.Valid {
-			ogpCache = append(ogpCache, tmp.Content.Title + "\n" + tmp.Content.Description)
+		if urlCache.Valid {
+			ogpCache = append(ogpCache, urlCache.Content.Title + "\n" + urlCache.Content.Description)
 		}
 	}
 	attr.OgpContent = ogpCache
@@ -140,7 +128,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 		}
 	}
 
-	return attr,  nil
+	return attr
 }
 
 func (e *esEngine) syncLoop(done <-chan struct{}) {
@@ -288,10 +276,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 		} else {
-			doc, err := e.convertMessageUpdated(v, message.Parse(v.Text))
-			if err != nil {
-				return err
-			}
+			doc := e.convertMessageUpdated(v, message.Parse(v.Text))
 
 			data, err := json.Marshal(map[string]any{"doc": *doc})
 			if err != nil {
