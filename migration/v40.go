@@ -1,8 +1,8 @@
 package migration
 
 import (
+	"fmt"
 	"math/rand"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +18,9 @@ func v40() *gormigrate.Migration {
 		Migrate: func(db *gorm.DB) error {
 			// No changes in this migration
 			var groupRecords []v40GroupRecord
-			db.Table(v40GroupRecord{}.TableName()).Find(&groupRecords).Where("name REGEXP ^[^@＠#＃:： 　]*$")
+			if err := db.Table(v40GroupRecord{}.TableName()).Where("name REGEXP ?", "[@＠#＃:： 　]").Find(&groupRecords).Error; err != nil {
+				return err
+			}
 			for _, record := range groupRecords {
 				newName := record.Name
 				newName = strings.ReplaceAll(newName, "@", "_")
@@ -33,10 +35,31 @@ func v40() *gormigrate.Migration {
 				if err := db.Table(v40GroupRecord{}.TableName()).Where("name = ?", newName).Model(&v40GroupRecord{}).Count(&count).Error; err != nil {
 					return err
 				}
-				if count > 0 {
-					newName = strconv.Itoa(rand.Intn(999999999999999))
+				// 先頭20文字を残してランダムな英数字を付け加える
+				for attempt := 0; count > 0 && attempt < 10; attempt++ {
+					uniqueName := newName
+					if len(uniqueName) > 20 {
+						uniqueName = uniqueName[:20]
+					}
+					chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+					for len(uniqueName) < 30 {
+						uniqueName += string(chars[rand.Intn(len(chars))])
+					}
+					if err := db.Table(v40GroupRecord{}.TableName()).Where("name = ?", uniqueName).Model(&v40GroupRecord{}).Count(&count).Error; err != nil {
+						return err
+					}
+					if count == 0 {
+						newName = uniqueName
+						break
+					}
 				}
-				db.Table(v40GroupRecord{}.TableName()).Model(&v40GroupRecord{}).Where("id = ?", record.ID).Update("name", newName)
+				if count > 0 {
+					return fmt.Errorf("Failed to generate a unique name for group %s after 10 attempts", record.Name)
+				}
+				// グループ名を書き換え
+				if err := db.Table(v40GroupRecord{}.TableName()).Model(&v40GroupRecord{}).Where("id = ?", record.ID).Update("name", newName).Error; err != nil {
+					return err
+				}
 			}
 			return nil
 		},
