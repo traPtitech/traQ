@@ -38,8 +38,8 @@ func v40() *gormigrate.Migration {
 				// 先頭20文字を残してランダムな英数字を付け加える
 				for attempt := 0; count > 0 && attempt < 10; attempt++ {
 					uniqueName := newName
-					if len(uniqueName) > 20 {
-						uniqueName = uniqueName[:20]
+					if len(uniqueName) > 15 {
+						uniqueName = uniqueName[:15]
 					}
 					chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 					for len(uniqueName) < 30 {
