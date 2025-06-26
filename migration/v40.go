@@ -21,7 +21,7 @@ func v40() *gormigrate.Migration {
 			db.Table(v40GroupRecord{}.TableName()).Find(&groupRecords).Where("name REGEXP ^[^@＠#＃:： 　]*$")
 			for _, record := range groupRecords {
 				newName := record.Name
-				newName = strings.ReplaceAll(record.Name, "@", "_")
+				newName = strings.ReplaceAll(newName, "@", "_")
 				newName = strings.ReplaceAll(newName, "＠", "_")
 				newName = strings.ReplaceAll(newName, "#", "_")
 				newName = strings.ReplaceAll(newName, "＃", "_")
