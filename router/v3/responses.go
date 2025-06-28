@@ -607,7 +607,7 @@ type StampPalette struct {
 }
 
 func formatStampPalette(cf *model.StampPalette) *StampPalette {
-	return &StampPalette{
+	res := &StampPalette{
 		ID:          cf.ID,
 		Name:        cf.Name,
 		Description: cf.Description,
@@ -616,6 +616,10 @@ func formatStampPalette(cf *model.StampPalette) *StampPalette {
 		CreatedAt:   cf.CreatedAt,
 		UpdatedAt:   cf.UpdatedAt,
 	}
+	if res.Stamps == nil {
+		res.Stamps = model.UUIDs{}
+	}
+	return res
 }
 
 // formatStampPalettes ソートされたものを返す
