@@ -79,15 +79,16 @@ func (repo *Repository) GetPinnedMessageByChannelID(channelID uuid.UUID) (pins [
 	if channelID == uuid.Nil {
 		return pins, nil
 	}
-
 	err = repo.db.
-		Preload("Message", &model.Message{ChannelID: channelID}).
-		Preload("Message.Stamps").
+		Scopes(pinPreloads).
+		Joins("INNER JOIN messages ON messages.id = pins.message_id AND messages.channel_id = ?", channelID).
 		Find(&pins).
 		Error
-	if err != nil {
-		return nil, err
-	}
+	return
+}
 
-	return pins, nil
+func pinPreloads(db *gorm.DB) *gorm.DB {
+	return db.
+		Preload("Message").
+		Preload("Message.Stamps")
 }
