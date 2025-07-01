@@ -81,6 +81,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	originalText := m.Text
 
+	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), repository.ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV7()), "new message"), repository.ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), repository.ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))
@@ -119,6 +120,9 @@ func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 	}
 
 	_, err = repo.GetMessageByID(uuid.Nil)
+	assert.Error(err)
+
+	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV4()))
 	assert.Error(err)
 
 	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV7()))

@@ -172,13 +172,30 @@ func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, mes
 	require.NoError(t, repo.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
 }
 
-func mustMakeUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
+func mustMakeUser(t *testing.T, repo repository.Repository, userName string, uuidVersions ...int) model.UserInfo {
 	t.Helper()
+	uuidVersion := 7 // デフォルトはUUIDv7
+	if len(uuidVersions) > 0 {
+		uuidVersion = uuidVersions[0]
+	}
+
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
+	var iconUUID uuid.UUID
+	var err error
+	switch uuidVersion {
+	case 4:
+		iconUUID, err = uuid.NewV4()
+		require.NoError(t, err)
+	case 7:
+		iconUUID, err = uuid.NewV7()
+		require.NoError(t, err)
+	default:
+		t.Fatalf("unsupported UUID version: %d", uuidVersion)
+	}
+	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
 }

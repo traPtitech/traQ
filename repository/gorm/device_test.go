@@ -15,10 +15,15 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand).GetID()
-	id2 := mustMakeUser(t, repo, rand).GetID()
+	id1 := mustMakeUser(t, repo, rand, 7).GetID()
+	id2 := mustMakeUser(t, repo, rand, 7).GetID()
+	id3 := mustMakeUser(t, repo, rand, 4).GetID()
+	id4 := mustMakeUser(t, repo, rand, 4).GetID()
+
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
+	token3 := random2.AlphaNumeric(20)
+	token4 := random2.AlphaNumeric(20)
 
 	cases := []struct {
 		user  uuid.UUID
@@ -28,6 +33,8 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 		{id1, token1, false},
 		{id2, token2, false},
 		{id2, token2, false},
+		{id3, token3, false},
+		{id4, token4, false},
 		{id1, token2, true},
 		{uuid.Nil, token2, true},
 		{id1, "", true},
@@ -42,19 +49,24 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 		}
 	}
 
-	assert.EqualValues(2, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?)", id1, id2)))
+	assert.EqualValues(4, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ? ,? , ?)", id1, id2, id3, id4)))
 }
 
 func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand).GetID()
-	id2 := mustMakeUser(t, repo, rand).GetID()
+	id1 := mustMakeUser(t, repo, rand, 7).GetID()
+	id2 := mustMakeUser(t, repo, rand, 7).GetID()
+	id3 := mustMakeUser(t, repo, rand, 4).GetID()
+	id4 := mustMakeUser(t, repo, rand, 4).GetID()
+
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
 	token4 := random2.AlphaNumeric(20)
+	token5 := random2.AlphaNumeric(20)
+	token6 := random2.AlphaNumeric(20)
 
 	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -64,19 +76,25 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	require.NoError(err)
 	err = repo.RegisterDevice(id1, token4)
 	require.NoError(err)
+	err = repo.RegisterDevice(id3, token5)
+	require.NoError(err)
+	err = repo.RegisterDevice(id4, token6)
+	require.NoError(err)
 
 	cases := []struct {
 		tokens []string
 		expect int
 	}{
-		{[]string{token2}, 3},
-		{[]string{}, 3},
+		{[]string{token2}, 5},
+		{[]string{}, 5},
+		{[]string{token5}, 4},
+		{[]string{token6}, 3},
 		{[]string{token1, token3, ""}, 1},
 		{[]string{token4, token2}, 0},
 	}
 	for _, v := range cases {
 		assert.NoError(repo.DeleteDeviceTokens(v.tokens))
-		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?)", id1, id2)))
+		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?, ?, ?)", id1, id2, id3, id4)))
 	}
 }
 
@@ -84,17 +102,26 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand).GetID()
-	id2 := mustMakeUser(t, repo, rand).GetID()
+	id1 := mustMakeUser(t, repo, rand, 7).GetID()
+	id2 := mustMakeUser(t, repo, rand, 7).GetID()
+	id3 := mustMakeUser(t, repo, rand, 4).GetID()
+	id4 := mustMakeUser(t, repo, rand, 4).GetID()
+
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
+	token4 := random2.AlphaNumeric(20)
+	token5 := random2.AlphaNumeric(20)
 
 	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
 	err = repo.RegisterDevice(id2, token2)
 	require.NoError(err)
 	err = repo.RegisterDevice(id1, token3)
+	require.NoError(err)
+	err = repo.RegisterDevice(id3, token4)
+	require.NoError(err)
+	err = repo.RegisterDevice(id4, token5)
 	require.NoError(err)
 
 	cases := []struct {
@@ -105,6 +132,9 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 		{"id1", []uuid.UUID{id1}, 2},
 		{"id2", []uuid.UUID{id2}, 1},
 		{"id1, id2", []uuid.UUID{id1, id2}, 3},
+		{"id3", []uuid.UUID{id3}, 1},
+		{"id4", []uuid.UUID{id4}, 1},
+		{"id1, id2, id3, id4", []uuid.UUID{id1, id2, id3, id4}, 5},
 		{"nil", []uuid.UUID{}, 0},
 	}
 

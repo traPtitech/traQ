@@ -19,15 +19,27 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 		_, err := repo.PinMessage(uuid.Nil, user.GetID())
 		assert.Error(t, err)
 	})
+	t.Run("nil id (user - UUIDv4)", func(t *testing.T) {
+		t.Parallel()
 
-	t.Run("nil id (user)", func(t *testing.T) {
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), uuid.Nil)
+		assert.Error(t, err)
+	})
+	t.Run("nil id (user - UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), uuid.Nil)
 		assert.Error(t, err)
 	})
 
-	t.Run("message not found", func(t *testing.T) {
+	t.Run("message not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("message not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
@@ -64,8 +76,13 @@ func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 		_, err := repo.UnpinMessage(uuid.Nil)
 		assert.Error(t, err)
 	})
+	t.Run("pin not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
 
-	t.Run("pin not found", func(t *testing.T) {
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+	t.Run("pin not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
