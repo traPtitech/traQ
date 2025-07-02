@@ -293,19 +293,16 @@ func TestHandlers_DeleteStamp(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("forbidden (my stamp)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, stamp2.ID).
 			WithCookie(session.CookieName, userSession).
 			Expect().
-			Status(http.StatusNoContent)
-
-		_, err := env.Repository.GetStamp(stamp2.ID)
-		assert.ErrorIs(t, err, repository.ErrNotFound)
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("forbidden", func(t *testing.T) {
+	t.Run("forbidden (others' stamp)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, stamp3.ID).
