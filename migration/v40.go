@@ -26,7 +26,7 @@ func v40() *gormigrate.Migration {
 			foreignKeys := [][6]string{
 				// table name, constraint name, field name, references, on delete, on update
 				{"users_subscribe_threads", "users_subscribe_threads_user_id_users_id_foreign", "user_id", "users(id)", "CASCADE", "CASCADE"},
-				{"users_subscribe_threads", "users_subscribe_threadss_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+				{"users_subscribe_threads", "users_subscribe_threads_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			}
 
 			for _, c := range foreignKeys {

@@ -8,7 +8,7 @@
 | [bots](bots.md) | 15 | traQ BOTテーブル | BASE TABLE |
 | [bot_event_logs](bot_event_logs.md) | 9 | BOTイベントログテーブル | BASE TABLE |
 | [bot_join_channels](bot_join_channels.md) | 2 | BOT参加チャンネルテーブル | BASE TABLE |
-| [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
+| [channels](channels.md) | 13 | チャンネルテーブル | BASE TABLE |
 | [channel_events](channel_events.md) | 5 | チャンネルイベントテーブル | BASE TABLE |
 | [channel_latest_messages](channel_latest_messages.md) | 3 | チャンネル最新メッセージテーブル | BASE TABLE |
 | [clip_folders](clip_folders.md) | 5 | クリップフォルダーテーブル | BASE TABLE |
@@ -38,6 +38,7 @@
 | [users](users.md) | 11 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
 | [users_subscribe_channels](users_subscribe_channels.md) | 4 | チャンネル購読者テーブル | BASE TABLE |
+| [users_subscribe_threads](users_subscribe_threads.md) | 4 |  | BASE TABLE |
 | [users_tags](users_tags.md) | 5 | ユーザータグテーブル | BASE TABLE |
 | [user_groups](user_groups.md) | 7 | ユーザーグループテーブル | BASE TABLE |
 | [user_group_admins](user_group_admins.md) | 2 | ユーザーグループ管理者テーブル | BASE TABLE |
@@ -87,6 +88,8 @@ erDiagram
 "users_private_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_subscribe_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"users_subscribe_threads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"users_subscribe_threads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "users_tags" }o--|| "tags" : "FOREIGN KEY (tag_id) REFERENCES tags (id)"
 "users_tags" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "user_groups" }o--o| "files" : "FOREIGN KEY (icon) REFERENCES files (id)"
@@ -153,6 +156,7 @@ erDiagram
   tinyint_1_ is_forced
   tinyint_1_ is_public
   tinyint_1_ is_visible
+  tinyint_1_ is_thread
   char_36_ creator_id
   char_36_ updater_id
   datetime_6_ created_at
@@ -374,6 +378,12 @@ erDiagram
   char_36_ channel_id PK
 }
 "users_subscribe_channels" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  tinyint_1_ mark
+  tinyint_1_ notify
+}
+"users_subscribe_threads" {
   char_36_ user_id PK
   char_36_ channel_id PK
   tinyint_1_ mark

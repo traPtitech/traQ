@@ -31,7 +31,7 @@ CREATE TABLE `users` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [bots](bots.md) [clip_folders](clip_folders.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [external_provider_users](external_provider_users.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stamp_palettes](stamp_palettes.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [user_profiles](user_profiles.md) [user_settings](user_settings.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
+| id | char(36) |  | false | [bots](bots.md) [clip_folders](clip_folders.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [external_provider_users](external_provider_users.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stamp_palettes](stamp_palettes.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_subscribe_threads](users_subscribe_threads.md) [users_tags](users_tags.md) [user_profiles](user_profiles.md) [user_settings](user_settings.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
 | name | varchar(32) |  | false |  |  | traP ID |
 | display_name | varchar(32) | '' | false |  |  | 表示名 |
 | password | char(128) | '' | false |  |  | ハッシュ化されたパスワード |
@@ -78,6 +78,7 @@ erDiagram
 "unreads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "users_private_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "users_subscribe_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"users_subscribe_threads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "users_tags" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "user_profiles" |o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "user_settings" |o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
@@ -208,6 +209,12 @@ erDiagram
   tinyint_1_ mark
   tinyint_1_ notify
 }
+"users_subscribe_threads" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  tinyint_1_ mark
+  tinyint_1_ notify
+}
 "users_tags" {
   char_36_ user_id PK
   char_36_ tag_id PK
@@ -246,6 +253,7 @@ erDiagram
   tinyint_1_ is_forced
   tinyint_1_ is_public
   tinyint_1_ is_visible
+  tinyint_1_ is_thread
   char_36_ creator_id
   char_36_ updater_id
   datetime_6_ created_at

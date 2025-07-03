@@ -16,6 +16,7 @@ CREATE TABLE `channels` (
   `is_forced` tinyint(1) NOT NULL DEFAULT 0,
   `is_public` tinyint(1) NOT NULL DEFAULT 0,
   `is_visible` tinyint(1) NOT NULL DEFAULT 0,
+  `is_thread` tinyint(1) NOT NULL DEFAULT 0,
   `creator_id` char(36) NOT NULL,
   `updater_id` char(36) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -33,13 +34,14 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
+| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_subscribe_threads](users_subscribe_threads.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
 | name | varchar(20) |  | false |  |  | チャンネル名 |
 | parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
 | topic | text |  | false |  |  | チャンネルトピック |
 | is_forced | tinyint(1) | 0 | false |  |  | 強制通知チャンネルかどうか |
 | is_public | tinyint(1) | 0 | false |  |  | 公開チャンネルかどうか |
 | is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
+| is_thread | tinyint(1) | 0 | false |  |  |  |
 | creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
 | updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
 | created_at | datetime(6) | NULL | true |  |  | チャンネル作成日時 |
@@ -74,6 +76,7 @@ erDiagram
 "unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_private_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"users_subscribe_threads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "user_profiles" }o--o| "channels" : "FOREIGN KEY (home_channel) REFERENCES channels (id)"
 "webhook_bots" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "channels" }o--|| "channels" : "Additional Relation"
@@ -87,6 +90,7 @@ erDiagram
   tinyint_1_ is_forced
   tinyint_1_ is_public
   tinyint_1_ is_visible
+  tinyint_1_ is_thread
   char_36_ creator_id
   char_36_ updater_id
   datetime_6_ created_at
@@ -143,6 +147,12 @@ erDiagram
   char_36_ channel_id PK
 }
 "users_subscribe_channels" {
+  char_36_ user_id PK
+  char_36_ channel_id PK
+  tinyint_1_ mark
+  tinyint_1_ notify
+}
+"users_subscribe_threads" {
   char_36_ user_id PK
   char_36_ channel_id PK
   tinyint_1_ mark

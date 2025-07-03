@@ -232,8 +232,8 @@ type UserSubscribeThread struct {
 	Mark      bool      `gorm:"type:boolean;not null;default:false"`
 	Notify    bool      `gorm:"type:boolean;not null;default:false"`
 
-	User    User    `gorm:"constraint:users_subscribe_channels_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Channel Channel `gorm:"constraint:users_subscribe_channels_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	User    User    `gorm:"constraint:users_subscribe_threads_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:users_subscribe_threads_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName UserNotifiedChannel構造体のテーブル名
