@@ -508,3 +508,41 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessa
 	stats.DateTime = time.Now()
 	return &stats, nil
 }
+
+// GetThreadSubscriptions implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscriptions(query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeThread, error) {
+
+	subQuery := repo.db.Table("channels").
+		Select(`
+			COALESCE(users_subscribe_threads.user_id, users_subscribe_channels.user_id) as user_id,
+			COALESCE(users_subscribe_threads.channel_id, users_subscribe_channels.channel_id) as channel_id,
+			COALESCE(users_subscribe_threads.mark, users_subscribe_channels.mark) as mark,
+			COALESCE(users_subscribe_threads.notify, users_subscribe_channels.notify) as notify
+		`).
+		Joins("LEFT JOIN users_subscribe_threads ON channels.id = users_subscribe_threads.channel_id").
+		Joins("LEFT JOIN users_subscribe_channels ON channels.id = users_subscribe_channels.channel_id").
+		Where("users_subscribe_threads.user_id IS NOT NULL OR users_subscribe_channels.user_id IS NOT NULL")
+
+	if query.UserID.Valid {
+		subQuery = subQuery.Where("(users_subscribe_threads.user_id = ? OR users_subscribe_channels.user_id = ?)", query.UserID.V, query.UserID.V)
+	}
+	if query.ChannelID.Valid {
+		subQuery = subQuery.Where("channels.id = ?", query.ChannelID.V)
+	}
+
+	tx := repo.db.Table("(?) as sub", subQuery)
+
+	switch query.Level {
+	case model.ChannelSubscribeLevelMark:
+		tx = tx.Where("mark = true AND notify = false")
+	case model.ChannelSubscribeLevelMarkAndNotify:
+		tx = tx.Where("mark = true AND notify = true")
+	default:
+		tx = tx.Where("mark = true OR notify = true")
+	}
+
+
+	result := make([]*model.UserSubscribeThread, 0) 
+	err := tx.Find(&result).Error
+	return result, err
+}
