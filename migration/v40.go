@@ -25,8 +25,8 @@ func v40() *gormigrate.Migration {
 
 			foreignKeys := [][6]string{
 				// table name, constraint name, field name, references, on delete, on update
-				{"users_subscribe_threads", "users_subscribe_channels_user_id_users_id_foreign", "user_id", "users(id)", "CASCADE", "CASCADE"},
-				{"users_subscribe_threads", "users_subscribe_channels_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+				{"users_subscribe_threads", "users_subscribe_threads_user_id_users_id_foreign", "user_id", "users(id)", "CASCADE", "CASCADE"},
+				{"users_subscribe_threads", "users_subscribe_threadss_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			}
 
 			for _, c := range foreignKeys {
@@ -41,8 +41,6 @@ func v40() *gormigrate.Migration {
 	}
 }
 
-
-
 type v40UserSubscribeThread struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
@@ -50,15 +48,15 @@ type v40UserSubscribeThread struct {
 	Notify    bool      `gorm:"type:boolean;not null;default:false"`
 }
 
-type v40Channel struct{
-		ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_is_public_is_forced,priority:1"`
+type v40Channel struct {
+	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_is_public_is_forced,priority:1"`
 	Name      string         `gorm:"type:varchar(20);not null;uniqueIndex:name_parent"`
 	ParentID  uuid.UUID      `gorm:"type:char(36);not null;uniqueIndex:name_parent"`
 	Topic     string         `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:3"`
 	IsPublic  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:2"`
 	IsVisible bool           `gorm:"type:boolean;not null;default:false"`
-	IsThread  bool			 `gorm:"type:boolean;not null;default:false"`
+	IsThread  bool           `gorm:"type:boolean;not null;default:false"`
 	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
 	UpdaterID uuid.UUID      `gorm:"type:char(36);not null"`
 	CreatedAt time.Time      `gorm:"precision:6"`
