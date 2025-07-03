@@ -25,6 +25,7 @@ type Channel struct {
 	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:3"`
 	IsPublic  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:2"`
 	IsVisible bool           `gorm:"type:boolean;not null;default:false"`
+	IsThread  bool			 `gorm:"type:boolean;not null;default:false"`
 	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
 	UpdaterID uuid.UUID      `gorm:"type:char(36);not null"`
 	CreatedAt time.Time      `gorm:"precision:6"`
@@ -73,6 +74,7 @@ const (
 	ChannelSubscribeLevelMark
 	// ChannelSubscribeLevelMarkAndNotify レベル：未読管理＋通知
 	ChannelSubscribeLevelMarkAndNotify
+	// ChannelSubscribeLevelMarkAndNotify
 )
 
 func (v ChannelSubscribeLevel) Int() int {
@@ -220,4 +222,33 @@ type ChannelEvent struct {
 // TableName テーブル名
 func (*ChannelEvent) TableName() string {
 	return "channel_events"
+}
+
+
+
+type UserSubscribeThread struct {
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	Mark      bool      `gorm:"type:boolean;not null;default:false"`
+	Notify    bool      `gorm:"type:boolean;not null;default:false"`
+
+	User    User    `gorm:"constraint:users_subscribe_channels_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:users_subscribe_channels_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName UserNotifiedChannel構造体のテーブル名
+func (*UserSubscribeThread) TableName() string {
+	return "users_subscribe_threads"
+}
+
+// GetLevel 購読レベルを返します
+func (ust *UserSubscribeThread) GetLevel() ChannelSubscribeLevel {
+	switch {
+	case ust.Notify:
+		return ChannelSubscribeLevelMarkAndNotify
+	case ust.Mark:
+		return ChannelSubscribeLevelMark
+	default:
+		return ChannelSubscribeLevelNone
+	}
 }
