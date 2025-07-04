@@ -178,6 +178,9 @@ func TestRepositoryImpl_GetTagByID(t *testing.T) {
 		assert.Equal(tag.Name, r.Name)
 	}
 
+	_, err = repo.GetTagByID(uuid.Must(uuid.NewV4()))
+	assert.Error(err)
+
 	_, err = repo.GetTagByID(uuid.Must(uuid.NewV7()))
 	assert.Error(err)
 

@@ -168,7 +168,13 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		assert.EqualError(repo.UpdateUser(uuid.Nil, repository.UpdateUserArgs{}), repository.ErrNilID.Error())
 	})
 
-	t.Run("Unknown User", func(t *testing.T) {
+	t.Run("Unknown User(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("Unknown User(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV7()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
@@ -256,7 +262,14 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetUserStats(uuid.Must(uuid.NewV7()))

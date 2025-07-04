@@ -12,9 +12,20 @@ import (
 )
 
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		runRevokeTokenEndpointTests(t, 4)
+	})
+
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		runRevokeTokenEndpointTests(t, 7)
+	})
+}
+
+func runRevokeTokenEndpointTests(t *testing.T, uuidVersion int) {
 	env := Setup(t, db1)
-	user := env.CreateUser(t, rand)
+	user := env.CreateUser(t, rand, uuidVersion)
 
 	t.Run("NoToken", func(t *testing.T) {
 		t.Parallel()

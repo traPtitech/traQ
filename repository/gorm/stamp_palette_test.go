@@ -61,7 +61,14 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		assert.EqualError(repo.UpdateStampPalette(uuid.Nil, repository.UpdateStampPaletteArgs{}), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV4()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -108,7 +115,15 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV4()))
+		assert.EqualError(err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -142,7 +157,14 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		assert.EqualError(repo.DeleteStampPalette(uuid.Nil), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 

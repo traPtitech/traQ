@@ -33,16 +33,35 @@ func TestHandlers_TokenEndpointHandler(t *testing.T) {
 }
 
 func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointClientCredentialsTests(t, 4)
+	})
+
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointClientCredentialsTests(t, 7)
+	})
+}
+
+func runTokenEndpointClientCredentialsTests(t *testing.T, uuidVersion int) {
 	env := Setup(t, db2)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
+
+	var creatorID uuid.UUID
+	if uuidVersion == 4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.Must(uuid.NewV7()),
+		CreatorID:    creatorID,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
@@ -175,11 +194,19 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Not confidential)", func(t *testing.T) {
 		t.Parallel()
+
+		var creatorID uuid.UUID
+		if uuidVersion == 4 {
+			creatorID = uuid.Must(uuid.NewV4())
+		} else {
+			creatorID = uuid.Must(uuid.NewV7())
+		}
+
 		client := &model.OAuth2Client{
 			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.Must(uuid.NewV7()),
+			CreatorID:    creatorID,
 			Secret:       random2.AlphaNumeric(36),
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
@@ -229,17 +256,36 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 }
 
 func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointPasswordTests(t, 4)
+	})
+
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointPasswordTests(t, 7)
+	})
+}
+
+func runTokenEndpointPasswordTests(t *testing.T, uuidVersion int) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand)
+	user := env.CreateUser(t, rand, uuidVersion)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
+
+	var creatorID uuid.UUID
+	if uuidVersion == 4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorID,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
@@ -339,11 +385,19 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Success with not confidential client", func(t *testing.T) {
 		t.Parallel()
+
+		var creatorID uuid.UUID
+		if uuidVersion == 4 {
+			creatorID = uuid.Must(uuid.NewV4())
+		} else {
+			creatorID = uuid.Must(uuid.NewV7())
+		}
+
 		client := &model.OAuth2Client{
 			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.Must(uuid.NewV4()),
+			CreatorID:    creatorID,
 			Secret:       random2.AlphaNumeric(36),
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
@@ -483,28 +537,54 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 }
 
 func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointRefreshTokenTests(t, 4)
+	})
+
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointRefreshTokenTests(t, 7)
+	})
+}
+
+func runTokenEndpointRefreshTokenTests(t *testing.T, uuidVersion int) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand)
+	user := env.CreateUser(t, rand, uuidVersion)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
+
+	var creatorID uuid.UUID
+	if uuidVersion == 4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorID,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, env.Repository.SaveClient(client))
 
+	var creatorIDConf uuid.UUID
+	if uuidVersion == 4 {
+		creatorIDConf = uuid.Must(uuid.NewV4())
+	} else {
+		creatorIDConf = uuid.Must(uuid.NewV7())
+	}
+
 	clientConf := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorIDConf,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
@@ -723,9 +803,20 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 }
 
 func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointAuthorizationCodeTests(t, 4)
+	})
+
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		runTokenEndpointAuthorizationCodeTests(t, 7)
+	})
+}
+
+func runTokenEndpointAuthorizationCodeTests(t *testing.T, uuidVersion int) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand)
+	user := env.CreateUser(t, rand, uuidVersion)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -733,22 +824,37 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	scopesRead.Add("read")
 	scopesReadManageBot := model.AccessScopes{}
 	scopesReadManageBot.Add("read", "manage_bot")
+
+	var creatorID uuid.UUID
+	if uuidVersion == 4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorID,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, env.Repository.SaveClient(client))
 
+	var creatorIDConf uuid.UUID
+	if uuidVersion == 4 {
+		creatorIDConf = uuid.Must(uuid.NewV4())
+	} else {
+		creatorIDConf = uuid.Must(uuid.NewV7())
+	}
+
 	clientConf := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorIDConf,
 		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,

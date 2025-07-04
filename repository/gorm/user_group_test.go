@@ -68,7 +68,13 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		assert.NoError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{}))
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV7()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
@@ -94,7 +100,13 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 		assert.Error(t, repo.DeleteUserGroup(uuid.Nil))
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
@@ -119,7 +131,14 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV4()))
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV7()))
@@ -307,7 +326,13 @@ func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 		assert.EqualError(t, repo.AddUserToGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
@@ -341,7 +366,13 @@ func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
 		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())

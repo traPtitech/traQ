@@ -174,7 +174,7 @@ func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, mes
 
 func mustMakeUser(t *testing.T, repo repository.Repository, userName string, uuidVersions ...int) model.UserInfo {
 	t.Helper()
-	uuidVersion := 7 // デフォルトはUUIDv7
+	uuidVersion := 7
 	if len(uuidVersions) > 0 {
 		uuidVersion = uuidVersions[0]
 	}
@@ -237,10 +237,28 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
-func mustMakeDummyFile(t *testing.T, repo repository.Repository) *model.FileMeta {
+func mustMakeDummyFile(t *testing.T, repo repository.Repository, uuidVersions ...int) *model.FileMeta {
 	t.Helper()
+	uuidVersion := 7
+	if len(uuidVersions) > 0 {
+		uuidVersion = uuidVersions[0]
+	}
+
+	var fileID uuid.UUID
+	var err error
+	switch uuidVersion {
+	case 4:
+		fileID, err = uuid.NewV4()
+		require.NoError(t, err)
+	case 7:
+		fileID, err = uuid.NewV7()
+		require.NoError(t, err)
+	default:
+		t.Fatalf("unsupported UUID version: %d", uuidVersion)
+	}
+
 	meta := &model.FileMeta{
-		ID:   uuid.Must(uuid.NewV7()),
+		ID:   fileID,
 		Name: "dummy",
 		Mime: "application/octet-stream",
 		Size: 10,
@@ -255,7 +273,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository) *model.FileMeta
 			},
 		},
 	}
-	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+	err = repo.SaveFileMeta(meta, []*model.FileACLEntry{
 		{UserID: uuid.Nil, Allow: true},
 	})
 	require.NoError(t, err)
