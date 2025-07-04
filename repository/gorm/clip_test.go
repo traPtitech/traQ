@@ -240,7 +240,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 		assert := assert.New(t)
 		otherUser := mustMakeUser(t, repo, rand)
 		n := 10
-		for i := 0; i < 10; i++ {
+		for i := 0; i < n; i++ {
 			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
 		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)

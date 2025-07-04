@@ -25,8 +25,8 @@ import (
 )
 
 // Helper function to generate UUIDs for testing
-func mustGenerateUUID(version ...int) uuid.UUID {
-	v := 4 // default to v4
+func mustGenerateUUID(version ...int) uuid.UUID { // デフォルトがv7
+	v := 7
 	if len(version) > 0 {
 		v = version[0]
 	}
@@ -36,7 +36,7 @@ func mustGenerateUUID(version ...int) uuid.UUID {
 	case 7:
 		return uuid.Must(uuid.NewV7())
 	default:
-		return uuid.Must(uuid.NewV4())
+		panic(fmt.Sprintf("unsupported UUID version: %d", v))
 	}
 }
 
@@ -312,6 +312,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 
 		for _, uuidVersion := range []int{4, 7} {
 			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+				t.Parallel()
 				for i, c := range cases {
 					t.Run(strconv.Itoa(i), func(t *testing.T) {
 						ctrl := gomock.NewController(t)

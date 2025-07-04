@@ -58,7 +58,7 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, rand, 7).GetID()
 	id2 := mustMakeUser(t, repo, rand, 7).GetID()
-	id3 := mustMakeUser(t, repo, rand, 4).GetID()
+	id3 := mustMakeUser(t, repo, rand, 7).GetID()
 	id4 := mustMakeUser(t, repo, rand, 4).GetID()
 
 	token1 := random2.AlphaNumeric(20)
@@ -67,6 +67,7 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	token4 := random2.AlphaNumeric(20)
 	token5 := random2.AlphaNumeric(20)
 	token6 := random2.AlphaNumeric(20)
+	token7 := random2.AlphaNumeric(20)
 
 	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -80,17 +81,19 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	require.NoError(err)
 	err = repo.RegisterDevice(id4, token6)
 	require.NoError(err)
+	err = repo.RegisterDevice(id4, token7)
+	require.NoError(err)
 
 	cases := []struct {
 		tokens []string
 		expect int
 	}{
-		{[]string{token2}, 5},
-		{[]string{}, 5},
-		{[]string{token5}, 4},
-		{[]string{token6}, 3},
-		{[]string{token1, token3, ""}, 1},
-		{[]string{token4, token2}, 0},
+		{[]string{token2}, 6},         // v7単体
+		{[]string{token6}, 5},         // v4単体
+		{[]string{}, 5},               // 空配列
+		{[]string{token1, token5}, 3}, // v7 2つ
+		{[]string{token4, token7}, 1}, //v4 とv7 1つずつ
+		{[]string{token3, token2, token6}, 0},
 	}
 	for _, v := range cases {
 		assert.NoError(repo.DeleteDeviceTokens(v.tokens))
@@ -105,13 +108,11 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	id1 := mustMakeUser(t, repo, rand, 7).GetID()
 	id2 := mustMakeUser(t, repo, rand, 7).GetID()
 	id3 := mustMakeUser(t, repo, rand, 4).GetID()
-	id4 := mustMakeUser(t, repo, rand, 4).GetID()
 
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
 	token4 := random2.AlphaNumeric(20)
-	token5 := random2.AlphaNumeric(20)
 
 	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -120,8 +121,6 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	err = repo.RegisterDevice(id1, token3)
 	require.NoError(err)
 	err = repo.RegisterDevice(id3, token4)
-	require.NoError(err)
-	err = repo.RegisterDevice(id4, token5)
 	require.NoError(err)
 
 	cases := []struct {
@@ -133,8 +132,7 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 		{"id2", []uuid.UUID{id2}, 1},
 		{"id1, id2", []uuid.UUID{id1, id2}, 3},
 		{"id3", []uuid.UUID{id3}, 1},
-		{"id4", []uuid.UUID{id4}, 1},
-		{"id1, id2, id3, id4", []uuid.UUID{id1, id2, id3, id4}, 5},
+		{"id1, id3", []uuid.UUID{id1, id3}, 3},
 		{"nil", []uuid.UUID{}, 0},
 	}
 

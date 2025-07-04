@@ -41,14 +41,15 @@ func TestResponseType_valid(t *testing.T) {
 }
 
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runAuthorizationEndpointTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationEndpointTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runAuthorizationEndpointTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationEndpointTests(tt, 7)
 	})
 }
 
@@ -554,14 +555,15 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 }
 
 func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runAuthorizationDecideHandlerTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationDecideHandlerTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runAuthorizationDecideHandlerTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationDecideHandlerTests(tt, 7)
 	})
 }
 

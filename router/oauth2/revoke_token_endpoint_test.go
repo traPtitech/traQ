@@ -12,14 +12,15 @@ import (
 )
 
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runRevokeTokenEndpointTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runRevokeTokenEndpointTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runRevokeTokenEndpointTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runRevokeTokenEndpointTests(tt, 7)
 	})
 }
 

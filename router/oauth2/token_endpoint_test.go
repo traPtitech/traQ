@@ -33,14 +33,15 @@ func TestHandlers_TokenEndpointHandler(t *testing.T) {
 }
 
 func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointClientCredentialsTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointClientCredentialsTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointClientCredentialsTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointClientCredentialsTests(tt, 7)
 	})
 }
 
@@ -256,14 +257,15 @@ func runTokenEndpointClientCredentialsTests(t *testing.T, uuidVersion int) {
 }
 
 func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointPasswordTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointPasswordTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointPasswordTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointPasswordTests(tt, 7)
 	})
 }
 
@@ -537,14 +539,15 @@ func runTokenEndpointPasswordTests(t *testing.T, uuidVersion int) {
 }
 
 func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointRefreshTokenTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointRefreshTokenTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointRefreshTokenTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointRefreshTokenTests(tt, 7)
 	})
 }
 
@@ -803,14 +806,15 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, uuidVersion int) {
 }
 
 func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
-	t.Run("UUIDv4", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointAuthorizationCodeTests(t, 4)
+	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointAuthorizationCodeTests(tt, 4)
 	})
 
-	t.Run("UUIDv7", func(t *testing.T) {
-		t.Parallel()
-		runTokenEndpointAuthorizationCodeTests(t, 7)
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runTokenEndpointAuthorizationCodeTests(tt, 7)
 	})
 }
 
