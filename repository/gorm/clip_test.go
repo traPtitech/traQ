@@ -229,50 +229,22 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 
 func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 	repo, _, _, user := setupWithUser(t, common3)
-
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		_, err := repo.GetClipFoldersByUserID(uuid.Nil)
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
-
-	t.Run("success (UUIDv4)", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-
-		otherUser := mustMakeUser(t, repo, rand, 4)
-
+		otherUser := mustMakeUser(t, repo, rand)
 		n := 10
-		for range n {
+		for i := 0; i < 10; i++ {
 			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
 		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)
-
 		clipFolders, err := repo.GetClipFoldersByUserID(user.GetID())
-
-		if assert.NoError(err) {
-			assert.Len(clipFolders, n)
-			for _, clipFolder := range clipFolders {
-				assert.Equal(user.GetID(), clipFolder.OwnerID)
-			}
-		}
-	})
-
-	t.Run("success (UUIDv7)", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		otherUser := mustMakeUser(t, repo, rand, 7)
-
-		n := 10
-		for range n {
-			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
-		}
-		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)
-
-		clipFolders, err := repo.GetClipFoldersByUserID(user.GetID())
-
 		if assert.NoError(err) {
 			assert.Len(clipFolders, n)
 			for _, clipFolder := range clipFolders {
