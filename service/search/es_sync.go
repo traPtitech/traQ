@@ -11,6 +11,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -26,6 +27,7 @@ const (
 type attributes struct {
 	To             []uuid.UUID
 	Citation       []uuid.UUID
+	OgpContent	   []string
 	HasURL         bool
 	HasAttachments bool
 	HasImage       bool
@@ -60,6 +62,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		UpdatedAt:      m.UpdatedAt,
 		To:             attr.To,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
@@ -76,6 +79,7 @@ func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.
 		Text:           m.Text,
 		UpdatedAt:      m.UpdatedAt,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
@@ -91,6 +95,23 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.Citation = parseResult.Citation
 	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
 	attr.HasAttachments = len(parseResult.Attachments) != 0
+
+	urls := lo.Filter(strings.Fields(m.Text), func(s string, _ int) bool {
+		return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+	})
+
+	ogpCache := make([]string, 0, len(urls))
+	for _, url := range urls {
+		urlCache, err := e.repo.GetOgpCache(url)
+		if err != nil {
+			e.l.Warn(err.Error(), zap.Error(err))
+			continue
+		}
+		if urlCache.Valid {
+			ogpCache = append(ogpCache, urlCache.Content.Title + "\n" + urlCache.Content.Description)
+		}
+	}
+	attr.OgpContent = ogpCache
 
 	for _, attachmentID := range parseResult.Attachments {
 		meta, err := e.repo.GetFileMeta(attachmentID)
