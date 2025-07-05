@@ -53,16 +53,16 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	})
 }
 
-func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
+func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 	env := Setup(t, db2)
-	defaultUser := env.CreateUser(t, rand, useUuidV4)
+	defaultUser := env.CreateUser(t, rand, useUUIDV4)
 	s := env.S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
 
 	var creatorID uuid.UUID
-	if useUuidV4 {
+	if useUUIDV4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -82,7 +82,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
@@ -113,7 +113,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Success (code)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -147,7 +147,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Success (GET)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -181,7 +181,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Success With PKCE", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -474,7 +474,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		_, err := env.Repository.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := env.R(t)
@@ -498,7 +498,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 		t.Parallel()
 
 		var creatorID uuid.UUID
-		if useUuidV4 {
+		if useUUIDV4 {
 			creatorID = uuid.Must(uuid.NewV4())
 		} else {
 			creatorID = uuid.Must(uuid.NewV7())
@@ -529,7 +529,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	t.Run("Found (valid session but deactivated account)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, useUuidV4)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
 
@@ -567,9 +567,9 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	})
 }
 
-func runAuthorizationDecideHandlerTests(t *testing.T, useUuidV4 bool) {
+func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand, useUuidV4)
+	user := env.CreateUser(t, rand, useUUIDV4)
 	s := env.S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}
@@ -578,7 +578,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUuidV4 bool) {
 	scopesReadWrite.Add("read", "write")
 
 	var creatorID uuid.UUID
-	if useUuidV4 {
+	if useUUIDV4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -681,7 +681,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUuidV4 bool) {
 		t.Parallel()
 
 		var creatorID uuid.UUID
-		if useUuidV4 {
+		if useUUIDV4 {
 			creatorID = uuid.Must(uuid.NewV4())
 		} else {
 			creatorID = uuid.Must(uuid.NewV7())

@@ -39,8 +39,8 @@ var (
 	repositories = map[string]*Repository{}
 )
 
-func mustGenerateUUID(useUuidV4 bool) uuid.UUID {
-	if useUuidV4 {
+func mustGenerateUUID(useUUIDV4 bool) uuid.UUID {
+	if useUUIDV4 {
 		return uuid.Must(uuid.NewV4())
 	}
 	return uuid.Must(uuid.NewV7())
@@ -125,17 +125,17 @@ func setup(t *testing.T, repo string) (repository.Repository, *assert.Assertions
 	return r, assert, require
 }
 
-func setupWithUserAndChannel(t *testing.T, repo string, useUuidV4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
+func setupWithUserAndChannel(t *testing.T, repo string, useUUIDv4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
 
-	return r, assert, require, mustMakeUser(t, r, rand, useUuidV4), mustMakeChannel(t, r, rand)
+	return r, assert, require, mustMakeUser(t, r, rand, useUUIDv4), mustMakeChannel(t, r, rand)
 }
 
-func setupWithUser(t *testing.T, repo string, useUuidV4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
+func setupWithUser(t *testing.T, repo string, useUUIDv4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeUser(t, r, rand, useUuidV4)
+	return r, assert, require, mustMakeUser(t, r, rand, useUUIDv4)
 }
 
 func getEnvOrDefault(env string, def string) string {
@@ -180,14 +180,14 @@ func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, mes
 	require.NoError(t, repo.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
 }
 
-func mustMakeUser(t *testing.T, repo repository.Repository, userName string, useUuidV4 bool) model.UserInfo {
+func mustMakeUser(t *testing.T, repo repository.Repository, userName string, useUUIDv4 bool) model.UserInfo {
 	t.Helper()
 
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	iconUUID := mustGenerateUUID(useUuidV4)
+	iconUUID := mustGenerateUUID(useUUIDv4)
 	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
@@ -230,10 +230,10 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
-func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUuidV4 bool) *model.FileMeta {
+func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool) *model.FileMeta {
 	t.Helper()
 
-	fileID := mustGenerateUUID(useUuidV4)
+	fileID := mustGenerateUUID(useUUIDv4)
 
 	meta := &model.FileMeta{
 		ID:   fileID,
