@@ -24,7 +24,6 @@ import (
 	"github.com/traPtitech/traQ/utils/set"
 )
 
-// Helper function to generate UUIDs for testing
 func mustGenerateUUID(version ...int) uuid.UUID { // デフォルトがv7
 	v := 7
 	if len(version) > 0 {
@@ -528,6 +527,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 
 		for _, uuidVersion := range []int{4, 7} {
 			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+				t.Parallel()
 				for i, c := range cases {
 					c := c
 					t.Run(strconv.Itoa(i), func(t *testing.T) {
@@ -873,6 +873,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 
 	for _, uuidVersion := range []int{4, 7} {
 		t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+			t.Parallel()
 			t.Run("ErrChannelNotFound", func(t *testing.T) {
 				t.Parallel()
 				ctrl := gomock.NewController(t)
@@ -991,6 +992,7 @@ func TestManagerImpl_GetDMChannelMembers(t *testing.T) {
 
 	for _, uuidVersion := range []int{4, 7} {
 		t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+			t.Parallel()
 			t.Run("success", func(t *testing.T) {
 				t.Parallel()
 				ctrl := gomock.NewController(t)

@@ -39,6 +39,21 @@ var (
 	repositories = map[string]*Repository{}
 )
 
+func mustGenerateUUID(version ...int) uuid.UUID { //デフォルトはv7
+	v := 7
+	if len(version) > 0 {
+		v = version[0]
+	}
+	switch v {
+	case 4:
+		return uuid.Must(uuid.NewV4())
+	case 7:
+		return uuid.Must(uuid.NewV7())
+	default:
+		panic(fmt.Sprintf("unsupported UUID version: %d", v))
+	}
+}
+
 func TestMain(m *testing.M) {
 	user := getEnvOrDefault("MARIADB_USERNAME", "root")
 	pass := getEnvOrDefault("MARIADB_PASSWORD", "password")
@@ -183,18 +198,7 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string, uui
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	var iconUUID uuid.UUID
-	var err error
-	switch uuidVersion {
-	case 4:
-		iconUUID, err = uuid.NewV4()
-		require.NoError(t, err)
-	case 7:
-		iconUUID, err = uuid.NewV7()
-		require.NoError(t, err)
-	default:
-		t.Fatalf("unsupported UUID version: %d", uuidVersion)
-	}
+	iconUUID := mustGenerateUUID(uuidVersion)
 	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
@@ -244,18 +248,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository, uuidVersions ..
 		uuidVersion = uuidVersions[0]
 	}
 
-	var fileID uuid.UUID
-	var err error
-	switch uuidVersion {
-	case 4:
-		fileID, err = uuid.NewV4()
-		require.NoError(t, err)
-	case 7:
-		fileID, err = uuid.NewV7()
-		require.NoError(t, err)
-	default:
-		t.Fatalf("unsupported UUID version: %d", uuidVersion)
-	}
+	fileID := mustGenerateUUID(uuidVersion)
 
 	meta := &model.FileMeta{
 		ID:   fileID,
@@ -273,7 +266,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository, uuidVersions ..
 			},
 		},
 	}
-	err = repo.SaveFileMeta(meta, []*model.FileACLEntry{
+	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
 		{UserID: uuid.Nil, Allow: true},
 	})
 	require.NoError(t, err)
