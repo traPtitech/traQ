@@ -15,7 +15,7 @@ import (
 
 func TestGormRepository_UpdateChannel(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common, false)
 
 	cases := []repository.UpdateChannelArgs{
 		{
@@ -101,8 +101,8 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		ch := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 4)
-		user2 := mustMakeUser(t, repo, rand, 4)
+		user1 := mustMakeUser(t, repo, rand, true)
+		user2 := mustMakeUser(t, repo, rand, true)
 
 		args := repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
@@ -135,8 +135,8 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		ch := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 7)
-		user2 := mustMakeUser(t, repo, rand, 7)
+		user1 := mustMakeUser(t, repo, rand, false)
+		user2 := mustMakeUser(t, repo, rand, false)
 
 		args := repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
@@ -195,8 +195,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 4)
-		user2 := mustMakeUser(t, repo, rand, 4)
+		user1 := mustMakeUser(t, repo, rand, true)
+		user2 := mustMakeUser(t, repo, rand, true)
 		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
 
@@ -251,8 +251,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 7)
-		user2 := mustMakeUser(t, repo, rand, 7)
+		user1 := mustMakeUser(t, repo, rand, false)
+		user2 := mustMakeUser(t, repo, rand, false)
 		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
 
@@ -307,8 +307,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 4)
-		user2 := mustMakeUser(t, repo, rand, 4)
+		user1 := mustMakeUser(t, repo, rand, true)
+		user2 := mustMakeUser(t, repo, rand, true)
 		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
 
@@ -364,8 +364,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user1 := mustMakeUser(t, repo, rand, 7)
-		user2 := mustMakeUser(t, repo, rand, 7)
+		user1 := mustMakeUser(t, repo, rand, false)
+		user2 := mustMakeUser(t, repo, rand, false)
 		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
 

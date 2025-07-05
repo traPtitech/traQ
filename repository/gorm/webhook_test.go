@@ -16,9 +16,9 @@ import (
 
 func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
-	fid := mustMakeDummyFile(t, repo).ID
+	fid := mustMakeDummyFile(t, repo, false).ID
 	t.Run("Invalid name", func(t *testing.T) {
 		t.Parallel()
 		_, err := repo.CreateWebhook("", "", channel.ID, fid, user.GetID(), "")
@@ -65,7 +65,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 
 func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -170,7 +170,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 
 func TestRepositoryImpl_DeleteWebhook(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -202,7 +202,7 @@ func TestRepositoryImpl_DeleteWebhook(t *testing.T) {
 
 func TestRepositoryImpl_GetWebhook(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -242,7 +242,7 @@ func TestRepositoryImpl_GetWebhook(t *testing.T) {
 
 func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -282,7 +282,7 @@ func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 
 func TestRepositoryImpl_GetAllWebhooks(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, ex3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, ex3, false)
 
 	n := 10
 	for range n {
@@ -297,13 +297,13 @@ func TestRepositoryImpl_GetAllWebhooks(t *testing.T) {
 
 func TestRepositoryImpl_GetWebhooksByCreator(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common, false)
 
 	n := 10
 	for range n {
 		mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 	}
-	user2 := mustMakeUser(t, repo, rand)
+	user2 := mustMakeUser(t, repo, rand, false)
 	mustMakeWebhook(t, repo, rand, channel.ID, user2.GetID(), "test")
 
 	t.Run("Nil id", func(t *testing.T) {

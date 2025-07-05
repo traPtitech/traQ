@@ -15,9 +15,9 @@ import (
 
 func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
-	fid := mustMakeDummyFile(t, repo).ID
+	fid := mustMakeDummyFile(t, repo, false).ID
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
@@ -139,7 +139,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		s := mustMakeStamp(t, repo, rand, uuid.Nil)
-		newFile := mustMakeDummyFile(t, repo).ID
+		newFile := mustMakeDummyFile(t, repo, false).ID
 		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
@@ -362,8 +362,8 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
-	user1 := mustMakeUser(t, repo, rand)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2, false)
+	user1 := mustMakeUser(t, repo, rand, false)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
@@ -431,7 +431,7 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 		stamp := mustMakeStamp(t, repo, rand, user.GetID())
 
 		messages := make([]*model.Message, 15)

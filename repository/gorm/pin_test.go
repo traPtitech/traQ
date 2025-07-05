@@ -11,7 +11,7 @@ import (
 
 func TestRepositoryImpl_PinMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2, false)
 
 	t.Run("nil id (message)", func(t *testing.T) {
 		t.Parallel()
@@ -68,7 +68,7 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 
 func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -104,7 +104,7 @@ func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 
 func TestRepositoryImpl_GetPinnedMessageByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2, false)
 
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	mustMakePin(t, repo, testMessage.ID, user.GetID())

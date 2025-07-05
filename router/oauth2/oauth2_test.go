@@ -183,19 +183,14 @@ func (env *Env) R(t *testing.T) *httpexpect.Expect {
 }
 
 // CreateUser ユーザーを必ず作成します
-func (env *Env) CreateUser(t *testing.T, userName string, uuidVersion ...int) model.UserInfo {
+func (env *Env) CreateUser(t *testing.T, userName string, useUuidV4 bool) model.UserInfo {
 	t.Helper()
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
 
-	version := 7
-	if len(uuidVersion) > 0 {
-		version = uuidVersion[0]
-	}
-
 	var iconFileID uuid.UUID
-	if version == 4 {
+	if useUuidV4 {
 		iconFileID = uuid.Must(uuid.NewV4())
 	} else {
 		iconFileID = uuid.Must(uuid.NewV7())

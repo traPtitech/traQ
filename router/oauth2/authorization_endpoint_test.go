@@ -44,25 +44,25 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	t.Run("UUIDv4", func(tt *testing.T) {
 		tt.Parallel()
-		runAuthorizationEndpointTests(tt, 4)
+		runAuthorizationEndpointTests(tt, true)
 	})
 
 	t.Run("UUIDv7", func(tt *testing.T) {
 		tt.Parallel()
-		runAuthorizationEndpointTests(tt, 7)
+		runAuthorizationEndpointTests(tt, false)
 	})
 }
 
-func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
+func runAuthorizationEndpointTests(t *testing.T, useUuidV4 bool) {
 	env := Setup(t, db2)
-	defaultUser := env.CreateUser(t, rand, uuidVersion)
+	defaultUser := env.CreateUser(t, rand, useUuidV4)
 	s := env.S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
 
 	var creatorID uuid.UUID
-	if uuidVersion == 4 {
+	if useUuidV4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -82,7 +82,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
@@ -113,7 +113,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Success (code)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -147,7 +147,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Success (GET)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -181,7 +181,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Success With PKCE", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -474,7 +474,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		_, err := env.Repository.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := env.R(t)
@@ -498,7 +498,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 		t.Parallel()
 
 		var creatorID uuid.UUID
-		if uuidVersion == 4 {
+		if useUuidV4 {
 			creatorID = uuid.Must(uuid.NewV4())
 		} else {
 			creatorID = uuid.Must(uuid.NewV7())
@@ -529,7 +529,7 @@ func runAuthorizationEndpointTests(t *testing.T, uuidVersion int) {
 	t.Run("Found (valid session but deactivated account)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand, uuidVersion)
+		user := env.CreateUser(t, rand, useUuidV4)
 		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
 
@@ -558,18 +558,18 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
 	t.Run("UUIDv4", func(tt *testing.T) {
 		tt.Parallel()
-		runAuthorizationDecideHandlerTests(tt, 4)
+		runAuthorizationDecideHandlerTests(tt, true)
 	})
 
 	t.Run("UUIDv7", func(tt *testing.T) {
 		tt.Parallel()
-		runAuthorizationDecideHandlerTests(tt, 7)
+		runAuthorizationDecideHandlerTests(tt, false)
 	})
 }
 
-func runAuthorizationDecideHandlerTests(t *testing.T, uuidVersion int) {
+func runAuthorizationDecideHandlerTests(t *testing.T, useUuidV4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand, uuidVersion)
+	user := env.CreateUser(t, rand, useUuidV4)
 	s := env.S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}
@@ -578,7 +578,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, uuidVersion int) {
 	scopesReadWrite.Add("read", "write")
 
 	var creatorID uuid.UUID
-	if uuidVersion == 4 {
+	if useUuidV4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -681,7 +681,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, uuidVersion int) {
 		t.Parallel()
 
 		var creatorID uuid.UUID
-		if uuidVersion == 4 {
+		if useUuidV4 {
 			creatorID = uuid.Must(uuid.NewV4())
 		} else {
 			creatorID = uuid.Must(uuid.NewV7())

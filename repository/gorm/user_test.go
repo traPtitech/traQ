@@ -17,7 +17,7 @@ import (
 func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, ex2)
-	mustMakeUser(t, repo, "traq")
+	mustMakeUser(t, repo, "traq", false)
 
 	u0, err := repo.GetUserByName("traq", false)
 	require.NoError(err)
@@ -40,7 +40,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		{true, true, false},
 	}
 	for _, v := range ut {
-		u := mustMakeUser(t, repo, rand)
+		u := mustMakeUser(t, repo, rand, false)
 		us = append(us, u.GetID())
 
 		if v.Bot {
@@ -125,7 +125,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 func TestRepositoryImpl_GetUser(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
+	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	_, err := repo.GetUser(uuid.Nil, false)
 	assert.Error(err)
@@ -139,7 +139,7 @@ func TestRepositoryImpl_GetUser(t *testing.T) {
 
 func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
+	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	_, err := repo.GetUserByName("", false)
 	assert.Error(err)
@@ -153,7 +153,7 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 
 func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	t.Run("No Args", func(t *testing.T) {
 		t.Parallel()
@@ -183,7 +183,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("DisplayName", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
@@ -200,7 +200,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("TwitterID", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Failed", func(t *testing.T) {
 			assert := assert.New(t)
@@ -237,7 +237,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("Role", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
@@ -280,7 +280,7 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 		stamp1 := mustMakeStamp(t, repo, rand, user.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user.GetID())
 

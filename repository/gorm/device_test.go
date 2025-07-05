@@ -15,10 +15,10 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand, 7).GetID()
-	id2 := mustMakeUser(t, repo, rand, 7).GetID()
-	id3 := mustMakeUser(t, repo, rand, 4).GetID()
-	id4 := mustMakeUser(t, repo, rand, 4).GetID()
+	id1 := mustMakeUser(t, repo, rand, false).GetID()
+	id2 := mustMakeUser(t, repo, rand, false).GetID()
+	id3 := mustMakeUser(t, repo, rand, true).GetID()
+	id4 := mustMakeUser(t, repo, rand, true).GetID()
 
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
@@ -56,10 +56,10 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand, 7).GetID()
-	id2 := mustMakeUser(t, repo, rand, 7).GetID()
-	id3 := mustMakeUser(t, repo, rand, 7).GetID()
-	id4 := mustMakeUser(t, repo, rand, 4).GetID()
+	id1 := mustMakeUser(t, repo, rand, false).GetID()
+	id2 := mustMakeUser(t, repo, rand, false).GetID()
+	id3 := mustMakeUser(t, repo, rand, false).GetID()
+	id4 := mustMakeUser(t, repo, rand, true).GetID()
 
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
@@ -105,9 +105,9 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, rand, 7).GetID()
-	id2 := mustMakeUser(t, repo, rand, 7).GetID()
-	id3 := mustMakeUser(t, repo, rand, 4).GetID()
+	id1 := mustMakeUser(t, repo, rand, false).GetID()
+	id2 := mustMakeUser(t, repo, rand, false).GetID()
+	id3 := mustMakeUser(t, repo, rand, true).GetID()
 
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)

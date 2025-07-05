@@ -68,7 +68,7 @@ func TestGormRepository_GetFileMeta(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	f := mustMakeDummyFile(t, repo)
+	f := mustMakeDummyFile(t, repo, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -109,7 +109,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		f := mustMakeDummyFile(t, repo)
+		f := mustMakeDummyFile(t, repo, false)
 
 		err := repo.DeleteFileMeta(f.ID)
 		if assert.NoError(t, err) {
@@ -127,7 +127,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 
 func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common, false)
 
 	t.Run("file which doesn't exist", func(t *testing.T) {
 		t.Parallel()
@@ -149,7 +149,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 
 	t.Run("allow everyone", func(t *testing.T) {
 		t.Parallel()
-		f := mustMakeDummyFile(t, repo)
+		f := mustMakeDummyFile(t, repo, false)
 
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
@@ -207,7 +207,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -252,7 +252,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -263,7 +263,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("allow two(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		user2 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV4()),
 			Name: "dummy",
@@ -308,7 +308,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -318,7 +318,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("allow two(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		user2 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
@@ -363,7 +363,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -374,7 +374,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("deny rule(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		deniedUser := mustMakeUser(t, repo, rand)
+		deniedUser := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV4()),
 			Name: "dummy",
@@ -420,7 +420,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("deny rule(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		deniedUser := mustMakeUser(t, repo, rand)
+		deniedUser := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
@@ -533,7 +533,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 				return
 			}
 
-			f := mustMakeDummyFile(t, repo)
+			f := mustMakeDummyFile(t, repo, false)
 
 			if !tt.deletesExistingFile { // 存在しないファイルの場合, 変更なしを検証
 				var nonExistentID uuid.UUID
