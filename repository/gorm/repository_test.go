@@ -42,9 +42,8 @@ var (
 func mustGenerateUUID(useUuidV4 bool) uuid.UUID {
 	if useUuidV4 {
 		return uuid.Must(uuid.NewV4())
-	} else {
-		return uuid.Must(uuid.NewV7())
 	}
+	return uuid.Must(uuid.NewV7())
 }
 
 func TestMain(m *testing.M) {

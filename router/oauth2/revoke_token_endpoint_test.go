@@ -24,9 +24,9 @@ func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
 	})
 }
 
-func runRevokeTokenEndpointTests(t *testing.T, useUuidV4 bool) {
+func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 	env := Setup(t, db1)
-	user := env.CreateUser(t, rand, useUuidV4)
+	user := env.CreateUser(t, rand, useUUIDv4)
 
 	t.Run("NoToken", func(t *testing.T) {
 		t.Parallel()

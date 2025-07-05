@@ -269,15 +269,15 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 	})
 }
 
-func runTokenEndpointPasswordTests(t *testing.T, useUuidV4 bool) {
+func runTokenEndpointPasswordTests(t *testing.T, useUUIDV4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand, useUuidV4)
+	user := env.CreateUser(t, rand, useUUIDV4)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
 
 	var creatorID uuid.UUID
-	if useUuidV4 {
+	if useUUIDV4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -389,7 +389,7 @@ func runTokenEndpointPasswordTests(t *testing.T, useUuidV4 bool) {
 		t.Parallel()
 
 		var creatorID uuid.UUID
-		if useUuidV4 {
+		if useUUIDV4 {
 			creatorID = uuid.Must(uuid.NewV4())
 		} else {
 			creatorID = uuid.Must(uuid.NewV7())
@@ -551,15 +551,15 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 	})
 }
 
-func runTokenEndpointRefreshTokenTests(t *testing.T, useUuidV4 bool) {
+func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand, useUuidV4)
+	user := env.CreateUser(t, rand, useUUIDv4)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
 
 	var creatorID uuid.UUID
-	if useUuidV4 {
+	if useUUIDv4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -577,7 +577,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUuidV4 bool) {
 	require.NoError(t, env.Repository.SaveClient(client))
 
 	var creatorIDConf uuid.UUID
-	if useUuidV4 {
+	if useUUIDv4 {
 		creatorIDConf = uuid.Must(uuid.NewV4())
 	} else {
 		creatorIDConf = uuid.Must(uuid.NewV7())
@@ -818,9 +818,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	})
 }
 
-func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUuidV4 bool) {
+func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand, useUuidV4)
+	user := env.CreateUser(t, rand, useUUIDv4)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -830,7 +830,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUuidV4 bool) {
 	scopesReadManageBot.Add("read", "manage_bot")
 
 	var creatorID uuid.UUID
-	if useUuidV4 {
+	if useUUIDv4 {
 		creatorID = uuid.Must(uuid.NewV4())
 	} else {
 		creatorID = uuid.Must(uuid.NewV7())
@@ -848,7 +848,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUuidV4 bool) {
 	require.NoError(t, env.Repository.SaveClient(client))
 
 	var creatorIDConf uuid.UUID
-	if useUuidV4 {
+	if useUUIDv4 {
 		creatorIDConf = uuid.Must(uuid.NewV4())
 	} else {
 		creatorIDConf = uuid.Must(uuid.NewV7())
