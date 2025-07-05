@@ -150,7 +150,16 @@ func TestHandlers_GetStamp(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.GET(path, uuid.Must(uuid.NewV7())).
@@ -215,7 +224,17 @@ func TestHandlers_EditStamp(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("bad request (invalid creator id)", func(t *testing.T) {
+	t.Run("bad request (invalid creator id) - UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, stamp3.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchStampRequest{CreatorID: optional.From(uuid.Must(uuid.NewV4()))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (invalid creator id) - UUIDv7", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).

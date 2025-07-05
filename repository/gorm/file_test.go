@@ -22,7 +22,27 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 		assert.Error(t, repo.SaveFileMeta(nil, nil))
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success with UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		meta := &model.FileMeta{
+			ID:   uuid.Must(uuid.NewV4()),
+			Name: "dummy",
+			Mime: "application/octet-stream",
+			Size: 10,
+			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
+		}
+		acl := []*model.FileACLEntry{
+			{UserID: uuid.Nil, Allow: true},
+		}
+
+		err := repo.SaveFileMeta(meta, acl)
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, meta.CreatedAt)
+			assert.False(t, meta.DeletedAt.Valid)
+		}
+	})
+	t.Run("success with UUIDv7", func(t *testing.T) {
 		t.Parallel()
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV7()),
@@ -48,7 +68,7 @@ func TestGormRepository_GetFileMeta(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	f := mustMakeDummyFile(t, repo)
+	f := mustMakeDummyFile(t, repo, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -89,7 +109,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		f := mustMakeDummyFile(t, repo)
+		f := mustMakeDummyFile(t, repo, false)
 
 		err := repo.DeleteFileMeta(f.ID)
 		if assert.NoError(t, err) {
@@ -107,7 +127,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 
 func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common, false)
 
 	t.Run("file which doesn't exist", func(t *testing.T) {
 		t.Parallel()
@@ -129,7 +149,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 
 	t.Run("allow everyone", func(t *testing.T) {
 		t.Parallel()
-		f := mustMakeDummyFile(t, repo)
+		f := mustMakeDummyFile(t, repo, false)
 
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
@@ -150,7 +170,52 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		})
 	})
 
-	t.Run("allow one", func(t *testing.T) {
+	t.Run("allow one(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		meta := &model.FileMeta{
+			ID:   uuid.Must(uuid.NewV4()),
+			Name: "dummy",
+			Mime: "application/octet-stream",
+			Size: 10,
+			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
+		}
+		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+			{UserID: user.GetID(), Allow: true},
+		})
+		require.NoError(t, err)
+
+		t.Run("any users", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			if assert.NoError(t, err) {
+				assert.False(t, ok)
+			}
+		})
+
+		t.Run("allowed user", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			if assert.NoError(t, err) {
+				assert.True(t, ok)
+			}
+		})
+
+		t.Run("denied user", func(t *testing.T) {
+			t.Parallel()
+
+			user := mustMakeUser(t, repo, rand, false)
+			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			if assert.NoError(t, err) {
+				assert.False(t, ok)
+			}
+		})
+	})
+
+	t.Run("allow one(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		meta := &model.FileMeta{
@@ -187,7 +252,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -195,10 +260,65 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		})
 	})
 
-	t.Run("allow two", func(t *testing.T) {
+	t.Run("allow two(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		user2 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand, false)
+		meta := &model.FileMeta{
+			ID:   uuid.Must(uuid.NewV4()),
+			Name: "dummy",
+			Mime: "application/octet-stream",
+			Size: 10,
+			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
+		}
+		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+			{UserID: user.GetID(), Allow: true},
+			{UserID: user2.GetID(), Allow: true},
+		})
+		require.NoError(t, err)
+
+		t.Run("any users", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			if assert.NoError(t, err) {
+				assert.False(t, ok)
+			}
+		})
+
+		t.Run("allowed user", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			if assert.NoError(t, err) {
+				assert.True(t, ok)
+			}
+		})
+
+		t.Run("allowed user2", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, user2.GetID())
+			if assert.NoError(t, err) {
+				assert.True(t, ok)
+			}
+		})
+
+		t.Run("denied user", func(t *testing.T) {
+			t.Parallel()
+
+			user := mustMakeUser(t, repo, rand, false)
+			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			if assert.NoError(t, err) {
+				assert.False(t, ok)
+			}
+		})
+	})
+	t.Run("allow two(UUIDv7)", func(t *testing.T) {
+		t.Parallel()
+
+		user2 := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
@@ -243,7 +363,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, rand)
+			user := mustMakeUser(t, repo, rand, false)
 			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -251,10 +371,56 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		})
 	})
 
-	t.Run("deny rule", func(t *testing.T) {
+	t.Run("deny rule(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		deniedUser := mustMakeUser(t, repo, rand)
+		deniedUser := mustMakeUser(t, repo, rand, false)
+		meta := &model.FileMeta{
+			ID:   uuid.Must(uuid.NewV4()),
+			Name: "dummy",
+			Mime: "application/octet-stream",
+			Size: 10,
+			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
+		}
+		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+			{UserID: uuid.Nil, Allow: true},
+			{UserID: deniedUser.GetID(), Allow: false},
+		})
+		require.NoError(t, err)
+
+		t.Run("any user", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			if assert.NoError(t, err) {
+				assert.True(t, ok)
+			}
+		})
+
+		t.Run("allowed user", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			if assert.NoError(t, err) {
+				assert.True(t, ok)
+			}
+		})
+
+		t.Run("denied user", func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.IsFileAccessible(meta.ID, deniedUser.GetID())
+			if assert.NoError(t, err) {
+				assert.False(t, ok)
+			}
+		})
+	})
+
+	t.Run("deny rule(UUIDv7)", func(t *testing.T) {
+		t.Parallel()
+
+		deniedUser := mustMakeUser(t, repo, rand, false)
 		meta := &model.FileMeta{
 			ID:   uuid.Must(uuid.NewV7()),
 			Name: "dummy",
@@ -313,26 +479,49 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 		createsFile           bool
 		deletesExistingFile   bool
 		thumbnailTypeToDelete model.ThumbnailType
+		uuidVersion           string // "v4" or "v7"
 	}{
 		"nil id": {
 			createsFile:           false,
 			deletesExistingFile:   false,
 			thumbnailTypeToDelete: model.ThumbnailTypeImage,
+			uuidVersion:           "v7",
 		},
-		"file not found": {
+		"file not found (UUIDv4)": {
 			createsFile:           true,
 			deletesExistingFile:   false,
 			thumbnailTypeToDelete: model.ThumbnailTypeImage,
+			uuidVersion:           "v4",
 		},
-		"thumbnail type not found": {
+		"file not found (UUIDv7)": {
+			createsFile:           true,
+			deletesExistingFile:   false,
+			thumbnailTypeToDelete: model.ThumbnailTypeImage,
+			uuidVersion:           "v7",
+		},
+		"thumbnail type not found (UUIDv4)": {
 			createsFile:           true,
 			deletesExistingFile:   true,
 			thumbnailTypeToDelete: model.ThumbnailTypeWaveform,
+			uuidVersion:           "v4",
 		},
-		"success": {
+		"thumbnail type not found (UUIDv7)": {
+			createsFile:           true,
+			deletesExistingFile:   true,
+			thumbnailTypeToDelete: model.ThumbnailTypeWaveform,
+			uuidVersion:           "v7",
+		},
+		"success (UUIDv4)": {
 			createsFile:           true,
 			deletesExistingFile:   true,
 			thumbnailTypeToDelete: model.ThumbnailTypeImage,
+			uuidVersion:           "v4",
+		},
+		"success (UUIDv7)": {
+			createsFile:           true,
+			deletesExistingFile:   true,
+			thumbnailTypeToDelete: model.ThumbnailTypeImage,
+			uuidVersion:           "v7",
 		},
 	}
 
@@ -344,10 +533,16 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 				return
 			}
 
-			f := mustMakeDummyFile(t, repo)
+			f := mustMakeDummyFile(t, repo, false)
 
 			if !tt.deletesExistingFile { // 存在しないファイルの場合, 変更なしを検証
-				err := repo.DeleteFileThumbnail(uuid.Must(uuid.NewV7()), tt.thumbnailTypeToDelete)
+				var nonExistentID uuid.UUID
+				if tt.uuidVersion == "v4" {
+					nonExistentID = uuid.Must(uuid.NewV4())
+				} else {
+					nonExistentID = uuid.Must(uuid.NewV7())
+				}
+				err := repo.DeleteFileThumbnail(nonExistentID, tt.thumbnailTypeToDelete)
 				assert.NoError(t, err)
 				ff, err := repo.GetFileMeta(f.ID)
 				assert.NoError(t, err)

@@ -103,7 +103,12 @@ func TestGetFilesRequest_Validate(t *testing.T) {
 			true,
 		},
 		{
-			"in channel",
+			"in channel (UUIDv4)",
+			fields{ChannelID: uuid.Must(uuid.NewV4())},
+			false,
+		},
+		{
+			"in channel (UUIDv7)",
 			fields{ChannelID: uuid.Must(uuid.NewV7())},
 			false,
 		},

@@ -183,12 +183,20 @@ func (env *Env) R(t *testing.T) *httpexpect.Expect {
 }
 
 // CreateUser ユーザーを必ず作成します
-func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
+func (env *Env) CreateUser(t *testing.T, userName string, useUUIDV4 bool) model.UserInfo {
 	t.Helper()
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
+
+	var iconFileID uuid.UUID
+	if useUUIDV4 {
+		iconFileID = uuid.Must(uuid.NewV4())
+	} else {
+		iconFileID = uuid.Must(uuid.NewV7())
+	}
+
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: iconFileID})
 	require.NoError(t, err)
 	return u
 }

@@ -42,18 +42,37 @@ func TestResponseType_valid(t *testing.T) {
 
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationEndpointTests(tt, true)
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationEndpointTests(tt, false)
+	})
+}
+
+func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 	env := Setup(t, db2)
-	defaultUser := env.CreateUser(t, rand)
+	defaultUser := env.CreateUser(t, rand, useUUIDV4)
 	s := env.S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
 
+	var creatorID uuid.UUID
+	if useUUIDV4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.Must(uuid.NewV7()),
+		CreatorID:    creatorID,
 		Secret:       random.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
@@ -63,7 +82,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
@@ -94,7 +113,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (code)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -128,7 +147,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (GET)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -162,7 +181,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success With PKCE", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		env.IssueToken(t, client, user.GetID(), false)
 		s := env.S(t, user.GetID())
 		e := env.R(t)
@@ -455,7 +474,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		_, err := env.Repository.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := env.R(t)
@@ -478,13 +497,20 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Forbidden (client without redirect uri)", func(t *testing.T) {
 		t.Parallel()
 
+		var creatorID uuid.UUID
+		if useUUIDV4 {
+			creatorID = uuid.Must(uuid.NewV4())
+		} else {
+			creatorID = uuid.Must(uuid.NewV7())
+		}
+
 		scopes := model.AccessScopes{}
 		scopes.Add("read", "write")
 		client := &model.OAuth2Client{
 			ID:           random.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.Must(uuid.NewV7()),
+			CreatorID:    creatorID,
 			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopes,
 		}
@@ -503,7 +529,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (valid session but deactivated account)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := env.CreateUser(t, rand)
+		user := env.CreateUser(t, rand, useUUIDV4)
 		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
 
@@ -530,8 +556,20 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 
 func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationDecideHandlerTests(tt, true)
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		runAuthorizationDecideHandlerTests(tt, false)
+	})
+}
+
+func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	env := Setup(t, db2)
-	user := env.CreateUser(t, rand)
+	user := env.CreateUser(t, rand, useUUIDV4)
 	s := env.S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}
@@ -539,11 +577,18 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
 
+	var creatorID uuid.UUID
+	if useUUIDV4 {
+		creatorID = uuid.Must(uuid.NewV4())
+	} else {
+		creatorID = uuid.Must(uuid.NewV7())
+	}
+
 	client := &model.OAuth2Client{
 		ID:           random.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.Must(uuid.NewV4()),
+		CreatorID:    creatorID,
 		Secret:       random.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
@@ -634,11 +679,19 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 
 	t.Run("Forbidden (client without redirect uri", func(t *testing.T) {
 		t.Parallel()
+
+		var creatorID uuid.UUID
+		if useUUIDV4 {
+			creatorID = uuid.Must(uuid.NewV4())
+		} else {
+			creatorID = uuid.Must(uuid.NewV7())
+		}
+
 		client := &model.OAuth2Client{
 			ID:           random.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: true,
-			CreatorID:    uuid.Must(uuid.NewV4()),
+			CreatorID:    creatorID,
 			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopesRead,
 		}

@@ -2,6 +2,7 @@ package channel
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,6 +23,21 @@ import (
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
 )
+
+func mustGenerateUUID(version ...int) uuid.UUID { // デフォルトがv7
+	v := 7
+	if len(version) > 0 {
+		v = version[0]
+	}
+	switch v {
+	case 4:
+		return uuid.Must(uuid.NewV4())
+	case 7:
+		return uuid.Must(uuid.NewV7())
+	default:
+		panic(fmt.Sprintf("unsupported UUID version: %d", v))
+	}
+}
 
 func initCM(t *testing.T, repo repository.ChannelRepository) *managerImpl {
 	return &managerImpl{
@@ -292,48 +308,54 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			{Name: "test2", Parent: cA, Creator: cABC},
 			{Name: "test2", Parent: cEFGJ, Creator: cABCD},
 		}
-		for i, c := range cases {
-			t.Run(strconv.Itoa(i), func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				repo := mock_repository.NewMockChannelRepository(ctrl)
-				cm := initCM(t, repo)
 
-				cid := uuid.Must(uuid.NewV7())
-				createdAt := time.Now()
-				expected := &model.Channel{
-					ID:         cid,
-					Name:       c.Name,
-					ParentID:   c.Parent,
-					CreatorID:  c.Creator,
-					UpdaterID:  c.Creator,
-					IsPublic:   true,
-					IsForced:   false,
-					IsVisible:  true,
-					CreatedAt:  createdAt,
-					UpdatedAt:  createdAt,
-					DeletedAt:  gorm.DeletedAt{},
-					ChildrenID: make([]uuid.UUID, 0),
-				}
+		for _, uuidVersion := range []int{4, 7} {
+			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+				t.Parallel()
+				for i, c := range cases {
+					t.Run(strconv.Itoa(i), func(t *testing.T) {
+						ctrl := gomock.NewController(t)
+						repo := mock_repository.NewMockChannelRepository(ctrl)
+						cm := initCM(t, repo)
 
-				repo.EXPECT().
-					CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(expected, nil).
-					AnyTimes()
-				if c.Parent != uuid.Nil {
-					repo.EXPECT().
-						RecordChannelEvent(c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
-							"userId":    c.Creator,
-							"channelId": cid,
-						}), createdAt).
-						Return(nil).
-						Times(1)
-				}
+						cid := mustGenerateUUID(uuidVersion)
+						createdAt := time.Now()
+						expected := &model.Channel{
+							ID:         cid,
+							Name:       c.Name,
+							ParentID:   c.Parent,
+							CreatorID:  c.Creator,
+							UpdaterID:  c.Creator,
+							IsPublic:   true,
+							IsForced:   false,
+							IsVisible:  true,
+							CreatedAt:  createdAt,
+							UpdatedAt:  createdAt,
+							DeletedAt:  gorm.DeletedAt{},
+							ChildrenID: make([]uuid.UUID, 0),
+						}
 
-				ch, err := cm.CreatePublicChannel(c.Name, c.Parent, c.Creator)
-				cm.P.Wait()
-				if assert.NoError(t, err) {
-					assert.Equal(t, expected, ch)
-					assert.True(t, cm.PublicChannelTree().IsChannelPresent(cid))
+						repo.EXPECT().
+							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
+							Return(expected, nil).
+							AnyTimes()
+						if c.Parent != uuid.Nil {
+							repo.EXPECT().
+								RecordChannelEvent(c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
+									"userId":    c.Creator,
+									"channelId": cid,
+								}), createdAt).
+								Return(nil).
+								Times(1)
+						}
+
+						ch, err := cm.CreatePublicChannel(c.Name, c.Parent, c.Creator)
+						cm.P.Wait()
+						if assert.NoError(t, err) {
+							assert.Equal(t, expected, ch)
+							assert.True(t, cm.PublicChannelTree().IsChannelPresent(cid))
+						}
+					})
 				}
 			})
 		}
@@ -441,145 +463,163 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 
 		cases := []struct {
 			ID   uuid.UUID
-			Args repository.UpdateChannelArgs
+			Args func(uuidVersion int) repository.UpdateChannelArgs
 		}{
 			{
 				ID: cA,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV7()),
-					Topic:     optional.From(""),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID: mustGenerateUUID(uuidVersion),
+						Topic:     optional.From(""),
+					}
 				},
 			},
 			{
 				ID: cA,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID:  uuid.Must(uuid.NewV7()),
-					Visibility: optional.From(true),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID:  mustGenerateUUID(uuidVersion),
+						Visibility: optional.From(true),
+					}
 				},
 			},
 			{
 				ID: cA,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID:          uuid.Must(uuid.NewV7()),
-					ForcedNotification: optional.From(true),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID:          mustGenerateUUID(uuidVersion),
+						ForcedNotification: optional.From(true),
+					}
 				},
 			},
 			{
 				ID: cABBC,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV7()),
-					Parent:    optional.From(pubChannelRootUUID),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID: mustGenerateUUID(uuidVersion),
+						Parent:    optional.From(pubChannelRootUUID),
+					}
 				},
 			},
 			{
 				ID: cABCE,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID: uuid.Must(uuid.NewV7()),
-					Parent:    optional.From(cABCD),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID: mustGenerateUUID(uuidVersion),
+						Parent:    optional.From(cABCD),
+					}
 				},
 			},
 			{
 				ID: cEFGHI,
-				Args: repository.UpdateChannelArgs{
-					UpdaterID:          uuid.Must(uuid.NewV7()),
-					Name:               optional.From("test"),
-					Topic:              optional.From("test"),
-					Visibility:         optional.From(false),
-					ForcedNotification: optional.From(true),
-					Parent:             optional.From(cE),
+				Args: func(uuidVersion int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{
+						UpdaterID:          mustGenerateUUID(uuidVersion),
+						Name:               optional.From("test"),
+						Topic:              optional.From("test"),
+						Visibility:         optional.From(false),
+						ForcedNotification: optional.From(true),
+						Parent:             optional.From(cE),
+					}
 				},
 			},
 		}
-		for i, c := range cases {
-			c := c
-			t.Run(strconv.Itoa(i), func(t *testing.T) {
+
+		for _, uuidVersion := range []int{4, 7} {
+			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
 				t.Parallel()
-				ctrl := gomock.NewController(t)
-				repo := mock_repository.NewMockChannelRepository(ctrl)
-				cm := initCM(t, repo)
+				for i, c := range cases {
+					c := c
+					t.Run(strconv.Itoa(i), func(t *testing.T) {
+						t.Parallel()
+						ctrl := gomock.NewController(t)
+						repo := mock_repository.NewMockChannelRepository(ctrl)
+						cm := initCM(t, repo)
 
-				ch, err := cm.PublicChannelTree().GetModel(c.ID)
-				require.NoError(t, err)
-				args := c.Args
-				newChan := *ch
-				newChan.UpdaterID = args.UpdaterID
-				newChan.UpdatedAt = time.Now()
+						ch, err := cm.PublicChannelTree().GetModel(c.ID)
+						require.NoError(t, err)
+						args := c.Args(uuidVersion)
+						newChan := *ch
+						newChan.UpdaterID = args.UpdaterID
+						newChan.UpdatedAt = time.Now()
 
-				// トピックが同じだった場合、トピックの引数自体を無効化
-				if ch.Topic == args.Topic.V {
-					args.Topic = optional.New("", false)
-				}
-				if args.Topic.Valid {
-					repo.EXPECT().
-						RecordChannelEvent(c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
-							"userId": args.UpdaterID,
-							"before": ch.Topic,
-							"after":  args.Topic.V,
-						}, gomock.Any()).
-						Return(nil).
-						Times(1)
-					newChan.Topic = args.Topic.V
-				}
-				if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
-					repo.EXPECT().
-						RecordChannelEvent(c.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
-							"userId":     args.UpdaterID,
-							"visibility": args.Visibility.V,
-						}, gomock.Any()).
-						Return(nil).
-						Times(1)
-					newChan.IsVisible = args.Visibility.V
-				}
-				if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
-					repo.EXPECT().
-						RecordChannelEvent(c.ID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
-							"userId": args.UpdaterID,
-							"force":  args.ForcedNotification.V,
-						}, gomock.Any()).
-						Return(nil).
-						Times(1)
-					newChan.IsForced = args.ForcedNotification.V
-				}
-				if args.Name.Valid {
-					repo.EXPECT().
-						RecordChannelEvent(c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
-							"userId": args.UpdaterID,
-							"before": ch.Name,
-							"after":  args.Name.V,
-						}, gomock.Any()).
-						Return(nil).
-						Times(1)
-					newChan.Name = args.Name.V
-				}
-				if args.Parent.Valid {
-					repo.EXPECT().
-						RecordChannelEvent(c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
-							"userId": args.UpdaterID,
-							"before": ch.ParentID,
-							"after":  args.Parent.V,
-						}, gomock.Any()).
-						Return(nil).
-						Times(1)
-					newChan.ParentID = args.Parent.V
-				}
+						// トピックが同じだった場合、トピックの引数自体を無効化
+						if ch.Topic == args.Topic.V {
+							args.Topic = optional.New("", false)
+						}
+						if args.Topic.Valid {
+							repo.EXPECT().
+								RecordChannelEvent(c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
+									"userId": args.UpdaterID,
+									"before": ch.Topic,
+									"after":  args.Topic.V,
+								}, gomock.Any()).
+								Return(nil).
+								Times(1)
+							newChan.Topic = args.Topic.V
+						}
+						if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
+							repo.EXPECT().
+								RecordChannelEvent(c.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
+									"userId":     args.UpdaterID,
+									"visibility": args.Visibility.V,
+								}, gomock.Any()).
+								Return(nil).
+								Times(1)
+							newChan.IsVisible = args.Visibility.V
+						}
+						if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
+							repo.EXPECT().
+								RecordChannelEvent(c.ID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
+									"userId": args.UpdaterID,
+									"force":  args.ForcedNotification.V,
+								}, gomock.Any()).
+								Return(nil).
+								Times(1)
+							newChan.IsForced = args.ForcedNotification.V
+						}
+						if args.Name.Valid {
+							repo.EXPECT().
+								RecordChannelEvent(c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
+									"userId": args.UpdaterID,
+									"before": ch.Name,
+									"after":  args.Name.V,
+								}, gomock.Any()).
+								Return(nil).
+								Times(1)
+							newChan.Name = args.Name.V
+						}
+						if args.Parent.Valid {
+							repo.EXPECT().
+								RecordChannelEvent(c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
+									"userId": args.UpdaterID,
+									"before": ch.ParentID,
+									"after":  args.Parent.V,
+								}, gomock.Any()).
+								Return(nil).
+								Times(1)
+							newChan.ParentID = args.Parent.V
+						}
 
-				repo.EXPECT().
-					UpdateChannel(c.ID, args).
-					Return(&newChan, nil).
-					Times(1)
+						repo.EXPECT().
+							UpdateChannel(c.ID, args).
+							Return(&newChan, nil).
+							Times(1)
 
-				err = cm.UpdateChannel(c.ID, args)
-				cm.P.Wait()
-				if assert.NoError(t, err) {
-					v, err := cm.GetChannel(c.ID)
-					require.NoError(t, err)
-					sort.Slice(v.ChildrenID, func(i, j int) bool {
-						return strings.Compare(v.ChildrenID[i].String(), v.ChildrenID[j].String()) > 0
+						err = cm.UpdateChannel(c.ID, args)
+						cm.P.Wait()
+						if assert.NoError(t, err) {
+							v, err := cm.GetChannel(c.ID)
+							require.NoError(t, err)
+							sort.Slice(v.ChildrenID, func(i, j int) bool {
+								return strings.Compare(v.ChildrenID[i].String(), v.ChildrenID[j].String()) > 0
+							})
+							sort.Slice(newChan.ChildrenID, func(i, j int) bool {
+								return strings.Compare(newChan.ChildrenID[i].String(), newChan.ChildrenID[j].String()) > 0
+							})
+							assert.EqualValues(t, &newChan, v)
+						}
 					})
-					sort.Slice(newChan.ChildrenID, func(i, j int) bool {
-						return strings.Compare(newChan.ChildrenID[i].String(), newChan.ChildrenID[j].String()) > 0
-					})
-					assert.EqualValues(t, &newChan, v)
 				}
 			})
 		}
@@ -831,164 +871,174 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 func TestManagerImpl_GetDMChannel(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ErrChannelNotFound", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+	for _, uuidVersion := range []int{4, 7} {
+		t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+			t.Parallel()
+			t.Run("ErrChannelNotFound", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		_, err := cm.GetDMChannel(uuid.Nil, uuid.Nil)
-		assert.EqualError(t, err, ErrChannelNotFound.Error())
-		_, err = cm.GetDMChannel(uuid.Must(uuid.NewV4()), uuid.Nil)
-		assert.EqualError(t, err, ErrChannelNotFound.Error())
-		_, err = cm.GetDMChannel(uuid.Nil, uuid.Must(uuid.NewV4()))
-		assert.EqualError(t, err, ErrChannelNotFound.Error())
-	})
+				_, err := cm.GetDMChannel(uuid.Nil, uuid.Nil)
+				assert.EqualError(t, err, ErrChannelNotFound.Error())
+				_, err = cm.GetDMChannel(mustGenerateUUID(uuidVersion), uuid.Nil)
+				assert.EqualError(t, err, ErrChannelNotFound.Error())
+				_, err = cm.GetDMChannel(uuid.Nil, mustGenerateUUID(uuidVersion))
+				assert.EqualError(t, err, ErrChannelNotFound.Error())
+			})
 
-	t.Run("repository error1", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+			t.Run("repository error1", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		mockErr := errors.New("mock error")
-		repo.EXPECT().
-			GetDirectMessageChannel(gomock.Any(), gomock.Any()).
-			Return(nil, mockErr).
-			AnyTimes()
+				mockErr := errors.New("mock error")
+				repo.EXPECT().
+					GetDirectMessageChannel(gomock.Any(), gomock.Any()).
+					Return(nil, mockErr).
+					AnyTimes()
 
-		_, err := cm.GetDMChannel(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()))
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
-		}
-	})
+				_, err := cm.GetDMChannel(mustGenerateUUID(uuidVersion), mustGenerateUUID(uuidVersion))
+				if assert.Error(t, err) {
+					assert.Equal(t, mockErr, errors.Unwrap(err))
+				}
+			})
 
-	t.Run("repository error2", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+			t.Run("repository error2", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		mockErr := errors.New("mock error")
-		repo.EXPECT().
-			GetDirectMessageChannel(gomock.Any(), gomock.Any()).
-			Return(nil, repository.ErrNotFound).
-			Times(1)
-		repo.EXPECT().
-			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, mockErr).
-			Times(1)
+				mockErr := errors.New("mock error")
+				repo.EXPECT().
+					GetDirectMessageChannel(gomock.Any(), gomock.Any()).
+					Return(nil, repository.ErrNotFound).
+					Times(1)
+				repo.EXPECT().
+					CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, mockErr).
+					Times(1)
 
-		_, err := cm.GetDMChannel(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()))
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
-		}
-	})
+				_, err := cm.GetDMChannel(mustGenerateUUID(uuidVersion), mustGenerateUUID(uuidVersion))
+				if assert.Error(t, err) {
+					assert.Equal(t, mockErr, errors.Unwrap(err))
+				}
+			})
 
-	t.Run("success (found)", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+			t.Run("success (found)", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		uid1 := uuid.NewV3(uuid.Nil, "u1")
-		uid2 := uuid.NewV3(uuid.Nil, "u2")
-		dm1 := &model.Channel{
-			ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
-			Name:      "a",
-			ParentID:  dmChannelRootUUID,
-			IsForced:  false,
-			IsPublic:  false,
-			IsVisible: true,
-		}
-		repo.EXPECT().
-			GetDirectMessageChannel(uid1, uid2).
-			Return(dm1, nil).
-			Times(1)
+				uid1 := uuid.NewV3(uuid.Nil, "u1")
+				uid2 := uuid.NewV3(uuid.Nil, "u2")
+				dm1 := &model.Channel{
+					ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
+					Name:      "a",
+					ParentID:  dmChannelRootUUID,
+					IsForced:  false,
+					IsPublic:  false,
+					IsVisible: true,
+				}
+				repo.EXPECT().
+					GetDirectMessageChannel(uid1, uid2).
+					Return(dm1, nil).
+					Times(1)
 
-		ch, err := cm.GetDMChannel(uid1, uid2)
-		if assert.NoError(t, err) {
-			assert.EqualValues(t, dm1, ch)
-		}
-	})
+				ch, err := cm.GetDMChannel(uid1, uid2)
+				if assert.NoError(t, err) {
+					assert.EqualValues(t, dm1, ch)
+				}
+			})
 
-	t.Run("succes (create)", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+			t.Run("succes (create)", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		uid1 := uuid.NewV3(uuid.Nil, "u1")
-		uid2 := uuid.NewV3(uuid.Nil, "u2")
-		repo.EXPECT().
-			GetDirectMessageChannel(uid1, uid2).
-			Return(nil, repository.ErrNotFound).
-			Times(1)
+				uid1 := uuid.NewV3(uuid.Nil, "u1")
+				uid2 := uuid.NewV3(uuid.Nil, "u2")
+				repo.EXPECT().
+					GetDirectMessageChannel(uid1, uid2).
+					Return(nil, repository.ErrNotFound).
+					Times(1)
 
-		repo.EXPECT().
-			CreateChannel(gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), true).
-			Return(&model.Channel{
-				ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
-				Name:      "dm_" + random.AlphaNumeric(17),
-				ParentID:  dmChannelRootUUID,
-				IsForced:  false,
-				IsPublic:  false,
-				IsVisible: true,
-			}, nil).
-			Times(1)
+				repo.EXPECT().
+					CreateChannel(gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), true).
+					Return(&model.Channel{
+						ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
+						Name:      "dm_" + random.AlphaNumeric(17),
+						ParentID:  dmChannelRootUUID,
+						IsForced:  false,
+						IsPublic:  false,
+						IsVisible: true,
+					}, nil).
+					Times(1)
 
-		_, err := cm.GetDMChannel(uid1, uid2)
-		assert.NoError(t, err)
-	})
+				_, err := cm.GetDMChannel(uid1, uid2)
+				assert.NoError(t, err)
+			})
+		})
+	}
 }
 
 func TestManagerImpl_GetDMChannelMembers(t *testing.T) {
 	t.Parallel()
 
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+	for _, uuidVersion := range []int{4, 7} {
+		t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
+			t.Parallel()
+			t.Run("success", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		id := uuid.Must(uuid.NewV4())
-		expected := []uuid.UUID{cA, cE}
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(id).
-			Return(expected, nil).
-			Times(1)
+				id := mustGenerateUUID(uuidVersion)
+				expected := []uuid.UUID{cA, cE}
+				repo.EXPECT().
+					GetPrivateChannelMemberIDs(id).
+					Return(expected, nil).
+					Times(1)
 
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(cNotFound).
-			Return([]uuid.UUID{}, nil).
-			Times(1)
+				repo.EXPECT().
+					GetPrivateChannelMemberIDs(cNotFound).
+					Return([]uuid.UUID{}, nil).
+					Times(1)
 
-		if ids, err := cm.GetDMChannelMembers(id); assert.NoError(t, err) {
-			assert.ElementsMatch(t, expected, ids)
-		}
+				if ids, err := cm.GetDMChannelMembers(id); assert.NoError(t, err) {
+					assert.ElementsMatch(t, expected, ids)
+				}
 
-		if ids, err := cm.GetDMChannelMembers(cNotFound); assert.NoError(t, err) {
-			assert.Empty(t, ids)
-		}
-	})
+				if ids, err := cm.GetDMChannelMembers(cNotFound); assert.NoError(t, err) {
+					assert.Empty(t, ids)
+				}
+			})
 
-	t.Run("repository error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+			t.Run("repository error", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
 
-		mockErr := errors.New("mock error")
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any()).
-			Return(nil, mockErr).
-			Times(1)
+				mockErr := errors.New("mock error")
+				repo.EXPECT().
+					GetPrivateChannelMemberIDs(gomock.Any()).
+					Return(nil, mockErr).
+					Times(1)
 
-		_, err := cm.GetDMChannelMembers(uuid.Nil)
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
-		}
-	})
+				_, err := cm.GetDMChannelMembers(uuid.Nil)
+				if assert.Error(t, err) {
+					assert.Equal(t, mockErr, errors.Unwrap(err))
+				}
+			})
+		})
+	}
 }
 
 func TestManagerImpl_GetDMChannelMapping(t *testing.T) {
