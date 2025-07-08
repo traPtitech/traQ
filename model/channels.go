@@ -25,7 +25,7 @@ type Channel struct {
 	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:3"`
 	IsPublic  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:2"`
 	IsVisible bool           `gorm:"type:boolean;not null;default:false"`
-	IsThread  bool			 `gorm:"type:boolean;not null;default:false"`
+	IsThread  bool           `gorm:"type:boolean;not null;default:false"`
 	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
 	UpdaterID uuid.UUID      `gorm:"type:char(36);not null"`
 	CreatedAt time.Time      `gorm:"precision:6"`
@@ -223,8 +223,6 @@ type ChannelEvent struct {
 func (*ChannelEvent) TableName() string {
 	return "channel_events"
 }
-
-
 
 type UserSubscribeThread struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`

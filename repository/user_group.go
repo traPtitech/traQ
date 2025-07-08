@@ -16,7 +16,6 @@ type UpdateUserGroupArgs struct {
 }
 
 // UserGroupRepository ユーザーグループリポジトリ
-//test
 type UserGroupRepository interface {
 	// CreateUserGroup ユーザーグループを作成します
 	//
