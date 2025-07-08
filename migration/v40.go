@@ -9,17 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// v40 スレッド通知を管理するテーブルを追加
-func v40() *gormigrate.Migration {
+// threadV1 スレッド通知を管理するテーブルを追加
+func threadV1() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "40",
+		ID: "thread1",
 		Migrate: func(db *gorm.DB) error {
 
-			if err := db.AutoMigrate(&v40UserSubscribeThread{}); err != nil {
+			if err := db.AutoMigrate(&threadV1UserSubscribeThread{}); err != nil {
 				return err
 			}
 
-			if err := db.AutoMigrate(&v40Channel{}); err != nil {
+			if err := db.AutoMigrate(&threadV1Channel{}); err != nil {
 				return err
 			}
 
@@ -41,14 +41,14 @@ func v40() *gormigrate.Migration {
 	}
 }
 
-type v40UserSubscribeThread struct {
+type threadV1UserSubscribeThread struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Mark      bool      `gorm:"type:boolean;not null;default:false"`
 	Notify    bool      `gorm:"type:boolean;not null;default:false"`
 }
 
-type v40Channel struct {
+type threadV1Channel struct {
 	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_is_public_is_forced,priority:1"`
 	Name      string         `gorm:"type:varchar(20);not null;uniqueIndex:name_parent"`
 	ParentID  uuid.UUID      `gorm:"type:char(36);not null;uniqueIndex:name_parent"`
@@ -66,6 +66,6 @@ type v40Channel struct {
 	ChildrenID []uuid.UUID `gorm:"-"`
 }
 
-func (*v40UserSubscribeThread) TableName() string {
+func (*threadV1UserSubscribeThread) TableName() string {
 	return "users_subscribe_threads"
 }
