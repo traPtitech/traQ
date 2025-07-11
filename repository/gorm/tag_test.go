@@ -11,7 +11,7 @@ import (
 
 func TestRepositoryImpl_AddUserTag(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
+	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	tag := mustMakeTag(t, repo, rand)
 	assert.NoError(repo.AddUserTag(user.GetID(), tag.ID))
@@ -21,7 +21,7 @@ func TestRepositoryImpl_AddUserTag(t *testing.T) {
 
 func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
 	t.Parallel()
-	repo, assert, require, user := setupWithUser(t, common2)
+	repo, assert, require, user := setupWithUser(t, common2, false)
 
 	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
@@ -43,7 +43,7 @@ func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
 
 func TestRepositoryImpl_DeleteUserTag(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
@@ -72,10 +72,10 @@ func TestRepositoryImpl_DeleteUserTag(t *testing.T) {
 
 func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	var createdTags []string
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		tag := mustMakeTag(t, repo, rand)
 		mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 		createdTags = append(createdTags, tag.Name)
@@ -108,7 +108,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 
 func TestRepositoryImpl_GetUserTag(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
@@ -142,8 +142,8 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 	repo, _, _ := setup(t, common2)
 
 	tag := mustMakeTag(t, repo, rand)
-	for i := 0; i < 10; i++ {
-		mustAddTagToUser(t, repo, mustMakeUser(t, repo, rand).GetID(), tag.ID)
+	for range 10 {
+		mustAddTagToUser(t, repo, mustMakeUser(t, repo, rand, false).GetID(), tag.ID)
 	}
 
 	t.Run("found", func(t *testing.T) {
@@ -177,6 +177,9 @@ func TestRepositoryImpl_GetTagByID(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Equal(tag.Name, r.Name)
 	}
+
+	_, err = repo.GetTagByID(uuid.Must(uuid.NewV4()))
+	assert.Error(err)
 
 	_, err = repo.GetTagByID(uuid.Must(uuid.NewV7()))
 	assert.Error(err)

@@ -10,7 +10,7 @@ import (
 
 func TestRepositoryImpl_AddStar(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2, false)
 
 	assert.Error(repo.AddStar(user.GetID(), uuid.Nil))
 	assert.Error(repo.AddStar(uuid.Nil, channel.ID))
@@ -24,7 +24,7 @@ func TestRepositoryImpl_AddStar(t *testing.T) {
 
 func TestRepositoryImpl_RemoveStar(t *testing.T) {
 	t.Parallel()
-	repo, assert, require, user, channel := setupWithUserAndChannel(t, common2)
+	repo, assert, require, user, channel := setupWithUserAndChannel(t, common2, false)
 
 	require.NoError(repo.AddStar(user.GetID(), channel.ID))
 
@@ -41,10 +41,10 @@ func TestRepositoryImpl_RemoveStar(t *testing.T) {
 
 func TestRepositoryImpl_GetStaredChannels(t *testing.T) {
 	t.Parallel()
-	repo, assert, require, user, _ := setupWithUserAndChannel(t, common2)
+	repo, assert, require, user, _ := setupWithUserAndChannel(t, common2, false)
 
 	n := 5
-	for i := 0; i < n; i++ {
+	for range n {
 		ch := mustMakeChannel(t, repo, rand)
 		require.NoError(repo.AddStar(user.GetID(), ch.ID))
 	}

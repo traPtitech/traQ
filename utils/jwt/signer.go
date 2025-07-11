@@ -3,16 +3,20 @@ package jwt
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/ecdsa"
+	"encoding/base64"
 	"encoding/json"
 
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
 var (
-	priv *ecdsa.PrivateKey
-	jwks jwkset.Storage
+	priv  *ecdsa.PrivateKey
+	keyID string
+	jwks  jwkset.Storage
 )
 
 func init() {
@@ -27,16 +31,40 @@ func SetupSigner(privRaw []byte) error {
 	}
 	priv = _priv
 
-	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{})
+	j, err := jwk.Import(priv.Public().(*ecdsa.PublicKey))
 	if err != nil {
 		return err
 	}
+
+	thumb, err := j.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return err
+	}
+	keyID = base64.RawURLEncoding.EncodeToString(thumb)
+
+	err = j.Set("kid", keyID)
+	if err != nil {
+		return err
+	}
+
+	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{
+		Metadata: jwkset.JWKMetadataOptions{
+			KID: keyID,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return jwks.KeyWrite(context.Background(), jwk)
 }
 
 // Sign JWTの発行を行う
 func Sign(claims jwt.Claims) (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodES256, claims).SignedString(priv)
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token.Header["kid"] = keyID
+	return token.SignedString(priv)
 }
 
 // SupportedAlgorithms サポートする signing algorithm の一覧

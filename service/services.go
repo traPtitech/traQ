@@ -27,6 +27,7 @@ type Services struct {
 	OnlineCounter        *counter.OnlineCounter
 	UnreadMessageCounter counter.UnreadMessageCounter
 	MessageCounter       counter.MessageCounter
+	UserCounter          counter.UserCounter
 	ChannelCounter       counter.ChannelCounter
 	StampThrottler       *exevent.StampThrottler
 	FCM                  fcm.Client

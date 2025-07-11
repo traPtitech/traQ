@@ -32,7 +32,7 @@ jobs:
         with:
           go-version-file: "./go.mod"
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           args: '--timeout 3m0s'
@@ -42,7 +42,7 @@ jobs:
     needs: [build]
     services:
       mysql:
-        image: mariadb:10.11.11
+        image: mariadb:10.11.13
         options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
         env:
           MYSQL_ROOT_PASSWORD: password
@@ -72,7 +72,7 @@ jobs:
     needs: [build]
     services:
       mysql:
-        image: mariadb:10.11.11
+        image: mariadb:10.11.13
         options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
         env:
           MYSQL_ROOT_PASSWORD: password

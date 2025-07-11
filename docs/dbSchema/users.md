@@ -21,7 +21,7 @@ CREATE TABLE `users` (
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uni_users_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -47,15 +47,15 @@ CREATE TABLE `users` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_users_name | UNIQUE | UNIQUE KEY uni_users_name (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_users_name | UNIQUE KEY uni_users_name (name) USING BTREE |
 
 ## Relations
 
@@ -196,7 +196,7 @@ erDiagram
   char_36_ channel_id PK
   char_36_ message_id PK
   tinyint_1_ noticeable
-  datetime_6_ created_at
+  datetime_6_ message_created_at
 }
 "users_private_channels" {
   char_36_ user_id PK

@@ -32,16 +32,6 @@ type S3FileStorage struct {
 func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forcePathStyle bool, cacheDir string) (*S3FileStorage, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(
-				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{
-						URL:           endpoint,
-						SigningRegion: region,
-					}, nil
-				},
-			),
-		),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(apiKey, apiSecret, "")),
 	)
 	if err != nil {
@@ -50,6 +40,7 @@ func NewS3FileStorage(bucket, region, endpoint, apiKey, apiSecret string, forceP
 
 	client := s3.NewFromConfig(cfg, func(opt *s3.Options) {
 		opt.UsePathStyle = forcePathStyle
+		opt.BaseEndpoint = aws.String(endpoint)
 	})
 
 	m := &S3FileStorage{

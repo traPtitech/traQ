@@ -1,3 +1,4 @@
+// revive:disable-next-line FIXME: https://github.com/traPtitech/traQ/issues/2717
 package utils
 
 import (
@@ -39,7 +40,7 @@ func TestKeyMutex_LockAndUnlock(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100000; i++ {
+	for i := range 100000 {
 		wg.Add(1)
 		go func(i int) {
 			j := i % 10
@@ -51,7 +52,7 @@ func TestKeyMutex_LockAndUnlock(t *testing.T) {
 	}
 	wg.Wait()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		assert.Equal(10000, counter[i])
 	}
 }

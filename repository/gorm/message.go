@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -289,49 +290,102 @@ func (repo *Repository) GetDeletedMessagesAfter(after time.Time, limit int) (mes
 	return
 }
 
-// SetMessageUnread implements MessageRepository interface.
-func (repo *Repository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
-	if userID == uuid.Nil || messageID == uuid.Nil {
+// SetMessageUnreads implements MessageRepository interface.
+func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
+	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
+	if len(userNoticeableMap) == 0 {
+		return nil
+	}
 
-	var update bool
+	userIDs := make([]uuid.UUID, 0, len(userNoticeableMap))
+	for userID := range userNoticeableMap {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var u model.Unread
-		if err := tx.First(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				var m model.Message
-				err := tx.First(&m, &model.Message{ID: messageID}).Error
-				if err != nil {
-					return err
-				}
-
-				return tx.Create(&model.Unread{
-					UserID:           userID,
-					ChannelID:        m.ChannelID,
-					MessageID:        messageID,
-					Noticeable:       noticeable,
-					MessageCreatedAt: m.CreatedAt,
-				}).Error
-			}
+		var msg model.Message
+		err := tx.First(&msg, &model.Message{ID: messageID}).Error
+		if err != nil {
 			return err
 		}
-		update = true
-		return tx.Model(&u).Update("noticeable", noticeable).Error
+
+		var unreadList []model.Unread
+		if err := tx.Where("user_id IN (?) AND message_id = ?", userIDs, messageID).Find(&unreadList).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+
+		unreadRecordMap := make(map[uuid.UUID]model.Unread, len(unreadList))
+		for _, u := range unreadList {
+			unreadRecordMap[u.UserID] = u
+		}
+
+		userIDListToBeNoticeable := make([]uuid.UUID, 0, len(unreadList))
+		userIDListToBeUnnoticeable := make([]uuid.UUID, 0, len(unreadList))
+
+		for userID, noticeable := range userNoticeableMap {
+			if u, ok := unreadRecordMap[userID]; ok {
+				toBeNoticeable := userNoticeableMap[u.UserID]
+				if toBeNoticeable == u.Noticeable {
+					continue
+				}
+
+				if toBeNoticeable {
+					userIDListToBeNoticeable = append(userIDListToBeNoticeable, u.UserID)
+				} else {
+					userIDListToBeUnnoticeable = append(userIDListToBeUnnoticeable, u.UserID)
+				}
+			} else {
+				unreadListToInsert = append(unreadListToInsert, &model.Unread{
+					UserID:           userID,
+					ChannelID:        msg.ChannelID,
+					MessageID:        messageID,
+					Noticeable:       noticeable,
+					MessageCreatedAt: msg.CreatedAt,
+				})
+			}
+		}
+
+		if len(unreadListToInsert) != 0 {
+			if err := tx.Create(&unreadListToInsert).Error; err != nil {
+				return err
+			}
+		}
+
+		if len(userIDListToBeNoticeable) != 0 {
+			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIDListToBeNoticeable).Update("noticeable", true).Error; err != nil {
+				return err
+			}
+		}
+		if len(userIDListToBeUnnoticeable) != 0 {
+			if err := tx.Model(model.Unread{}).Where("user_id IN ?", userIDListToBeUnnoticeable).Update("noticeable", false).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
 	}
-	if !update {
+	for _, unread := range unreadListToInsert {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnread,
 			Fields: hub.Fields{
 				"message_id": messageID,
-				"user_id":    userID,
-				"noticeable": noticeable,
+				"user_id":    unread.UserID,
+				"noticeable": unread.Noticeable,
 			},
 		})
 	}
+
 	return nil
 }
 

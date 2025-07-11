@@ -100,7 +100,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiUsers := api.Group("/users")
 		{
 			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
-			if !h.Config.AllowSignUp {
+			if !h.AllowSignUp {
 				apiUsers.POST("", h.CreateUser, requires(permission.RegisterUser))
 			}
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
@@ -409,7 +409,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
 		apiNoAuth.GET("/jwks", h.GetJWKS)
-		if h.Config.AllowSignUp {
+		if h.AllowSignUp {
 			apiNoAuth.POST("/users", h.CreateUser, noLogin)
 		}
 		apiNoAuth.POST("/login", h.Login, noLogin)

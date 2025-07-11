@@ -17,7 +17,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
-	channelService "github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
@@ -33,16 +32,16 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 	var res echo.Map
 
 	if channelPath := c.QueryParam("path"); channelPath != "" {
-		channel, err := h.ChannelManager.GetChannelFromPath(channelPath)
+		targetChannel, err := h.ChannelManager.GetChannelFromPath(channelPath)
 		if err != nil {
-			if errors.Is(err, channelService.ErrInvalidChannelPath) {
+			if errors.Is(err, channel.ErrInvalidChannelPath) {
 				return herror.HTTPError(http.StatusNotFound, err)
 			}
 			return herror.InternalServerError(err)
 		}
 		res = echo.Map{
 			"public": []*Channel{
-				formatChannel(channel, h.ChannelManager.PublicChannelTree().GetChildrenIDs(channel.ID)),
+				formatChannel(targetChannel, h.ChannelManager.PublicChannelTree().GetChildrenIDs(targetChannel.ID)),
 			},
 		}
 		return extension.ServeJSONWithETag(c, res)
@@ -244,7 +243,7 @@ func (h *Handlers) GetChannelPins(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, formatPins(pins))
+	return extension.ServeJSONWithETag(c, formatPins(pins))
 }
 
 type channelEventsQuery struct {

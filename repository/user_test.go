@@ -28,23 +28,42 @@ func TestUsersQuery_NotBot(t *testing.T) {
 }
 
 func TestUsersQuery_CMemberOf(t *testing.T) {
-	t.Parallel()
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		id, _ := uuid.NewV4()
+		assert.EqualValues(t,
+			UsersQuery{IsCMemberOf: optional.From(id)},
+			UsersQuery{}.CMemberOf(id),
+		)
+	})
 
-	id, _ := uuid.NewV7()
-	assert.EqualValues(t,
-		UsersQuery{IsCMemberOf: optional.From(id)},
-		UsersQuery{}.CMemberOf(id),
-	)
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		id, _ := uuid.NewV7()
+		assert.EqualValues(t,
+			UsersQuery{IsCMemberOf: optional.From(id)},
+			UsersQuery{}.CMemberOf(id),
+		)
+	})
 }
 
 func TestUsersQuery_GMemberOf(t *testing.T) {
-	t.Parallel()
-
-	id, _ := uuid.NewV7()
-	assert.EqualValues(t,
-		UsersQuery{IsGMemberOf: optional.From(id)},
-		UsersQuery{}.GMemberOf(id),
-	)
+	t.Run("UUIDv4", func(t *testing.T) {
+		t.Parallel()
+		id, _ := uuid.NewV4()
+		assert.EqualValues(t,
+			UsersQuery{IsGMemberOf: optional.From(id)},
+			UsersQuery{}.GMemberOf(id),
+		)
+	})
+	t.Run("UUIDv7", func(t *testing.T) {
+		t.Parallel()
+		id, _ := uuid.NewV7()
+		assert.EqualValues(t,
+			UsersQuery{IsGMemberOf: optional.From(id)},
+			UsersQuery{}.GMemberOf(id),
+		)
+	})
 }
 
 func TestUsersQuery_Composite(t *testing.T) {

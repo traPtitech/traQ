@@ -13,7 +13,7 @@ CREATE TABLE `unreads` (
   `channel_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `noticeable` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime(6) DEFAULT NULL,
+  `message_created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`user_id`,`channel_id`,`message_id`),
   KEY `unreads_channel_id_channels_id_foreign` (`channel_id`),
   KEY `unreads_message_id_messages_id_foreign` (`message_id`),
@@ -33,7 +33,7 @@ CREATE TABLE `unreads` (
 | channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | noticeable | tinyint(1) | 0 | false |  |  | 注目メッセージかどうか |
-| created_at | datetime(6) | NULL | true |  |  | 未読日時 |
+| message_created_at | datetime(6) | NULL | true |  |  | 未読日時 |
 
 ## Constraints
 
@@ -66,7 +66,7 @@ erDiagram
   char_36_ channel_id PK
   char_36_ message_id PK
   tinyint_1_ noticeable
-  datetime_6_ created_at
+  datetime_6_ message_created_at
 }
 "users" {
   char_36_ id PK

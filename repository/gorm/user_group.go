@@ -331,12 +331,12 @@ func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
 		return err
 	}
 
-	for _, userID := range removedUsers {
+	for _, user := range removedUsers {
 		repo.hub.Publish(hub.Message{
 			Name: event.UserGroupMemberRemoved,
 			Fields: hub.Fields{
 				"group_id": groupID,
-				"user_id":  userID,
+				"user_id":  user.UserID,
 			},
 		})
 	}

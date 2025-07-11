@@ -1,3 +1,4 @@
+// revive:disable-next-line FIXME: https://github.com/traPtitech/traQ/issues/2717
 package utils
 
 func Map[T, R any](s []T, mapper func(item T) R) []R {

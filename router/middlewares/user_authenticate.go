@@ -26,7 +26,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 
 				// Authorizationスキーム検証
 				l := len(authScheme)
-				if !(len(ah) > l+1 && ah[:l] == authScheme) {
+				if len(ah) <= l+1 || ah[:l] != authScheme {
 					return herror.Unauthorized("invalid authorization scheme")
 				}
 
@@ -47,6 +47,12 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 				}
 
 				c.Set(consts.KeyOAuth2AccessScopes, token.Scopes)
+				if token.UserID == uuid.Nil {
+					// client credentials grant の場合ユーザーが存在しない
+					c.Set(consts.KeyUser, nil)
+					c.Set(consts.KeyUserID, uuid.Nil)
+					return next(c)
+				}
 				uid = token.UserID
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する

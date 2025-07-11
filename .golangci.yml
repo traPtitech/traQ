@@ -1,16 +1,28 @@
+version: "2"
+
 linters:
   enable:
     - govet
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
-    - typecheck
     - revive
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*go.uber.org/zap.Logger).Sync
+  exclusions:
+    generated: lax
+    warn-unused: true
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+formatters:
+  enable:
     - gofmt
-
-linters-settings:
-  errcheck:
-    exclude-functions:
-      - (*go.uber.org/zap.Logger).Sync
+  exclusions:
+    generated: lax
+    warn-unused: true
