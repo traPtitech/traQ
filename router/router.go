@@ -39,9 +39,7 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 		wellKnown.GET("/reset-password", func(c echo.Context) error {
 			return c.Redirect(http.StatusFound, "/settings/session")
 		})
-		wellKnown.GET("/openid-configuration", func(c echo.Context) error {
-			return c.Redirect(http.StatusFound, "/api/v3/oauth2/oidc/discovery")
-		})
+		wellKnown.GET("/openid-configuration", r.oauth2.OIDCDiscovery)
 		wellKnown.GET("/security.txt", func(c echo.Context) error {
 			// Contactなどの情報が古くなっていないかを定期的に確認し、Expiresを*手動で*更新すること
 			// See: https://www.rfc-editor.org/rfc/rfc9116.html#section-5.3
