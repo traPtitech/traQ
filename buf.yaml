@@ -1,0 +1,9 @@
+version: v2
+modules:
+  - path: docs/proto/v4
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE
