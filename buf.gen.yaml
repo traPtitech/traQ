@@ -1,0 +1,10 @@
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: infrastructure/proto
+    opt:
+      - paths=source_relative
+  - remote: buf.build/connectrpc/go:v1.18.1
+    out: infrastructure/proto
+    opt:
+      - paths=source_relative
