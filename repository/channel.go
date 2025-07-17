@@ -42,7 +42,6 @@ type ChannelEventsQuery struct {
 type ChannelSubscriptionQuery struct {
 	UserID         optional.Of[uuid.UUID]
 	ChannelID      optional.Of[uuid.UUID]
-	ThreadParentID optional.Of[uuid.UUID]
 	Level          model.ChannelSubscribeLevel
 }
 
