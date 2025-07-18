@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package v4;
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4"; // Standardized go_package
+
+// 空のレスポンスを表すメッセージ
+message EmptyResponse {}

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package v4;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "v4/common.proto";
+
+option go_package = "github.com/traPtitech/traQ/infrastructure/proto/v4";
+
+// ---------- general -----------
+message Messages {
+  repeated Message messages = 1;
+}
+
+message Message {
+  string id = 1;
+  string user_id = 2;
+  string channel_id = 3;
+  string content = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  bool pinned = 7;
+  repeated MessageStamp stamps = 8;
+  string thread_id = 9;
+}
+
+message MessageStamp {
+  string userId = 1;
+  string stampId = 2;
+  int32 count = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp updatedAt = 5;
+}
+
+// ---------- get -----------
+message GetMessageRequest {
+  string channel_id = 1;
+
+  // convention: message_id was in path parameter
+  string message_id = 2;
+
+  // convention: limit, offset, since, until, inclusive, order were in query parameters
+  int32 limit = 3;
+  int32 offset = 4;
+  google.protobuf.Timestamp since = 5;
+  google.protobuf.Timestamp until = 6;
+  bool inclusive = 7;
+  MessageOrder order = 8;
+}
+
+enum MessageOrder {
+  MESSAGE_ORDER_ASCENDING = 0;
+  MESSAGE_ORDER_DESCENDING = 1;
+}
+
+// ---------- post -----------
+message PostMessageRequest {
+  string request_id = 1;
+  string channel_id = 2;
+  string content = 3;
+  bool embed = 4;
+}
+
+// ---------- service -----------
+service MessageService {
+  rpc GetMessage(GetMessageRequest) returns (Messages);
+  rpc PostMessage(PostMessageRequest) returns (Message);
+}
