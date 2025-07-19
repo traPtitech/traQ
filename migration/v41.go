@@ -12,13 +12,13 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func v40() *gormigrate.Migration {
+func v41() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "40",
+		ID: "41",
 		Migrate: func(db *gorm.DB) error {
 			// No changes in this migration
-			var groupRecords []v40GroupRecord
-			if err := db.Table(v40GroupRecord{}.TableName()).Where("name REGEXP ?", "[@＠#＃:： 　]").Find(&groupRecords).Error; err != nil {
+			var groupRecords []v41GroupRecord
+			if err := db.Table(v41GroupRecord{}.TableName()).Where("name REGEXP ?", "[@＠#＃:： 　]").Find(&groupRecords).Error; err != nil {
 				return err
 			}
 			for _, record := range groupRecords {
@@ -32,7 +32,7 @@ func v40() *gormigrate.Migration {
 				newName = strings.ReplaceAll(newName, " ", "_")
 				newName = strings.ReplaceAll(newName, "　", "_")
 				var count int64
-				if err := db.Table(v40GroupRecord{}.TableName()).Where("name = ?", newName).Model(&v40GroupRecord{}).Count(&count).Error; err != nil {
+				if err := db.Table(v41GroupRecord{}.TableName()).Where("name = ?", newName).Model(&v41GroupRecord{}).Count(&count).Error; err != nil {
 					return err
 				}
 				// 先頭15文字を残してランダムな英数字を付け加える
@@ -45,7 +45,7 @@ func v40() *gormigrate.Migration {
 					for len(uniqueName) < 30 {
 						uniqueName += string(chars[rand.Intn(len(chars))])
 					}
-					if err := db.Table(v40GroupRecord{}.TableName()).Where("name = ?", uniqueName).Model(&v40GroupRecord{}).Count(&count).Error; err != nil {
+					if err := db.Table(v41GroupRecord{}.TableName()).Where("name = ?", uniqueName).Model(&v41GroupRecord{}).Count(&count).Error; err != nil {
 						return err
 					}
 					if count == 0 {
@@ -57,7 +57,7 @@ func v40() *gormigrate.Migration {
 					return fmt.Errorf("failed to generate a unique name for group %s after 10 attempts", record.Name)
 				}
 				// グループ名を書き換え
-				if err := db.Table(v40GroupRecord{}.TableName()).Model(&v40GroupRecord{}).Where("id = ?", record.ID).Update("name", newName).Error; err != nil {
+				if err := db.Table(v41GroupRecord{}.TableName()).Model(&v41GroupRecord{}).Where("id = ?", record.ID).Update("name", newName).Error; err != nil {
 					return err
 				}
 			}
@@ -66,7 +66,7 @@ func v40() *gormigrate.Migration {
 	}
 }
 
-type v40GroupRecord struct {
+type v41GroupRecord struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Name        string    `gorm:"type:varchar(30);not null;unique"`
 	Description string    `gorm:"type:text;not null"`
@@ -76,6 +76,6 @@ type v40GroupRecord struct {
 	UpdatedAt   time.Time `gorm:"precision:6"`
 }
 
-func (v40GroupRecord) TableName() string {
+func (v41GroupRecord) TableName() string {
 	return "user_groups"
 }
