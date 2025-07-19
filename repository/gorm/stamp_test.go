@@ -15,9 +15,9 @@ import (
 
 func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
-	fid := mustMakeDummyFile(t, repo).ID
+	fid := mustMakeDummyFile(t, repo, false).ID
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
@@ -33,7 +33,14 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("file not found", func(t *testing.T) {
+	t.Run("file not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStamp(repository.CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
+		assert.Error(t, err)
+	})
+
+	t.Run("file not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.CreateStamp(repository.CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Must(uuid.NewV7()), CreatorID: user.GetID()})
@@ -78,7 +85,13 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert.EqualError(t, repo.UpdateStamp(uuid.Nil, repository.UpdateStampArgs{}), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), repository.UpdateStampArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV7()), repository.UpdateStampArgs{}), repository.ErrNotFound.Error())
@@ -109,7 +122,13 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.From(uuid.Nil)}))
 	})
 
-	t.Run("file not found", func(t *testing.T) {
+	t.Run("file not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.From(uuid.Must(uuid.NewV4()))}))
+	})
+
+	t.Run("file not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.Error(t, repo.UpdateStamp(s.ID, repository.UpdateStampArgs{FileID: optional.From(uuid.Must(uuid.NewV7()))}))
@@ -120,7 +139,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		s := mustMakeStamp(t, repo, rand, uuid.Nil)
-		newFile := mustMakeDummyFile(t, repo).ID
+		newFile := mustMakeDummyFile(t, repo, false).ID
 		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
@@ -147,7 +166,14 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetStamp(uuid.Must(uuid.NewV4()))
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetStamp(uuid.Must(uuid.NewV7()))
@@ -179,7 +205,13 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 		assert.EqualError(t, repo.DeleteStamp(uuid.Nil), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteStamp(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.DeleteStamp(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
@@ -259,7 +291,15 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 		}
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		ok, err := repo.StampExists(uuid.Must(uuid.NewV4()))
+		if assert.NoError(t, err) {
+			assert.False(t, ok)
+		}
+	})
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		ok, err := repo.StampExists(uuid.Must(uuid.NewV7()))
@@ -289,7 +329,18 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 		stampIDs = append(stampIDs, s.ID)
 	}
 
-	t.Run("argument err", func(t *testing.T) {
+	t.Run("argument err(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		stampIDsCopy := make([]uuid.UUID, len(stampIDs), cap(stampIDs))
+		_ = copy(stampIDsCopy, stampIDs)
+		if assert.True(len(stampIDsCopy) > 0) {
+			stampIDsCopy[0] = uuid.Must(uuid.NewV4())
+		}
+		assert.Error(repo.ExistStamps(stampIDsCopy))
+	})
+	t.Run("argument err(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -311,8 +362,8 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
-	user1 := mustMakeUser(t, repo, rand)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2, false)
+	user1 := mustMakeUser(t, repo, rand, false)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
@@ -362,7 +413,14 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetStampStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetStampStats(uuid.Must(uuid.NewV7()))
@@ -373,7 +431,7 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 		stamp := mustMakeStamp(t, repo, rand, user.GetID())
 
 		messages := make([]*model.Message, 15)

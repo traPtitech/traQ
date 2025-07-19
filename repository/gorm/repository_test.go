@@ -39,6 +39,13 @@ var (
 	repositories = map[string]*Repository{}
 )
 
+func mustGenerateUUID(useUUIDV4 bool) uuid.UUID {
+	if useUUIDV4 {
+		return uuid.Must(uuid.NewV4())
+	}
+	return uuid.Must(uuid.NewV7())
+}
+
 func TestMain(m *testing.M) {
 	user := getEnvOrDefault("MARIADB_USERNAME", "root")
 	pass := getEnvOrDefault("MARIADB_PASSWORD", "password")
@@ -118,16 +125,17 @@ func setup(t *testing.T, repo string) (repository.Repository, *assert.Assertions
 	return r, assert, require
 }
 
-func setupWithUserAndChannel(t *testing.T, repo string) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
+func setupWithUserAndChannel(t *testing.T, repo string, useUUIDv4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeUser(t, r, rand), mustMakeChannel(t, r, rand)
+
+	return r, assert, require, mustMakeUser(t, r, rand, useUUIDv4), mustMakeChannel(t, r, rand)
 }
 
-func setupWithUser(t *testing.T, repo string) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
+func setupWithUser(t *testing.T, repo string, useUUIDv4 bool) (repository.Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeUser(t, r, rand)
+	return r, assert, require, mustMakeUser(t, r, rand, useUUIDv4)
 }
 
 func getEnvOrDefault(env string, def string) string {
@@ -169,16 +177,18 @@ func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID
 
 func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.SetMessageUnread(userID, messageID, false))
+	require.NoError(t, repo.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
 }
 
-func mustMakeUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
+func mustMakeUser(t *testing.T, repo repository.Repository, userName string, useUUIDv4 bool) model.UserInfo {
 	t.Helper()
+
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
+	iconUUID := mustGenerateUUID(useUUIDv4)
+	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
 }
@@ -209,7 +219,7 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	icon := mustMakeDummyFile(t, repo)
+	icon := mustMakeDummyFile(t, repo, false)
 	g, err := repo.CreateUserGroup(name, "", "", adminID, icon.ID)
 	require.NoError(t, err)
 	return g
@@ -220,10 +230,13 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
-func mustMakeDummyFile(t *testing.T, repo repository.Repository) *model.FileMeta {
+func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool) *model.FileMeta {
 	t.Helper()
+
+	fileID := mustGenerateUUID(useUUIDv4)
+
 	meta := &model.FileMeta{
-		ID:   uuid.Must(uuid.NewV7()),
+		ID:   fileID,
 		Name: "dummy",
 		Mime: "application/octet-stream",
 		Size: 10,
@@ -250,7 +263,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	fid := mustMakeDummyFile(t, repo).ID
+	fid := mustMakeDummyFile(t, repo, false).ID
 	s, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
 	require.NoError(t, err)
 	return s
@@ -280,7 +293,7 @@ func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, chan
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := repo.CreateWebhook(name, "", channelID, mustMakeDummyFile(t, repo).ID, creatorID, secret)
+	w, err := repo.CreateWebhook(name, "", channelID, mustMakeDummyFile(t, repo, false).ID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }

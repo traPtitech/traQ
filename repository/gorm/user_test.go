@@ -17,7 +17,7 @@ import (
 func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, ex2)
-	mustMakeUser(t, repo, "traq")
+	mustMakeUser(t, repo, "traq", false)
 
 	u0, err := repo.GetUserByName("traq", false)
 	require.NoError(err)
@@ -40,7 +40,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		{true, true, false},
 	}
 	for _, v := range ut {
-		u := mustMakeUser(t, repo, rand)
+		u := mustMakeUser(t, repo, rand, false)
 		us = append(us, u.GetID())
 
 		if v.Bot {
@@ -125,7 +125,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 func TestRepositoryImpl_GetUser(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
+	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	_, err := repo.GetUser(uuid.Nil, false)
 	assert.Error(err)
@@ -139,7 +139,7 @@ func TestRepositoryImpl_GetUser(t *testing.T) {
 
 func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
+	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	_, err := repo.GetUserByName("", false)
 	assert.Error(err)
@@ -153,7 +153,7 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 
 func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	t.Run("No Args", func(t *testing.T) {
 		t.Parallel()
@@ -168,7 +168,13 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		assert.EqualError(repo.UpdateUser(uuid.Nil, repository.UpdateUserArgs{}), repository.ErrNilID.Error())
 	})
 
-	t.Run("Unknown User", func(t *testing.T) {
+	t.Run("Unknown User(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("Unknown User(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV7()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
@@ -177,7 +183,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("DisplayName", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
@@ -194,7 +200,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("TwitterID", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Failed", func(t *testing.T) {
 			assert := assert.New(t)
@@ -231,7 +237,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("Role", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
@@ -256,7 +262,14 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetUserStats(uuid.Must(uuid.NewV7()))
@@ -267,7 +280,7 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, rand)
-		user := mustMakeUser(t, repo, rand)
+		user := mustMakeUser(t, repo, rand, false)
 		stamp1 := mustMakeStamp(t, repo, rand, user.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user.GetID())
 

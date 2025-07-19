@@ -15,8 +15,8 @@ import (
 
 func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
-	file := mustMakeDummyFile(t, repo)
+	repo, _, _, user := setupWithUser(t, common3, false)
+	file := mustMakeDummyFile(t, repo, false)
 
 	// Success
 	a := random2.AlphaNumeric(20)
@@ -34,7 +34,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -68,7 +68,13 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		assert.NoError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{}))
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV7()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
@@ -86,7 +92,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -94,7 +100,13 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 		assert.Error(t, repo.DeleteUserGroup(uuid.Nil))
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
@@ -110,7 +122,7 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -119,7 +131,14 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV4()))
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV7()))
@@ -142,7 +161,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
@@ -174,9 +193,9 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 
 func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
-	user2 := mustMakeUser(t, repo, rand)
+	user2 := mustMakeUser(t, repo, rand, false)
 	g1 := mustMakeUserGroup(t, repo, rand, user.GetID())
 	g2 := mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustMakeUserGroup(t, repo, rand, user.GetID())
@@ -215,7 +234,7 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 
 func TestRepositoryImpl_GetAllUserGroups(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, ex1)
+	repo, assert, _, user := setupWithUser(t, ex1, false)
 
 	mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustMakeUserGroup(t, repo, rand, user.GetID())
@@ -229,7 +248,7 @@ func TestRepositoryImpl_GetAllUserGroups(t *testing.T) {
 
 func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
@@ -270,7 +289,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 
 func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
+	repo, _, _, user := setupWithUser(t, common3, false)
 
 	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
@@ -296,8 +315,8 @@ func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 
 func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
-	user2 := mustMakeUser(t, repo, rand)
+	repo, _, _, user := setupWithUser(t, common3, false)
+	user2 := mustMakeUser(t, repo, rand, false)
 
 	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
@@ -307,7 +326,13 @@ func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 		assert.EqualError(t, repo.AddUserToGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
@@ -329,8 +354,8 @@ func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 
 func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common3)
-	user2 := mustMakeUser(t, repo, rand)
+	repo, _, _, user := setupWithUser(t, common3, false)
+	user2 := mustMakeUser(t, repo, rand, false)
 
 	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 	require.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
@@ -341,7 +366,13 @@ func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
 		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())

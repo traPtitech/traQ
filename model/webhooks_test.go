@@ -15,32 +15,78 @@ func TestWebhookBot_TableName(t *testing.T) {
 
 func TestWebhookBot_GetID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV7())
-	assert.Equal(t, id, (&WebhookBot{ID: id}).GetID())
+
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV4())
+		assert.Equal(tt, id, (&WebhookBot{ID: id}).GetID())
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV7())
+		assert.Equal(tt, id, (&WebhookBot{ID: id}).GetID())
+	})
 }
 
 func TestWebhookBot_GetChannelID(t *testing.T) {
-	t.Parallel()
-	id := uuid.Must(uuid.NewV7())
-	assert.Equal(t, id, (&WebhookBot{ChannelID: id}).GetChannelID())
+
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV4())
+		assert.Equal(tt, id, (&WebhookBot{ChannelID: id}).GetChannelID())
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV7())
+		assert.Equal(tt, id, (&WebhookBot{ChannelID: id}).GetChannelID())
+	})
 }
 
 func TestWebhookBot_GetBotUserID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV7())
-	assert.Equal(t, id, (&WebhookBot{BotUserID: id}).GetBotUserID())
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV4())
+		assert.Equal(tt, id, (&WebhookBot{BotUserID: id}).GetBotUserID())
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV7())
+		assert.Equal(tt, id, (&WebhookBot{BotUserID: id}).GetBotUserID())
+	})
 }
 
 func TestWebhookBot_GetCreatorID(t *testing.T) {
 	t.Parallel()
-	id := uuid.Must(uuid.NewV7())
-	assert.Equal(t, id, (&WebhookBot{CreatorID: id}).GetCreatorID())
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV4())
+		assert.Equal(tt, id, (&WebhookBot{CreatorID: id}).GetCreatorID())
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		id := uuid.Must(uuid.NewV7())
+		assert.Equal(tt, id, (&WebhookBot{CreatorID: id}).GetCreatorID())
+	})
 }
 
 func TestWebhookBot_GetDescription(t *testing.T) {
 	t.Parallel()
-	desc := "test"
-	assert.Equal(t, desc, (&WebhookBot{Description: desc}).GetDescription())
+	t.Run("UUIDv4", func(tt *testing.T) {
+		tt.Parallel()
+		desc := "test"
+		assert.Equal(tt, desc, (&WebhookBot{Description: desc}).GetDescription())
+	})
+
+	t.Run("UUIDv7", func(tt *testing.T) {
+		tt.Parallel()
+		desc := "test"
+		assert.Equal(tt, desc, (&WebhookBot{Description: desc}).GetDescription())
+	})
 }
 
 func TestWebhookBot_GetSecret(t *testing.T) {

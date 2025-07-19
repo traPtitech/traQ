@@ -13,7 +13,7 @@ import (
 
 func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	t.Run("nil user id", func(t *testing.T) {
 		t.Parallel()
@@ -50,7 +50,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 
@@ -61,7 +61,14 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		assert.EqualError(repo.UpdateStampPalette(uuid.Nil, repository.UpdateStampPaletteArgs{}), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV4()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -98,7 +105,7 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -108,7 +115,15 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV4()))
+		assert.EqualError(err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -133,7 +148,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2, false)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -142,7 +157,14 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		assert.EqualError(repo.DeleteStampPalette(uuid.Nil), repository.ErrNilID.Error())
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -163,8 +185,8 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common2)
-	otherUser := mustMakeUser(t, repo, rand)
+	repo, assert, _, user := setupWithUser(t, common2, false)
+	otherUser := mustMakeUser(t, repo, rand, false)
 
 	n := 10
 	for range 10 {

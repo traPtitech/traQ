@@ -82,12 +82,13 @@ type MessageRepository interface {
 	// 指定した範囲内にlimitを超えてメッセージが存在していた場合、trueを返します。
 	// DBによるエラーを返すことがあります。
 	GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error)
-	// SetMessageUnread 指定したメッセージを未読にします
+	// SetMessageUnreads ユーザーの集合について、指定したメッセージを未読にします
 	//
 	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// userNoticeableMap には、未読を追加するユーザーと、指定した各ユーザーに対しそのメッセージが noticeable (自分宛のメッセージが含まれているか) かどうかのマッピングを指定します。
+	// 引数にuuid.Nilを指定するもしくは引数中の要素にuuid.Nilが含まれるものを指定すると ErrNilID を返します。
 	// DBによるエラーを返すことがあります。
-	SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error
+	SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error
 	// GetUnreadMessagesByUserID 指定したユーザーの未読メッセージをすべて取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。
