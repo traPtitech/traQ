@@ -109,7 +109,42 @@ func TestPostUserGroupRequest_Validate(t *testing.T) {
 		},
 		{
 			"invalid name 2",
+			fields{Name: "＠po"},
+			true,
+		},
+		{
+			"invalid name 3",
 			fields{Name: ":po:"},
+			true,
+		},
+		{
+			"invalid name 4",
+			fields{Name: "po:po"},
+			true,
+		},
+		{
+			"invalid name 5",
+			fields{Name: "：po"},
+			true,
+		},
+		{
+			"invalid name 6",
+			fields{Name: "#po"},
+			true,
+		},
+		{
+			"invalid name 7",
+			fields{Name: "＃po"},
+			true,
+		},
+		{
+			"invalid name 8",
+			fields{Name: "po po"},
+			true,
+		},
+		{
+			"invalid name 9",
+			fields{Name: "po　po"},
 			true,
 		},
 		{
