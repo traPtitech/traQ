@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package message.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/traPtitech/traQ/router/v4/gen/message/v1";
+
+// ---------- general -----------
+message Messages {
+  repeated Message messages = 1;
+}
+
+message Message {
+  string id = 1;
+  string user_id = 2;
+  string channel_id = 3;
+  string content = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  bool pinned = 7;
+  repeated MessageStamp stamps = 8;
+  string thread_id = 9;
+}
+
+message MessageStamp {
+  string user_id = 1;
+  string stamp_id = 2;
+  int32 count = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// get messages in a specified channel
+message ListChannelMessagesRequest {
+  // convention: path parameter
+  string channel_id = 1;
+
+  // convention: query parameter
+  optional int32 limit = 2;
+  // convention: query parameter
+  optional int32 offset = 3;
+  // convention: query parameter
+  optional google.protobuf.Timestamp since = 4;
+  // convention: query parameter
+  optional google.protobuf.Timestamp until = 5;
+  // convention: query parameter
+  optional bool inclusive = 6;
+  // convention: query parameter
+  optional MessageOrder order = 7;
+}
+
+enum MessageOrder {
+  MESSAGE_ORDER_UNSPECIFIED = 0;
+  MESSAGE_ORDER_ASCENDING = 1;
+  MESSAGE_ORDER_DESCENDING = 2;
+}
+
+// post message to a specified channel
+message PostMessageRequest {
+  string request_id = 1;
+  string channel_id = 2;
+  string content = 3;
+  bool embed = 4;
+}
+
+// delete specified message by message_id
+message DeleteMessageRequest {
+  // convention: message_id was in path parameter
+  string message_id = 1;
+}
+
+service MessageService {
+  rpc ListChannelMessages(ListChannelMessagesRequest) returns (Messages) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PostMessage(PostMessageRequest) returns (Message) {
+    option idempotency_level = IDEMPOTENT;
+  }
+  rpc DeleteMessage(DeleteMessageRequest) returns (google.protobuf.Empty) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
