@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package event_stream.v1;
+
+import "event_stream/v1/message_event.proto";
+
+option go_package = "github.com/traPtitech/traQ/router/v4/gen/event_stream/v1";
+
+message SubscribeEventStreamRequest {}
+
+message SubscribeEventStreamResponse {
+  oneof events {
+    MessageCreatedEvent message_created = 1;
+    MessageUpdatedEvent message_updated = 2;
+    MessageDeletedEvent message_deleted = 3;
+    MessagePinnedEvent message_pinned = 4;
+    MessageUnpinnedEvent message_unpinned = 5;
+    MessageStampedEvent message_stamped = 6;
+    MessageUnstampedEvent message_unstamped = 7;
+  }
+}
+
+service EventStreamService {
+  rpc SubscribeEventStream(SubscribeEventStreamRequest) returns (stream SubscribeEventStreamResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}

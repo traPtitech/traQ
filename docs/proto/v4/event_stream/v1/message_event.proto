@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package event_stream.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/traPtitech/traQ/router/v4/gen/event_stream/v1";
+
+message MessageCreatedEvent {
+  string message_id = 1;
+  bool is_cited = 2;
+}
+
+message MessageUpdatedEvent {
+  string message_id = 1;
+}
+
+message MessageDeletedEvent {
+  string message_id = 1;
+}
+
+message MessagePinnedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+}
+
+message MessageUnpinnedEvent {
+  string message_id = 1;
+  string channel_id = 2;
+}
+
+message MessageStampedEvent {
+  string message_id = 1;
+  string user_id = 2;
+  string stamp_id = 3;
+  int32 count = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message MessageUnstampedEvent {
+  string message_id = 1;
+  string user_id = 2;
+  string stamp_id = 3;
+}
