@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	cloud.google.com/go/profiler v0.4.3
+	connectrpc.com/connect v1.18.1
 	firebase.google.com/go/v4 v4.17.0
 	github.com/MicahParks/jwkset v0.9.6
 	github.com/NYTimes/gziphandler v1.1.1
@@ -272,7 +273,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250721164621-a45f3dfb1074 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
