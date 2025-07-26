@@ -14,7 +14,8 @@ func RateLimit(limit rate.Limit) echo.MiddlewareFunc {
 		Store: middleware.NewRateLimiterMemoryStore(limit),
 		IdentifierExtractor: func(ctx echo.Context) (string, error) {
 			user := ctx.Get(consts.KeyUser).(model.UserInfo)
-			return user.GetID().String(), nil
+			ip := ctx.RealIP()
+			return user.GetID().String() + ip, nil
 		},
 	})
 }
