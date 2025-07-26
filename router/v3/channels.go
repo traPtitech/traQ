@@ -315,6 +315,27 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+// GetChannelAudiences GET /channels/:channelID/audiences
+func (h *Handlers) GetChannelAudiences(c echo.Context) error {
+	ch := getParamChannel(c)
+
+	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
+	if !ch.IsPublic || ch.IsForced {
+		return herror.Forbidden()
+	}
+
+	audiences, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMark))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	result := make([]uuid.UUID, 0)
+	for _, audience := range audiences {
+		result = append(result, audience.UserID)
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
 // PutChannelSubscribersRequest PUT /channels/:channelID/subscribers リクエストボディ
 type PutChannelSubscribersRequest struct {
 	On set.UUID `json:"on"`
