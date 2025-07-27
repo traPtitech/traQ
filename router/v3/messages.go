@@ -80,7 +80,20 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 
 // GetMessage GET /messages/:messageID
 func (h *Handlers) GetMessage(c echo.Context) error {
-	return c.JSON(http.StatusOK, getParamMessage(c))
+	userID := getRequestUserID(c)
+	m := getParamMessage(c)
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
+	return c.JSON(http.StatusOK, m)
 }
 
 // PostMessageRequest POST /channels/:channelID/messages等リクエストボディ
@@ -99,6 +112,16 @@ func (r PostMessageRequest) Validate() error {
 func (h *Handlers) EditMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -129,6 +152,16 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 func (h *Handlers) DeleteMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
 
 	if muid := m.GetUserID(); muid != userID {
 		mUser, err := h.Repo.GetUser(muid, false)
@@ -185,7 +218,19 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 
 // GetPin GET /messages/:messageID/pin
 func (h *Handlers) GetPin(c echo.Context) error {
+	userID := getRequestUserID(c)
 	m := getParamMessage(c)
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
 	if m.GetPin() == nil {
 		return herror.NotFound("this message is not pinned")
 	}
@@ -194,8 +239,20 @@ func (h *Handlers) GetPin(c echo.Context) error {
 
 // CreatePin POST /messages/:messageID/pin
 func (h *Handlers) CreatePin(c echo.Context) error {
+	userID := getRequestUserID(c)
 	m := getParamMessage(c)
-	p, err := h.MessageManager.Pin(m.GetID(), getRequestUserID(c))
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
+	p, err := h.MessageManager.Pin(m.GetID(), userID)
 	if err != nil {
 		switch err {
 		case message.ErrAlreadyExists:
@@ -213,8 +270,20 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 
 // RemovePin DELETE /messages/:messageID/pin
 func (h *Handlers) RemovePin(c echo.Context) error {
+	userID := getRequestUserID(c)
 	m := getParamMessage(c)
-	if err := h.MessageManager.Unpin(m.GetID(), getRequestUserID(c)); err != nil {
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
+	if err := h.MessageManager.Unpin(m.GetID(), userID); err != nil {
 		switch err {
 		case message.ErrNotFound:
 			return herror.NotFound("pin was not found")
@@ -229,7 +298,20 @@ func (h *Handlers) RemovePin(c echo.Context) error {
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	return c.JSON(http.StatusOK, getParamMessage(c).GetStamps())
+	userID := getRequestUserID(c)
+	m := getParamMessage(c)
+
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
+	return c.JSON(http.StatusOK, m.GetStamps())
 }
 
 // PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ
@@ -254,11 +336,21 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	m := getParamMessage(c)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
 	// スタンプをメッセージに押す
-	if _, err := h.MessageManager.AddStamps(messageID, stampID, userID, req.Count); err != nil {
+	if _, err := h.MessageManager.AddStamps(m.GetID(), stampID, userID, req.Count); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -273,11 +365,21 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	m := getParamMessage(c)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(messageID, stampID, userID); err != nil {
+	if err := h.MessageManager.RemoveStamps(m.GetID(), stampID, userID); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -292,9 +394,19 @@ func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 // GetMessageClips GET /messages/:messageID/clips
 func (h *Handlers) GetMessageClips(c echo.Context) error {
 	userID := getRequestUserID(c)
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	m := getParamMessage(c)
 
-	clips, err := h.Repo.GetMessageClips(userID, messageID)
+	// メッセージアクセス権確認
+	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
+		if err == message.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.NotFound()
+	}
+
+	clips, err := h.Repo.GetMessageClips(userID, m.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
