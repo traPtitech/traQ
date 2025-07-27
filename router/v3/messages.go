@@ -19,7 +19,7 @@ import (
 // checkMessageAccess メッセージアクセス権限を確認するヘルパー関数
 func (h *Handlers) checkMessageAccess(m message.Message, userID uuid.UUID) error {
 	if ok, err := h.MessageManager.IsAccessible(m, userID); err != nil {
-		if err == message.ErrNotFound {
+		if errors.Is(err, message.ErrNotFound) {
 			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
