@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
