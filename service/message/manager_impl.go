@@ -316,6 +316,16 @@ func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
 	return nil
 }
 
+func (m *manager) IsAccessible(msg Message, userID uuid.UUID) (bool, error) {
+	// チャンネルアクセス権を確認
+	accessible, err := m.CM.IsChannelAccessibleToUser(userID, msg.GetChannelID())
+	if err != nil {
+		return false, fmt.Errorf("failed to check channel access: %w", err)
+	}
+
+	return accessible, nil
+}
+
 func (m *manager) Wait(_ context.Context) error {
 	m.P.Wait()
 	return nil
