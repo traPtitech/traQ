@@ -50,7 +50,7 @@ func Migrations() []*gormigrate.Migration {
 		v37(), // サウンドボードアイテム追加
 		v38(), // v37で作ったサウンドボードアイテムのテーブル名変更
 		v39(), // OAuth Client Credentials Grantの対応のため、clientロールを追加
-		threadV1(), // スレッド通知を管理するテーブルを追加、チャンネルにIsThreadを追加
+		threadv1(), // スレッド通知を管理するテーブルを追加、チャンネルにIsThreadを追加
 	}
 }
 

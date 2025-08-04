@@ -74,7 +74,6 @@ const (
 	ChannelSubscribeLevelMark
 	// ChannelSubscribeLevelMarkAndNotify レベル：未読管理＋通知
 	ChannelSubscribeLevelMarkAndNotify
-	// ChannelSubscribeLevelMarkAndNotify
 )
 
 func (v ChannelSubscribeLevel) Int() int {
