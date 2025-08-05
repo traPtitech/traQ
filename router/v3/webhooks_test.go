@@ -556,7 +556,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.GET(path, wh.GetID()).
+		e.DELETE(path, wh.GetID(), message.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
