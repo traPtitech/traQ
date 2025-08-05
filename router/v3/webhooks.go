@@ -255,6 +255,10 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 
 	message, err := h.Repo.GetMessageByID(messageID)
 	if err != nil {
+		if err == repository.ErrNotFound {
+			return herror.NotFound("message not found")
+		}
+
 		return herror.InternalServerError(err)
 	}
 
