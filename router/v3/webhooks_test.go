@@ -552,19 +552,30 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	wh2 := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	message := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
+	s := env.S(t, user.GetID())
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, wh.GetID()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found webhook", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, uuid.Must(uuid.NewV4()), message.GetID()).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found message", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh.GetID(), uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -573,6 +584,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh2.GetID(), message.GetID()).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -580,7 +592,8 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.DELETE(path, wh.GetBotUserID(), message.GetID()).
+		e.DELETE(path, wh.GetID(), message.GetID()).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
