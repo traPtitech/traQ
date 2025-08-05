@@ -541,3 +541,50 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 		messageEquals(t, m, obj.Value(0).Object())
 	})
 }
+
+func TestHandlers_DeleteWebhookMessage(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/webhooks/{webhookId}/message/{messageId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
+	wh2 := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
+	message := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, uuid.Must(uuid.NewV4()), message.GetID()).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, wh.GetID(), uuid.Must(uuid.NewV4())).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, wh2.GetID(), message.GetID()).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, wh.GetBotUserID(), message.GetID()).
+			Expect().
+			Status(http.StatusNoContent)
+
+		_, err := env.Repository.GetMessageByID(message.GetID())
+		assert.ErrorIs(t, err, repository.ErrNotFound)
+	})
+}
