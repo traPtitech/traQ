@@ -251,14 +251,14 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	w := getParamWebhook(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
-	botUserId := w.GetBotUserID()
+	botUserID := w.GetBotUserID()
 
 	message, err := h.Repo.GetMessageByID(messageID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	if botUserId == message.UserID {
+	if botUserID == message.UserID {
 		if err := h.Repo.DeleteMessage(messageID); err != nil {
 			return herror.InternalServerError(err)
 		}
