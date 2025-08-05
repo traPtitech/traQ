@@ -290,7 +290,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
 				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages", requires(permission.GetWebhook), retrieve.MessageID(), requiresMessageAccessPerm)
 				{
-					apiWebhooksWIDMessage.DELETE("/:message", h.DeleteWebhookMessage, requires(permission.GetMessageByID))
+					apiWebhooksWIDMessage.DELETE("/:message", h.DeleteWebhookMessage, requires(permission.GetMessage))
 				}
 			}
 		}
