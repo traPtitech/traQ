@@ -255,7 +255,7 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	botUserID := w.GetBotUserID()
 	messageUserID := m.GetUserID()
 
-	if botUserID == message.UserID {
+	if botUserID == messageUserID {
 		if err := h.Repo.DeleteMessage(messageID); err != nil {
 			return herror.InternalServerError(err)
 		}
