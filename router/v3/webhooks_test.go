@@ -544,8 +544,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 
 func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Parallel()
-
-	path := "/api/v3/webhooks/{webhookId}/message/{messageId}"
+	path := "/api/v3/webhooks/{webhookId}/messages/{messageId}"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
