@@ -250,17 +250,10 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
 func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	w := getParamWebhook(c)
+	m := getParamMessage(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	botUserID := w.GetBotUserID()
-
-	message, err := h.Repo.GetMessageByID(messageID)
-	if err != nil {
-		if err == repository.ErrNotFound {
-			return herror.NotFound("message not found")
-		}
-
-		return herror.InternalServerError(err)
-	}
+	messageUserID := m.GetUserID()
 
 	if botUserID == message.UserID {
 		if err := h.Repo.DeleteMessage(messageID); err != nil {
