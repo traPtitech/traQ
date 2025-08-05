@@ -288,7 +288,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
 				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
-				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages", requires(permission.GetWebhook), retrieve.MessageID())
+				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages", requires(permission.GetWebhook), retrieve.MessageID(), requiresMessageAccessPerm)
 				{
 					apiWebhooksWIDMessage.DELETE("/:message", h.DeleteWebhookMessage, requires(permission.GetMessageByID))
 				}
