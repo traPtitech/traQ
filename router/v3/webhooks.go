@@ -246,3 +246,25 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 
 	return serveMessages(c, h.MessageManager, req.convertU(w.GetBotUserID()))
 }
+
+// DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
+func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
+	w := getParamWebhook(c)
+	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	botUserId := w.GetBotUserID()
+
+	message, err := h.Repo.GetMessageByID(messageID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	if botUserId == message.UserID {
+		if err := h.Repo.DeleteMessage(messageID); err != nil {
+			return herror.InternalServerError(err)
+		}
+	} else {
+		return herror.Forbidden("you are not allowed to delete this message")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
