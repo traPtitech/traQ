@@ -923,9 +923,82 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
-		user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
+		user.GetID():  model.ChannelSubscribeLevelMarkAndNotify,
+		user2.GetID(): model.ChannelSubscribeLevelNone,
+		user3.GetID(): model.ChannelSubscribeLevelMark,
+	}, false, user.GetID())
+	require.NoError(t, err)
+	forced := env.CreateChannel(t, rand)
+	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
+	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
+	commonSession := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("forbidden (forced)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, forced.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("forbidden (dm)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, dm.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+		obj.Value(0).String().IsEqual(user.GetID().String())
+	})
+}
+
+func TestHandlers_GetChannelAudiences(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/channels/{channelId}/audiences"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+		user.GetID():  model.ChannelSubscribeLevelMark,
+		user2.GetID(): model.ChannelSubscribeLevelNone,
+		user3.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)

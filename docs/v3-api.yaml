@@ -1355,6 +1355,35 @@ paths:
             ユーザーが見つかりません。
       operationId: getUserStats
       description: 指定したユーザーの統計情報を取得します。
+  '/channels/{channelId}/audiences':
+    parameters:
+      - $ref: '#/components/parameters/channelIdInPath'
+    get:
+      summary: チャンネルの未読管理者のリストを取得
+      tags:
+        - channel
+        - notification
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: 未読管理者UUIDの配列
+                items:
+                  type: string
+                  format: uuid
+        '403':
+          description: |-
+            Forbidden
+            プライベートチャンネル・強制通知チャンネルの設定は取得できません。
+        '404':
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
+      operationId: getChannelAudiences
+      description: 指定したチャンネルを未読管理しているユーザーのUUIDのリストを取得します。
   '/channels/{channelId}/subscribers':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
