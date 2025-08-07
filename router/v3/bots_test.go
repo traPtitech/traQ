@@ -285,7 +285,16 @@ func TestHandlers_GetBot(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("not found(UUIDv4)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.GET(path, uuid.Must(uuid.NewV7()).String()).

@@ -243,7 +243,7 @@ func (h *Handlers) GetChannelPins(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, formatPins(pins))
+	return extension.ServeJSONWithETag(c, formatPins(pins))
 }
 
 type channelEventsQuery struct {

@@ -14,7 +14,7 @@ import (
 
 func TestRepositoryImpl_CreateMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	t.Run("failures 1", func(t *testing.T) {
 		t.Parallel()
@@ -76,11 +76,12 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 
 func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	originalText := m.Text
 
+	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), repository.ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV7()), "new message"), repository.ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), repository.ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))
@@ -94,7 +95,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 
 func TestRepositoryImpl_DeleteMessage(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
@@ -109,7 +110,7 @@ func TestRepositoryImpl_DeleteMessage(t *testing.T) {
 
 func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
@@ -121,13 +122,16 @@ func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 	_, err = repo.GetMessageByID(uuid.Nil)
 	assert.Error(err)
 
+	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV4()))
+	assert.Error(err)
+
 	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV7()))
 	assert.Error(err)
 }
 
 func TestRepositoryImpl_GetMessages(t *testing.T) {
 	t.Parallel()
-	repo, _, require, user := setupWithUser(t, ex3)
+	repo, _, require, user := setupWithUser(t, ex3, false)
 	ch1 := mustMakeChannel(t, repo, rand)
 	ch2 := mustMakeChannel(t, repo, rand)
 
@@ -227,9 +231,9 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 
 func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user1, channel := setupWithUserAndChannel(t, common3)
-	user2 := mustMakeUser(t, repo, rand)
-	user3 := mustMakeUser(t, repo, rand)
+	repo, assert, _, user1, channel := setupWithUserAndChannel(t, common3, false)
+	user2 := mustMakeUser(t, repo, rand, false)
+	user3 := mustMakeUser(t, repo, rand, false)
 
 	m := mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 
@@ -263,7 +267,7 @@ func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 
 func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	for range 10 {
 		mustMakeMessageUnread(t, repo, user.GetID(), mustMakeMessage(t, repo, user.GetID(), channel.ID).ID)
@@ -279,7 +283,7 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 
 func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	messages := make([]*model.Message, 10)
 	for i := range 10 {
@@ -314,9 +318,9 @@ func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
 
 func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
-	creator := mustMakeUser(t, repo, rand)
+	creator := mustMakeUser(t, repo, rand, false)
 	channel2 := mustMakeChannel(t, repo, rand)
 	testMessage := mustMakeMessage(t, repo, creator.GetID(), channel.ID)
 	testMessage2 := mustMakeMessage(t, repo, creator.GetID(), channel2.ID)
@@ -341,7 +345,7 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 
 func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, ex1)
+	repo, _, _, user := setupWithUser(t, ex1, false)
 
 	var latests []uuid.UUID
 	for i := range 10 {
@@ -400,7 +404,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 
 func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
@@ -453,7 +457,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 
 func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
