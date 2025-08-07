@@ -40,9 +40,9 @@ type ChannelEventsQuery struct {
 
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
-	UserID    optional.Of[uuid.UUID]
-	ChannelID optional.Of[uuid.UUID]
-	Level     model.ChannelSubscribeLevel
+	UserID         optional.Of[uuid.UUID]
+	ChannelID      optional.Of[uuid.UUID]
+	Level          model.ChannelSubscribeLevel
 }
 
 func (q ChannelSubscriptionQuery) SetUser(id uuid.UUID) ChannelSubscriptionQuery {
@@ -119,4 +119,6 @@ type ChannelRepository interface {
 	GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
 	// RecordChannelEvent チャンネルイベントを記録します
 	RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
+	//スレッドの通知管理状況を返します。
+	GetThreadSubscriptions(query ChannelSubscriptionQuery) ([]*model.UserSubscribeThread, error)
 }

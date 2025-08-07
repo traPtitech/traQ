@@ -1,22 +1,20 @@
-# users_subscribe_channels
+# users_subscribe_threads
 
 ## Description
-
-チャンネル購読者テーブル
 
 <details>
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE `users_subscribe_channels` (
+CREATE TABLE `users_subscribe_threads` (
   `user_id` char(36) NOT NULL,
   `channel_id` char(36) NOT NULL,
   `mark` tinyint(1) NOT NULL DEFAULT 0,
   `notify` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`user_id`,`channel_id`),
-  KEY `users_subscribe_channels_channel_id_channels_id_foreign` (`channel_id`),
-  CONSTRAINT `users_subscribe_channels_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `users_subscribe_channels_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `users_subscribe_threads_channel_id_channels_id_foreign` (`channel_id`),
+  CONSTRAINT `users_subscribe_threads_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `users_subscribe_threads_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -26,24 +24,24 @@ CREATE TABLE `users_subscribe_channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
-| channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
-| mark | tinyint(1) | 0 | false |  |  | 未読管理が有効かどうか |
-| notify | tinyint(1) | 0 | false |  |  | 通知が有効かどうか |
+| user_id | char(36) |  | false |  | [users](users.md) |  |
+| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
+| mark | tinyint(1) | 0 | false |  |  |  |
+| notify | tinyint(1) | 0 | false |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (user_id, channel_id) |
-| users_subscribe_channels_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
-| users_subscribe_channels_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
+| users_subscribe_threads_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
+| users_subscribe_threads_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| users_subscribe_channels_channel_id_channels_id_foreign | KEY users_subscribe_channels_channel_id_channels_id_foreign (channel_id) USING BTREE |
+| users_subscribe_threads_channel_id_channels_id_foreign | KEY users_subscribe_threads_channel_id_channels_id_foreign (channel_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (user_id, channel_id) USING BTREE |
 
 ## Relations
@@ -51,10 +49,10 @@ CREATE TABLE `users_subscribe_channels` (
 ```mermaid
 erDiagram
 
-"users_subscribe_channels" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
-"users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"users_subscribe_threads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"users_subscribe_threads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 
-"users_subscribe_channels" {
+"users_subscribe_threads" {
   char_36_ user_id PK
   char_36_ channel_id PK
   tinyint_1_ mark
