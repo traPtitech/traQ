@@ -40,9 +40,9 @@ type ChannelEventsQuery struct {
 
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
-	UserID         optional.Of[uuid.UUID]
-	ChannelID      optional.Of[uuid.UUID]
-	Level          model.ChannelSubscribeLevel
+	UserID    optional.Of[uuid.UUID]
+	ChannelID optional.Of[uuid.UUID]
+	Level     model.ChannelSubscribeLevel
 }
 
 func (q ChannelSubscriptionQuery) SetUser(id uuid.UUID) ChannelSubscriptionQuery {
