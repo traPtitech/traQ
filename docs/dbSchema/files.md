@@ -140,6 +140,7 @@ erDiagram
   tinyint_1_ is_forced
   tinyint_1_ is_public
   tinyint_1_ is_visible
+  tinyint_1_ is_thread
   char_36_ creator_id
   char_36_ updater_id
   datetime_6_ created_at

@@ -186,10 +186,10 @@ func (r *userRepository) makeGetUsersTx(query repository.UsersQuery) *gorm.DB {
 		tx = tx.Where("users.bot = ?", query.IsBot.V)
 	}
 	if query.IsSubscriberAtMarkLevelOf.Valid {
-		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.mark = true", query.IsSubscriberAtMarkLevelOf.V)
+		tx = tx.Where("users.id IN (SELECT user_id FROM users_subscribe_threads WHERE channel_id = ? AND mark = true UNION SELECT user_id FROM users_subscribe_channels WHERE channel_id = ? AND mark = true)", query.IsSubscriberAtMarkLevelOf.V, query.IsSubscriberAtMarkLevelOf.V)
 	}
 	if query.IsSubscriberAtNotifyLevelOf.Valid {
-		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.notify = true", query.IsSubscriberAtNotifyLevelOf.V)
+		tx = tx.Where("users.id IN (SELECT user_id FROM users_subscribe_threads WHERE channel_id = ? AND mark = true UNION SELECT user_id FROM users_subscribe_channels WHERE channel_id = ? AND notify = true)", query.IsSubscriberAtNotifyLevelOf.V, query.IsSubscriberAtNotifyLevelOf.V)
 	}
 	if query.IsCMemberOf.Valid {
 		tx = tx.Joins("INNER JOIN users_private_channels ON users_private_channels.user_id = users.id AND users_private_channels.channel_id = ?", query.IsCMemberOf.V)

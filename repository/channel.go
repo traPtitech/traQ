@@ -119,4 +119,6 @@ type ChannelRepository interface {
 	GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
 	// RecordChannelEvent チャンネルイベントを記録します
 	RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
+	//スレッドの通知管理状況を返します。
+	GetThreadSubscriptions(query ChannelSubscriptionQuery) ([]*model.UserSubscribeThread, error)
 }
