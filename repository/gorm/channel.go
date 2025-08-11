@@ -541,8 +541,7 @@ func (repo *Repository) GetThreadSubscriptions(query repository.ChannelSubscript
 		tx = tx.Where("mark = true OR notify = true")
 	}
 
-
-	result := make([]*model.UserSubscribeThread, 0) 
+	result := make([]*model.UserSubscribeThread, 0)
 	err := tx.Find(&result).Error
 	return result, err
 }
