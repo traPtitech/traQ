@@ -29,7 +29,7 @@ const (
 type attributes struct {
 	To             []uuid.UUID
 	Citation       []uuid.UUID
-	OgpContent	   []string
+	OgpContent     []string
 	HasURL         bool
 	HasAttachments bool
 	HasImage       bool
@@ -119,9 +119,8 @@ func (e *esEngine) getAttributes(messageText string, parseResult *message.ParseR
 	urls := lo.Map(urlRegex.FindAllString(messageText, -1), func(url string, _ int) string {
 		if url[0] != 'h' {
 			return url[1:]
-		} else {
-			return url
 		}
+		return url
 	})
 
 	filteredUrls := lo.Filter(urls, func(url string, _ int) bool {
@@ -136,7 +135,7 @@ func (e *esEngine) getAttributes(messageText string, parseResult *message.ParseR
 			continue
 		}
 		if urlCache.Valid {
-			ogpCache = append(ogpCache, urlCache.Content.Title + "\n" + urlCache.Content.Description)
+			ogpCache = append(ogpCache, urlCache.Content.Title+"\n"+urlCache.Content.Description)
 		}
 	}
 	if len(ogpCache) == 0 {
@@ -292,7 +291,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, noOgpMessage []resM
 		}
 
 		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, added ogp field %v message(s), last insert %v",
-			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated - uint64(ogpContentUpdateCount), ogpContentUpdateCount, lastInsert))
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated-uint64(ogpContentUpdateCount), ogpContentUpdateCount, lastInsert))
 	}()
 
 	for _, v := range messages {
@@ -427,14 +426,14 @@ func (e *esEngine) getNoOgpfieldMessage(limit int) (Result, error) {
 	type fieldQuery struct {
 		Field string `json:"field"`
 	}
-	
+
 	var mustNots = []searchQuery{
-		searchQuery{"exists": fieldQuery{Field: "ogpContent"}},
+		{"exists": fieldQuery{Field: "ogpContent"}},
 	}
 	var musts = []searchQuery{
-		searchQuery{"term": termQuery{"hasURL": termQueryParameter{Value: true}}},
+		{"term": termQuery{"hasURL": termQueryParameter{Value: true}}},
 	}
-	
+
 	body := newSearchBodyWithMustNot(musts, mustNots)
 
 	b, err := json.Marshal(body)

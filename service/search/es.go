@@ -62,7 +62,7 @@ type esMessageDoc struct {
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	To             []uuid.UUID `json:"to"`
 	Citation       []uuid.UUID `json:"citation"`
-	OgpContent	   []string    `json:"ogpContent"`
+	OgpContent     []string    `json:"ogpContent"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 	HasImage       bool        `json:"hasImage"`
@@ -75,7 +75,7 @@ type esMessageDocUpdate struct {
 	Text           string      `json:"text"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	Citation       []uuid.UUID `json:"citation"`
-	OgpContent	   []string    `json:"ogpContent"`
+	OgpContent     []string    `json:"ogpContent"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 	HasImage       bool        `json:"hasImage"`
@@ -125,7 +125,7 @@ var esMapping = m{
 			"type": "keyword",
 		},
 		"ogpContent": m{
-			"type": "text",
+			"type":     "text",
 			"analyzer": "sudachi_analyzer",
 		},
 		"hasURL": m{
@@ -297,8 +297,8 @@ type simpleQueryString struct {
 }
 
 type boolQuery struct {
-	Must   []searchQuery `json:"must,omitempty"`
-	Should []searchQuery `json:"should,omitempty"`
+	Must    []searchQuery `json:"must,omitempty"`
+	Should  []searchQuery `json:"should,omitempty"`
 	Mustnot []searchQuery `json:"must_not,omitempty"`
 }
 
@@ -403,7 +403,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if q.Citation.Valid {
 		musts = append(musts, searchQuery{"term": termQuery{"citation": termQueryParameter{Value: q.Citation}}})
 	}
-	
+
 	if q.Bot.Valid {
 		musts = append(musts, searchQuery{"term": termQuery{"bot": termQueryParameter{Value: q.Bot}}})
 	}
