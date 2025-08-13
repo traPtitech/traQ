@@ -279,6 +279,17 @@ func newSearchBody(andQueries []searchQuery) searchBody {
 	}
 }
 
+func newSearchBodyWithMustNot(andQueries []searchQuery, notQueries []searchQuery) searchBody {
+	return searchBody{
+		Query: searchQuery{
+			"bool": boolQuery{
+				Must:    andQueries,
+				Mustnot: notQueries,
+			},
+		},
+	}
+}
+
 type simpleQueryString struct {
 	Query           string   `json:"query"`
 	Fields          []string `json:"fields"`
@@ -288,6 +299,7 @@ type simpleQueryString struct {
 type boolQuery struct {
 	Must   []searchQuery `json:"must,omitempty"`
 	Should []searchQuery `json:"should,omitempty"`
+	Mustnot []searchQuery `json:"must_not,omitempty"`
 }
 
 type rangeQuery map[string]rangeParameters
@@ -308,7 +320,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	var musts []searchQuery
 
-	if q.Word.Valid && q.Ogp.Valid && q.Ogp.V {
+	if q.Word.Valid  {
 		wordBody := simpleQueryString{
 			Query:           q.Word.V,
 			Fields:          []string{"text"},
