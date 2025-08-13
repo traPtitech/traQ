@@ -214,15 +214,11 @@ func (e *esEngine) sync() error {
 		if len(messages) != 0 {
 			lastInsert = messages[len(messages)-1].UpdatedAt
 		}
-		e.l.Debug("fetched messages", zap.Int("count", len(messages)), zap.Time("lastInsert", lastInsert))
-
 
 		r, err := e.getNoOgpfieldMessage(syncMessageBulk - len(messages))
 		if err != nil {
 			return fmt.Errorf("failed to get messages without OGP field: %w", err)
 		}
-		e.l.Debug("fetched messages without OGP field", zap.Int("count", len(r.Hits())))
-
 
 		if r.TotalHits() == 0 && len(messages) == 0 {
 			break
@@ -282,6 +278,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, noOgpMessage []resM
 	if err != nil {
 		return err
 	}
+	ogpContentUpdateCount := 0
 
 	defer func() {
 		closeErr := bulkIndexer.Close(context.Background())
@@ -294,8 +291,8 @@ func syncNewMessages(e *esEngine, messages []*model.Message, noOgpMessage []resM
 			return
 		}
 
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
-			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, added ogp field %v message(s), last insert %v",
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated - uint64(ogpContentUpdateCount), ogpContentUpdateCount, lastInsert))
 	}()
 
 	for _, v := range messages {
@@ -353,9 +350,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, noOgpMessage []resM
 		if err != nil {
 			return err
 		}
-		e.l.Info(fmt.Sprintf("updated noOgpMessage %s", v.GetID().String()), zap.Time("updatedAt", v.GetUpdatedAt()), zap.Time("createdAt", v.GetCreatedAt()))
-
-
+		ogpContentUpdateCount++
 	}
 	return nil
 }
@@ -429,7 +424,6 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 // getNoOgpfieldMessage OGPフィールドを持っていない過去のメッセージを取得する
 func (e *esEngine) getNoOgpfieldMessage(limit int) (Result, error) {
 
-	e.l.Debug("getting messages without OGP content", zap.Int("limit", limit))
 	type fieldQuery struct {
 		Field string `json:"field"`
 	}
@@ -442,8 +436,6 @@ func (e *esEngine) getNoOgpfieldMessage(limit int) (Result, error) {
 	}
 	
 	body := newSearchBodyWithMustNot(musts, mustNots)
-
-	e.l.Debug("searching for messages without OGP content", zap.Reflect("body", body))
 
 	b, err := json.Marshal(body)
 	if err != nil {
@@ -470,7 +462,5 @@ func (e *esEngine) getNoOgpfieldMessage(limit int) (Result, error) {
 		return nil, err
 	}
 
-	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
 	return e.parseResultFromResponse(res)
-
 }

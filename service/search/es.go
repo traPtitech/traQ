@@ -320,7 +320,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	var musts []searchQuery
 
-	if q.Word.Valid  {
+	if q.Word.Valid && q.Ogp.Valid && q.Ogp.V {
 		wordBody := simpleQueryString{
 			Query:           q.Word.V,
 			Fields:          []string{"text"},
