@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
@@ -115,16 +115,21 @@ func (e *esEngine) getAttributes(messageText string, parseResult *message.ParseR
 	attr.HasURL = strings.Contains(messageText, "http://") || strings.Contains(messageText, "https://")
 	attr.HasAttachments = len(parseResult.Attachments) != 0
 
-	isURLDelimiter := func (r rune) bool {
-		return unicode.IsSpace(r) || r == '{' || r == '}' || r == '[' || r == ']' || r == '(' || r == ')'
-	}
-
-	urls := lo.Filter(strings.FieldsFunc(messageText, isURLDelimiter), func(s string, _ int) bool {
-		return (strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")) && !strings.HasPrefix(s, "https://q.trap.jp")
+	urlRegex := regexp.MustCompile(`(^https?|[^a-zA-Z0-9:+]https?)://[^\s\(\)\{\}\[\]]+`)
+	urls := lo.Map(urlRegex.FindAllString(messageText, -1), func(url string, _ int) string {
+		if url[0] != 'h' {
+			return url[1:]
+		} else {
+			return url
+		}
 	})
 
-	ogpCache := make([]string, 0, len(urls))
-	for _, url := range urls {
+	filteredUrls := lo.Filter(urls, func(url string, _ int) bool {
+		return !strings.HasPrefix(url, "https://q.trap.jp")
+	})
+
+	ogpCache := make([]string, 0, len(filteredUrls))
+	for _, url := range filteredUrls {
 		urlCache, err := e.repo.GetOgpCache(url)
 		if err != nil {
 			e.l.Warn(err.Error(), zap.Error(err))
