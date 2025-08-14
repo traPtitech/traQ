@@ -10,7 +10,7 @@
 - Frontend: [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI)
 
 traQ (pronounced "track") is a messenger application built for [Digital Creators Club traP](https://trap.jp).
-traQ allows ease communication among team members by organizing contexts into tree-structured channels.
+traQ allows easy communication among team members by organizing contexts into tree-structured channels.
 
 ![traQ](https://user-images.githubusercontent.com/49056869/115141831-5a376980-a079-11eb-93c1-7016bc2097d0.png)
 
