@@ -113,6 +113,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.ChangeUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.ChangeUserPassword, requires(permission.EditOtherUsers))
+				apiUsersUID.GET("/dm-channel-list", h.GetDMChannelList, requires(permission.GetChannel))
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
 					apiUsersUIDTags.GET("", h.GetUserTags, requires(permission.GetUserTag))

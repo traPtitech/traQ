@@ -418,3 +418,14 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
+
+// GetDMChannelList GET /users/:userID/dm-channel-list
+func (h *Handlers) GetDMChannelList(c echo.Context) error {
+	myID := getParamAsUUID(c, consts.ParamUserID)
+
+	DMChannels, err := h.Repo.GetDirectMessageChannelList(myID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, DMChannels)
+}
