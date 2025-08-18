@@ -1237,7 +1237,7 @@ func TestHandlers_GetUserDMChannel(t *testing.T) {
 func TestHandlers_GetDMChannelList(t *testing.T) {
 	t.Parallel()
 
-	path := "/api/v3/users/{userId}/dm-channel-list"
+	path := "/api/v3/users/me/dm-channel-list"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
@@ -1255,24 +1255,15 @@ func TestHandlers_GetDMChannelList(t *testing.T) {
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.GET(path, user.GetID().String()).
+		e.GET(path).
 			Expect().
 			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-		e.GET(path, uuid.Must(uuid.NewV4()).String()).
-			WithCookie(session.CookieName, commonSession).
-			Expect().
-			Status(http.StatusNotFound)
 	})
 
 	t.Run("success (existing dm)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		obj := e.GET(path, user.GetID().String()).
+		obj := e.GET(path).
 			WithCookie(session.CookieName, commonSession).
 			Expect().
 			Status(http.StatusOK).
@@ -1283,16 +1274,13 @@ func TestHandlers_GetDMChannelList(t *testing.T) {
 		second := obj.Value(1).Object()
 		third := obj.Value(2).Object()
 
-		first.Value("ChannelID").String().IsEqual(dm4.ID.String())
-		first.Value("User1").String().IsEqual(user.GetID().String())
-		first.Value("User2").String().IsEqual(user4.GetID().String())
+		first.Value("id").String().IsEqual(dm4.ID.String())
+		first.Value("userId").String().IsEqual(user4.GetID().String())
 
-		second.Value("ChannelID").String().IsEqual(dm3.ID.String())
-		second.Value("User1").String().IsEqual(user.GetID().String())
-		second.Value("User2").String().IsEqual(user3.GetID().String())
+		second.Value("id").String().IsEqual(dm3.ID.String())
+		second.Value("userId").String().IsEqual(user3.GetID().String())
 
-		third.Value("ChannelID").String().IsEqual(dm2.ID.String())
-		third.Value("User1").String().IsEqual(user.GetID().String())
-		third.Value("User2").String().IsEqual(user2.GetID().String())
+		third.Value("id").String().IsEqual(dm2.ID.String())
+		third.Value("userId").String().IsEqual(user2.GetID().String())
 	})
 }

@@ -99,8 +99,8 @@ type ChannelRepository interface {
 	GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error)
 	// GetDirectMessageChannelMapping 指定したユーザーのDMチャンネルのマッピングを取得します
 	GetDirectMessageChannelMapping(userID uuid.UUID) ([]*model.DMChannelMapping, error)
-	// GetDirectMessageChannelList 自分の参加しているDMチャンネルを新しい順にして取得します
-	GetDirectMessageChannelList(userID uuid.UUID) ([]*model.DMChannelMapping, error)
+	// GetDirectMessageChannelList 指定したユーザーが参加しているDMチャンネルを、メッセージの更新時間が新しい順に最大20件取得します
+	GetDirectMessageChannelList(userID uuid.UUID) ([]model.DMChannel, error)
 	// GetPrivateChannelMemberIDs 指定したプライベートチャンネルのメンバーのUUIDを取得します
 	GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error)
 	// ChangeChannelSubscription ユーザーのチャンネルの購読を変更します

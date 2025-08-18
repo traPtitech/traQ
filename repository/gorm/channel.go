@@ -241,20 +241,44 @@ func (repo *Repository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappin
 }
 
 // GetDirectMessageChannelList implements ChannelRepository interface.
-func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannelMapping []*model.DMChannelMapping, err error) {
-	dmChannelMapping = make([]*model.DMChannelMapping, 0)
+func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannels []model.DMChannel, err error) {
+	dmChannelMapping := make([]*model.DMChannelMapping, 0)
 	if userID == uuid.Nil {
-		return
+		return dmChannels, nil
 	}
 
-	return dmChannelMapping, repo.db.
-		Table("dm_channel_mappings").
-		Joins("right join channel_latest_messages on dm_channel_mappings.channel_id = channel_latest_messages.channel_id").
-		Where("dm_channel_mappings.user1 = ? OR dm_channel_mappings.user2 = ?", userID, userID).
-		Order("channel_latest_messages.date_time DESC").
-		Limit(20).
-		Find(&dmChannelMapping).
-		Error
+	if err := repo.db.
+		Raw(`(SELECT dm.*, clm.date_time 
+		      FROM dm_channel_mappings AS dm 
+		      RIGHT JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id 
+		      WHERE dm.user1 = ?)
+		     UNION
+		     (SELECT dm.*, clm.date_time 
+		      FROM dm_channel_mappings AS dm 
+		      RIGHT JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id 
+		      WHERE dm.user2 = ?)
+		     ORDER BY date_time DESC 
+		     LIMIT 20`, userID, userID).
+		Scan(&dmChannelMapping).
+		Error; err != nil {
+		return dmChannels, err
+	}
+
+	for _, mapping := range dmChannelMapping {
+		var targetUserID uuid.UUID
+		if mapping.User1 == userID {
+			targetUserID = mapping.User2
+		} else {
+			targetUserID = mapping.User1
+		}
+
+		dmChannels = append(dmChannels, model.DMChannel{
+			ID:     mapping.ChannelID,
+			UserID: targetUserID,
+		})
+	}
+
+	return dmChannels, nil
 }
 
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.

@@ -407,7 +407,7 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, &DMChannel{ID: ch.ID, UserID: userID})
+	return c.JSON(http.StatusOK, &model.DMChannel{ID: ch.ID, UserID: userID})
 }
 
 // GetChannelPath GET /channels/:channelID/path
@@ -419,9 +419,9 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
 
-// GetDMChannelList GET /users/:userID/dm-channel-list
+// GetDMChannelList GET /users/me/dm-channel-list
 func (h *Handlers) GetDMChannelList(c echo.Context) error {
-	myID := getParamAsUUID(c, consts.ParamUserID)
+	myID := getRequestUserID(c)
 
 	DMChannels, err := h.Repo.GetDirectMessageChannelList(myID)
 	if err != nil {
