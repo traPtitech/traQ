@@ -1900,6 +1900,25 @@ paths:
         - me
         - notification
       description: 自身のチャンネル閲覧状態一覧を取得します。
+  /users/me/dm-channel-list:
+    get:
+      summary: DMチャンネルを更新順にしたリストを取得
+      tags:
+        - me
+        - channel
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: DMチャンネルが更新された順に入った配列
+                items:
+                  $ref: "#/components/schemas/DMChannel"
+      operationId: getUserDMChannelList
+      description: |-
+        自身が参加しているDMチャンネルを、メッセージの更新時間が新しい順に最大20件取得します。
   /users:
     post:
       summary: ユーザーを登録
