@@ -176,10 +176,10 @@ func (mr *MockChannelRepositoryMockRecorder) GetDirectMessageChannelMapping(user
 }
 
 // GetDirectMessageChannelList mocks base method.
-func (m *MockChannelRepository) GetDirectMessageChannelList(userID uuid.UUID) ([]model.DMChannel, error) {
+func (m *MockChannelRepository) GetDirectMessageChannelList(userID uuid.UUID) ([]*model.DMChannelMapping, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDirectMessageChannelList", userID)
-	ret0, _ := ret[0].([]model.DMChannel)
+	ret0, _ := ret[0].([]*model.DMChannelMapping)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

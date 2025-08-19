@@ -49,12 +49,6 @@ func (ch *Channel) IsArchived() bool {
 	return !ch.IsVisible
 }
 
-// DMChannel ダイレクトメッセージチャンネルの構造体
-type DMChannel struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"userId"`
-}
-
 // UsersPrivateChannel UsersPrivateChannelsの構造体
 type UsersPrivateChannel struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`

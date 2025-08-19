@@ -407,7 +407,7 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, &model.DMChannel{ID: ch.ID, UserID: userID})
+	return c.JSON(http.StatusOK, &DMChannel{ID: ch.ID, UserID: userID})
 }
 
 // GetChannelPath GET /channels/:channelID/path
@@ -423,9 +423,24 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 func (h *Handlers) GetDMChannelList(c echo.Context) error {
 	myID := getRequestUserID(c)
 
-	DMChannels, err := h.Repo.GetDirectMessageChannelList(myID)
+	dmChannelMapping, err := h.Repo.GetDirectMessageChannelList(myID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, DMChannels)
+
+	dmChannels := make([]DMChannel, 0, len(dmChannelMapping))
+	for _, mapping := range dmChannelMapping {
+		var targetUserID uuid.UUID
+		if mapping.User1 == myID {
+			targetUserID = mapping.User2
+		} else {
+			targetUserID = mapping.User1
+		}
+
+		dmChannels = append(dmChannels, DMChannel{
+			ID:     mapping.ChannelID,
+			UserID: targetUserID,
+		})
+	}
+	return c.JSON(http.StatusOK, dmChannels)
 }

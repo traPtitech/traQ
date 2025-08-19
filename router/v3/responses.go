@@ -32,11 +32,16 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	}
 }
 
+type DMChannel struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"userId"`
+}
+
 // formatDMChannels ソートされたものを返す
-func formatDMChannels(dmcs map[uuid.UUID]uuid.UUID) []*model.DMChannel {
-	res := make([]*model.DMChannel, 0, len(dmcs))
+func formatDMChannels(dmcs map[uuid.UUID]uuid.UUID) []*DMChannel {
+	res := make([]*DMChannel, 0, len(dmcs))
 	for cid, uid := range dmcs {
-		res = append(res, &model.DMChannel{ID: cid, UserID: uid})
+		res = append(res, &DMChannel{ID: cid, UserID: uid})
 	}
 
 	sort.Slice(res, func(i, j int) bool {

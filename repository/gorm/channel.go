@@ -241,10 +241,10 @@ func (repo *Repository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappin
 }
 
 // GetDirectMessageChannelList implements ChannelRepository interface.
-func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannels []model.DMChannel, err error) {
-	dmChannelMapping := make([]*model.DMChannelMapping, 0)
+func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannelMapping []*model.DMChannelMapping, err error) {
+	dmChannelMapping = make([]*model.DMChannelMapping, 0)
 	if userID == uuid.Nil {
-		return dmChannels, nil
+		return dmChannelMapping, repository.ErrNilID
 	}
 
 	if err := repo.db.
@@ -261,24 +261,10 @@ func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannel
 		     LIMIT 20`, userID, userID).
 		Scan(&dmChannelMapping).
 		Error; err != nil {
-		return dmChannels, err
+		return dmChannelMapping, err
 	}
 
-	for _, mapping := range dmChannelMapping {
-		var targetUserID uuid.UUID
-		if mapping.User1 == userID {
-			targetUserID = mapping.User2
-		} else {
-			targetUserID = mapping.User1
-		}
-
-		dmChannels = append(dmChannels, model.DMChannel{
-			ID:     mapping.ChannelID,
-			UserID: targetUserID,
-		})
-	}
-
-	return dmChannels, nil
+	return dmChannelMapping, nil
 }
 
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
