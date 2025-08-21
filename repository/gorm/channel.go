@@ -248,18 +248,12 @@ func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannel
 	}
 
 	if err := repo.db.
-		Raw(`(SELECT dm.*, clm.date_time 
-		      FROM dm_channel_mappings AS dm 
-		      RIGHT JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id 
-		      WHERE dm.user1 = ?)
-		     UNION
-		     (SELECT dm.*, clm.date_time 
-		      FROM dm_channel_mappings AS dm 
-		      RIGHT JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id 
-		      WHERE dm.user2 = ?)
-		     ORDER BY date_time DESC 
-		     LIMIT 20`, userID, userID).
-		Scan(&dmChannelMapping).
+		Table("dm_channel_mappings AS dm").
+		Joins("JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id").
+		Where("dm.user1 = ? OR dm.user2 = ?", userID, userID).
+		Order("clm.date_time DESC").
+		Limit(20).
+		Find(&dmChannelMapping).
 		Error; err != nil {
 		return dmChannelMapping, err
 	}
