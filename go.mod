@@ -39,8 +39,8 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.10
-	github.com/livekit/protocol v1.39.4-0.20250802093152-1b7e38ef9c96
-	github.com/livekit/server-sdk-go/v2 v2.9.2
+	github.com/livekit/protocol v1.39.4-0.20250807105828-ccbae8154e54
+	github.com/livekit/server-sdk-go/v2 v2.10.0
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
 	github.com/motoki317/go-waveform v0.0.3
@@ -99,15 +99,15 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
 	github.com/livekit/mediatransportutil v0.0.0-20250519131108-fb90f5acfded // indirect
-	github.com/livekit/psrpc v0.6.1-0.20250511053145-465289d72c3c // indirect
+	github.com/livekit/psrpc v0.6.1-0.20250726180611-3915e005e741 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
-	github.com/nats-io/nats.go v1.43.0 // indirect
+	github.com/nats-io/nats.go v1.44.0 // indirect
 	github.com/nats-io/nkeys v0.4.11 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/pion/datachannel v1.5.10 // indirect
-	github.com/pion/dtls/v3 v3.0.6 // indirect
+	github.com/pion/dtls/v3 v3.0.7 // indirect
 	github.com/pion/ice/v4 v4.0.10 // indirect
 	github.com/pion/interceptor v0.1.40 // indirect
 	github.com/pion/logging v0.2.4 // indirect
@@ -123,7 +123,7 @@ require (
 	github.com/pion/turn/v4 v4.0.2 // indirect
 	github.com/pion/webrtc/v4 v4.1.3 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
-	github.com/redis/go-redis/v9 v9.11.0 // indirect
+	github.com/redis/go-redis/v9 v9.12.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
@@ -269,7 +269,7 @@ require (
 	golang.org/x/tools v0.36.0 // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250721164621-a45f3dfb1074 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250804133106-a7a43d27e69b // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c // indirect
 	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.7 // indirect
