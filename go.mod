@@ -30,7 +30,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/go-querystring v1.1.0
-	github.com/google/wire v0.6.0
+	github.com/google/wire v0.7.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hajimehoshi/go-mp3 v0.3.4
