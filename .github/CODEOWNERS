@@ -1,8 +1,8 @@
-/.github/CODEOWNER @traQ-Admin
+/.github/CODEOWNER @traPtitech/traq-admin
 
 # migration ファイル - DB 変更だけは必ず Admin もレビューする
-/migration/ @traQ-Admin
+/migration/ @traPtitech/traq-admin
 
 # api 定義は Admin も確認するようにする - 後から API を落とすのは大変なので
-/docs/v3-api.yaml @traQ-Admin
-/docs/swagger.yaml @traQ-Admin
+/docs/v3-api.yaml @traPtitech/traq-admin
+/docs/swagger.yaml @traPtitech/traq-admin
