@@ -4966,10 +4966,12 @@ components:
       title: ChannelViewState
       enum:
         - none
+        - stale_viewing
         - monitoring
         - editing
       x-enum-descriptions:
-        - バックグランド表示中
+        - バックグラウンド表示中
+        - 古いメッセージを表示中
         - メッセージ表示中
         - メッセージ入力中
       description: 閲覧状態
@@ -5914,7 +5916,7 @@ components:
         file:
           type: string
           format: binary
-          description: 'アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)'
+          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
       required:
         - file
     PutMyPasswordRequest:

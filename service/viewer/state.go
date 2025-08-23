@@ -12,6 +12,8 @@ type State int
 const (
 	// StateNone バックグランド表示中
 	StateNone State = iota
+	// StateStaleViewing 古いメッセージを表示中
+	StateStaleViewing
 	// StateMonitoring メッセージ表示中
 	StateMonitoring
 	// StateEditing メッセージ入力中
@@ -35,9 +37,10 @@ func StateFromString(s string) State {
 
 var (
 	viewStateStrings = map[State]string{
-		StateNone:       "none",
-		StateEditing:    "editing",
-		StateMonitoring: "monitoring",
+		StateNone:         "none",
+		StateStaleViewing: "stale_viewing",
+		StateEditing:      "editing",
+		StateMonitoring:   "monitoring",
 	}
 	stringViewStates = map[string]State{}
 )
