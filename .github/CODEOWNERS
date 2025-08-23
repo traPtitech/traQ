@@ -6,3 +6,5 @@
 # api 定義は Admin も確認するようにする - 後から API を落とすのは大変なので
 /docs/v3-api.yaml @traPtitech/traq-admin
 /docs/swagger.yaml @traPtitech/traq-admin
+
+* @traPtitech/traq-reviewer
