@@ -7084,6 +7084,8 @@ components:
         stamps:
           type: array
           description: パレット内のスタンプのUUID配列
+          uniqueItems: true
+          maxItems: 200
           items:
             type: string
             format: uuid
