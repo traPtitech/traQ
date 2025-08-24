@@ -8,7 +8,7 @@ import (
 
 func (repo *Repository) GetFeatureFlagByUserID(userID uuid.UUID) (*model.FeatureFlag, error) {
 	if userID == uuid.Nil {
-		return nil, repository.ErrNotFound
+		return nil, repository.ErrNilID
 	}
 	featureFlag := &model.FeatureFlag{}
 	if err := repo.db.Take(featureFlag, &model.FeatureFlag{UserID: userID}).Error; err != nil {
