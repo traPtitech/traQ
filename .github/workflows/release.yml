@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Set IMAGE_TAG env
         run: echo "IMAGE_TAG=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set TRAQ_VERSION env
         run: echo "TRAQ_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
