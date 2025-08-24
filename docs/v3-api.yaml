@@ -5914,7 +5914,7 @@ components:
         file:
           type: string
           format: binary
-          description: "アイコン画像(2MBまでのpng, jpeg, gif)"
+          description: 'アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)'
       required:
         - file
     PutMyPasswordRequest:
@@ -7106,6 +7106,8 @@ components:
         stamps:
           type: array
           description: パレット内のスタンプのUUID配列
+          uniqueItems: true
+          maxItems: 200
           items:
             type: string
             format: uuid
