@@ -24,6 +24,7 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/twemoji"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 // serveCommand サーバー起動コマンド
@@ -57,7 +58,7 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.Logger = gormzap.New(logger.Named("gorm"))
+			engine.Logger = gormzap.New(logger.Named("gorm")).LogMode(gormlogger.Silent)
 			db, err := engine.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
