@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/twemoji"
 )
 
@@ -35,7 +34,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 		Short: "download and install Unicode emojiMeta stamps",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -44,7 +43,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

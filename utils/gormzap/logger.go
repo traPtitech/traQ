@@ -14,12 +14,16 @@ import (
 )
 
 type L struct {
-	l *zap.Logger
+	l                    *zap.Logger
+	ParameterizedQueries bool // same as https://gorm.io/ja_JP/docs/logger.html
 }
 
 func New(logger *zap.Logger) *L {
 	return &L{l: logger}
 }
+
+var _ logger.Interface = (*L)(nil)
+var _ gorm.ParamsFilter = (*L)(nil)
 
 func (gl *L) LogMode(level logger.LogLevel) logger.Interface {
 	var zapLevel zapcore.LevelEnabler
@@ -68,4 +72,13 @@ func (gl *L) Trace(_ context.Context, begin time.Time, fc func() (string, int64)
 			gl.l.Debug(sql, zap.String("file", utils.FileWithLineNum()), zap.Float64("latency(ms)", float64(elapsed.Nanoseconds())/1e6), zap.Int64("rows", rows))
 		}
 	}
+}
+
+// ParamsFilter implements [(gorm.io/gorm).ParamsFilter]
+// https://github.com/go-gorm/gorm/blob/4e34a6d21b63e9a9b701a70be9759e5539bf26e9/logger/logger.go#L192-L198
+func (gl *L) ParamsFilter(_ context.Context, sql string, params ...any) (string, []any) {
+	if gl.ParameterizedQueries {
+		return sql, nil
+	}
+	return sql, params
 }
