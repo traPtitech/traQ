@@ -7,4 +7,4 @@
 /docs/v3-api.yaml @traPtitech/traq-admin
 /docs/swagger.yaml @traPtitech/traq-admin
 
-* @traPtitech/traq-reviewer
+# * @traPtitech/traq-reviewer 通知周りの問題をどうするか決めるまでは使わないでおく
