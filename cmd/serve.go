@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	gormlogger "gorm.io/gorm/logger"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
@@ -24,7 +25,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/twemoji"
-	gormlogger "gorm.io/gorm/logger"
 )
 
 // serveCommand サーバー起動コマンド
