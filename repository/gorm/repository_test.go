@@ -82,6 +82,7 @@ func TestMain(m *testing.M) {
 		engine.Logger = logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
 			SlowThreshold:             200 * time.Millisecond,
 			LogLevel:                  logger.Warn,
+			ParameterizedQueries:      true,
 			Colorful:                  true,
 			IgnoreRecordNotFoundError: true,
 		})
