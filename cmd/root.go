@@ -103,8 +103,7 @@ func getLogger() (*zap.Logger, *gormzap.L) {
 	}
 	zapLogger, _ := cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 
-	gormLogger := gormzap.New(zapLogger.Named("gorm"))
-	gormLogger.ParameterizedQueries = true
+	gormLogger := gormzap.New(zapLogger.Named("gorm"), gormzap.WithParameterizedQueries(true))
 
 	return zapLogger, gormLogger
 }
@@ -136,8 +135,7 @@ func getCLILoggers() (*zap.Logger, *gormzap.L) {
 	}
 	zapLogger, _ := cfg.Build()
 
-	gormLogger := gormzap.New(zapLogger.Named("gorm"))
-	gormLogger.ParameterizedQueries = true
+	gormLogger := gormzap.New(zapLogger.Named("gorm"), gormzap.WithParameterizedQueries(true))
 
 	return zapLogger, gormLogger
 }

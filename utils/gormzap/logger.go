@@ -15,17 +15,31 @@ import (
 
 type L struct {
 	l                    *zap.Logger
-	ParameterizedQueries bool // same as https://gorm.io/ja_JP/docs/logger.html
+	parameterizedQueries bool // same as https://gorm.io/ja_JP/docs/logger.html
 }
 
-func New(logger *zap.Logger) *L {
-	return &L{l: logger}
+func New(zl *zap.Logger, options ...Option) *L {
+	l := &L{l: zl}
+
+	for _, o := range options {
+		o(l)
+	}
+
+	return l
 }
 
 var _ logger.Interface = (*L)(nil)
 var _ gorm.ParamsFilter = (*L)(nil)
 
-func (gl *L) LogMode(level logger.LogLevel) logger.Interface {
+type Option func(l *L)
+
+func WithParameterizedQueries(enabled bool) Option {
+	return func(l *L) {
+		l.parameterizedQueries = enabled
+	}
+}
+
+func (gl L) LogMode(level logger.LogLevel) logger.Interface {
 	var zapLevel zapcore.LevelEnabler
 	switch level {
 	case logger.Silent:
@@ -37,9 +51,12 @@ func (gl *L) LogMode(level logger.LogLevel) logger.Interface {
 	case logger.Info:
 		zapLevel = zap.InfoLevel
 	default:
-		return gl
+		return &gl
 	}
-	return New(gl.l.WithOptions(zap.IncreaseLevel(zapLevel)))
+
+	gl.l = gl.l.WithOptions(zap.IncreaseLevel(zapLevel))
+
+	return &gl
 }
 
 func (gl *L) Info(_ context.Context, s string, i ...interface{}) {
@@ -77,7 +94,7 @@ func (gl *L) Trace(_ context.Context, begin time.Time, fc func() (string, int64)
 // ParamsFilter implements [(gorm.io/gorm).ParamsFilter]
 // https://github.com/go-gorm/gorm/blob/4e34a6d21b63e9a9b701a70be9759e5539bf26e9/logger/logger.go#L192-L198
 func (gl *L) ParamsFilter(_ context.Context, sql string, params ...any) (string, []any) {
-	if gl.ParameterizedQueries {
+	if gl.parameterizedQueries {
 		return sql, nil
 	}
 	return sql, params
