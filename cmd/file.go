@@ -15,7 +15,6 @@ import (
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -47,7 +46,7 @@ func filePruneCommand() *cobra.Command {
 		Short: "delete files which are not used or linked to anywhere",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -55,7 +54,7 @@ func filePruneCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -154,7 +153,7 @@ func genMissingThumbnails() *cobra.Command {
 		Short: "Generate missing thumbnails",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -162,7 +161,7 @@ func genMissingThumbnails() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -346,7 +345,7 @@ func genGroupImages() *cobra.Command {
 		Short: "Generate missing icons for user groups",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -354,7 +353,7 @@ func genGroupImages() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

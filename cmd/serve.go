@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	gormlogger "gorm.io/gorm/logger"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
@@ -20,7 +19,6 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
@@ -36,7 +34,7 @@ func serveCommand() *cobra.Command {
 		Short: "Serve traQ API",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getLogger()
+			logger, gormLogger := getLogger()
 			defer logger.Sync()
 
 			logger.Info(fmt.Sprintf("traQ %s (revision %s)", Version, Revision))
@@ -58,7 +56,7 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.Logger = gormzap.New(logger.Named("gorm")).LogMode(gormlogger.Silent)
+			engine.Logger = gormLogger
 			db, err := engine.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

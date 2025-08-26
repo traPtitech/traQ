@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/migration/v2tov3"
-	"github.com/traPtitech/traQ/utils/gormzap"
 )
 
 // migrateV2ToV3Command traQv2データをv3データに変換するコマンド
@@ -23,7 +22,7 @@ func migrateV2ToV3Command() *cobra.Command {
 		Short: "migrate from v2 to v3 (messages, files)",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -31,7 +30,7 @@ func migrateV2ToV3Command() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
