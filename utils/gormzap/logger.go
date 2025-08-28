@@ -93,6 +93,7 @@ func (gl *L) Trace(_ context.Context, begin time.Time, fc func() (string, int64)
 
 // ParamsFilter implements [(gorm.io/gorm).ParamsFilter]
 // https://github.com/go-gorm/gorm/blob/4e34a6d21b63e9a9b701a70be9759e5539bf26e9/logger/logger.go#L192-L198
+// TODO: this filter does not applys to (*gorm.DB).Raw(). We need to read the GORM source code for this method and deal with it.
 func (gl *L) ParamsFilter(_ context.Context, sql string, params ...any) (string, []any) {
 	if gl.parameterizedQueries {
 		return sql, nil
