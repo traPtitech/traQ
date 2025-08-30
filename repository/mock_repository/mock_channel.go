@@ -176,18 +176,18 @@ func (mr *MockChannelRepositoryMockRecorder) GetDirectMessageChannelMapping(user
 }
 
 // GetDirectMessageChannelList mocks base method.
-func (m *MockChannelRepository) GetDirectMessageChannelList(userID uuid.UUID) ([]*model.DMChannelMapping, error) {
+func (m *MockChannelRepository) GetDirectMessageChannelList(userID uuid.UUID, limit int) ([]*model.DMChannelMapping, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDirectMessageChannelList", userID)
+	ret := m.ctrl.Call(m, "GetDirectMessageChannelList", userID, limit)
 	ret0, _ := ret[0].([]*model.DMChannelMapping)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDirectMessageChannelList indicates an expected call of GetDirectMessageChannelList.
-func (mr *MockChannelRepositoryMockRecorder) GetDirectMessageChannelList(userID interface{}) *gomock.Call {
+func (mr *MockChannelRepositoryMockRecorder) GetDirectMessageChannelList(userID, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDirectMessageChannelList", reflect.TypeOf((*MockChannelRepository)(nil).GetDirectMessageChannelList), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDirectMessageChannelList", reflect.TypeOf((*MockChannelRepository)(nil).GetDirectMessageChannelList), userID, limit)
 }
 
 // GetPrivateChannelMemberIDs mocks base method.

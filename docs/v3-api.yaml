@@ -1906,6 +1906,14 @@ paths:
       tags:
         - me
         - channel
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+          description: 取得する最大件数
       responses:
         "200":
           description: OK
@@ -1916,9 +1924,12 @@ paths:
                 description: DMチャンネルが更新された順に入った配列
                 items:
                   $ref: "#/components/schemas/DMChannel"
+        "400":
+          description: Bad Request
       operationId: getUserDMChannelList
       description: |-
-        自身が参加しているDMチャンネルを、メッセージの更新時間が新しい順に最大20件取得します。
+        自身が参加しているDMチャンネルを、メッセージの更新時間が新しい順に取得します。
+        limitパラメータで取得件数を指定できます（default: 20件）。
   /users:
     post:
       summary: ユーザーを登録

@@ -1283,4 +1283,27 @@ func TestHandlers_GetDMChannelList(t *testing.T) {
 		third.Value("id").String().IsEqual(dm2.ID.String())
 		third.Value("userId").String().IsEqual(user2.GetID().String())
 	})
+
+	t.Run("success with limit parameter", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("limit", 2).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(2)
+
+		first := obj.Value(0).Object()
+		second := obj.Value(1).Object()
+
+		first.Value("id").String().IsEqual(dm4.ID.String())
+		first.Value("userId").String().IsEqual(user4.GetID().String())
+
+		second.Value("id").String().IsEqual(dm3.ID.String())
+		second.Value("userId").String().IsEqual(user3.GetID().String())
+	})
 }

@@ -422,8 +422,19 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 // GetDMChannelList GET /users/me/dm-channel-list
 func (h *Handlers) GetDMChannelList(c echo.Context) error {
 	myID := getRequestUserID(c)
+	limitStr := c.QueryParam("limit")
+	if limitStr == "" {
+		limitStr = "20"
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		return herror.BadRequest("invalid limit")
+	}
+	if limit <= 0 {
+		limit = 20
+	}
 
-	dmChannelMapping, err := h.Repo.GetDirectMessageChannelList(myID)
+	dmChannelMapping, err := h.Repo.GetDirectMessageChannelList(myID, limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

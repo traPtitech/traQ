@@ -241,7 +241,7 @@ func (repo *Repository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappin
 }
 
 // GetDirectMessageChannelList implements ChannelRepository interface.
-func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannelMapping []*model.DMChannelMapping, err error) {
+func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID, limit int) (dmChannelMapping []*model.DMChannelMapping, err error) {
 	dmChannelMapping = make([]*model.DMChannelMapping, 0)
 	if userID == uuid.Nil {
 		return dmChannelMapping, repository.ErrNilID
@@ -252,7 +252,7 @@ func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID) (dmChannel
 		Joins("JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id").
 		Where("dm.user1 = ? OR dm.user2 = ?", userID, userID).
 		Order("clm.date_time DESC").
-		Limit(20).
+		Limit(limit).
 		Find(&dmChannelMapping).
 		Error; err != nil {
 		return dmChannelMapping, err
