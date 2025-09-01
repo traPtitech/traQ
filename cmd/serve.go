@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	gormlogger "gorm.io/gorm/logger"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
@@ -57,7 +58,7 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.Logger = gormzap.New(logger.Named("gorm"))
+			engine.Logger = gormzap.New(logger.Named("gorm")).LogMode(gormlogger.Silent)
 			db, err := engine.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))

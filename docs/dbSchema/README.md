@@ -26,7 +26,7 @@
 | [oauth2_authorizes](oauth2_authorizes.md) | 11 | OAuth2認可リクエストテーブル | BASE TABLE |
 | [oauth2_clients](oauth2_clients.md) | 11 | OAuth2クライアントテーブル | BASE TABLE |
 | [oauth2_tokens](oauth2_tokens.md) | 11 | OAuth2トークンテーブル | BASE TABLE |
-| [ogp_cache](ogp_cache.md) | 6 | OGPキャッシュテーブルr | BASE TABLE |
+| [ogp_cache](ogp_cache.md) | 6 | OGPキャッシュテーブル | BASE TABLE |
 | [pins](pins.md) | 4 | ピンテーブル | BASE TABLE |
 | [r_sessions](r_sessions.md) | 5 | traQ API HTTPセッションテーブル | BASE TABLE |
 | [soundboard_items](soundboard_items.md) | 4 | サウンドボードアイテムテーブル | BASE TABLE |
