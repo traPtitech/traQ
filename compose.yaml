@@ -93,7 +93,7 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.25.0-alpine
+    image: golang:1.25.1-alpine
     restart: always
     volumes:
       - ./dev/bin:/app
