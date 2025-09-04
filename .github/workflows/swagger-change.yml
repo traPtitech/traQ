@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
       - name: Install spectral
         run: npm install --location=global @stoplight/spectral-cli
       - name: Run spectral
