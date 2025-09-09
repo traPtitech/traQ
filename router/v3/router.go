@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
@@ -94,7 +95,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100)))
 	{
 		apiUsers := api.Group("/users")
 		{
