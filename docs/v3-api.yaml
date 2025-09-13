@@ -4707,7 +4707,7 @@ components:
           nullable: true
         nonce:
           type: string
-          description: メッセージ送信の確認に使うことができる任意の識別子
+          description: メッセージ送信の確認に使うことができる任意の識別子(投稿でのみ使用可)
       required:
         - id
         - userId
