@@ -262,7 +262,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutMessageRequest"
+              $ref: "#/components/schemas/PostMessageRequest"
       tags:
         - message
       operationId: editMessage
@@ -4841,23 +4841,7 @@ components:
           description: メンション・チャンネルリンクを自動埋め込みするか
         nonce:
           type: string
-          description: メッセージ送信の確認に使うことができる任意の識別子
-      required:
-        - content
-    PutMessageRequest:
-      title: PutMessageRequest
-      type: object
-      description: メッセージ編集リクエスト
-      properties:
-        content:
-          type: string
-          description: メッセージ本文
-          minLength: 1
-          maxLength: 10000
-        embed:
-          type: boolean
-          default: false
-          description: メンション・チャンネルリンクを自動埋め込みするか
+          description: メッセージ送信の確認に使うことができる任意の識別子(投稿でのみ使用可)
       required:
         - content
     ChannelStats:
