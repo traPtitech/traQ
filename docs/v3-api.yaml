@@ -262,7 +262,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostMessageRequest"
+              $ref: "#/components/schemas/PutMessageRequest"
       tags:
         - message
       operationId: editMessage
@@ -4705,6 +4705,9 @@ components:
           format: uuid
           description: スレッドUUID
           nullable: true
+        nonce:
+          type: string
+          description: メッセージ送信の確認に使うことができる任意の識別子
       required:
         - id
         - userId
@@ -4826,6 +4829,25 @@ components:
       title: PostMessageRequest
       type: object
       description: メッセージ投稿リクエスト
+      properties:
+        content:
+          type: string
+          description: メッセージ本文
+          minLength: 1
+          maxLength: 10000
+        embed:
+          type: boolean
+          default: false
+          description: メンション・チャンネルリンクを自動埋め込みするか
+        nonce:
+          type: string
+          description: メッセージ送信の確認に使うことができる任意の識別子
+      required:
+        - content
+    PutMessageRequest:
+      title: PutMessageRequest
+      type: object
+      description: メッセージ編集リクエスト
       properties:
         content:
           type: string
