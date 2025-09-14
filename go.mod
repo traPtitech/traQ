@@ -1,6 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.24.2
+go 1.24.4
 
 toolchain go1.24.5
 
@@ -38,7 +38,7 @@ require (
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/lestrrat-go/jwx/v3 v3.0.10
+	github.com/lestrrat-go/jwx/v3 v3.0.11
 	github.com/livekit/protocol v1.41.0
 	github.com/livekit/server-sdk-go/v2 v2.11.3
 	github.com/lthibault/jitterbug/v2 v2.2.2
@@ -93,7 +93,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc/v3 v3.0.0 // indirect
+	github.com/lestrrat-go/httprc/v3 v3.0.1 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
