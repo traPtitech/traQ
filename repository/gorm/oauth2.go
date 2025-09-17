@@ -168,6 +168,18 @@ func (repo *Repository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
 	return ot, nil
 }
 
+// GetTokenByIDWithDeleted implements OAuth2Repository interface.
+func (repo *Repository) GetTokenByIDWithDeleted(id uuid.UUID) (*model.OAuth2Token, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	ot := &model.OAuth2Token{}
+	if err := repo.db.Unscoped().Take(ot, &model.OAuth2Token{ID: id}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return ot, nil
+}
+
 // DeleteTokenByID implements OAuth2Repository interface.
 func (repo *Repository) DeleteTokenByID(id uuid.UUID) error {
 	if id == uuid.Nil {
