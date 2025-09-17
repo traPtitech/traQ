@@ -418,3 +418,40 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
+
+// GetDMChannelList GET /users/me/dm-channel-list
+func (h *Handlers) GetDMChannelList(c echo.Context) error {
+	myID := getRequestUserID(c)
+	limitStr := c.QueryParam("limit")
+	if limitStr == "" {
+		limitStr = "20"
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		return herror.BadRequest("invalid limit")
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+
+	dmChannelMapping, err := h.Repo.GetDirectMessageChannelList(myID, limit)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	dmChannels := make([]DMChannel, 0, len(dmChannelMapping))
+	for _, mapping := range dmChannelMapping {
+		var targetUserID uuid.UUID
+		if mapping.User1 == myID {
+			targetUserID = mapping.User2
+		} else {
+			targetUserID = mapping.User1
+		}
+
+		dmChannels = append(dmChannels, DMChannel{
+			ID:     mapping.ChannelID,
+			UserID: targetUserID,
+		})
+	}
+	return c.JSON(http.StatusOK, dmChannels)
+}
