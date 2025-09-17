@@ -239,7 +239,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	// チャンネル閲覧者取得
 	for uid, swt := range ns.vm.GetChannelViewers(m.ChannelID) {
 		viewers.Add(uid)
-		if swt.State > viewer.StateNone {
+		if swt.State >= viewer.StateMonitoring {
 			markedUsers.Remove(uid)   // 閲覧中ユーザーは未読管理から外す
 			notifiedUsers.Remove(uid) // 閲覧中ユーザーは通知から外す
 		}
