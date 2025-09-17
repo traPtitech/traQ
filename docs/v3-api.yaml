@@ -6471,9 +6471,13 @@ components:
         accessToken:
           type: string
           description: BOTアクセストークン
+        accessTokenRevoked:
+          type: boolean
+          description: BOTアクセストークンが無効化されているかどうか
       required:
         - verificationToken
         - accessToken
+        - accessTokenRevoked
     BotDetail:
       title: BotDetail
       type: object
