@@ -3729,7 +3729,7 @@ paths:
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
       description: 指定されたWebhookが投稿したメッセージのリストを返します。
-  "/webhooks/:webhookID/messages/{messageId}":
+  "/webhooks/{webhookId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
       - $ref: "#/components/parameters/messageIdInPath"
