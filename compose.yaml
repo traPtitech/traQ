@@ -82,7 +82,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:5.3.0
+    image: adminer:5.4.0
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
@@ -93,7 +93,7 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.25.0-alpine
+    image: golang:1.25.1-alpine
     restart: always
     volumes:
       - ./dev/bin:/app

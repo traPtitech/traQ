@@ -2,7 +2,7 @@ SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go
 
 TEST_DB_PORT := 3100
 # renovate:image-tag imageName=ghcr.io/k1low/tbls
-TBLS_VERSION := "v1.87.0"
+TBLS_VERSION := "v1.88.0"
 # renovate:image-tag imageName=index.docker.io/stoplight/spectral
 SPECTRAL_VERSION := "6.15.1"
 

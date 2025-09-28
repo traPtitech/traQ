@@ -14,7 +14,7 @@ func healthcheckCommand() *cobra.Command {
 		Use:   "healthcheck",
 		Short: "Run healthcheck",
 		Run: func(_ *cobra.Command, _ []string) {
-			logger := getCLILogger()
+			logger, _ := getCLILoggers()
 			defer logger.Sync()
 
 			resp, err := http.DefaultClient.Get(fmt.Sprintf("http://localhost:%d/api/ping", c.Port))
