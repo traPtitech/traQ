@@ -62,7 +62,7 @@ require (
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9
 	golang.org/x/image v0.31.0
 	golang.org/x/net v0.45.0
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.17.0
 	google.golang.org/api v0.252.0
 	gopkg.in/yaml.v3 v3.0.1
