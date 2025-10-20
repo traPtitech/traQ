@@ -38,7 +38,7 @@ require (
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/lestrrat-go/jwx/v3 v3.0.11
+	github.com/lestrrat-go/jwx/v3 v3.0.12
 	github.com/livekit/protocol v1.42.1
 	github.com/livekit/server-sdk-go/v2 v2.11.3
 	github.com/lthibault/jitterbug/v2 v2.2.2
@@ -124,7 +124,7 @@ require (
 	github.com/pion/webrtc/v4 v4.1.5-0.20250828044558-c376d0edf977 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/redis/go-redis/v9 v9.12.1 // indirect
-	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
