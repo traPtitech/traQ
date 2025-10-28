@@ -39,7 +39,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.12
-	github.com/livekit/protocol v1.42.3-0.20251022084609-f19569a346e2
+	github.com/livekit/protocol v1.42.3-0.20251028133809-672acf9e6a48
 	github.com/livekit/server-sdk-go/v2 v2.12.2
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
@@ -99,7 +99,7 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
 	github.com/livekit/mediatransportutil v0.0.0-20250825135402-7bc31f107ade // indirect
-	github.com/livekit/psrpc v0.7.0 // indirect
+	github.com/livekit/psrpc v0.7.1-0.20251021235041-bdebea7dacf4 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/nats-io/nats.go v1.47.0 // indirect
