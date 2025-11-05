@@ -39,7 +39,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.12
-	github.com/livekit/protocol v1.42.3-0.20251104185919-971b960bbfd9
+	github.com/livekit/protocol v1.42.3-0.20251105115457-db57aec022af
 	github.com/livekit/server-sdk-go/v2 v2.12.7
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
