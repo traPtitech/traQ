@@ -2863,7 +2863,7 @@ paths:
         description: ユーザー名
         schema:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
     get:
       summary: ユーザーのアイコン画像を取得
       tags:
@@ -5256,7 +5256,7 @@ components:
           format: uuid
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
           description: ユーザー名
         displayName:
           type: string
@@ -5309,7 +5309,7 @@ components:
           maxLength: 32
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
           description: ユーザー名
         twitterId:
           type: string
@@ -5608,7 +5608,7 @@ components:
           pattern: "^[a-zA-Z0-9_]{1,15}$"
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
           description: ユーザー名
         displayName:
           type: string
@@ -5660,11 +5660,11 @@ components:
           format: uuid
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
           description: ユーザー名
         preferred_username:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
           description: ユーザー名
         picture:
           type: string
@@ -6148,7 +6148,7 @@ components:
         name:
           type: string
           description: ユーザー名
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^[#a-zA-Z0-9_-]{1,32}$"
         password:
           type: string
           description: パスワード
