@@ -554,6 +554,9 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/svg+xml:
+              schema:
+                type: string
         "403":
           description: Forbidden
         "404":
@@ -789,7 +792,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
         description: ""
       operationId: createStamp
       tags:
@@ -3927,6 +3930,9 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/svg+xml:
+              schema:
+                type: string
         "404":
           description: Not Found
       operationId: getStampImage
