@@ -50,7 +50,7 @@ func (h *Handler) TokenEndpointHandler(c echo.Context) error {
 	}
 }
 
-func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID) (string, error) {
+func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID, nonce string) (string, error) {
 	// Base claims
 	claims := jwt.MapClaims{
 		"iss": h.Origin,
@@ -58,6 +58,9 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 		"aud": client.ID,
 		"exp": token.Deadline().Unix(),
 		"iat": token.CreatedAt.Unix(),
+	}
+	if len(nonce) > 0 {
+		claims["nonce"] = nonce
 	}
 	// Extra claims according to scopes (profile)
 	userInfo, err := h.OIDC.GetUserInfo(userID, token.Scopes)
@@ -69,7 +72,7 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 	return jwt2.Sign(claims)
 }
 
-func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool) (*tokenResponse, error) {
+func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool, nonce string) (*tokenResponse, error) {
 	isOIDC := scopes.Contains("openid")
 	// OIDCの場合は、Refresh TokenのScopeの管理（主にoffline_access周り）が面倒なので、一律で発行しないことにする
 	refresh := h.IsRefreshEnabled && grantTypeRefreshAllowed && !isOIDC
@@ -89,7 +92,7 @@ func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scope
 		res.RefreshToken = token.RefreshToken
 	}
 	if scopes.Contains("openid") {
-		idToken, err := h.issueIDToken(client, token, userID)
+		idToken, err := h.issueIDToken(client, token, userID, nonce)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +175,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, code.UserID, code.Scopes, code.OriginalScopes, true)
+	res, err := h.issueToken(client, code.UserID, code.Scopes, code.OriginalScopes, true, code.Nonce)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -253,7 +256,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, user.GetID(), validScopes, reqScopes, true)
+	res, err := h.issueToken(client, user.GetID(), validScopes, reqScopes, true, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -311,7 +314,7 @@ func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, uuid.Nil, validScopes, reqScopes, false)
+	res, err := h.issueToken(client, uuid.Nil, validScopes, reqScopes, false, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -388,7 +391,7 @@ func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, token.UserID, newScopes, token.Scopes, true)
+	res, err := h.issueToken(client, token.UserID, newScopes, token.Scopes, true, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
