@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.92.0
 	github.com/blendle/zapdriver v1.3.1
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
-	github.com/coreos/go-oidc/v3 v3.16.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
