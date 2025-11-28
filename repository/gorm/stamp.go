@@ -352,6 +352,24 @@ func (r *stampRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []
 	return
 }
 
+// GetUserStampRecommendations implements StampRepository interface.
+func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit int) (recs []uuid.UUID, err error) {
+	recs = make([]uuid.UUID, 0)
+	if userID == uuid.Nil {
+		return
+	}
+
+	err = r.db.
+		Table("messages_stamps").
+		Where("user_id = ?", userID).
+		Group("stamp_id").
+		Order("SUM(1 / POWER(DATEDIFF(NOW(), updated_at) + 1, 1.5)) DESC").
+		Limit(limit).
+		Pluck("stamp_id", &recs).
+		Error
+	return
+}
+
 // GetStampStats implements StampRepository interface
 func (r *stampRepository) GetStampStats(stampID uuid.UUID) (*repository.StampStats, error) {
 	if stampID == uuid.Nil {

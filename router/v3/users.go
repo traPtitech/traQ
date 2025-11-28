@@ -294,6 +294,36 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	return c.JSON(http.StatusOK, history)
 }
 
+// GetMyStampRecommendationsRequest GET /users/me/stamp-recommendations リクエストクエリ
+type GetMyStampRecommendationsRequest struct {
+	Limit int `query:"limit"`
+}
+
+func (r *GetMyStampRecommendationsRequest) Validate() error {
+	if r.Limit == 0 {
+		r.Limit = 100
+	}
+	return vd.ValidateStruct(r,
+		vd.Field(&r.Limit, vd.Min(1), vd.Max(200)),
+	)
+}
+
+// GetMyStampRecommendations GET /users/me/stamp-recommendations
+func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
+	var req GetMyStampRecommendationsRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	userID := getRequestUserID(c)
+	recommendations, err := h.Repo.GetUserStampRecommendations(userID, req.Limit)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, recommendations)
+}
+
 // PostMyFCMDeviceRequest POST /users/me/fcm-device リクエストボディ
 type PostMyFCMDeviceRequest struct {
 	Token string `json:"token"`

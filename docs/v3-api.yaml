@@ -858,6 +858,35 @@ paths:
         結果は降順で返されます。
 
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
+  /users/me/stamp-recommendations:
+    get:
+      summary: スタンプレコメンドを取得
+      tags:
+        - stamp
+        - me
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                  description: スタンプUUID
+      operationId: getMyStampRecommendations
+      parameters:
+        - schema:
+            type: integer
+            default: 100
+            maximum: 200
+            minimum: 1
+          in: query
+          name: limit
+          description: 件数
+      description: |-
+        自分のスタンプレコメンドを最大200件まで取得します。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
