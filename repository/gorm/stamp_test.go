@@ -436,9 +436,9 @@ func TestRepositoryImpl_GetUserStampRecommendations(t *testing.T) {
 		t.Parallel()
 		ms, err := repo.GetUserStampRecommendations(user.GetID(), -1)
 		if assert.NoError(t, err) && assert.Len(t, ms, 3) {
-			assert.Equal(t, ms[0], stamp1.ID)
-			assert.Equal(t, ms[1], stamp2.ID)
-			assert.Equal(t, ms[2], stamp3.ID)
+			assert.Equal(t, stamp1.ID, ms[0].StampID)
+			assert.Equal(t, stamp2.ID, ms[1].StampID)
+			assert.Equal(t, stamp3.ID, ms[2].StampID)
 		}
 	})
 
@@ -446,7 +446,7 @@ func TestRepositoryImpl_GetUserStampRecommendations(t *testing.T) {
 		t.Parallel()
 		ms, err := repo.GetUserStampRecommendations(user.GetID(), 1)
 		if assert.NoError(t, err) && assert.Len(t, ms, 1) {
-			assert.Equal(t, ms[0], stamp1.ID)
+			assert.Equal(t, stamp1.ID, ms[0].StampID)
 		}
 	})
 }
