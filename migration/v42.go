@@ -7,7 +7,7 @@ import (
 
 // v42 get_my_stamp_recommendationsパーミッションの追加とmessages_stampsテーブルへの (user_id, updated_at) の複合インデックスの追加
 func v42() *gormigrate.Migration {
-	rolePermissions := map[string][]string{
+	addedRolePermissions := map[string][]string{
 		"user": {
 			"get_my_stamp_recommendations",
 		},
@@ -22,7 +22,7 @@ func v42() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "42",
 		Migrate: func(db *gorm.DB) error {
-			for role, perms := range rolePermissions {
+			for role, perms := range addedRolePermissions {
 				for _, perm := range perms {
 					if err := db.Create(&v42RolePermission{Role: role, Permission: perm}).Error; err != nil {
 						return err
@@ -32,7 +32,7 @@ func v42() *gormigrate.Migration {
 			return db.Exec("CREATE INDEX idx_messages_stamps_user_id_updated_at ON messages_stamps (user_id, updated_at)").Error
 		},
 		Rollback: func(db *gorm.DB) error {
-			for role, perms := range rolePermissions {
+			for role, perms := range addedRolePermissions {
 				for _, perm := range perms {
 					if err := db.Delete(&v42RolePermission{Role: role, Permission: perm}).Error; err != nil {
 						return err
