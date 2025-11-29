@@ -367,9 +367,6 @@ func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit in
 	// 最新のn件のみを対象に計算する (パフォーマンス対策)
 	const historyLimit = 10000
 
-	// パフォーマンスが問題になった場合は、
-	// messages_stampsテーブルに (user_id, updated_at) の複合インデックスを追加することで、
-	// 以下のサブクエリのFilesortを回避し高速化できます。
 	recentStamps := r.db.
 		Model(&model.MessageStamp{}).
 		Select("stamp_id, updated_at").
