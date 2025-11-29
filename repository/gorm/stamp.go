@@ -355,9 +355,9 @@ func (r *stampRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []
 // GetUserStampRecommendations implements StampRepository interface.
 //
 // スコアリングアルゴリズム:
-// 各スタンプの使用履歴に対して 1/(経過日数+1)^1.5 のスコアを計算し、合計値でランキングします。
+// 各スタンプの使用履歴に対して 1/(経過日数+1)^0.8 のスコアを計算し、合計値でランキングします。
 // これにより、使用頻度が高く、かつ直近で使用されたスタンプほど高いスコアを得ます。
-// 例: 今日使用 → 1.0, 1日前 → 0.35, 7日前 → 0.04
+// 例: 今日使用 → 1.0, 7日前 → 0.19, 30日前 → 0.07
 func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit int) (recs []uuid.UUID, err error) {
 	recs = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
@@ -382,7 +382,7 @@ func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit in
 		Group("stamp_id").
 		Joins("LEFT JOIN stamps ON stamps.id = recent_stamps.stamp_id").
 		Where("stamps.id IS NOT NULL").
-		Order("SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), recent_stamps.updated_at), 0) + 1, 1.5)) DESC").
+		Order("SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), recent_stamps.updated_at), 0) + 1, 0.8)) DESC").
 		Limit(limit).
 		Pluck("stamp_id", &recs).
 		Error
