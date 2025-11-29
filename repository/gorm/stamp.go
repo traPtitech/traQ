@@ -353,6 +353,11 @@ func (r *stampRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []
 }
 
 // GetUserStampRecommendations implements StampRepository interface.
+//
+// スコアリングアルゴリズム:
+// 各スタンプの使用履歴に対して 1/(経過日数+1)^1.5 のスコアを計算し、合計値でランキングします。
+// これにより、使用頻度が高く、かつ直近で使用されたスタンプほど高いスコアを得ます。
+// 例: 今日使用 → 1.0, 1日前 → 0.35, 7日前 → 0.04
 func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit int) (recs []uuid.UUID, err error) {
 	recs = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
