@@ -296,12 +296,12 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 
 // GetMyStampRecommendationsRequest GET /users/me/stamp-recommendations リクエストクエリ
 type GetMyStampRecommendationsRequest struct {
-	Limit int `query:"limit"`
+	Limit *int `query:"limit"`
 }
 
 func (r *GetMyStampRecommendationsRequest) Validate() error {
-	if r.Limit == 0 {
-		r.Limit = 100
+	if r.Limit == nil {
+		r.Limit = lo.ToPtr(100)
 	}
 	return vd.ValidateStruct(r,
 		vd.Field(&r.Limit, vd.Min(1), vd.Max(200)),
@@ -316,7 +316,7 @@ func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	recommendations, err := h.Repo.GetUserStampRecommendations(userID, req.Limit)
+	recommendations, err := h.Repo.GetUserStampRecommendations(userID, *req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
