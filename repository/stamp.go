@@ -105,7 +105,7 @@ type StampRepository interface {
 	// GetUserStampRecommendations 指定したユーザーのスタンプレコメンドを最大limit件取得します
 	//
 	// limitに負の値を指定した場合、全て取得します。
-	// 成功した場合、降順のスタンプレコメンドの配列とnilを返します。
+	// 成功した場合、レコメンドスコアの高い順で並んだスタンプIDの配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserStampRecommendations(userID uuid.UUID, limit int) (h []uuid.UUID, err error)

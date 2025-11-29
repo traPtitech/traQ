@@ -887,6 +887,7 @@ paths:
           description: 件数
       description: |-
         自分のスタンプレコメンドを最大200件まで取得します。
+        結果は推薦度の高い順で返されます。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
