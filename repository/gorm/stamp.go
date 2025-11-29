@@ -375,7 +375,9 @@ func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit in
 	err = r.db.
 		Table("(?) AS recent_stamps", recentStamps).
 		Group("stamp_id").
-		Order("SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), updated_at), 0) + 1, 1.5)) DESC").
+		Joins("LEFT JOIN stamps ON stamps.id = recent_stamps.stamp_id").
+		Where("stamps.id IS NOT NULL").
+		Order("SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), recent_stamps.updated_at), 0) + 1, 1.5)) DESC").
 		Limit(limit).
 		Pluck("stamp_id", &recs).
 		Error
