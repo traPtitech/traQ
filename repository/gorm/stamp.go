@@ -359,11 +359,23 @@ func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit in
 		return
 	}
 
-	err = r.db.
-		Table("messages_stamps").
+	// 最新のn件のみを対象に計算する (パフォーマンス対策)
+	const historyLimit = 10000
+
+	// パフォーマンスが問題になった場合は、
+	// messages_stampsテーブルに (user_id, updated_at) の複合インデックスを追加することで、
+	// 以下のサブクエリのFilesortを回避し高速化できます。
+	recentStamps := r.db.
+		Model(&model.MessageStamp{}).
+		Select("stamp_id, updated_at").
 		Where("user_id = ?", userID).
+		Order("updated_at DESC").
+		Limit(historyLimit)
+
+	err = r.db.
+		Table("(?) AS recent_stamps", recentStamps).
 		Group("stamp_id").
-		Order("SUM(1 / POWER(DATEDIFF(NOW(), updated_at) + 1, 1.5)) DESC").
+		Order("SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), updated_at), 0) + 1, 1.5)) DESC").
 		Limit(limit).
 		Pluck("stamp_id", &recs).
 		Error
