@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
@@ -398,6 +399,54 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 		ms, err := repo.GetUserStampHistory(user.GetID(), 1)
 		if assert.NoError(t, err) && assert.Len(t, ms, 1) {
 			assert.Equal(t, ms[0].StampID, stamp2.ID)
+		}
+	})
+}
+
+func TestRepositoryImpl_GetUserStampRecommendations(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2, false)
+
+	message1 := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	message2 := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp2 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp3 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	mustAddMessageStamp(t, repo, message1.ID, stamp3.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message1.ID, stamp2.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message1.ID, stamp1.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message2.ID, stamp1.ID, user.GetID())
+
+	repoImpl := repo.(*Repository)
+	repoImpl.db.Model(&model.MessageStamp{}).
+		Where(
+			"message_id = ? AND stamp_id = ? AND user_id = ?",
+			message1.ID, stamp3.ID, user.GetID()).
+		Update("updated_at", time.Now().AddDate(0, 0, -1))
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampRecommendations(uuid.Nil, 0)
+		if assert.NoError(t, err) {
+			assert.Empty(t, ms)
+		}
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampRecommendations(user.GetID(), -1)
+		if assert.NoError(t, err) && assert.Len(t, ms, 3) {
+			assert.Equal(t, ms[0], stamp1.ID)
+			assert.Equal(t, ms[1], stamp2.ID)
+			assert.Equal(t, ms[2], stamp3.ID)
+		}
+	})
+
+	t.Run("Success (Limit 1)", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampRecommendations(user.GetID(), 1)
+		if assert.NoError(t, err) && assert.Len(t, ms, 1) {
+			assert.Equal(t, ms[0], stamp1.ID)
 		}
 	})
 }

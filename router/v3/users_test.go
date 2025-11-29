@@ -611,6 +611,52 @@ func TestHandlers_GetMyStampHistory(t *testing.T) {
 	})
 }
 
+func TestHandlers_GetMyStampRecommendations(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/users/me/stamp-recommendations"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	stamp := env.CreateStamp(t, user.GetID(), rand)
+	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			WithCookie(session.CookieName, s).
+			WithQuery("limit", 500).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+
+		obj.Value(0).String().IsEqual(stamp.ID.String())
+	})
+}
+
 func TestPostMyFCMDeviceRequest_Validate(t *testing.T) {
 	t.Parallel()
 

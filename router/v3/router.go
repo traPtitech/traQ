@@ -131,6 +131,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.PATCH("", h.EditMe, requires(permission.EditMe))
 				apiUsersMe.GET("/oidc", h.GetMeOIDC, requires(permission.GetOIDCUserInfo))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
+				apiUsersMe.GET("/stamp-recommendations", h.GetMyStampRecommendations, requires(permission.GetMyStampRecommendations))
 				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode), blockBot)
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
 				apiUsersMe.PUT("/icon", h.ChangeMyIcon, requires(permission.ChangeMyIcon))
