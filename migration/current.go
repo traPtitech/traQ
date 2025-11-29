@@ -52,6 +52,7 @@ func Migrations() []*gormigrate.Migration {
 		v39(), // OAuth Client Credentials Grantの対応のため、clientロールを追加
 		v40(), // delete_my_stampパーミッションを削除
 		v41(), // ユーザーグループ名受付規則変更に伴う既存ユーザーグループ名の更新
+		v42(), // messages_stampsテーブルへの (user_id, updated_at) の複合インデックスの追加
 	}
 }
 
