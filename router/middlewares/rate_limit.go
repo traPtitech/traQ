@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/traPtitech/traQ/model"
@@ -9,9 +11,13 @@ import (
 )
 
 // RateLimit 各ユーザーについて、すべてのエンドポイントでのリクエスト数を制限するミドルウェア
-func RateLimit(limit rate.Limit) echo.MiddlewareFunc {
+func RateLimit(limit rate.Limit, burst int, expiresIn time.Duration) echo.MiddlewareFunc {
 	return middleware.RateLimiterWithConfig(middleware.RateLimiterConfig{
-		Store: middleware.NewRateLimiterMemoryStore(limit),
+		Store: middleware.NewRateLimiterMemoryStoreWithConfig(middleware.RateLimiterMemoryStoreConfig{
+			Rate:      limit,
+			Burst:     burst,
+			ExpiresIn: expiresIn,
+		}),
 		IdentifierExtractor: func(ctx echo.Context) (string, error) {
 			user := ctx.Get(consts.KeyUser).(model.UserInfo)
 			ip := ctx.RealIP()

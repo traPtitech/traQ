@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
@@ -95,7 +97,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100)))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
 	{
 		apiUsers := api.Group("/users")
 		{
