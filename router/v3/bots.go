@@ -114,14 +114,9 @@ func (h *Handlers) GetBot(c echo.Context) error {
 			return herror.Forbidden()
 		}
 
-		t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+		t, err := h.Repo.GetTokenByIDWithDeleted(b.AccessTokenID)
 		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				return herror.HTTPError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
-			default:
-				return herror.InternalServerError(err)
-			}
+			return herror.InternalServerError(err)
 		}
 
 		ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
