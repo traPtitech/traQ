@@ -368,7 +368,7 @@ func (r *stampRepository) GetUserStampRecommendations(userID uuid.UUID, limit in
 	const historyLimit = 10000
 
 	recentStamps := r.db.
-		Model(&model.MessageStamp{}).
+		Table("messages_stamps USE INDEX (idx_messages_stamps_user_id_updated_at_stamp_id)").
 		Select("stamp_id, updated_at").
 		Where("user_id = ?", userID).
 		Order("updated_at DESC").
