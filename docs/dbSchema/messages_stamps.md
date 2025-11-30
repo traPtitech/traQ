@@ -18,7 +18,7 @@ CREATE TABLE `messages_stamps` (
   PRIMARY KEY (`message_id`,`stamp_id`,`user_id`),
   KEY `idx_messages_stamps_message_id` (`message_id`),
   KEY `idx_messages_stamps_user_id_stamp_id_updated_at` (`user_id`,`stamp_id`,`updated_at`),
-  KEY `idx_messages_stamps_user_id_updated_at` (`user_id`,`updated_at`),
+  KEY `idx_messages_stamps_user_id_updated_at_stamp_id` (`user_id`,`updated_at`,`stamp_id`),
   KEY `idx_messages_stamps_updated_at` (`updated_at`),
   KEY `messages_stamps_stamp_id_stamps_id_foreign` (`stamp_id`),
   CONSTRAINT `messages_stamps_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -56,7 +56,7 @@ CREATE TABLE `messages_stamps` (
 | idx_messages_stamps_message_id | KEY idx_messages_stamps_message_id (message_id) USING BTREE |
 | idx_messages_stamps_updated_at | KEY idx_messages_stamps_updated_at (updated_at) USING BTREE |
 | idx_messages_stamps_user_id_stamp_id_updated_at | KEY idx_messages_stamps_user_id_stamp_id_updated_at (user_id, stamp_id, updated_at) USING BTREE |
-| idx_messages_stamps_user_id_updated_at | KEY idx_messages_stamps_user_id_updated_at (user_id, updated_at) USING BTREE |
+| idx_messages_stamps_user_id_updated_at_stamp_id | KEY idx_messages_stamps_user_id_updated_at_stamp_id (user_id, updated_at, stamp_id) USING BTREE |
 | messages_stamps_stamp_id_stamps_id_foreign | KEY messages_stamps_stamp_id_stamps_id_foreign (stamp_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (message_id, stamp_id, user_id) USING BTREE |
 
