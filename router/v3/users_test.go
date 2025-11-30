@@ -653,7 +653,8 @@ func TestHandlers_GetMyStampRecommendations(t *testing.T) {
 
 		obj.Length().IsEqual(1)
 
-		obj.Value(0).String().IsEqual(stamp.ID.String())
+		obj.Value(0).Object().Value("stampId").String().IsEqual(stamp.ID.String())
+		obj.Value(0).Object().Value("score").Number()
 	})
 }
 
