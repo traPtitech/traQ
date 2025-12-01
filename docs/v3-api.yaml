@@ -7536,6 +7536,7 @@ components:
         - add_message_stamp
         - remove_message_stamp
         - get_my_stamp_history
+        - get_my_stamp_recommendations
         - get_stamp_palette
         - create_stamp_palette
         - edit_stamp_palette
@@ -7620,6 +7621,7 @@ components:
         - AddMessageStamp
         - RemoveMessageStamp
         - GetMyStampHistory
+        - GetMyStampRecommendations
         - GetStampPalette
         - CreateStampPalette
         - EditStampPalette
