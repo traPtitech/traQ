@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.25.4 AS build
+FROM --platform=$BUILDPLATFORM golang:1.25.5 AS build
 
 RUN mkdir /storage
 
