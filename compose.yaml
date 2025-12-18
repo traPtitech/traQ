@@ -43,7 +43,7 @@ services:
       - backend
 
   mysql:
-    image: mariadb:10.11.15
+    image: mariadb:12.1.2
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
