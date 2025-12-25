@@ -84,6 +84,12 @@ type OAuth2Repository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error)
+	// GetTokenByIDWithDeleted 指定したIDのトークンを論理削除されたものも含めて取得します
+	//
+	// 成功した場合、トークンとnilを返します。
+	// 存在しなかった場合、ErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	GetTokenByIDWithDeleted(id uuid.UUID) (*model.OAuth2Token, error)
 	// DeleteTokenByID 指定したIDのトークンを削除します
 	//
 	// 成功した、或いは既に存在しない場合、nilを返します。
