@@ -357,6 +357,24 @@ func TestHandlers_GetBot(t *testing.T) {
 		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
 	})
+
+	t.Run("success (detail=true, revoked=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		err := env.Repository.DeleteTokenByID(bot1.AccessTokenID)
+		require.NoError(t, err)
+
+		obj := e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("detail", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		botEquals(t, bot1, obj)
+		obj.Value("tokens").Object().Value("accessTokenRevoked").Boolean().IsTrue()
+	})
 }
 
 func TestHandlers_EditBot(t *testing.T) {

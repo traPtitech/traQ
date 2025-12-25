@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 )
 
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
@@ -47,6 +48,9 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 			Expect().
 			Status(http.StatusOK)
 
+		_, err = env.Repository.GetTokenByID(token.ID)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+
 		d, err := env.Repository.GetTokenByIDWithDeleted(token.ID)
 		assert.NoError(t, err)
 		assert.True(t, d.DeletedAt.Valid)
@@ -62,6 +66,9 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 			WithFormField("token", token.RefreshToken).
 			Expect().
 			Status(http.StatusOK)
+
+		_, err = env.Repository.GetTokenByID(token.ID)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
 
 		d, err := env.Repository.GetTokenByIDWithDeleted(token.ID)
 		assert.NoError(t, err)
