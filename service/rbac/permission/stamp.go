@@ -19,6 +19,8 @@ const (
 	RemoveMessageStamp = Permission("remove_message_stamp")
 	// GetMyStampHistory 自分のスタンプ履歴取得権限
 	GetMyStampHistory = Permission("get_my_stamp_history")
+	// GetMyStampRecommendations 自分のスタンプレコメンド取得権限
+	GetMyStampRecommendations = Permission("get_my_stamp_recommendations")
 
 	// GetStampPalette スタンプパレット取得権限
 	GetStampPalette = Permission("get_stamp_palette")

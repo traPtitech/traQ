@@ -554,6 +554,9 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/svg+xml:
+              schema:
+                type: string
         "403":
           description: Forbidden
         "404":
@@ -789,7 +792,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
         description: ""
       operationId: createStamp
       tags:
@@ -855,6 +858,47 @@ paths:
         結果は降順で返されます。
 
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
+  /users/me/stamp-recommendations:
+    get:
+      summary: スタンプレコメンドを取得
+      tags:
+        - stamp
+        - me
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    stampId:
+                      type: string
+                      format: uuid
+                      description: スタンプUUID
+                    score:
+                      type: number
+                      format: double
+                      description: レコメンドスコア
+                  required:
+                    - stampId
+                    - score
+      operationId: getMyStampRecommendations
+      parameters:
+        - schema:
+            type: integer
+            default: 100
+            maximum: 200
+            minimum: 1
+          in: query
+          name: limit
+          description: 件数
+      description: |-
+        自分のスタンプレコメンドを最大200件まで取得します。
+        結果は推薦度の高い順で返されます。
+        スタンプを使用したことがないユーザーの場合は空配列が返されます。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
@@ -2860,7 +2904,7 @@ paths:
         description: ユーザー名
         schema:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
     get:
       summary: ユーザーのアイコン画像を取得
       tags:
@@ -3927,6 +3971,9 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/svg+xml:
+              schema:
+                type: string
         "404":
           description: Not Found
       operationId: getStampImage
@@ -4974,10 +5021,12 @@ components:
       title: ChannelViewState
       enum:
         - none
+        - stale_viewing
         - monitoring
         - editing
       x-enum-descriptions:
-        - バックグランド表示中
+        - バックグラウンド表示中
+        - 古いメッセージを表示中
         - メッセージ表示中
         - メッセージ入力中
       description: 閲覧状態
@@ -5248,7 +5297,7 @@ components:
           format: uuid
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
           description: ユーザー名
         displayName:
           type: string
@@ -5301,7 +5350,7 @@ components:
           maxLength: 32
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
           description: ユーザー名
         twitterId:
           type: string
@@ -5600,7 +5649,7 @@ components:
           pattern: "^[a-zA-Z0-9_]{1,15}$"
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
           description: ユーザー名
         displayName:
           type: string
@@ -5652,11 +5701,11 @@ components:
           format: uuid
         name:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
           description: ユーザー名
         preferred_username:
           type: string
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
           description: ユーザー名
         picture:
           type: string
@@ -5922,7 +5971,7 @@ components:
         file:
           type: string
           format: binary
-          description: 'アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)'
+          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
       required:
         - file
     PutMyPasswordRequest:
@@ -6140,7 +6189,7 @@ components:
         name:
           type: string
           description: ユーザー名
-          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
         password:
           type: string
           description: パスワード
@@ -7491,6 +7540,7 @@ components:
         - add_message_stamp
         - remove_message_stamp
         - get_my_stamp_history
+        - get_my_stamp_recommendations
         - get_stamp_palette
         - create_stamp_palette
         - edit_stamp_palette
@@ -7575,6 +7625,7 @@ components:
         - AddMessageStamp
         - RemoveMessageStamp
         - GetMyStampHistory
+        - GetMyStampRecommendations
         - GetStampPalette
         - CreateStampPalette
         - EditStampPalette

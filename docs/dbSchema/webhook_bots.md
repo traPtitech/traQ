@@ -20,8 +20,8 @@ CREATE TABLE `webhook_bots` (
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uni_webhook_bots_bot_user_id` (`bot_user_id`),
-  KEY `webhook_bots_channel_id_channels_id_foreign` (`channel_id`),
   KEY `webhook_bots_creator_id_users_id_foreign` (`creator_id`),
+  KEY `webhook_bots_channel_id_channels_id_foreign` (`channel_id`),
   CONSTRAINT `webhook_bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `webhook_bots_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `webhook_bots_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE

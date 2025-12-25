@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
       - name: Install spectral
         run: npm install --location=global @stoplight/spectral-cli
       - name: Run spectral
