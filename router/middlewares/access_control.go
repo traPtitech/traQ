@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
-	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -157,25 +156,6 @@ func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 			// アクセス権確認
 			if !rbac.IsGranted(user.GetRole(), permission.ManageOthersClient) && oc.CreatorID != user.GetID() {
 				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// CheckMessageAccessPerm Messageアクセス権限を確認するミドルウェア
-func CheckMessageAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-			channelID := c.Get(consts.KeyParamMessage).(message.Message).GetChannelID()
-
-			// アクセス権確認
-			if ok, err := cm.IsChannelAccessibleToUser(userID, channelID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.NotFound()
 			}
 
 			return next(c)
