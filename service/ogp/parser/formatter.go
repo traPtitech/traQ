@@ -1,13 +1,16 @@
 package parser
 
 import (
+	"context"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/dyatlov/go-opengraph/opengraph/types/image"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -75,11 +78,30 @@ func toOgpMedia(image *image.Image) model.OgpMedia {
 	if len(image.Type) > 0 {
 		result.Type = optional.From(image.Type)
 	}
-	if image.Width > 0 {
-		result.Width = optional.From(int(image.Width))
+
+	url := image.SecureURL
+	if len(url) == 0 {
+		url = image.URL
 	}
-	if image.Height > 0 {
-		result.Height = optional.From(int(image.Height))
+
+	// Width / Height が未設定の場合は実画像からサイズを取得して fallback する
+	width := image.Width
+	height := image.Height
+	if width == 0 && height == 0 && len(url) > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if w, h, err := imaging.FetchImageSize(ctx, &client, url); err == nil {
+			width = uint64(w)
+			height = uint64(h)
+		}
+	}
+
+	if width > 0 {
+		result.Width = optional.From(int(width))
+	}
+	if height > 0 {
+		result.Height = optional.From(int(height))
 	}
 
 	return result
