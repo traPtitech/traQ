@@ -140,7 +140,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	client := http.Client{
 		Timeout:   5 * time.Second,
 		Transport: transport,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
 			// Validate redirect destination to prevent SSRF via redirects
 			if err := validateURL(req.URL); err != nil {
 				return err
