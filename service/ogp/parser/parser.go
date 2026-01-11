@@ -47,10 +47,6 @@ func isPrivateIP(ip net.IP) bool {
 	if ip.IsMulticast() {
 		return true
 	}
-	// EC2メタデータサービス (169.254.169.254)
-	if ip.Equal(net.ParseIP("169.254.169.254")) {
-		return true
-	}
 	return false
 }
 
