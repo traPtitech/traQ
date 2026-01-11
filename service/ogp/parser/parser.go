@@ -54,19 +54,19 @@ func isPrivateIP(ip net.IP) bool {
 func validateURL(u *url.URL) error {
 	// スキームの検証
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return ErrSSRF
+		return ErrNotAllowed
 	}
 
 	// ホスト名を取得
 	host := u.Hostname()
 	if host == "" {
-		return ErrSSRF
+		return ErrNotAllowed
 	}
 
 	// IPアドレスの場合は直接検証
 	if ip := net.ParseIP(host); ip != nil {
 		if isPrivateIP(ip) {
-			return ErrSSRF
+			return ErrNotAllowed
 		}
 		return nil
 	}
@@ -79,7 +79,7 @@ func validateURL(u *url.URL) error {
 
 	for _, ip := range ips {
 		if isPrivateIP(ip) {
-			return ErrSSRF
+			return ErrNotAllowed
 		}
 	}
 
@@ -120,7 +120,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 			for _, ip := range ips {
 				if isPrivateIP(ip) {
-					return nil, ErrSSRF
+					return nil, ErrNotAllowed
 				}
 			}
 

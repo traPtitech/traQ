@@ -15,6 +15,6 @@ var (
 	ErrServer = errors.New("network error (server)")
 	// ErrDomainRequest 特殊処理を行うドメインのURLが期待した形式ではありませんでした
 	ErrDomainRequest = errors.New("bad request for special domain ")
-	// ErrSSRF はSSRF攻撃の可能性がある場合に返されるエラーです
-	ErrSSRF = errors.New("SSRF detected: access to internal network is not allowed")
+	// ErrNotAllowed URLが許可されていません
+	ErrNotAllowed = errors.New("access to this URL is not allowed")
 )
