@@ -50,40 +50,40 @@ func isPrivateIP(ip net.IP) bool {
 	return false
 }
 
-// validateURL はURLがSSRFに対して安全かどうかを検証します
-func validateURL(u *url.URL) error {
+// validateURL はURLがSSRFに対して安全かどうかを検証し、検証済みのIPアドレスを返します
+func validateURL(u *url.URL) ([]net.IP, error) {
 	// スキームの検証
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return ErrNotAllowed
+		return nil, ErrNotAllowed
 	}
 
 	// ホスト名を取得
 	host := u.Hostname()
 	if host == "" {
-		return ErrNotAllowed
+		return nil, ErrNotAllowed
 	}
 
 	// IPアドレスの場合は直接検証
 	if ip := net.ParseIP(host); ip != nil {
 		if isPrivateIP(ip) {
-			return ErrNotAllowed
+			return nil, ErrNotAllowed
 		}
-		return nil
+		return []net.IP{ip}, nil
 	}
 
 	// ホスト名の場合はDNS解決して検証
 	ips, err := net.LookupIP(host)
 	if err != nil {
-		return ErrNetwork
+		return nil, ErrNetwork
 	}
 
 	for _, ip := range ips {
 		if isPrivateIP(ip) {
-			return ErrNotAllowed
+			return nil, ErrNotAllowed
 		}
 	}
 
-	return nil
+	return ips, nil
 }
 
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
@@ -91,8 +91,9 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	_ = requestLimiter.Acquire(context.Background(), 1)
 	defer requestLimiter.Release(1)
 
-	// SSRF対策: URLを検証
-	if err := validateURL(url); err != nil {
+	// SSRF対策: URLを検証し、検証済みIPアドレスを取得
+	resolvedIPs, err := validateURL(url)
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -101,34 +102,19 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return og, meta, nil
 	}
 
-	// SSRF対策: DNSリバインディング攻撃を防ぐため、解決されたIPアドレスを使用してリクエストを送信
+	// SSRF対策: 検証済みのIPアドレスを使用してリクエストを送信
 	dialer := &net.Dialer{
 		Timeout: 5 * time.Second,
 	}
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, port, err := net.SplitHostPort(addr)
+			_, port, err := net.SplitHostPort(addr)
 			if err != nil {
 				return nil, err
-			}
-
-			// IPアドレスを再度解決して検証
-			ips, err := net.LookupIP(host)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, ip := range ips {
-				if isPrivateIP(ip) {
-					return nil, ErrNotAllowed
-				}
 			}
 
 			// 検証済みのIPアドレスに接続
-			if len(ips) > 0 {
-				addr = net.JoinHostPort(ips[0].String(), port)
-			}
-
+			addr = net.JoinHostPort(resolvedIPs[0].String(), port)
 			return dialer.DialContext(ctx, network, addr)
 		},
 	}
@@ -138,10 +124,8 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
 			// Validate redirect destination to prevent SSRF via redirects
-			if err := validateURL(req.URL); err != nil {
-				return err
-			}
-			return nil
+			_, err := validateURL(req.URL)
+			return err
 		},
 	}
 
