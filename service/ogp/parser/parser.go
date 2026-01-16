@@ -2,10 +2,12 @@ package parser
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
@@ -60,82 +62,36 @@ func isPrivateIP(ip net.IP) bool {
 	return false
 }
 
-// validateURL はURLがSSRFに対して安全かどうかを検証し、検証済みのIPアドレスを返します
-func validateURL(u *url.URL) ([]net.IP, error) {
-	// スキームの検証
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, ErrNotAllowed
-	}
-
-	// ホスト名を取得
-	host := u.Hostname()
-	if host == "" {
-		return nil, ErrNotAllowed
-	}
-
-	// IPアドレスの場合は直接検証
-	if ip := net.ParseIP(host); ip != nil {
-		if isPrivateIP(ip) {
-			return nil, ErrNotAllowed
-		}
-		return []net.IP{ip}, nil
-	}
-
-	// ホスト名の場合はDNS解決して検証
-	ips, err := net.LookupIP(host)
-	if err != nil {
-		return nil, ErrNetwork
-	}
-
-	for _, ip := range ips {
-		if isPrivateIP(ip) {
-			return nil, ErrNotAllowed
-		}
-	}
-
-	return ips, nil
-}
-
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	_ = requestLimiter.Acquire(context.Background(), 1)
 	defer requestLimiter.Release(1)
-
-	// SSRF対策: URLを検証し、検証済みIPアドレスを取得
-	resolvedIPs, err := validateURL(url)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	og, meta, isSpecialDomain, err := FetchSpecialDomainInfo(url)
 	if isSpecialDomain && (err == nil) {
 		return og, meta, nil
 	}
 
-	// SSRF対策: 検証済みのIPアドレスを使用してリクエストを送信
+	// SSRF対策: DNS解決後のIPアドレスを検証してプライベートIPへのアクセスをブロック
 	dialer := &net.Dialer{
 		Timeout: 5 * time.Second,
-	}
-	transport := &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			_, port, err := net.SplitHostPort(addr)
+		Control: func(_, address string, _ syscall.RawConn) error {
+			host, _, err := net.SplitHostPort(address)
 			if err != nil {
-				return nil, err
+				return err
 			}
-
-			// 検証済みのIPアドレスに接続
-			addr = net.JoinHostPort(resolvedIPs[0].String(), port)
-			return dialer.DialContext(ctx, network, addr)
+			ip := net.ParseIP(host)
+			if isPrivateIP(ip) {
+				logger.Info("blocked request to private IP", zap.String("url", url.String()), zap.String("ip", host))
+				return errors.New("private IP address is not allowed")
+			}
+			return nil
 		},
 	}
-
 	client := http.Client{
-		Timeout:   5 * time.Second,
-		Transport: transport,
-		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
-			// Validate redirect destination to prevent SSRF via redirects
-			_, err := validateURL(req.URL)
-			return err
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			DialContext: dialer.DialContext,
 		},
 	}
 
