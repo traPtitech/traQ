@@ -542,6 +542,138 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 	})
 }
 
+func TestHandlers_EditWebhookMessage(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/webhooks/{webhookId}/messages/{messageId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	archived := env.CreateChannel(t, rand)
+	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
+	wh2 := env.CreateWebhook(t, rand, user2.GetID(), ch.ID)
+	archivedMessage := env.CreateMessage(t, wh.GetBotUserID(), archived.ID, "archived")
+	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	m := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
+
+	calcHMACSHA1 := func(t *testing.T, message, secret string) string {
+		t.Helper()
+		mac := hmac.New(sha1.New, []byte(secret))
+		_, _ = mac.Write([]byte(message))
+		return hex.EncodeToString(mac.Sum(nil))
+	}
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "updated", wh.GetSecret())).
+			WithQuery("embed", 1).
+			WithText("updated").
+			Expect().
+			Status(http.StatusNoContent)
+
+		tl, err := env.MM.GetTimeline(message.TimelineQuery{Channel: ch.ID})
+		require.NoError(t, err)
+		if assert.Len(t, tl.Records(), 1) {
+			got := tl.Records()[0]
+			assert.EqualValues(t, wh.GetBotUserID(), got.GetUserID())
+			assert.EqualValues(t, "updated", got.GetText())
+		}
+	})
+
+	t.Run("bad request (empty body)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
+			WithText("").
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (no signature)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), m.GetID()).
+			WithText("updated").
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (bad signature)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "test", wh.GetSecret())).
+			WithText("testTestTest").
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (archived)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), archivedMessage.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "xxpoxx", wh.GetSecret())).
+			WithText("xxpoxx").
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("webhook not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, uuid.Must(uuid.NewV7()), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "updated", wh.GetSecret())).
+			WithText("updated").
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("message not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), uuid.Must(uuid.NewV7())).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "updated", wh.GetSecret())).
+			WithText("updated").
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("message and webhook not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7())).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "updated", wh.GetSecret())).
+			WithText("updated").
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("unsupported media type", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "xxpoxx", wh.GetSecret())).
+			WithJSON(map[string]interface{}{"text": "xxpoxx"}).
+			Expect().
+			Status(http.StatusUnsupportedMediaType)
+	})
+
+	t.Run("forbidden (not message owner)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh2.GetID(), m.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "updated", wh2.GetSecret())).
+			WithText("updated").
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+}
+
 func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/webhooks/{webhookId}/messages/{messageId}"
