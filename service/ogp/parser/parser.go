@@ -123,9 +123,17 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 				return nil, err
 			}
 
-			// 検証済みのIPアドレスに接続
-			addr = net.JoinHostPort(resolvedIPs[0].String(), port)
-			return dialer.DialContext(ctx, network, addr)
+			// 検証済みのIPアドレスに順番に接続を試みる
+			var lastErr error
+			for _, ip := range resolvedIPs {
+				targetAddr := net.JoinHostPort(ip.String(), port)
+				conn, err := dialer.DialContext(ctx, network, targetAddr)
+				if err == nil {
+					return conn, nil
+				}
+				lastErr = err
+			}
+			return nil, lastErr
 		},
 	}
 
