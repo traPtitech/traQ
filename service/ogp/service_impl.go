@@ -35,9 +35,6 @@ type ServiceImpl struct {
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
-	// parserパッケージにloggerを設定
-	parser.SetLogger(logger)
-
 	s := &ServiceImpl{
 		repo:   repo,
 		logger: logger,
