@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
-	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/sync/semaphore"
@@ -23,15 +22,6 @@ var requestLimiter = semaphore.NewWeighted(concurrentRequestLimit)
 
 type DefaultPageMeta struct {
 	Title, Description, URL, Image string
-}
-
-var logger = zap.NewNop()
-
-// SetLogger パッケージで使用するloggerを設定します
-func SetLogger(l *zap.Logger) {
-	if l != nil {
-		logger = l
-	}
 }
 
 // isPrivateIP はIPアドレスがプライベート、ループバック、リンクローカル、またはその他の内部アドレスかどうかを判定します
@@ -82,7 +72,6 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 			}
 			ip := net.ParseIP(host)
 			if isPrivateIP(ip) {
-				logger.Info("blocked request to private IP", zap.String("url", url.String()), zap.String("ip", host))
 				return errors.New("private IP address is not allowed")
 			}
 			return nil
@@ -97,7 +86,6 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
-		logger.Info("failed to create HTTP request", zap.String("url", url.String()), zap.Error(err))
 		return nil, nil, ErrNetwork
 	}
 
@@ -105,7 +93,6 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Info("failed to perform HTTP request", zap.String("url", url.String()), zap.Error(err))
 		return nil, nil, ErrNetwork
 	}
 
