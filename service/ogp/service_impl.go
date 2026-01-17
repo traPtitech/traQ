@@ -123,7 +123,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	if err != nil {
 		s.logger.Info("failed to fetch OGP meta", zap.String("url", urlStr), zap.Error(err))
 		switch err {
-		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
+		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported, parser.ErrNotAllowed:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
 			cache, createErr := s.repo.CreateOgpCache(urlStr, nil, DefaultCacheDuration)
 			if createErr != nil {
