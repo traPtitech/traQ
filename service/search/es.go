@@ -107,6 +107,13 @@ var esMapping = m{
 		"text": m{
 			"type":     "text",
 			"analyzer": "sudachi_analyzer",
+			"fields": m{
+				"ngram": m{
+					"type":            "text",
+					"search_analyzer": "ja_ngram_search_analyzer",
+					"analyzer":        "ja_ngram_index_analyzer",
+				},
+			},
 		},
 		"createdAt": m{
 			"type":   "date",
@@ -149,25 +156,54 @@ var esSetting = m{
 					"type": "sudachi_tokenizer",
 				},
 			},
-			"filter": m{
-				"sudachi_split_filter": m{
-					"type": "sudachi_split",
-					"mode": "search",
+
+			"ja_ngram_tokenizer": m{
+				"type":     "ngram",
+				"min_gram": 2,
+				"max_gram": 2,
+				"token_chars": []string{
+					"letter",
+					"digit",
 				},
 			},
-			"analyzer": m{
-				"sudachi_analyzer": m{
-					"tokenizer": "sudachi_tokenizer",
-					"type":      "custom",
-					"filter": []string{
-						"sudachi_split_filter",
-						"sudachi_normalizedform",
-					},
-					"discard_punctuation": true,
-					"resources_path":      "/usr/share/elasticsearch/plugins/analysis-sudachi/",
-					"settings_path":       "/usr/share/elasticsearch/plugins/analysis-sudachi/sudachi.json",
+		},
+		"filter": m{
+			"sudachi_split_filter": m{
+				"type": "sudachi_split",
+				"mode": "search",
+			},
+		},
+		"analyzer": m{
+			"sudachi_analyzer": m{
+				"tokenizer": "sudachi_tokenizer",
+				"type":      "custom",
+				"filter": []string{
+					"sudachi_split_filter",
+					"sudachi_normalizedform",
+				},
+				"discard_punctuation": true,
+				"resources_path":      "/usr/share/elasticsearch/plugins/analysis-sudachi/",
+				"settings_path":       "/usr/share/elasticsearch/plugins/analysis-sudachi/sudachi.json",
+			},
+			"ja_ngram_index_analyzer": m{
+				"type": "custom",
+				"char_filter": []string{
+					"normalize",
+				},
+				"tokenizer": "ja_ngram_tokenizer",
+				"filter": []string{
+					"lowercase",
 				},
 			},
+			"ja_ngram_search_analyzer": m{
+				"type": "custom",
+				"char_filter": []string{
+					"normalize",
+				},
+				"tokenizer": "ja_ngram_tokenizer",
+				"filter": []string{
+					"lowercase",
+				}},
 		},
 	},
 }
