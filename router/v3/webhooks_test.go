@@ -598,7 +598,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh2.GetID(), message.GetID()).
-			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh2.GetSecret())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
