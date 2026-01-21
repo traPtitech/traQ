@@ -261,7 +261,7 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(hmac.SHA1("", w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmac.SHA1([]byte{}, w.GetSecret()), sig) != 1 {
 			return herror.BadRequest("X-TRAQ-Signature is wrong")
 		}
 	}
