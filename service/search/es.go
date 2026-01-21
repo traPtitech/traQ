@@ -162,15 +162,14 @@ var esSetting = m{
 				"sudachi_tokenizer": m{
 					"type": "sudachi_tokenizer",
 				},
-			},
-
-			"ja_ngram_tokenizer": m{
-				"type":     "ngram",
-				"min_gram": 2,
-				"max_gram": 2,
-				"token_chars": []string{
-					"letter",
-					"digit",
+				"ja_ngram_tokenizer": m{
+					"type":     "ngram",
+					"min_gram": 2,
+					"max_gram": 2,
+					"token_chars": []string{
+						"letter",
+						"digit",
+					},
 				},
 			},
 		},
@@ -210,7 +209,8 @@ var esSetting = m{
 				"tokenizer": "ja_ngram_tokenizer",
 				"filter": []string{
 					"lowercase",
-				}},
+				},
+			},
 		},
 	},
 }
