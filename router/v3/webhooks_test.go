@@ -562,7 +562,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("bad request (no signature)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, wh.GetID(), message.GetID()).
+		e.DELETE(path, wh.GetID(), message.GetID()).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -570,7 +570,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("bad request (bad signature)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, wh.GetID(), message.GetID()).
+		e.DELETE(path, wh.GetID(), message.GetID()).
 			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "test", wh.GetSecret())).
 			Expect().
 			Status(http.StatusBadRequest)

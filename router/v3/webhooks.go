@@ -254,7 +254,7 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	botUserID := w.GetBotUserID()
 	messageUserID := m.GetUserID()
-	
+
 	// Webhookシークレット確認
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
