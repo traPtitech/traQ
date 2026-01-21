@@ -151,6 +151,13 @@ var esMapping = m{
 var esSetting = m{
 	"index": m{
 		"analysis": m{
+			"char_filter": m{
+				"normalize": m{
+					"type": "icu_normalizer",
+					"name": "nfkc",
+					"mode": "compose",
+				},
+			},
 			"tokenizer": m{
 				"sudachi_tokenizer": m{
 					"type": "sudachi_tokenizer",
