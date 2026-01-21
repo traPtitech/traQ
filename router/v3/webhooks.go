@@ -254,6 +254,24 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	botUserID := w.GetBotUserID()
 	messageUserID := m.GetUserID()
+	
+	// Webhookシークレット確認
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if len(body) == 0 {
+		return herror.BadRequest("empty body")
+	}
+	if len(w.GetSecret()) > 0 {
+		sig, _ := hex.DecodeString(c.Request().Header.Get(consts.HeaderSignature))
+		if len(sig) == 0 {
+			return herror.BadRequest("missing X-TRAQ-Signature header")
+		}
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
+			return herror.BadRequest("X-TRAQ-Signature is wrong")
+		}
+	}
 
 	if botUserID == messageUserID {
 		if err := h.Repo.DeleteMessage(messageID); err != nil {

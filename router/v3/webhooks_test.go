@@ -551,21 +551,36 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	wh2 := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	message := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
-	s := env.S(t, user.GetID())
 
-	t.Run("not logged in", func(t *testing.T) {
+	calcHMACSHA1 := func(t *testing.T, message, secret string) string {
+		t.Helper()
+		mac := hmac.New(sha1.New, []byte(secret))
+		_, _ = mac.Write([]byte(message))
+		return hex.EncodeToString(mac.Sum(nil))
+	}
+
+	t.Run("bad request (no signature)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.DELETE(path, wh.GetID(), message.GetID()).
+		e.PUT(path, wh.GetID(), message.GetID()).
 			Expect().
-			Status(http.StatusUnauthorized)
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (bad signature)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, wh.GetID(), message.GetID()).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "test", wh.GetSecret())).
+			Expect().
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("not found webhook", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, uuid.Must(uuid.NewV4()), message.GetID()).
-			WithCookie(session.CookieName, s).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -574,7 +589,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh.GetID(), uuid.Must(uuid.NewV4())).
-			WithCookie(session.CookieName, s).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -583,7 +598,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh2.GetID(), message.GetID()).
-			WithCookie(session.CookieName, s).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -592,7 +607,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, wh.GetID(), message.GetID()).
-			WithCookie(session.CookieName, s).
+			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
 			Expect().
 			Status(http.StatusNoContent)
 
