@@ -418,7 +418,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
-		apiWebhooks := apiNoAuth.Group("/webhook/:webhookID", retrieve.WebhookID())
+		apiWebhooks := apiNoAuth.Group("/webhooks/:webhookID", retrieve.WebhookID())
 		{
 			apiWebhooks.POST("", h.PostWebhook)
 			apiWebhooksMessages := apiWebhooks.Group("/messages/:messageID", retrieve.MessageID())
