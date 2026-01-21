@@ -606,12 +606,13 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.DELETE(path, wh.GetID(), message.GetID()).
+		message2 := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
+		e.DELETE(path, wh.GetID(), message2.GetID()).
 			WithHeader("X-TRAQ-Signature", calcHMACSHA1(t, "", wh.GetSecret())).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(message.GetID())
+		_, err := env.Repository.GetMessageByID(message2.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
