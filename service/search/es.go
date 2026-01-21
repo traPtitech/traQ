@@ -348,7 +348,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if q.Word.Valid {
 		body := simpleQueryString{
 			Query:           q.Word.V,
-			Fields:          []string{"text"},
+			Fields:          []string{"text", "text.ngram"},
 			DefaultOperator: "AND",
 		}
 
