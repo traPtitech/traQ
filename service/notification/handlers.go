@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -285,7 +286,10 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
 	mid := ev.Fields["message_id"].(uuid.UUID)
-	citedChannels := getCitedChannelIDs(ns, mid)
+	citedChannels, err := ns.cache.Get(context.Background(), mid)
+	if err != nil {
+		return
+	}
 	wsEventType := "MESSAGE_UPDATED"
 	wsPayload := map[string]interface{}{
 		"id": mid,
@@ -310,7 +314,8 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 func messageDeletedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
 	mid := ev.Fields["message_id"].(uuid.UUID)
-	citedChannels := getCitedChannelIDs(ns, mid)
+	citedChannels := ns.getCitedChannelIDs(context.Background(), mid)
+
 	wsEventType := "MESSAGE_DELETED"
 	wsPayload := map[string]interface{}{
 		"id": mid,
@@ -750,13 +755,12 @@ func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload 
 	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
 }
 
-func getCitedChannelIDs(ns *Service, messageId uuid.UUID) []uuid.UUID {
+func (ns *Service) getCitedChannelIDs(_ context.Context, messageId uuid.UUID) []uuid.UUID {
 	query := search.Query{}
 	query.Citation = optional.From(messageId)
 
 	res, err := ns.search.Do(&query)
 	if err != nil {
-		ns.logger.Error("failed to search cited messages", zap.Error(err), zap.Stringer("messageId", messageId))
 		return nil
 	}
 	result := []uuid.UUID{}

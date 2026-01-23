@@ -1,7 +1,12 @@
 package notification
 
 import (
+	"context"
+	"time"
+
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/motoki317/sc"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -28,6 +33,7 @@ type Service struct {
 	vm     *viewer.Manager
 	origin string
 	search search.Engine
+	cache  *sc.Cache[uuid.UUID, []uuid.UUID]
 }
 
 // NewService 通知サービスを作成して起動します
@@ -45,6 +51,14 @@ func NewService(repo repository.Repository, cm channel.Manager, mm message.Manag
 		origin: string(origin),
 		search: search,
 	}
+	service.cache = sc.NewMust(
+		func(ctx context.Context, messageID uuid.UUID) ([]uuid.UUID, error) {
+			return service.getCitedChannelIDs(context.Background(), messageID), nil
+		},
+		time.Minute,
+		time.Minute,
+		sc.WithLRUBackend(1000),
+	)
 	go func() {
 		topics := make([]string, 0, len(handlerMap))
 		for k := range handlerMap {
