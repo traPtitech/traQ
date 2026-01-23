@@ -284,9 +284,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
+	mid := ev.Fields["message_id"].(uuid.UUID)
+	citedChannels := getCitedChannelIDs(ns, mid)
 	wsEventType := "MESSAGE_UPDATED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": mid,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -294,6 +296,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
+			ws.TargetChannelsViewers(citedChannels),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
@@ -306,9 +309,11 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
+	mid := ev.Fields["message_id"].(uuid.UUID)
+	citedChannels := getCitedChannelIDs(ns, mid)
 	wsEventType := "MESSAGE_DELETED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": mid,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -316,6 +321,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
+			ws.TargetChannelsViewers(citedChannels),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
