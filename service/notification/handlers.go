@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/qall"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
@@ -741,4 +742,21 @@ func broadcast(ns *Service, wsEventType string, wsPayload interface{}) {
 
 func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload interface{}) {
 	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
+}
+
+func getCitedChannelIDs(ns *Service, messageId uuid.UUID) []uuid.UUID {
+	query := search.Query{}
+	query.Citation = optional.From(messageId)
+
+	res, err := ns.search.Do(&query)
+	if err != nil {
+		ns.logger.Error("failed to search cited messages", zap.Error(err), zap.Stringer("messageId", messageId))
+		return nil
+	}
+	result := []uuid.UUID{}
+	for _, hit := range res.Hits() {
+		result = append(result, hit.GetChannelID())
+	}
+	return result
+
 }
