@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -245,6 +246,61 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 	}
 
 	return serveMessages(c, h.MessageManager, req.convertU(w.GetBotUserID()))
+}
+
+// EditWebhookMessage PUT /webhooks/:webhookID/messages/:messageID
+func (h *Handlers) EditWebhookMessage(c echo.Context) error {
+	w := getParamWebhook(c)
+	m := getParamMessage(c)
+	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	botUserID := w.GetBotUserID()
+	messageUserID := m.GetUserID()
+
+	if botUserID != messageUserID {
+		return herror.Forbidden("you are not allowed to edit this message")
+	}
+
+	// text/plainのみ受け付ける
+	switch strings.ToLower(c.Request().Header.Get(echo.HeaderContentType)) {
+	case echo.MIMETextPlain, strings.ToLower(echo.MIMETextPlainCharsetUTF8):
+		break
+	default:
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
+	}
+
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if len(body) == 0 {
+		return herror.BadRequest("empty body")
+	}
+
+	// Webhookシークレット確認
+	if len(w.GetSecret()) > 0 {
+		sig, _ := hex.DecodeString(c.Request().Header.Get(consts.HeaderSignature))
+		if len(sig) == 0 {
+			return herror.BadRequest("missing X-TRAQ-Signature header")
+		}
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
+			return herror.BadRequest("X-TRAQ-Signature is wrong")
+		}
+	}
+
+	// 埋め込み変換
+	if isTrue(c.QueryParam("embed")) {
+		body = []byte(h.Replacer.Replace(string(body)))
+	}
+
+	// メッセージ編集
+	if err := h.MessageManager.Edit(messageID, string(body)); err != nil {
+		if errors.Is(err, message.ErrChannelArchived) {
+			return herror.BadRequest("the channel has been archived")
+		}
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
