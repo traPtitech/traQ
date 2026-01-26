@@ -860,6 +860,7 @@ paths:
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
   /users/me/stamp-recommendations:
     get:
+      deprecated: true
       summary: スタンプレコメンドを取得
       tags:
         - stamp
