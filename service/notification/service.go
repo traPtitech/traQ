@@ -1,7 +1,12 @@
 package notification
 
 import (
+	"context"
+	"time"
+
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/motoki317/sc"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -9,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
@@ -26,10 +32,12 @@ type Service struct {
 	ws     *ws.Streamer
 	vm     *viewer.Manager
 	origin string
+	search search.Engine
+	cache  *sc.Cache[uuid.UUID, []uuid.UUID]
 }
 
 // NewService 通知サービスを作成して起動します
-func NewService(repo repository.Repository, cm channel.Manager, mm message.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
+func NewService(repo repository.Repository, cm channel.Manager, mm message.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString, search search.Engine) *Service {
 	service := &Service{
 		repo:   repo,
 		cm:     cm,
@@ -41,7 +49,16 @@ func NewService(repo repository.Repository, cm channel.Manager, mm message.Manag
 		ws:     ws,
 		vm:     vm,
 		origin: string(origin),
+		search: search,
 	}
+	service.cache = sc.NewMust(
+		func(ctx context.Context, messageID uuid.UUID) ([]uuid.UUID, error) {
+			return service.getCitedChannelIDs(context.Background(), messageID), nil
+		},
+		time.Minute,
+		time.Minute,
+		sc.WithLRUBackend(1000),
+	)
 	go func() {
 		topics := make([]string, 0, len(handlerMap))
 		for k := range handlerMap {
