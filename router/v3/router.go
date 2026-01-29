@@ -140,6 +140,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.PUT("/password", h.PutMyPassword, requires(permission.ChangeMyPassword), blockBot)
 				apiUsersMe.POST("/fcm-device", h.PostMyFCMDevice, requires(permission.RegisterFCMDevice), blockBot)
 				apiUsersMe.GET("/view-states", h.GetMyViewStates, requires(permission.ConnectNotificationStream), blockBot)
+				apiUsersMe.GET("/dm-channel-list", h.GetDMChannelList, requires(permission.GetChannel))
 				apiUsersMeTags := apiUsersMe.Group("/tags")
 				{
 					apiUsersMeTags.GET("", h.GetMyUserTags, requires(permission.GetUserTag))

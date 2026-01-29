@@ -240,6 +240,27 @@ func (repo *Repository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappin
 		Error
 }
 
+// GetDirectMessageChannelList implements ChannelRepository interface.
+func (repo *Repository) GetDirectMessageChannelList(userID uuid.UUID, limit int) (dmChannelMapping []*model.DMChannelMapping, err error) {
+	dmChannelMapping = make([]*model.DMChannelMapping, 0)
+	if userID == uuid.Nil {
+		return dmChannelMapping, repository.ErrNilID
+	}
+
+	if err := repo.db.
+		Table("dm_channel_mappings AS dm").
+		Joins("JOIN channel_latest_messages AS clm ON dm.channel_id = clm.channel_id").
+		Where("dm.user1 = ? OR dm.user2 = ?", userID, userID).
+		Order("clm.date_time DESC").
+		Limit(limit).
+		Find(&dmChannelMapping).
+		Error; err != nil {
+		return dmChannelMapping, err
+	}
+
+	return dmChannelMapping, nil
+}
+
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
 func (repo *Repository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)
