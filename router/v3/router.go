@@ -92,7 +92,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.ChannelManager)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.ChannelManager)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
@@ -217,7 +216,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiMessages := api.Group("/messages")
 		{
 			apiMessages.GET("", h.SearchMessages, requires(permission.GetMessage))
-			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
+			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID())
 			{
 				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))
 				apiMessagesMID.PUT("", h.EditMessage, bodyLimit(100), requires(permission.EditMessage))
