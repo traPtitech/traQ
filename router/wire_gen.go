@@ -53,6 +53,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	webrtcv3Manager := ss.WebRTCv3
 	processor := ss.Imaging
 	engine := ss.Search
+	nonceManager := message.NewNonceManager()
 	soundboard := ss.QallSoundBoard
 	roomStateManager := ss.QallRoomStateManager
 	v3Config := provideV3Config(config)
@@ -75,6 +76,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		MessageManager: messageManager,
 		FileManager:    fileManager,
 		Replacer:       replacer,
+		NonceManager:   nonceManager,
 		Soundboard:     soundboard,
 		QallRepo:       roomStateManager,
 		Config:         v3Config,
