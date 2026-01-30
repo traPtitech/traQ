@@ -2,12 +2,16 @@ package parser
 
 import (
 	"context"
+	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
+	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/sync/semaphore"
@@ -21,6 +25,43 @@ type DefaultPageMeta struct {
 	Title, Description, URL, Image string
 }
 
+var logger = zap.NewNop()
+
+// SetLogger パッケージで使用するloggerを設定します
+func SetLogger(l *zap.Logger) {
+	if l != nil {
+		logger = l
+	}
+}
+
+// isPrivateIP はIPアドレスがプライベート、ループバック、リンクローカル、またはその他の内部アドレスかどうかを判定します
+func isPrivateIP(ip net.IP) bool {
+	if ip == nil {
+		return true // 不明なIPはブロック
+	}
+	// ループバック (127.0.0.0/8, ::1)
+	if ip.IsLoopback() {
+		return true
+	}
+	// プライベートアドレス (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
+	if ip.IsPrivate() {
+		return true
+	}
+	// リンクローカル (169.254.0.0/16, fe80::/10)
+	if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return true
+	}
+	// 未指定アドレス (0.0.0.0, ::)
+	if ip.IsUnspecified() {
+		return true
+	}
+	// マルチキャスト
+	if ip.IsMulticast() {
+		return true
+	}
+	return false
+}
+
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	_ = requestLimiter.Acquire(context.Background(), 1)
@@ -31,12 +72,32 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return og, meta, nil
 	}
 
+	// SSRF対策: DNS解決後のIPアドレスを検証してプライベートIPへのアクセスをブロック
+	dialer := &net.Dialer{
+		Timeout: 5 * time.Second,
+		Control: func(_, address string, _ syscall.RawConn) error {
+			host, _, err := net.SplitHostPort(address)
+			if err != nil {
+				return err
+			}
+			ip := net.ParseIP(host)
+			if isPrivateIP(ip) {
+				logger.Info("blocked request to private IP", zap.String("url", url.String()), zap.String("ip", host))
+				return errors.New("private IP address is not allowed")
+			}
+			return nil
+		},
+	}
 	client := http.Client{
 		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			DialContext: dialer.DialContext,
+		},
 	}
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
+		logger.Info("failed to create HTTP request", zap.String("url", url.String()), zap.Error(err))
 		return nil, nil, ErrNetwork
 	}
 
@@ -44,6 +105,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	resp, err := client.Do(req)
 	if err != nil {
+		logger.Info("failed to perform HTTP request", zap.String("url", url.String()), zap.Error(err))
 		return nil, nil, ErrNetwork
 	}
 

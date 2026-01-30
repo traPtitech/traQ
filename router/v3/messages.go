@@ -87,6 +87,7 @@ func (h *Handlers) GetMessage(c echo.Context) error {
 type PostMessageRequest struct {
 	Content string `json:"content"`
 	Embed   bool   `json:"embed" query:"embed"`
+	Nonce   string `json:"nonce"`
 }
 
 func (r PostMessageRequest) Validate() error {
@@ -103,6 +104,12 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
+	}
+
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
 	}
 
 	// 他人のテキストは編集できない
@@ -324,6 +331,12 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		return err
 	}
 
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
+	}
+
 	if req.Embed {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
@@ -367,6 +380,12 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
+	}
+
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
 	}
 
 	if req.Embed {

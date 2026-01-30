@@ -35,6 +35,9 @@ type ServiceImpl struct {
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
+	// parserパッケージにloggerを設定
+	parser.SetLogger(logger)
+
 	s := &ServiceImpl{
 		repo:   repo,
 		logger: logger,
@@ -121,6 +124,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	}
 	og, meta, err := parser.ParseMetaForURL(u)
 	if err != nil {
+		s.logger.Info("failed to fetch OGP meta", zap.String("url", urlStr), zap.Error(err))
 		switch err {
 		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成

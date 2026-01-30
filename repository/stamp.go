@@ -30,6 +30,12 @@ type UserStampHistory struct {
 	Datetime time.Time `json:"datetime"`
 }
 
+// UserStampRecommendation スタンプレコメンデーション構造体
+type UserStampRecommendation struct {
+	StampID uuid.UUID `json:"stampId"`
+	Score   float64   `json:"score"`
+}
+
 // StampStats スタンプ統計情報
 type StampStats struct {
 	Count      int64 `json:"count"`
@@ -102,6 +108,13 @@ type StampRepository interface {
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
+	// GetUserStampRecommendations 指定したユーザーのスタンプレコメンドを最大limit件取得します
+	//
+	// limitに負の値を指定した場合、全て取得します。
+	// 成功した場合、レコメンドスコアの高い順で並んだスタンプIDの配列とnilを返します。
+	// 存在しないユーザーを指定した場合は空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserStampRecommendations(userID uuid.UUID, limit int) (h []*UserStampRecommendation, err error)
 	// ExistStamps stampIDの配列から指定したスタンプが全て存在するか判定します
 	//
 	// 成功した場合、nilを返します。

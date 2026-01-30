@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
@@ -47,6 +49,7 @@ type Handlers struct {
 	MessageManager message.Manager
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
+	NonceManager   *mutil.NonceManager
 	Soundboard     qall.Soundboard
 	QallRepo       qall.RoomStateManager
 	Config
@@ -95,7 +98,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100)))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
 	{
 		apiUsers := api.Group("/users")
 		{
@@ -131,6 +134,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.PATCH("", h.EditMe, requires(permission.EditMe))
 				apiUsersMe.GET("/oidc", h.GetMeOIDC, requires(permission.GetOIDCUserInfo))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
+				apiUsersMe.GET("/stamp-recommendations", h.GetMyStampRecommendations, requires(permission.GetMyStampRecommendations))
 				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode), blockBot)
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
 				apiUsersMe.PUT("/icon", h.ChangeMyIcon, requires(permission.ChangeMyIcon))

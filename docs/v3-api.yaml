@@ -858,6 +858,47 @@ paths:
         結果は降順で返されます。
 
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
+  /users/me/stamp-recommendations:
+    get:
+      summary: スタンプレコメンドを取得
+      tags:
+        - stamp
+        - me
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    stampId:
+                      type: string
+                      format: uuid
+                      description: スタンプUUID
+                    score:
+                      type: number
+                      format: double
+                      description: レコメンドスコア
+                  required:
+                    - stampId
+                    - score
+      operationId: getMyStampRecommendations
+      parameters:
+        - schema:
+            type: integer
+            default: 100
+            maximum: 200
+            minimum: 1
+          in: query
+          name: limit
+          description: 件数
+      description: |-
+        自分のスタンプレコメンドを最大200件まで取得します。
+        結果は推薦度の高い順で返されます。
+        スタンプを使用したことがないユーザーの場合は空配列が返されます。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
@@ -7495,6 +7536,7 @@ components:
         - add_message_stamp
         - remove_message_stamp
         - get_my_stamp_history
+        - get_my_stamp_recommendations
         - get_stamp_palette
         - create_stamp_palette
         - edit_stamp_palette
@@ -7579,6 +7621,7 @@ components:
         - AddMessageStamp
         - RemoveMessageStamp
         - GetMyStampHistory
+        - GetMyStampRecommendations
         - GetStampPalette
         - CreateStampPalette
         - EditStampPalette
