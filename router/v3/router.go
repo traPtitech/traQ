@@ -293,10 +293,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
 				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
-				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages/:messageID", requires(permission.GetWebhook), retrieve.MessageID(), requiresMessageAccessPerm)
-				{
-					apiWebhooksWIDMessage.DELETE("", h.DeleteWebhookMessage, requires(permission.GetMessage))
-				}
+
 			}
 		}
 		apiGroups := api.Group("/groups")
@@ -422,7 +419,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiWebhooks := apiNoAuth.Group("/webhooks/:webhookID", retrieve.WebhookID())
+		{
+			apiWebhooks.POST("", h.PostWebhook)
+			apiWebhooksMessages := apiWebhooks.Group("/messages/:messageID", retrieve.MessageID())
+			{
+				apiWebhooksMessages.DELETE("", h.DeleteWebhookMessage)
+			}
+		}
 		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
