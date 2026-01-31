@@ -26,7 +26,7 @@ func BotJoined(ctx Context, datetime time.Time, _ string, fields hub.Fields) err
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
-	user, err := ctx.R().GetUser(context.TODO(), ch.CreatorID, false)
+	user, err := ctx.R().GetUser(context.Background(), ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}

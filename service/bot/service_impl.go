@@ -91,7 +91,7 @@ func (p *serviceImpl) start() {
 				if !ok {
 					return
 				}
-				if err := p.repo.PurgeBotEventLogs(context.TODO(), time.Now().Add(-botEventLogPurgeBefore)); err != nil {
+				if err := p.repo.PurgeBotEventLogs(context.Background(), time.Now().Add(-botEventLogPurgeBefore)); err != nil {
 					p.logger.Error("an error occurred while purging old bot event logs", zap.Error(err))
 				}
 			case <-p.serviceDone:
@@ -137,7 +137,7 @@ func (p *serviceImpl) Multicast(ev model.BotEventType, payload interface{}, targ
 }
 
 func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {
-	bots, err := p.repo.GetBots(context.TODO(), repository.BotsQuery{}.Active().BotID(id))
+	bots, err := p.repo.GetBots(context.Background(), repository.BotsQuery{}.Active().BotID(id))
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {
 }
 
 func (p *serviceImpl) GetBotByBotUserID(uid uuid.UUID) (*model.Bot, error) {
-	bots, err := p.repo.GetBots(context.TODO(), repository.BotsQuery{}.Active().BotUserID(uid))
+	bots, err := p.repo.GetBots(context.Background(), repository.BotsQuery{}.Active().BotUserID(uid))
 	if err != nil {
 		return nil, err
 	}
@@ -159,9 +159,9 @@ func (p *serviceImpl) GetBotByBotUserID(uid uuid.UUID) (*model.Bot, error) {
 }
 
 func (p *serviceImpl) GetBots(event model.BotEventType) ([]*model.Bot, error) {
-	return p.repo.GetBots(context.TODO(), repository.BotsQuery{}.Active().Subscribe(event))
+	return p.repo.GetBots(context.Background(), repository.BotsQuery{}.Active().Subscribe(event))
 }
 
 func (p *serviceImpl) GetChannelBots(cid uuid.UUID, event model.BotEventType) ([]*model.Bot, error) {
-	return p.repo.GetBots(context.TODO(), repository.BotsQuery{}.Active().Subscribe(event).CMemberOf(cid))
+	return p.repo.GetBots(context.Background(), repository.BotsQuery{}.Active().Subscribe(event).CMemberOf(cid))
 }

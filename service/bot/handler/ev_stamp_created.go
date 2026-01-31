@@ -25,7 +25,7 @@ func StampCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) 
 
 	var user model.UserInfo
 	if !stamp.IsSystemStamp() {
-		user, err = ctx.R().GetUser(context.TODO(), stamp.CreatorID, false)
+		user, err = ctx.R().GetUser(context.Background(), stamp.CreatorID, false)
 		if err != nil {
 			return fmt.Errorf("failed to GetUser: %w", err)
 		}

@@ -59,7 +59,7 @@ func (d *dispatcherImpl) Send(b *model.Bot, event model.BotEventType, body []byt
 }
 
 func (d *dispatcherImpl) writeLog(log *model.BotEventLog) {
-	if err := d.repo.WriteBotEventLog(context.TODO(), log); err != nil {
+	if err := d.repo.WriteBotEventLog(context.Background(), log); err != nil {
 		d.l.Warn("failed to write log", zap.Error(err), zap.Any("eventLog", log))
 	}
 }
