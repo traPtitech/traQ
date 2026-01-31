@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -155,7 +157,7 @@ func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 // StampPalettesID リクエストURLの`paletteID`パラメータからStampPaletteを取り出す
 func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamStampPaletteID, consts.KeyParamStampPalette, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetStampPalette(v)
+		return pr.repo.GetStampPalette(context.TODO(), v)
 	})
 }
 

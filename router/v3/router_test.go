@@ -367,7 +367,7 @@ func (env *Env) CreateStampPalette(t *testing.T, creator uuid.UUID, name string,
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	sp, err := env.Repository.CreateStampPalette(name, "desc", stamps, creator)
+	sp, err := env.Repository.CreateStampPalette(context.TODO(), name, "desc", stamps, creator)
 	require.NoError(t, err)
 	return sp
 }

@@ -284,7 +284,7 @@ func mustMakeStampPalette(t *testing.T, repo repository.Repository, name, descri
 	if description == rand {
 		description = random.AlphaNumeric(100)
 	}
-	sp, err := repo.CreateStampPalette(name, description, stamps, userID)
+	sp, err := repo.CreateStampPalette(context.TODO(), name, description, stamps, userID)
 	require.NoError(t, err)
 	return sp
 }
