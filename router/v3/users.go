@@ -96,7 +96,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(me.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(context.TODO(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -384,7 +384,7 @@ func (h *Handlers) GetUser(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(user.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(context.TODO(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -96,7 +96,7 @@ func (pr *ParamRetriever) error(err error) error {
 // GroupID リクエストURLの`groupID`パラメータからGroupを取り出す
 func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUserGroup(v)
+		return pr.repo.GetUserGroup(context.TODO(), v)
 	})
 }
 

@@ -311,7 +311,7 @@ func (repo *TestRepository) UpdateUser(ctx context.Context, id uuid.UUID, args r
 	return nil
 }
 
-func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) CreateUserGroup(ctx context.Context, name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
@@ -349,7 +349,7 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 	return &g, nil
 }
 
-func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupArgs) error {
+func (repo *TestRepository) UpdateUserGroup(ctx context.Context, id uuid.UUID, args repository.UpdateUserGroupArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -394,7 +394,7 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 	return nil
 }
 
-func (repo *TestRepository) DeleteUserGroup(id uuid.UUID) error {
+func (repo *TestRepository) DeleteUserGroup(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -413,7 +413,7 @@ func (repo *TestRepository) DeleteUserGroup(id uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroup(ctx context.Context, id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -438,7 +438,7 @@ func (repo *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 	return &g, nil
 }
 
-func (repo *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroupByName(ctx context.Context, name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
@@ -464,7 +464,7 @@ func (repo *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, e
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserBelongingGroupIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
@@ -482,7 +482,7 @@ func (repo *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 	return groups, nil
 }
 
-func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
+func (repo *TestRepository) GetAllUserGroups(ctx context.Context) ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	repo.UserGroupsLock.RLock()
 	repo.UserGroupAdminsLock.Lock()
@@ -505,7 +505,7 @@ func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	return groups, nil
 }
 
-func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, _ string) error {
+func (repo *TestRepository) AddUserToGroup(ctx context.Context, userID, groupID uuid.UUID, _ string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -530,7 +530,7 @@ func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, _ string) 
 	return nil
 }
 
-func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) RemoveUserFromGroup(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -552,7 +552,7 @@ func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	return nil
 }
 
-func (repo *TestRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) AddUserToGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -573,7 +573,7 @@ func (repo *TestRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error
 	return nil
 }
 
-func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) RemoveUserFromGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}

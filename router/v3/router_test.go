@@ -272,7 +272,7 @@ func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType strin
 		name = random.AlphaNumeric(20)
 	}
 	icon := env.CreateFile(t, uuid.Nil, uuid.Nil)
-	ug, err := env.Repository.CreateUserGroup(name, description, groupType, adminID, icon.GetID())
+	ug, err := env.Repository.CreateUserGroup(context.TODO(), name, description, groupType, adminID, icon.GetID())
 	require.NoError(t, err)
 	return ug
 }
@@ -280,7 +280,7 @@ func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType strin
 // AddUserToUserGroup ユーザーをユーザーグループに必ず追加します
 func (env *Env) AddUserToUserGroup(t *testing.T, userID, groupID uuid.UUID, role string) {
 	t.Helper()
-	require.NoError(t, env.Repository.AddUserToGroup(userID, groupID, role))
+	require.NoError(t, env.Repository.AddUserToGroup(context.TODO(), userID, groupID, role))
 }
 
 // CreateChannel チャンネルを必ず作成します

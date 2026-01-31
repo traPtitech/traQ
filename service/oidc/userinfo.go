@@ -42,7 +42,7 @@ func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string
 	if err != nil {
 		return nil, err
 	}
-	groups, err := s.repo.GetUserBelongingGroupIDs(user.GetID())
+	groups, err := s.repo.GetUserBelongingGroupIDs(context.TODO(), user.GetID())
 	if err != nil {
 		return nil, err
 	}

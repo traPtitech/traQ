@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -20,14 +21,14 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 
 	// Success
 	a := random2.AlphaNumeric(20)
-	if g, err := repo.CreateUserGroup(a, "", "", user.GetID(), file.ID); assert.NoError(t, err) {
+	if g, err := repo.CreateUserGroup(context.TODO(), a, "", "", user.GetID(), file.ID); assert.NoError(t, err) {
 		assert.NotNil(t, g)
 	}
 
 	t.Run("duplicate", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateUserGroup(a, "", "", user.GetID(), file.ID)
+		_, err := repo.CreateUserGroup(context.TODO(), a, "", "", user.GetID(), file.ID)
 		assert.EqualError(t, err, repository.ErrAlreadyExists.Error())
 	})
 }
@@ -39,7 +40,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Nil, repository.UpdateUserGroupArgs{}), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(context.TODO(), uuid.Nil, repository.UpdateUserGroupArgs{}), repository.ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -48,12 +49,12 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		a := random2.AlphaNumeric(20)
-		if assert.NoError(repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{
+		if assert.NoError(repo.UpdateUserGroup(context.TODO(), g.ID, repository.UpdateUserGroupArgs{
 			Name:        optional.From(a),
 			Description: optional.From(a),
 			Type:        optional.From(a),
 		})) {
-			g, err := repo.GetUserGroup(g.ID)
+			g, err := repo.GetUserGroup(context.TODO(), g.ID)
 			require.NoError(err)
 			assert.Equal(a, g.Name)
 			assert.Equal(a, g.Description)
@@ -65,19 +66,19 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.NoError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{}))
+		assert.NoError(t, repo.UpdateUserGroup(context.TODO(), g.ID, repository.UpdateUserGroupArgs{}))
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(context.TODO(), uuid.Must(uuid.NewV4()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV7()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(context.TODO(), uuid.Must(uuid.NewV7()), repository.UpdateUserGroupArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("duplicate", func(t *testing.T) {
@@ -86,7 +87,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		mustMakeUserGroup(t, repo, a, user.GetID())
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.EqualError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Name: optional.From(a)}), repository.ErrAlreadyExists.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(context.TODO(), g.ID, repository.UpdateUserGroupArgs{Name: optional.From(a)}), repository.ErrAlreadyExists.Error())
 	})
 }
 
@@ -97,26 +98,26 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.DeleteUserGroup(uuid.Nil))
+		assert.Error(t, repo.DeleteUserGroup(context.TODO(), uuid.Nil))
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteUserGroup(context.TODO(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteUserGroup(context.TODO(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.NoError(t, repo.DeleteUserGroup(g.ID))
+		assert.NoError(t, repo.DeleteUserGroup(context.TODO(), g.ID))
 	})
 }
 
@@ -127,21 +128,21 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroup(uuid.Nil)
+		_, err := repo.GetUserGroup(context.TODO(), uuid.Nil)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetUserGroup(context.TODO(), uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV7()))
+		_, err := repo.GetUserGroup(context.TODO(), uuid.Must(uuid.NewV7()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -150,7 +151,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 		assert := assert.New(t)
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		a, err := repo.GetUserGroup(g.ID)
+		a, err := repo.GetUserGroup(context.TODO(), g.ID)
 		if assert.NoError(err) {
 			assert.Equal(g.ID, a.ID)
 			assert.Equal(g.Name, a.Name)
@@ -166,14 +167,14 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupByName("")
+		_, err := repo.GetUserGroupByName(context.TODO(), "")
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupByName(random2.AlphaNumeric(20))
+		_, err := repo.GetUserGroupByName(context.TODO(), random2.AlphaNumeric(20))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -182,7 +183,7 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 		assert := assert.New(t)
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		a, err := repo.GetUserGroupByName(g.Name)
+		a, err := repo.GetUserGroupByName(context.TODO(), g.Name)
 		if assert.NoError(err) {
 			assert.Equal(g.ID, a.ID)
 			assert.Equal(g.Name, a.Name)
@@ -207,7 +208,7 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroupIDs(uuid.Nil)
+		gs, err := repo.GetUserBelongingGroupIDs(context.TODO(), uuid.Nil)
 		if assert.NoError(t, err) {
 			assert.Empty(t, gs)
 		}
@@ -216,7 +217,7 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Run("success1", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroupIDs(user.GetID())
+		gs, err := repo.GetUserBelongingGroupIDs(context.TODO(), user.GetID())
 		if assert.NoError(t, err) {
 			assert.ElementsMatch(t, gs, []uuid.UUID{g1.ID, g2.ID})
 		}
@@ -225,7 +226,7 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Run("success2", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroupIDs(user2.GetID())
+		gs, err := repo.GetUserBelongingGroupIDs(context.TODO(), user2.GetID())
 		if assert.NoError(t, err) {
 			assert.ElementsMatch(t, gs, []uuid.UUID{g1.ID})
 		}
@@ -240,7 +241,7 @@ func TestRepositoryImpl_GetAllUserGroups(t *testing.T) {
 	mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustMakeUserGroup(t, repo, rand, user.GetID())
 
-	gs, err := repo.GetAllUserGroups()
+	gs, err := repo.GetAllUserGroups(context.TODO())
 	if assert.NoError(err) {
 		assert.Len(gs, 3)
 	}
@@ -255,19 +256,19 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroup(uuid.Nil, g.ID, ""), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.AddUserToGroup(context.TODO(), uuid.Nil, g.ID, ""), repository.ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+		assert.NoError(t, repo.AddUserToGroup(context.TODO(), user.GetID(), g.ID, ""))
 
-		g, err := repo.GetUserGroup(g.ID)
+		g, err := repo.GetUserGroup(context.TODO(), g.ID)
 		require.NoError(t, err)
 		assert.True(t, g.IsMember(user.GetID()))
 
-		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+		assert.NoError(t, repo.AddUserToGroup(context.TODO(), user.GetID(), g.ID, ""))
 	})
 
 	t.Run("success concurrently", func(t *testing.T) {
@@ -279,7 +280,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 			wg.Add(1)
 			go func(t *testing.T) {
 				defer wg.Done()
-				assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+				assert.NoError(t, repo.AddUserToGroup(context.TODO(), user.GetID(), g.ID, ""))
 			}(t)
 		}
 
@@ -297,19 +298,19 @@ func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.RemoveUserFromGroup(uuid.Nil, g.ID), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroup(context.TODO(), uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.RemoveUserFromGroup(user.GetID(), g.ID))
+		assert.NoError(t, repo.RemoveUserFromGroup(context.TODO(), user.GetID(), g.ID))
 
-		g, err := repo.GetUserGroup(g.ID)
+		g, err := repo.GetUserGroup(context.TODO(), g.ID)
 		require.NoError(t, err)
 		assert.False(t, g.IsMember(user.GetID()))
 
-		assert.NoError(t, repo.RemoveUserFromGroup(user.GetID(), g.ID))
+		assert.NoError(t, repo.RemoveUserFromGroup(context.TODO(), user.GetID(), g.ID))
 	})
 }
 
@@ -323,32 +324,32 @@ func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.AddUserToGroupAdmin(context.TODO(), uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.AddUserToGroupAdmin(context.TODO(), user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.AddUserToGroupAdmin(context.TODO(), user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+		assert.NoError(t, repo.AddUserToGroupAdmin(context.TODO(), user2.GetID(), g.ID))
 
-		g, err := repo.GetUserGroup(g.ID)
+		g, err := repo.GetUserGroup(context.TODO(), g.ID)
 		require.NoError(t, err)
 		assert.True(t, g.IsAdmin(user.GetID()))
 		assert.True(t, g.IsAdmin(user2.GetID()))
 
-		assert.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+		assert.NoError(t, repo.AddUserToGroupAdmin(context.TODO(), user2.GetID(), g.ID))
 	})
 }
 
@@ -358,43 +359,43 @@ func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
 	user2 := mustMakeUser(t, repo, rand, false)
 
 	g := mustMakeUserGroup(t, repo, rand, user.GetID())
-	require.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+	require.NoError(t, repo.AddUserToGroupAdmin(context.TODO(), user2.GetID(), g.ID))
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(uuid.Nil, g.ID), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), uuid.Nil, g.ID), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), user2.GetID(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), user2.GetID(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("cannot remove last admin", func(t *testing.T) {
 		t.Parallel()
 		g2 := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user.GetID(), g2.ID), repository.ErrForbidden.Error())
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), user.GetID(), g2.ID), repository.ErrForbidden.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), g.ID))
+		assert.NoError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), user2.GetID(), g.ID))
 
-		g, err := repo.GetUserGroup(g.ID)
+		g, err := repo.GetUserGroup(context.TODO(), g.ID)
 		require.NoError(t, err)
 		assert.True(t, g.IsAdmin(user.GetID()))
 		assert.False(t, g.IsAdmin(user2.GetID()))
 
-		assert.NoError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), g.ID))
+		assert.NoError(t, repo.RemoveUserFromGroupAdmin(context.TODO(), user2.GetID(), g.ID))
 	})
 }

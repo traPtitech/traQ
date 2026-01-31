@@ -221,14 +221,14 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 		name = random.AlphaNumeric(20)
 	}
 	icon := mustMakeDummyFile(t, repo, false)
-	g, err := repo.CreateUserGroup(name, "", "", adminID, icon.ID)
+	g, err := repo.CreateUserGroup(context.TODO(), name, "", "", adminID, icon.ID)
 	require.NoError(t, err)
 	return g
 }
 
 func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
+	require.NoError(t, repo.AddUserToGroup(context.TODO(), userID, groupID, ""))
 }
 
 func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool) *model.FileMeta {

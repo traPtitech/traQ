@@ -22,7 +22,7 @@ func (m *replaceMapperImpl) Channel(path string) (uuid.UUID, bool) {
 }
 
 func (m *replaceMapperImpl) Group(name string) (uuid.UUID, bool) {
-	g, err := m.repo.GetUserGroupByName(name)
+	g, err := m.repo.GetUserGroupByName(context.TODO(), name)
 	if err != nil {
 		return uuid.Nil, false
 	}
