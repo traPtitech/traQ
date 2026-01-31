@@ -470,14 +470,14 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 	for _, opt := range opts {
 		opt(client)
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 	return client
 }
 
 // IssueToken OAuth2トークンを必ず発行します
 func (env *Env) IssueToken(t *testing.T, client *model.OAuth2Client, userID uuid.UUID) *model.OAuth2Token {
 	t.Helper()
-	tok, err := env.Repository.IssueToken(client, userID, "https://example.com", model.AccessScopes{"read": {}}, 86400, false)
+	tok, err := env.Repository.IssueToken(context.TODO(), client, userID, "https://example.com", model.AccessScopes{"read": {}}, 86400, false)
 	require.NoError(t, err)
 	return tok
 }

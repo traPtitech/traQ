@@ -110,7 +110,7 @@ func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
 // ClientID リクエストURLの`clientID`パラメータからOAuth2Clientを取り出す
 func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(_ echo.Context, v string) (interface{}, error) {
-		return pr.repo.GetClient(v)
+		return pr.repo.GetClient(context.TODO(), v)
 	})
 }
 

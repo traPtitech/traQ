@@ -94,7 +94,7 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	t, err := h.Repo.GetTokenByID(context.TODO(), b.AccessTokenID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -114,7 +114,7 @@ func (h *Handlers) GetBot(c echo.Context) error {
 			return herror.Forbidden()
 		}
 
-		t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+		t, err := h.Repo.GetTokenByID(context.TODO(), b.AccessTokenID)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -310,7 +310,7 @@ func (h *Handlers) ReissueBot(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	t, err := h.Repo.GetTokenByID(context.TODO(), b.AccessTokenID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

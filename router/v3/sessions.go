@@ -135,7 +135,7 @@ func (h *Handlers) RevokeMySession(c echo.Context) error {
 func (h *Handlers) GetMyTokens(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	ot, err := h.Repo.GetTokensByUser(userID)
+	ot, err := h.Repo.GetTokensByUser(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -165,7 +165,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 	tokenID := getParamAsUUID(c, consts.ParamTokenID)
 	userID := getRequestUserID(c)
 
-	ot, err := h.Repo.GetTokenByID(tokenID)
+	ot, err := h.Repo.GetTokenByID(context.TODO(), tokenID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -178,7 +178,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 		return herror.NotFound()
 	}
 
-	if err := h.Repo.DeleteTokenByAccess(ot.AccessToken); err != nil {
+	if err := h.Repo.DeleteTokenByAccess(context.TODO(), ot.AccessToken); err != nil {
 		return herror.InternalServerError(err)
 	}
 

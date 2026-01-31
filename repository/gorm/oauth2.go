@@ -13,21 +13,21 @@ import (
 )
 
 // GetClient implements OAuth2Repository interface.
-func (repo *Repository) GetClient(id string) (*model.OAuth2Client, error) {
+func (repo *Repository) GetClient(ctx context.Context, id string) (*model.OAuth2Client, error) {
 	if len(id) == 0 {
 		return nil, repository.ErrNotFound
 	}
 	oc := &model.OAuth2Client{}
-	if err := repo.db.Take(oc, &model.OAuth2Client{ID: id}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(oc, &model.OAuth2Client{ID: id}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return oc, nil
 }
 
 // GetClients implements OAuth2Repository interface.
-func (repo *Repository) GetClients(query repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
+func (repo *Repository) GetClients(ctx context.Context, query repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
 	cs := make([]*model.OAuth2Client, 0)
-	tx := repo.db
+	tx := repo.db.WithContext(ctx)
 	if query.DeveloperID.Valid {
 		tx = tx.Where("creator_id = ?", query.DeveloperID.V)
 	}
@@ -35,16 +35,16 @@ func (repo *Repository) GetClients(query repository.GetClientsQuery) ([]*model.O
 }
 
 // SaveClient implements OAuth2Repository interface.
-func (repo *Repository) SaveClient(client *model.OAuth2Client) error {
-	return repo.db.Create(client).Error
+func (repo *Repository) SaveClient(ctx context.Context, client *model.OAuth2Client) error {
+	return repo.db.WithContext(ctx).Create(client).Error
 }
 
 // UpdateClient implements OAuth2Repository interface.
-func (repo *Repository) UpdateClient(clientID string, args repository.UpdateClientArgs) error {
+func (repo *Repository) UpdateClient(ctx context.Context, clientID string, args repository.UpdateClientArgs) error {
 	if len(clientID) == 0 {
 		return repository.ErrNilID
 	}
-	return repo.db.Transaction(func(tx *gorm.DB) error {
+	return repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var oc model.OAuth2Client
 		if err := repo.db.Where(&model.OAuth2Client{ID: clientID}).First(&oc).Error; err != nil {
 			return convertError(err)
@@ -95,11 +95,11 @@ func (repo *Repository) UpdateClient(clientID string, args repository.UpdateClie
 }
 
 // DeleteClient implements OAuth2Repository interface.
-func (repo *Repository) DeleteClient(id string) error {
+func (repo *Repository) DeleteClient(ctx context.Context, id string) error {
 	if len(id) == 0 {
 		return nil
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&model.OAuth2Client{ID: id}).Error; err != nil {
 			return err
 		}
@@ -112,32 +112,32 @@ func (repo *Repository) DeleteClient(id string) error {
 }
 
 // SaveAuthorize implements OAuth2Repository interface.
-func (repo *Repository) SaveAuthorize(data *model.OAuth2Authorize) error {
-	return repo.db.Create(data).Error
+func (repo *Repository) SaveAuthorize(ctx context.Context, data *model.OAuth2Authorize) error {
+	return repo.db.WithContext(ctx).Create(data).Error
 }
 
 // GetAuthorize implements OAuth2Repository interface.
-func (repo *Repository) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
+func (repo *Repository) GetAuthorize(ctx context.Context, code string) (*model.OAuth2Authorize, error) {
 	if len(code) == 0 {
 		return nil, repository.ErrNotFound
 	}
 	oa := &model.OAuth2Authorize{}
-	if err := repo.db.Take(oa, &model.OAuth2Authorize{Code: code}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(oa, &model.OAuth2Authorize{Code: code}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return oa, nil
 }
 
 // DeleteAuthorize implements OAuth2Repository interface.
-func (repo *Repository) DeleteAuthorize(code string) error {
+func (repo *Repository) DeleteAuthorize(ctx context.Context, code string) error {
 	if len(code) == 0 {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Authorize{Code: code}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Authorize{Code: code}).Error
 }
 
 // IssueToken implements OAuth2Repository interface.
-func (repo *Repository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
+func (repo *Repository) IssueToken(ctx context.Context, client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
 		ID:             uuid.Must(uuid.NewV7()),
 		UserID:         userID,
@@ -154,97 +154,97 @@ func (repo *Repository) IssueToken(client *model.OAuth2Client, userID uuid.UUID,
 		newToken.ClientID = client.ID
 	}
 
-	return newToken, repo.db.Create(newToken).Error
+	return newToken, repo.db.WithContext(ctx).Create(newToken).Error
 }
 
 // GetTokenByID implements OAuth2Repository interface.
-func (repo *Repository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
+func (repo *Repository) GetTokenByID(ctx context.Context, id uuid.UUID) (*model.OAuth2Token, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Take(ot, &model.OAuth2Token{ID: id}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(ot, &model.OAuth2Token{ID: id}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
 // DeleteTokenByID implements OAuth2Repository interface.
-func (repo *Repository) DeleteTokenByID(id uuid.UUID) error {
+func (repo *Repository) DeleteTokenByID(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: id}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: id}).Error
 }
 
 // GetTokenByAccess implements OAuth2Repository interface.
-func (repo *Repository) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
+func (repo *Repository) GetTokenByAccess(ctx context.Context, access string) (*model.OAuth2Token, error) {
 	if len(access) == 0 {
 		return nil, repository.ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Take(ot, &model.OAuth2Token{AccessToken: access}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(ot, &model.OAuth2Token{AccessToken: access}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
 // DeleteTokenByAccess implements OAuth2Repository interface.
-func (repo *Repository) DeleteTokenByAccess(access string) error {
+func (repo *Repository) DeleteTokenByAccess(ctx context.Context, access string) error {
 	if len(access) == 0 {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{AccessToken: access}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{AccessToken: access}).Error
 }
 
 // GetTokenByRefresh implements OAuth2Repository interface.
-func (repo *Repository) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
+func (repo *Repository) GetTokenByRefresh(ctx context.Context, refresh string) (*model.OAuth2Token, error) {
 	if len(refresh) == 0 {
 		return nil, repository.ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Take(ot, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(ot, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
 // DeleteTokenByRefresh implements OAuth2Repository interface.
-func (repo *Repository) DeleteTokenByRefresh(refresh string) error {
+func (repo *Repository) DeleteTokenByRefresh(ctx context.Context, refresh string) error {
 	if len(refresh) == 0 {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error
 }
 
 // GetTokensByUser implements OAuth2Repository interface.
-func (repo *Repository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
+func (repo *Repository) GetTokensByUser(ctx context.Context, userID uuid.UUID) ([]*model.OAuth2Token, error) {
 	ts := make([]*model.OAuth2Token, 0)
 	if userID == uuid.Nil {
 		return ts, nil
 	}
-	return ts, repo.db.Where(&model.OAuth2Token{UserID: userID}).Find(&ts).Error
+	return ts, repo.db.WithContext(ctx).Where(&model.OAuth2Token{UserID: userID}).Find(&ts).Error
 }
 
 // DeleteTokenByUser implements OAuth2Repository interface.
-func (repo *Repository) DeleteTokenByUser(userID uuid.UUID) error {
+func (repo *Repository) DeleteTokenByUser(ctx context.Context, userID uuid.UUID) error {
 	if userID == uuid.Nil {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID}).Error
 }
 
 // DeleteTokenByClient implements OAuth2Repository interface.
-func (repo *Repository) DeleteTokenByClient(clientID string) error {
+func (repo *Repository) DeleteTokenByClient(ctx context.Context, clientID string) error {
 	if len(clientID) == 0 {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: clientID}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: clientID}).Error
 }
 
-func (repo *Repository) DeleteUserTokensByClient(userID uuid.UUID, clientID string) error {
+func (repo *Repository) DeleteUserTokensByClient(ctx context.Context, userID uuid.UUID, clientID string) error {
 	if userID == uuid.Nil || len(clientID) == 0 {
 		return nil
 	}
-	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID, ClientID: clientID}).Error
+	return repo.db.WithContext(ctx).Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID, ClientID: clientID}).Error
 }

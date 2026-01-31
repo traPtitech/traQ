@@ -204,7 +204,7 @@ func (env *Env) CreateUser(t *testing.T, userName string, useUUIDV4 bool) model.
 
 func (env *Env) IssueToken(t *testing.T, client *model.OAuth2Client, userID uuid.UUID, refresh bool) *model.OAuth2Token {
 	t.Helper()
-	token, err := env.Repository.IssueToken(client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
+	token, err := env.Repository.IssueToken(context.TODO(), client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
 	require.NoError(t, err)
 	return token
 }
@@ -224,7 +224,7 @@ func (env *Env) MakeAuthorizeData(t *testing.T, clientID string, userID uuid.UUI
 		OriginalScopes: scopes,
 		Nonce:          "nonce",
 	}
-	require.NoError(t, env.Repository.SaveAuthorize(authorize))
+	require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 	return authorize
 }
 

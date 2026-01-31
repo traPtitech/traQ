@@ -414,7 +414,7 @@ func TestHandlers_RevokeMyToken(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetTokenByID(tok.ID)
+		_, err := env.Repository.GetTokenByID(context.TODO(), tok.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
