@@ -171,14 +171,14 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 
 func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) *model.Message {
 	t.Helper()
-	m, err := repo.CreateMessage(userID, channelID, "popopo")
+	m, err := repo.CreateMessage(context.TODO(), userID, channelID, "popopo")
 	require.NoError(t, err)
 	return m
 }
 
 func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
+	require.NoError(t, repo.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{userID: false}, messageID))
 }
 
 func mustMakeUser(t *testing.T, repo repository.Repository, userName string, useUUIDv4 bool) model.UserInfo {
@@ -272,7 +272,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 
 func mustAddMessageStamp(t *testing.T, repo repository.Repository, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
-	_, err := repo.AddStampToMessage(messageID, stampID, userID, 1)
+	_, err := repo.AddStampToMessage(context.TODO(), messageID, stampID, userID, 1)
 	require.NoError(t, err)
 }
 

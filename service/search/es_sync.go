@@ -154,7 +154,7 @@ func (e *esEngine) sync() error {
 	var userCache userCache
 	lastInsert := lastSynced
 	for {
-		messages, more, err := e.repo.GetUpdatedMessagesAfter(lastInsert, syncMessageBulk)
+		messages, more, err := e.repo.GetUpdatedMessagesAfter(context.TODO(), lastInsert, syncMessageBulk)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (e *esEngine) sync() error {
 
 	lastDelete := lastSynced
 	for {
-		messages, more, err := e.repo.GetDeletedMessagesAfter(lastDelete, syncMessageBulk)
+		messages, more, err := e.repo.GetDeletedMessagesAfter(context.TODO(), lastDelete, syncMessageBulk)
 		if err != nil {
 			return err
 		}

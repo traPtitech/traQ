@@ -211,8 +211,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		for i := range 14 {
 			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		for i := range 7 {
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
@@ -267,8 +267,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		for i := range 14 {
 			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		for i := range 7 {
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
@@ -334,8 +334,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, true)
 		if assert.NoError(t, err) {
@@ -391,8 +391,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, true)
 		if assert.NoError(t, err) {

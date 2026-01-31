@@ -204,7 +204,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 		// メッセージを引用されたユーザーへの通知
 		for _, mid := range parsed.Citation {
-			m, err := ns.repo.GetMessageByID(mid)
+			m, err := ns.repo.GetMessageByID(context.TODO(), mid)
 			if err != nil {
 				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
 				continue
@@ -253,7 +253,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	for uid := range markedUsers {
 		userNoticeableMap[uid] = noticeable.Contains(uid)
 	}
-	if err := ns.repo.SetMessageUnreads(userNoticeableMap, m.ID); err != nil {
+	if err := ns.repo.SetMessageUnreads(context.TODO(), userNoticeableMap, m.ID); err != nil {
 		logger.Error("failed to SetMessageUnreads", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
 	}
 

@@ -290,8 +290,8 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		for i := range 15 {
 			messages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(messages[14].ID))
-		require.NoError(t, repo.DeleteMessage(messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), messages[14].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), messages[13].ID))
 
 		for i := range 5 {
 			for range 3 {

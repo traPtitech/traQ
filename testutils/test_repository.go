@@ -896,7 +896,7 @@ func (repo *TestRepository) GetChannelSubscriptions(ctx context.Context, query r
 	return result, nil
 }
 
-func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
+func (repo *TestRepository) CreateMessage(ctx context.Context, userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -917,7 +917,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	return m, nil
 }
 
-func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
+func (repo *TestRepository) UpdateMessage(ctx context.Context, messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -934,7 +934,7 @@ func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 	return nil
 }
 
-func (repo *TestRepository) DeleteMessage(messageID uuid.UUID) error {
+func (repo *TestRepository) DeleteMessage(ctx context.Context, messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -948,7 +948,7 @@ func (repo *TestRepository) DeleteMessage(messageID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
+func (repo *TestRepository) GetMessageByID(ctx context.Context, messageID uuid.UUID) (*model.Message, error) {
 	repo.MessagesLock.RLock()
 	m, ok := repo.Messages[messageID]
 	repo.MessagesLock.RUnlock()
@@ -959,7 +959,7 @@ func (repo *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 	return &m, nil
 }
 
-func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetMessages(ctx context.Context, query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1061,7 +1061,7 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 	return
 }
 
-func (repo *TestRepository) GetUpdatedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetUpdatedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1087,7 +1087,7 @@ func (repo *TestRepository) GetUpdatedMessagesAfter(after time.Time, limit int) 
 	return
 }
 
-func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetDeletedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1113,7 +1113,7 @@ func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) 
 	return
 }
 
-func (repo *TestRepository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
+func (repo *TestRepository) SetMessageUnreads(ctx context.Context, userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
 	if len(userNoticeableMap) == 0 {
 		return nil
 	}
@@ -1139,7 +1139,7 @@ func (repo *TestRepository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bo
 	return nil
 }
 
-func (repo *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error) {
+func (repo *TestRepository) GetUnreadMessagesByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Message, error) {
 	result := make([]*model.Message, 0)
 	repo.MessageUnreadsLock.RLock()
 	repo.MessagesLock.RLock()
@@ -1162,7 +1162,7 @@ func (repo *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*mode
 	return result, nil
 }
 
-func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+func (repo *TestRepository) DeleteUnreadsByChannelID(ctx context.Context, channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}

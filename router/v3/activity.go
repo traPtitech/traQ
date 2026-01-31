@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -74,7 +75,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 	if !req.All {
 		query.SubscribedByUser = optional.From(userID)
 	}
-	messages, err := h.Repo.GetChannelLatestMessages(query)
+	messages, err := h.Repo.GetChannelLatestMessages(context.TODO(), query)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

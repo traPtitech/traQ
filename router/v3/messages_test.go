@@ -82,7 +82,7 @@ func TestHandlers_ReadChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		chs, err := env.Repository.GetUserUnreadChannels(user.GetID())
+		chs, err := env.Repository.GetUserUnreadChannels(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.Len(t, chs, 0)
 	})

@@ -597,7 +597,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(message.GetID())
+		_, err := env.Repository.GetMessageByID(context.TODO(), message.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }

@@ -20,14 +20,14 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 	t.Run("failures 1", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateMessage(user.GetID(), uuid.Nil, "a")
+		_, err := repo.CreateMessage(context.TODO(), user.GetID(), uuid.Nil, "a")
 		assert.Error(t, err)
 	})
 
 	t.Run("failures 2", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateMessage(uuid.Nil, channel.ID, "a")
+		_, err := repo.CreateMessage(context.TODO(), uuid.Nil, channel.ID, "a")
 		assert.Error(t, err)
 	})
 
@@ -35,7 +35,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		m, err := repo.CreateMessage(user.GetID(), channel.ID, "test")
+		m, err := repo.CreateMessage(context.TODO(), user.GetID(), channel.ID, "test")
 		if assert.NoError(err) {
 			assert.NotZero(m.ID)
 			assert.Equal(user.GetID(), m.UserID)
@@ -46,7 +46,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 			assert.False(m.DeletedAt.Valid)
 		}
 
-		m, err = repo.CreateMessage(user.GetID(), channel.ID, "")
+		m, err = repo.CreateMessage(context.TODO(), user.GetID(), channel.ID, "")
 		if assert.NoError(err) {
 			assert.NotZero(m.ID)
 			assert.Equal(user.GetID(), m.UserID)
@@ -62,7 +62,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		m, err := repo.CreateMessage(user.GetID(), channel.ID, "")
+		m, err := repo.CreateMessage(context.TODO(), user.GetID(), channel.ID, "")
 		if assert.NoError(err) {
 			assert.NotZero(m.ID)
 			assert.Equal(user.GetID(), m.UserID)
@@ -82,12 +82,12 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	originalText := m.Text
 
-	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), repository.ErrNotFound.Error())
-	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV7()), "new message"), repository.ErrNotFound.Error())
-	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), repository.ErrNilID.Error())
-	assert.NoError(repo.UpdateMessage(m.ID, "new message"))
+	assert.EqualError(repo.UpdateMessage(context.TODO(), uuid.Must(uuid.NewV4()), "new message"), repository.ErrNotFound.Error())
+	assert.EqualError(repo.UpdateMessage(context.TODO(), uuid.Must(uuid.NewV7()), "new message"), repository.ErrNotFound.Error())
+	assert.EqualError(repo.UpdateMessage(context.TODO(), uuid.Nil, "new message"), repository.ErrNilID.Error())
+	assert.NoError(repo.UpdateMessage(context.TODO(), m.ID, "new message"))
 
-	m, err := repo.GetMessageByID(m.ID)
+	m, err := repo.GetMessageByID(context.TODO(), m.ID)
 	if assert.NoError(err) {
 		assert.Equal("new message", m.Text)
 		assert.Equal(1, count(t, getDB(repo).Model(&model.ArchivedMessage{}).Where(&model.ArchivedMessage{MessageID: m.ID, Text: originalText})))
@@ -100,13 +100,13 @@ func TestRepositoryImpl_DeleteMessage(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
-	assert.EqualError(repo.DeleteMessage(uuid.Nil), repository.ErrNilID.Error())
+	assert.EqualError(repo.DeleteMessage(context.TODO(), uuid.Nil), repository.ErrNilID.Error())
 
-	if assert.NoError(repo.DeleteMessage(m.ID)) {
-		_, err := repo.GetMessageByID(m.ID)
+	if assert.NoError(repo.DeleteMessage(context.TODO(), m.ID)) {
+		_, err := repo.GetMessageByID(context.TODO(), m.ID)
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	}
-	assert.EqualError(repo.DeleteMessage(m.ID), repository.ErrNotFound.Error())
+	assert.EqualError(repo.DeleteMessage(context.TODO(), m.ID), repository.ErrNotFound.Error())
 }
 
 func TestRepositoryImpl_GetMessageByID(t *testing.T) {
@@ -115,18 +115,18 @@ func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
-	r, err := repo.GetMessageByID(m.ID)
+	r, err := repo.GetMessageByID(context.TODO(), m.ID)
 	if assert.NoError(err) {
 		assert.Equal(m.Text, r.Text)
 	}
 
-	_, err = repo.GetMessageByID(uuid.Nil)
+	_, err = repo.GetMessageByID(context.TODO(), uuid.Nil)
 	assert.Error(err)
 
-	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV4()))
+	_, err = repo.GetMessageByID(context.TODO(), uuid.Must(uuid.NewV4()))
 	assert.Error(err)
 
-	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV7()))
+	_, err = repo.GetMessageByID(context.TODO(), uuid.Must(uuid.NewV7()))
 	assert.Error(err)
 }
 
@@ -164,7 +164,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	t.Run("id in", func(t *testing.T) {
 		t.Parallel()
 
-		messages, more, err := repo.GetMessages(repository.MessagesQuery{
+		messages, more, err := repo.GetMessages(context.TODO(), repository.MessagesQuery{
 			IDIn: optional.From([]uuid.UUID{m6.ID, latestCh1Msg.ID}),
 		})
 
@@ -178,7 +178,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	t.Run("activity all", func(t *testing.T) {
 		t.Parallel()
 
-		messages, more, err := repo.GetMessages(repository.MessagesQuery{
+		messages, more, err := repo.GetMessages(context.TODO(), repository.MessagesQuery{
 			Since:          optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:          50,
 			ExcludeDMs:     true,
@@ -196,7 +196,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	t.Run("activity all with limit", func(t *testing.T) {
 		t.Parallel()
 
-		messages, more, err := repo.GetMessages(repository.MessagesQuery{
+		messages, more, err := repo.GetMessages(context.TODO(), repository.MessagesQuery{
 			Since:          optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:          5,
 			ExcludeDMs:     true,
@@ -214,7 +214,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	t.Run("activity subscription", func(t *testing.T) {
 		t.Parallel()
 
-		messages, more, err := repo.GetMessages(repository.MessagesQuery{
+		messages, more, err := repo.GetMessages(context.TODO(), repository.MessagesQuery{
 			Since:                    optional.From(time.Now().Add(-7 * 24 * time.Hour)),
 			Limit:                    50,
 			ExcludeDMs:               true,
@@ -238,9 +238,9 @@ func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 
-	assert.NoError(repo.SetMessageUnreads(nil, m.ID))
-	assert.Error(repo.SetMessageUnreads(map[uuid.UUID]bool{uuid.Nil: true}, uuid.Nil))
-	if assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): true, user2.GetID(): false}, m.ID)) {
+	assert.NoError(repo.SetMessageUnreads(context.TODO(), nil, m.ID))
+	assert.Error(repo.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{uuid.Nil: true}, uuid.Nil))
+	if assert.NoError(repo.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{user1.GetID(): true, user2.GetID(): false}, m.ID)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()})))
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user2.GetID()})))
 		var messageCreatedAt time.Time
@@ -255,7 +255,7 @@ func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
 		assert.Equal(false, noticeable)
 
 	}
-	if assert.NoError(repo.SetMessageUnreads(map[uuid.UUID]bool{user1.GetID(): false, user2.GetID(): true, user3.GetID(): false}, m.ID)) {
+	if assert.NoError(repo.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{user1.GetID(): false, user2.GetID(): true, user3.GetID(): false}, m.ID)) {
 		var noticeable bool
 		assert.NoError(getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user1.GetID()}).Select("noticeable").Row().Scan(&noticeable))
 		assert.Equal(false, noticeable)
@@ -274,10 +274,10 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 		mustMakeMessageUnread(t, repo, user.GetID(), mustMakeMessage(t, repo, user.GetID(), channel.ID).ID)
 	}
 
-	if unreads, err := repo.GetUnreadMessagesByUserID(user.GetID()); assert.NoError(err) {
+	if unreads, err := repo.GetUnreadMessagesByUserID(context.TODO(), user.GetID()); assert.NoError(err) {
 		assert.Len(unreads, 10)
 	}
-	if unreads, err := repo.GetUnreadMessagesByUserID(uuid.Nil); assert.NoError(err) {
+	if unreads, err := repo.GetUnreadMessagesByUserID(context.TODO(), uuid.Nil); assert.NoError(err) {
 		assert.Len(unreads, 0)
 	}
 }
@@ -296,7 +296,7 @@ func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		unreads, err := repo.GetUserUnreadChannels(uuid.Nil)
+		unreads, err := repo.GetUserUnreadChannels(context.TODO(), uuid.Nil)
 		assert.NoError(err)
 		assert.Len(unreads, 0)
 	})
@@ -304,7 +304,7 @@ func TestRepositoryImpl_GetUserUnreadChannels(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		unreads, err := repo.GetUserUnreadChannels(user.GetID())
+		unreads, err := repo.GetUserUnreadChannels(context.TODO(), user.GetID())
 		assert.NoError(err)
 		assert.Len(unreads, 1)
 
@@ -331,14 +331,14 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteUnreadsByChannelID(channel.ID, uuid.Nil), repository.ErrNilID.Error())
-		assert.EqualError(t, repo.DeleteUnreadsByChannelID(uuid.Nil, user.GetID()), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.DeleteUnreadsByChannelID(context.TODO(), channel.ID, uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.DeleteUnreadsByChannelID(context.TODO(), uuid.Nil, user.GetID()), repository.ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		if assert.NoError(repo.DeleteUnreadsByChannelID(channel.ID, user.GetID())) {
+		if assert.NoError(repo.DeleteUnreadsByChannelID(context.TODO(), channel.ID, user.GetID())) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{UserID: user.GetID()})))
 		}
 	})
@@ -364,7 +364,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessages(repository.ChannelLatestMessagesQuery{})
+		arr, err := repo.GetChannelLatestMessages(context.TODO(), repository.ChannelLatestMessagesQuery{})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID
@@ -378,7 +378,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessages(repository.ChannelLatestMessagesQuery{SubscribedByUser: optional.From(user.GetID())})
+		arr, err := repo.GetChannelLatestMessages(context.TODO(), repository.ChannelLatestMessagesQuery{SubscribedByUser: optional.From(user.GetID())})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID
@@ -392,7 +392,7 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessages(repository.ChannelLatestMessagesQuery{Limit: 5})
+		arr, err := repo.GetChannelLatestMessages(context.TODO(), repository.ChannelLatestMessagesQuery{Limit: 5})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID
@@ -413,7 +413,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.AddStampToMessage(uuid.Nil, uuid.Nil, uuid.Nil, 1)
+		_, err := repo.AddStampToMessage(context.TODO(), uuid.Nil, uuid.Nil, uuid.Nil, 1)
 		assert.EqualError(t, err, repository.ErrNilID.Error())
 	})
 
@@ -421,7 +421,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		{
-			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 1)
+			ms, err := repo.AddStampToMessage(context.TODO(), message.ID, stamp.ID, user.GetID(), 1)
 			if assert.NoError(err) {
 				assert.Equal(message.ID, ms.MessageID)
 				assert.Equal(stamp.ID, ms.StampID)
@@ -432,7 +432,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 			}
 		}
 		{
-			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 1)
+			ms, err := repo.AddStampToMessage(context.TODO(), message.ID, stamp.ID, user.GetID(), 1)
 			if assert.NoError(err) {
 				assert.Equal(message.ID, ms.MessageID)
 				assert.Equal(stamp.ID, ms.StampID)
@@ -443,7 +443,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 			}
 		}
 		{
-			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 3)
+			ms, err := repo.AddStampToMessage(context.TODO(), message.ID, stamp.ID, user.GetID(), 3)
 			if assert.NoError(err) {
 				assert.Equal(message.ID, ms.MessageID)
 				assert.Equal(stamp.ID, ms.StampID)
@@ -465,9 +465,9 @@ func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.RemoveStampFromMessage(message.ID, stamp.ID, uuid.Nil), repository.ErrNilID.Error())
-		assert.EqualError(t, repo.RemoveStampFromMessage(message.ID, uuid.Nil, user.GetID()), repository.ErrNilID.Error())
-		assert.EqualError(t, repo.RemoveStampFromMessage(uuid.Nil, stamp.ID, user.GetID()), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, stamp.ID, uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, uuid.Nil, user.GetID()), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), uuid.Nil, stamp.ID, user.GetID()), repository.ErrNilID.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -475,7 +475,7 @@ func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
 		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
 
-		if assert.NoError(t, repo.RemoveStampFromMessage(message.ID, stamp.ID, user.GetID())) {
+		if assert.NoError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, stamp.ID, user.GetID())) {
 			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.MessageStamp{}).Where(&model.MessageStamp{MessageID: message.ID, StampID: stamp.ID, UserID: user.GetID()})))
 		}
 	})

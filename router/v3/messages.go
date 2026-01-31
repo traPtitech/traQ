@@ -20,7 +20,7 @@ import (
 func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	list, err := h.Repo.GetUserUnreadChannels(userID)
+	list, err := h.Repo.GetUserUnreadChannels(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -33,7 +33,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
+	if err := h.Repo.DeleteUnreadsByChannelID(context.TODO(), channelID, userID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
