@@ -139,7 +139,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// ユーザーアカウント状態を確認
-				user, err := repo.GetUser(context.TODO(), sess.UserID(), false)
+				user, err := repo.GetUser(c.Request().Context(), sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
@@ -148,7 +148,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// アカウントにリンク
-				if err := repo.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
+				if err := repo.LinkExternalUserAccount(c.Request().Context(), user.GetID(), repository.LinkExternalUserAccountArgs{
 					ProviderName: tu.GetProviderName(),
 					ExternalID:   tu.GetID(),
 					Extra:        model.JSON{"externalName": tu.GetRawName()},
@@ -178,7 +178,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return herror.BadRequest("You have already logged in. Please logout once.")
 		}
 
-		user, err := repo.GetUserByExternalID(context.TODO(), tu.GetProviderName(), tu.GetID(), false)
+		user, err := repo.GetUserByExternalID(c.Request().Context(), tu.GetProviderName(), tu.GetID(), false)
 		if err != nil {
 			if err != repository.ErrNotFound {
 				return herror.InternalServerError(err)
@@ -209,14 +209,14 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 			}
 			if args.IconFileID == uuid.Nil {
-				fid, err := file.GenerateIconFile(context.TODO(), fm, tu.GetName())
+				fid, err := file.GenerateIconFile(c.Request().Context(), fm, tu.GetName())
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
 				args.IconFileID = fid
 			}
 
-			user, err = repo.CreateUser(context.TODO(), args)
+			user, err = repo.CreateUser(c.Request().Context(), args)
 			if err != nil {
 				if err == repository.ErrAlreadyExists {
 					return herror.Conflict("name conflicts") // TODO 名前被りをどうするか
@@ -269,7 +269,7 @@ func processProfileIcon(m file.Manager, src []byte) (uuid.UUID, error) {
 	_ = png.Encode(b, img)
 
 	// ファイル保存
-	f, err := m.Save(context.TODO(), file.SaveArgs{
+	f, err := m.Save(context.Background(), file.SaveArgs{
 		FileName:  "icon",
 		FileSize:  int64(b.Len()),
 		MimeType:  consts.MimeImagePNG,
