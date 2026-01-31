@@ -202,7 +202,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルに上限数以上のメッセージがピン留めされていないか確認
-	pins, err := m.R.GetPinnedMessageByChannelID(msg.GetChannelID())
+	pins, err := m.R.GetPinnedMessageByChannelID(context.TODO(), msg.GetChannelID())
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// ピン
-	pin, err := m.R.PinMessage(id, userID)
+	pin, err := m.R.PinMessage(context.TODO(), id, userID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -250,7 +250,7 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 	}
 
 	// ピン外し
-	pin, err := m.R.UnpinMessage(id)
+	pin, err := m.R.UnpinMessage(context.TODO(), id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:

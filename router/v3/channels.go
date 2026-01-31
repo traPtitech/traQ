@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -238,7 +239,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 func (h *Handlers) GetChannelPins(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	pins, err := h.Repo.GetPinnedMessageByChannelID(channelID)
+	pins, err := h.Repo.GetPinnedMessageByChannelID(context.TODO(), channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -210,7 +211,7 @@ func mustAddTagToUser(t *testing.T, repo repository.Repository, userID, tagID uu
 
 func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uuid.UUID) {
 	t.Helper()
-	_, err := repo.PinMessage(messageID, userID)
+	_, err := repo.PinMessage(context.TODO(), messageID, userID)
 	require.NoError(t, err)
 }
 
