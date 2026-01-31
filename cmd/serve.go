@@ -132,7 +132,7 @@ func serveCommand() *cobra.Command {
 				}
 
 				// generalチャンネル作成
-				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+				if ch, err := server.SS.ChannelManager.CreatePublicChannel(context.Background(), "general", uuid.Nil, uuid.Nil); err == nil {
 					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
 				} else {
 					logger.Error("failed to init general channel", zap.Error(err))

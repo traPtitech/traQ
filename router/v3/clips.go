@@ -109,6 +109,7 @@ type PostClipFolderMessageRequest struct {
 
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
 func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	cf := getParamClipFolder(c)
 	userID := getRequestUserID(c)
 
@@ -128,7 +129,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	// ユーザーがアクセスできるか
-	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, m.GetChannelID()); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, userID, m.GetChannelID()); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid messageId")

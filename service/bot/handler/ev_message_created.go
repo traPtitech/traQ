@@ -19,7 +19,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
-	ch, err := ctx.CM().GetChannel(m.ChannelID)
+	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
@@ -30,7 +30,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 	}
 
 	if ch.IsDMChannel() {
-		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
+		ids, err := ctx.CM().GetDMChannelMembers(context.Background(), ch.ID)
 		if err != nil {
 			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
 		}

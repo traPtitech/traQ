@@ -122,7 +122,7 @@ func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 // ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
 func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.cm.GetChannel(v)
+		return pr.cm.GetChannel(c.Request().Context(), v)
 	})
 }
 

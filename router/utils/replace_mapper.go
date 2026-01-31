@@ -17,7 +17,7 @@ type replaceMapperImpl struct {
 }
 
 func (m *replaceMapperImpl) Channel(path string) (uuid.UUID, bool) {
-	id := m.cm.PublicChannelTree().GetChannelIDFromPath(path)
+	id := m.cm.PublicChannelTree(context.Background()).GetChannelIDFromPath(path)
 	return id, id != uuid.Nil
 }
 

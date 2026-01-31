@@ -154,6 +154,7 @@ func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
 
 // EditMe PATCH /users/me
 func (h *Handlers) EditMe(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
 	var req PatchMeRequest
@@ -164,7 +165,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 	if req.HomeChannel.Valid {
 		if req.HomeChannel.V != uuid.Nil {
 			// チャンネル存在確認
-			if !h.ChannelManager.PublicChannelTree().IsChannelPresent(req.HomeChannel.V) {
+			if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(req.HomeChannel.V) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}
@@ -481,6 +482,7 @@ func (r PutChannelSubscribeLevelRequest) Validate() error {
 
 // SetChannelSubscribeLevel PUT /users/me/subscriptions/:channelID
 func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
+	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req PutChannelSubscribeLevelRequest
@@ -488,7 +490,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(ctx, channelID)
 	if err != nil {
 		if err == channel.ErrChannelNotFound {
 			return herror.NotFound()
@@ -496,7 +498,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.V)}, false, getRequestUserID(c)); err != nil {
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.V)}, false, getRequestUserID(c)); err != nil {
 		switch err {
 		case channel.ErrInvalidChannel:
 			return herror.Forbidden("the channel's subscriptions is not configurable")

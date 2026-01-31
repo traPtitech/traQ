@@ -106,7 +106,7 @@ func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
 
 func (m *manager) CreateDM(from, to uuid.UUID, content string) (Message, error) {
 	// DMチャンネルを取得
-	ch, err := m.CM.GetDMChannel(from, to)
+	ch, err := m.CM.GetDMChannel(context.Background(), from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (m *manager) CreateDM(from, to uuid.UUID, content string) (Message, error) 
 
 func (m *manager) Create(channelID, userID uuid.UUID, content string) (Message, error) {
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(channelID) && m.CM.PublicChannelTree().IsArchivedChannel(channelID) {
+	if m.CM.IsPublicChannel(context.Background(), channelID) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(channelID) {
 		return nil, ErrChannelArchived
 	}
 
@@ -140,7 +140,7 @@ func (m *manager) Edit(id uuid.UUID, content string) error {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
@@ -166,7 +166,7 @@ func (m *manager) Delete(id uuid.UUID) error {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
@@ -197,7 +197,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return nil, ErrChannelArchived
 	}
 
@@ -245,7 +245,7 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
@@ -277,7 +277,7 @@ func (m *manager) AddStamps(id, stampID, userID uuid.UUID, n int) (*model.Messag
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return nil, ErrChannelArchived
 	}
 
@@ -301,7 +301,7 @@ func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 

@@ -80,7 +80,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	parsed := ev.Fields["parse_result"].(*message.ParseResult)
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
-	chTree := ns.cm.PublicChannelTree()
+	chTree := ns.cm.PublicChannelTree(context.Background())
 	chID := m.ChannelID
 	isDM := !chTree.IsChannelPresent(chID)
 	forceNotify := chTree.IsForceChannel(chID)
@@ -290,7 +290,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(cid) {
+	if ns.cm.IsPublicChannel(context.Background(), cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
@@ -312,7 +312,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(cid) {
+	if ns.cm.IsPublicChannel(context.Background(), cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
@@ -692,7 +692,7 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	private := ev.Fields["private"].(bool)
 	if private {
-		members, err := ns.cm.GetDMChannelMembers(cid)
+		members, err := ns.cm.GetDMChannelMembers(context.Background(), cid)
 		if err != nil {
 			ns.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("channelId", cid))
 			return

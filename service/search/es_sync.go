@@ -53,7 +53,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
-		IsPublic:       e.cm.IsPublicChannel(m.ChannelID),
+		IsPublic:       e.cm.IsPublicChannel(context.Background(), m.ChannelID),
 		Bot:            isBot,
 		Text:           m.Text,
 		CreatedAt:      m.CreatedAt,

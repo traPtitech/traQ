@@ -26,7 +26,7 @@ func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.F
 		return nil
 	}
 
-	ch, err := ctx.CM().GetChannel(chID)
+	ch, err := ctx.CM().GetChannel(context.Background(), chID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
@@ -43,7 +43,7 @@ func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.F
 
 	if err := ctx.Multicast(
 		event.ChannelTopicChanged,
-		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	); err != nil {
 		return fmt.Errorf("failed to multicast: %w", err)

@@ -306,6 +306,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 
 // GetLiveKitToken GET /qall/token
 func (h *Handlers) GetLiveKitToken(c echo.Context) error {
+	ctx := c.Request().Context()
 	// 1) roomクエリパラメータ取得 (必須)
 	room := c.QueryParam("roomId")
 	if room == "" {
@@ -317,7 +318,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		return herror.BadRequest("invalid room Id")
 	}
 
-	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(roomID) {
+	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(roomID) {
 		return herror.NotFound("channel not found")
 	}
 

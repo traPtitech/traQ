@@ -41,6 +41,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 
 // SearchMessages GET /messages
 func (h *Handlers) SearchMessages(c echo.Context) error {
+	ctx := c.Request().Context()
 	if !h.SearchEngine.Available() {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
 	}
@@ -52,7 +53,7 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 
 	if q.In.Valid {
 		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
-		ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), q.In.V)
+		ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), q.In.V)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -355,6 +356,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 
 // GetDirectMessages GET /users/:userId/messages
 func (h *Handlers) GetDirectMessages(c echo.Context) error {
+	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)
 
@@ -364,7 +366,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(ctx, myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -30,7 +30,7 @@ func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 
 		if err := ctx.Multicast(
 			event.ChannelCreated,
-			payload.MakeChannelCreated(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), user),
+			payload.MakeChannelCreated(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(ch.ID), user),
 			bots,
 		); err != nil {
 			return fmt.Errorf("failed to multicast: %w", err)

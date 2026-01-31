@@ -41,19 +41,19 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !cm.IsPublicChannel(v) {
+		if !cm.IsPublicChannel(ctx, v) {
 			return errors.New(errMessage)
 		}
 	case optional.Of[uuid.UUID]:
-		if v.Valid && !cm.IsPublicChannel(v.V) {
+		if v.Valid && !cm.IsPublicChannel(ctx, v.V) {
 			return errors.New(errMessage)
 		}
 	case string:
-		if !cm.IsPublicChannel(uuid.FromStringOrNil(v)) {
+		if !cm.IsPublicChannel(ctx, uuid.FromStringOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	case []byte:
-		if !cm.IsPublicChannel(uuid.FromBytesOrNil(v)) {
+		if !cm.IsPublicChannel(ctx, uuid.FromBytesOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	default:

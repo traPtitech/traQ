@@ -202,7 +202,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
+	if !h.ChannelManager.PublicChannelTree(c.Request().Context()).IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
 
