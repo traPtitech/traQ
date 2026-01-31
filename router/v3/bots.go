@@ -30,7 +30,7 @@ func (h *Handlers) GetBots(c echo.Context) error {
 		q = q.CreatedBy(getRequestUserID(c))
 	}
 
-	list, err := h.Repo.GetBots(q)
+	list, err := h.Repo.GetBots(context.TODO(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -89,7 +89,7 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		initialState = model.BotActive
 	}
 
-	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), model.BotMode(req.Mode), initialState, req.Endpoint)
+	b, err := h.Repo.CreateBot(context.TODO(), req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), model.BotMode(req.Mode), initialState, req.Endpoint)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -124,7 +124,7 @@ func (h *Handlers) GetBot(c echo.Context) error {
 			}
 		}
 
-		ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
+		ids, err := h.Repo.GetParticipatingChannelIDsByBot(context.TODO(), b.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -189,7 +189,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 		Bio:             req.Bio,
 	}
 
-	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
+	if err := h.Repo.UpdateBot(context.TODO(), b.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -200,7 +200,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 func (h *Handlers) DeleteBot(c echo.Context) error {
 	b := getParamBot(c)
 
-	if err := h.Repo.DeleteBot(b.ID); err != nil {
+	if err := h.Repo.DeleteBot(context.TODO(), b.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -250,7 +250,7 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 		return err
 	}
 
-	logs, err := h.Repo.GetBotEventLogs(b.ID, req.Limit, req.Offset)
+	logs, err := h.Repo.GetBotEventLogs(context.TODO(), b.ID, req.Limit, req.Offset)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -262,7 +262,7 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	bots, err := h.Repo.GetBots(repository.BotsQuery{}.CMemberOf(channelID))
+	bots, err := h.Repo.GetBots(context.TODO(), repository.BotsQuery{}.CMemberOf(channelID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -295,7 +295,7 @@ func (h *Handlers) ActivateBot(c echo.Context) error {
 func (h *Handlers) InactivateBot(c echo.Context) error {
 	b := getParamBot(c)
 
-	if err := h.Repo.ChangeBotState(b.ID, model.BotInactive); err != nil {
+	if err := h.Repo.ChangeBotState(context.TODO(), b.ID, model.BotInactive); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -305,7 +305,7 @@ func (h *Handlers) InactivateBot(c echo.Context) error {
 func (h *Handlers) ReissueBot(c echo.Context) error {
 	b := getParamBot(c)
 
-	b, err := h.Repo.ReissueBotTokens(b.ID)
+	b, err := h.Repo.ReissueBotTokens(context.TODO(), b.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -342,7 +342,7 @@ func (h *Handlers) LetBotJoinChannel(c echo.Context) error {
 	b := getParamBot(c)
 
 	// 参加
-	if err := h.Repo.AddBotToChannel(b.ID, req.ChannelID); err != nil {
+	if err := h.Repo.AddBotToChannel(context.TODO(), b.ID, req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -370,7 +370,7 @@ func (h *Handlers) LetBotLeaveChannel(c echo.Context) error {
 	b := getParamBot(c)
 
 	// 退出
-	if err := h.Repo.RemoveBotFromChannel(b.ID, req.ChannelID); err != nil {
+	if err := h.Repo.RemoveBotFromChannel(context.TODO(), b.ID, req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

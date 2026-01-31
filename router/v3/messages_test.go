@@ -213,7 +213,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
-	require.NoError(t, env.Repository.DeleteBot(bot3.ID))
+	require.NoError(t, env.Repository.DeleteBot(context.TODO(), bot3.ID))
 	require.NoError(t, env.Repository.DeleteWebhook(context.TODO(), w3.GetID()))
 
 	s := env.S(t, user.GetID())
@@ -363,7 +363,7 @@ func TestHandlers_DeleteMessage(t *testing.T) {
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
-	require.NoError(t, env.Repository.DeleteBot(bot3.ID))
+	require.NoError(t, env.Repository.DeleteBot(context.TODO(), bot3.ID))
 	require.NoError(t, env.Repository.DeleteWebhook(context.TODO(), w3.GetID()))
 
 	s := env.S(t, user.GetID())

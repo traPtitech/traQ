@@ -117,7 +117,7 @@ func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 // BotID リクエストURLの`botID`パラメータからBotを取り出す
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetBotByID(v)
+		return pr.repo.GetBotByID(context.TODO(), v)
 	})
 }
 

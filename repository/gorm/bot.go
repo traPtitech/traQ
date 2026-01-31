@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"math"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 )
 
 // CreateBot implements BotRepository interface.
-func (repo *Repository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
+func (repo *Repository) CreateBot(ctx context.Context, name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
 	uid := uuid.Must(uuid.NewV7())
 	bid := uuid.Must(uuid.NewV7())
 	tid := uuid.Must(uuid.NewV7())
@@ -58,7 +59,7 @@ func (repo *Repository) CreateBot(name, displayName, description string, iconFil
 		Scopes:         scopes,
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(u).Error; err != nil {
 			return err
 		}
@@ -88,7 +89,7 @@ func (repo *Repository) CreateBot(name, displayName, description string, iconFil
 }
 
 // UpdateBot implements BotRepository interface.
-func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
+func (repo *Repository) UpdateBot(ctx context.Context, id uuid.UUID, args repository.UpdateBotArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -98,7 +99,7 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 		updated     bool
 		userUpdated bool
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
@@ -175,9 +176,9 @@ func (repo *Repository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) e
 }
 
 // GetBots implements BotRepository interface.
-func (repo *Repository) GetBots(query repository.BotsQuery) ([]*model.Bot, error) {
+func (repo *Repository) GetBots(ctx context.Context, query repository.BotsQuery) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
-	tx := repo.db.Table("bots")
+	tx := repo.db.WithContext(ctx).Table("bots")
 
 	if query.IsPrivileged.Valid {
 		tx = tx.Where("bots.privileged = ?", query.IsPrivileged.V)
@@ -223,27 +224,27 @@ BotsFor:
 }
 
 // GetBotByID implements BotRepository interface.
-func (repo *Repository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
+func (repo *Repository) GetBotByID(ctx context.Context, id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	return getBot(repo.db, &model.Bot{ID: id})
+	return getBot(repo.db.WithContext(ctx), &model.Bot{ID: id})
 }
 
 // GetBotByBotUserID implements BotRepository interface.
-func (repo *Repository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
+func (repo *Repository) GetBotByBotUserID(ctx context.Context, id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	return getBot(repo.db, &model.Bot{BotUserID: id})
+	return getBot(repo.db.WithContext(ctx), &model.Bot{BotUserID: id})
 }
 
 // GetBotByCode implements BotRepository interface.
-func (repo *Repository) GetBotByCode(code string) (*model.Bot, error) {
+func (repo *Repository) GetBotByCode(ctx context.Context, code string) (*model.Bot, error) {
 	if len(code) == 0 {
 		return nil, repository.ErrNotFound
 	}
-	return getBot(repo.db, &model.Bot{BotCode: code})
+	return getBot(repo.db.WithContext(ctx), &model.Bot{BotCode: code})
 }
 
 func getBot(tx *gorm.DB, where interface{}) (*model.Bot, error) {
@@ -255,13 +256,13 @@ func getBot(tx *gorm.DB, where interface{}) (*model.Bot, error) {
 }
 
 // ChangeBotState implements BotRepository interface.
-func (repo *Repository) ChangeBotState(id uuid.UUID, state model.BotState) error {
+func (repo *Repository) ChangeBotState(ctx context.Context, id uuid.UUID, state model.BotState) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var changed bool
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.Take(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -288,12 +289,12 @@ func (repo *Repository) ChangeBotState(id uuid.UUID, state model.BotState) error
 }
 
 // ReissueBotTokens implements BotRepository interface.
-func (repo *Repository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
+func (repo *Repository) ReissueBotTokens(ctx context.Context, id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 	var bot model.Bot
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&bot, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
@@ -342,11 +343,11 @@ func (repo *Repository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 }
 
 // DeleteBot implements BotRepository interface.
-func (repo *Repository) DeleteBot(id uuid.UUID) error {
+func (repo *Repository) DeleteBot(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -380,12 +381,12 @@ func (repo *Repository) DeleteBot(id uuid.UUID) error {
 }
 
 // AddBotToChannel implements BotRepository interface.
-func (repo *Repository) AddBotToChannel(botID, channelID uuid.UUID) error {
+func (repo *Repository) AddBotToChannel(ctx context.Context, botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var b model.BotJoinChannel
-	result := repo.db.FirstOrCreate(&b, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
+	result := repo.db.WithContext(ctx).FirstOrCreate(&b, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
 	if result.RowsAffected > 0 {
 		repo.hub.Publish(hub.Message{
 			Name: event.BotJoined,
@@ -399,11 +400,11 @@ func (repo *Repository) AddBotToChannel(botID, channelID uuid.UUID) error {
 }
 
 // RemoveBotFromChannel implements BotRepository interface.
-func (repo *Repository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
+func (repo *Repository) RemoveBotFromChannel(ctx context.Context, botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
+	result := repo.db.WithContext(ctx).Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
 	if result.RowsAffected > 0 {
 		repo.hub.Publish(hub.Message{
 			Name: event.BotLeft,
@@ -417,12 +418,12 @@ func (repo *Repository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
 }
 
 // GetParticipatingChannelIDsByBot implements BotRepository interface.
-func (repo *Repository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *Repository) GetParticipatingChannelIDsByBot(ctx context.Context, botID uuid.UUID) ([]uuid.UUID, error) {
 	channels := make([]uuid.UUID, 0)
 	if botID == uuid.Nil {
 		return channels, nil
 	}
-	return channels, repo.db.
+	return channels, repo.db.WithContext(ctx).
 		Model(&model.BotJoinChannel{}).
 		Where(&model.BotJoinChannel{BotID: botID}).
 		Pluck("channel_id", &channels).
@@ -430,20 +431,20 @@ func (repo *Repository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid
 }
 
 // WriteBotEventLog implements BotRepository interface.
-func (repo *Repository) WriteBotEventLog(log *model.BotEventLog) error {
+func (repo *Repository) WriteBotEventLog(ctx context.Context, log *model.BotEventLog) error {
 	if log == nil || log.RequestID == uuid.Nil {
 		return nil
 	}
-	return repo.db.Create(log).Error
+	return repo.db.WithContext(ctx).Create(log).Error
 }
 
 // GetBotEventLogs implements BotRepository interface.
-func (repo *Repository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+func (repo *Repository) GetBotEventLogs(ctx context.Context, botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
 	logs := make([]*model.BotEventLog, 0)
 	if botID == uuid.Nil {
 		return logs, nil
 	}
-	return logs, repo.db.Where(&model.BotEventLog{BotID: botID}).
+	return logs, repo.db.WithContext(ctx).Where(&model.BotEventLog{BotID: botID}).
 		Order("date_time DESC").
 		Scopes(gormutil.LimitAndOffset(limit, offset)).
 		Find(&logs).
@@ -451,6 +452,6 @@ func (repo *Repository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*
 }
 
 // PurgeBotEventLogs implements BotRepository interface.
-func (repo *Repository) PurgeBotEventLogs(before time.Time) error {
-	return repo.db.Delete(&model.BotEventLog{}, "date_time < ?", before).Error
+func (repo *Repository) PurgeBotEventLogs(ctx context.Context, before time.Time) error {
+	return repo.db.WithContext(ctx).Delete(&model.BotEventLog{}, "date_time < ?", before).Error
 }

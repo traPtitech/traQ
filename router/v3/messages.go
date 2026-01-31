@@ -149,7 +149,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			return herror.Forbidden("you are not allowed to delete this message")
 		case model.UserTypeBot:
 			// BOTのメッセージの削除権限の確認
-			wh, err := h.Repo.GetBotByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetBotByBotUserID(context.TODO(), mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted bot
