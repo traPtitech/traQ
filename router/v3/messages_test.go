@@ -209,7 +209,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 
 	m := env.CreateMessage(t, user.GetID(), pub.ID, rand)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
@@ -359,7 +359,7 @@ func TestHandlers_DeleteMessage(t *testing.T) {
 
 	m := env.CreateMessage(t, user.GetID(), pub.ID, rand)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
@@ -479,7 +479,7 @@ func TestHandlers_GetPin(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	m2 := env.CreateMessage(t, user.GetID(), ch.ID, rand)
-	_, err := env.MM.Pin(m.GetID(), user.GetID())
+	_, err := env.MM.Pin(context.TODO(), m.GetID(), user.GetID())
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 
@@ -535,8 +535,8 @@ func TestHandlers_CreatePin(t *testing.T) {
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	m2 := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
-	_, err := env.MM.Pin(m2.GetID(), user.GetID())
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
+	_, err := env.MM.Pin(context.TODO(), m2.GetID(), user.GetID())
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 
@@ -600,12 +600,12 @@ func TestHandlers_RemovePin(t *testing.T) {
 	archived := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	m2 := env.CreateMessage(t, user.GetID(), ch.ID, rand)
-	_, err := env.MM.Pin(m.GetID(), user.GetID())
+	_, err := env.MM.Pin(context.TODO(), m.GetID(), user.GetID())
 	require.NoError(t, err)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
-	_, err = env.MM.Pin(archivedM.GetID(), user.GetID())
+	_, err = env.MM.Pin(context.TODO(), archivedM.GetID(), user.GetID())
 	require.NoError(t, err)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -651,7 +651,7 @@ func TestHandlers_RemovePin(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		m, err := env.MM.Get(m.GetID())
+		m, err := env.MM.Get(context.TODO(), m.GetID())
 		require.NoError(t, err)
 		assert.Nil(t, m.GetPin())
 	})
@@ -670,7 +670,7 @@ func TestHandlers_GetMessageStamps(t *testing.T) {
 	s := env.S(t, user.GetID())
 
 	var err error
-	m, err = env.MM.Get(m.GetID())
+	m, err = env.MM.Get(context.TODO(), m.GetID())
 	require.NoError(t, err)
 	require.Len(t, m.GetStamps(), 1)
 
@@ -762,7 +762,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 	archived := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	stamp := env.CreateStamp(t, user.GetID(), rand)
 	s := env.S(t, user.GetID())
 
@@ -824,7 +824,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		m, err := env.MM.Get(m.GetID())
+		m, err := env.MM.Get(context.TODO(), m.GetID())
 		require.NoError(t, err)
 
 		if assert.Len(t, m.GetStamps(), 1) {
@@ -850,7 +850,7 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	stamp := env.CreateStamp(t, user.GetID(), rand)
 	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
 	env.AddStampToMessage(t, archivedM.GetID(), stamp.ID, user.GetID())
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -896,7 +896,7 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		m, err := env.MM.Get(m.GetID())
+		m, err := env.MM.Get(context.TODO(), m.GetID())
 		require.NoError(t, err)
 
 		assert.Len(t, m.GetStamps(), 0)
@@ -1014,7 +1014,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
 	req := &PostMessageRequest{
@@ -1083,7 +1083,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
-			m, err := env.MM.Get(id)
+			m, err := env.MM.Get(context.TODO(), id)
 			require.NoError(t, err)
 			messageEquals(t, m, obj)
 		}
@@ -1224,7 +1224,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
-			m, err := env.MM.Get(id)
+			m, err := env.MM.Get(context.TODO(), id)
 			require.NoError(t, err)
 			messageEquals(t, m, obj)
 		}
@@ -1252,7 +1252,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 
 		id, err := uuid.FromString(obj.Value("id").String().Raw())
 		if assert.NoError(t, err) {
-			m, err := env.MM.Get(id)
+			m, err := env.MM.Get(context.TODO(), id)
 			require.NoError(t, err)
 			messageEquals(t, m, obj)
 		}

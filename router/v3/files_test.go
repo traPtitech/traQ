@@ -223,7 +223,7 @@ func TestHandlers_PostFile(t *testing.T) {
 	dm1 := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	dm2 := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
 	buf := []byte("test file")

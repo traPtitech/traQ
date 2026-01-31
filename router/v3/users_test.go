@@ -1013,7 +1013,7 @@ func TestHandlers_GetMyChannelSubscriptions(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
-	err := env.CM.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+	err := env.CM.ChangeChannelSubscriptions(context.TODO(), ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
 		user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
@@ -1094,7 +1094,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	forced := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
-	err := env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)})
+	err := env.CM.UpdateChannel(context.TODO(), forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)})
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 

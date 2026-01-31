@@ -289,7 +289,7 @@ func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.CM.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	ch, err := env.CM.CreatePublicChannel(context.TODO(), name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
@@ -300,10 +300,10 @@ func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name strin
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.CM.CreatePublicChannel(name, parent.ID, uuid.Nil)
+	ch, err := env.CM.CreatePublicChannel(context.TODO(), name, parent.ID, uuid.Nil)
 	require.NoError(t, err)
 	// parent.ChildrenId が更新されるので, 代入しなおす
-	newParent, err := env.CM.GetChannel(parent.ID)
+	newParent, err := env.CM.GetChannel(context.TODO(), parent.ID)
 	require.NoError(t, err)
 	*parent = *newParent
 	return ch
@@ -317,7 +317,7 @@ func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
 
 // CreateDMChannel DMチャンネルを必ず作成します
 func (env *Env) CreateDMChannel(t *testing.T, user1, user2 uuid.UUID) *model.Channel {
-	dm, err := env.CM.GetDMChannel(user1, user2)
+	dm, err := env.CM.GetDMChannel(context.TODO(), user1, user2)
 	require.NoError(t, err)
 	return dm
 }
@@ -328,7 +328,7 @@ func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text st
 	if text == rand {
 		text = random.AlphaNumeric(20)
 	}
-	m, err := env.MM.Create(channelID, userID, text)
+	m, err := env.MM.Create(context.TODO(), channelID, userID, text)
 	require.NoError(t, err)
 	return m
 }
@@ -336,7 +336,7 @@ func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text st
 // DeleteMessage メッセージを必ず削除します
 func (env *Env) DeleteMessage(t *testing.T, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.MM.Delete(messageID))
+	require.NoError(t, env.MM.Delete(context.TODO(), messageID))
 }
 
 // MakeMessageUnread 指定したメッセージを未読にします
@@ -375,7 +375,7 @@ func (env *Env) CreateStampPalette(t *testing.T, creator uuid.UUID, name string,
 // AddStampToMessage メッセージにスタンプを必ず押します
 func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
-	_, err := env.MM.AddStamps(messageID, stampID, userID, 1)
+	_, err := env.MM.AddStamps(context.TODO(), messageID, stampID, userID, 1)
 	require.NoError(t, err)
 }
 
@@ -406,7 +406,7 @@ func (env *Env) CreateFileWithName(t *testing.T, creatorID, channelID uuid.UUID,
 		Src:       buf,
 	}
 
-	members, err := env.CM.GetDMChannelMembers(channelID)
+	members, err := env.CM.GetDMChannelMembers(context.TODO(), channelID)
 	require.NoError(t, err)
 	for _, member := range members {
 		args.ACLAllow(member)

@@ -317,7 +317,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	ch2 := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 
 	calcHMACSHA1 := func(t *testing.T, message, secret string) string {
@@ -419,7 +419,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(message.TimelineQuery{Channel: ch2.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch2.ID})
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]
@@ -438,7 +438,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(message.TimelineQuery{Channel: ch.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch.ID})
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]

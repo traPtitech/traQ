@@ -67,7 +67,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			DoAndReturn(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
@@ -126,7 +126,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			DoAndReturn(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) error {
 				meta.CreatedAt = time.Now()
 				return nil
@@ -190,7 +190,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -257,7 +257,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -323,7 +323,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -387,7 +387,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			}).
 			Times(1)
 		repo.EXPECT().
-			SaveFileMeta(context.TODO(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
 			Do(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
 			Return(nil).
 			Times(1)
@@ -441,7 +441,7 @@ func TestManagerImpl_Get(t *testing.T) {
 		}}
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), meta.ID).
+			GetFileMeta(gomock.Any(), meta.ID).
 			Return(meta, nil).
 			Times(1)
 
@@ -458,7 +458,7 @@ func TestManagerImpl_Get(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), uuid.Nil).
+			GetFileMeta(gomock.Any(), uuid.Nil).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
@@ -475,7 +475,7 @@ func TestManagerImpl_Get(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), uuid.Nil).
+			GetFileMeta(gomock.Any(), uuid.Nil).
 			Return(nil, errMock).
 			Times(1)
 
@@ -510,7 +510,7 @@ func TestManagerImpl_List(t *testing.T) {
 		}}
 
 		repo.EXPECT().
-			GetFileMetas(context.TODO(), gomock.Any()).
+			GetFileMetas(gomock.Any(), gomock.Any()).
 			Return([]*model.FileMeta{meta, meta, meta}, true, nil).
 			Times(1)
 
@@ -528,7 +528,7 @@ func TestManagerImpl_List(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		repo.EXPECT().
-			GetFileMetas(context.TODO(), gomock.Any()).
+			GetFileMetas(gomock.Any(), gomock.Any()).
 			Return(nil, false, errMock).
 			Times(1)
 
@@ -571,11 +571,11 @@ func TestManagerImpl_Delete(t *testing.T) {
 			},
 		}
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), meta.ID).
+			GetFileMeta(gomock.Any(), meta.ID).
 			Return(meta, nil).
 			Times(1)
 		repo.EXPECT().
-			DeleteFileMeta(context.TODO(), meta.ID).
+			DeleteFileMeta(gomock.Any(), meta.ID).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
@@ -612,11 +612,11 @@ func TestManagerImpl_Delete(t *testing.T) {
 		}
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), meta.ID).
+			GetFileMeta(gomock.Any(), meta.ID).
 			Return(meta, nil).
 			Times(1)
 		repo.EXPECT().
-			DeleteFileMeta(context.TODO(), meta.ID).
+			DeleteFileMeta(gomock.Any(), meta.ID).
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
@@ -634,7 +634,7 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), uuid.Nil).
+			GetFileMeta(gomock.Any(), uuid.Nil).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
@@ -648,7 +648,7 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), uuid.Nil).
+			GetFileMeta(gomock.Any(), uuid.Nil).
 			Return(nil, errMock).
 			Times(1)
 
@@ -675,11 +675,11 @@ func TestManagerImpl_Delete(t *testing.T) {
 		}
 
 		repo.EXPECT().
-			GetFileMeta(context.TODO(), meta.ID).
+			GetFileMeta(gomock.Any(), meta.ID).
 			Return(meta, nil).
 			Times(1)
 		repo.EXPECT().
-			DeleteFileMeta(context.TODO(), meta.ID).
+			DeleteFileMeta(gomock.Any(), meta.ID).
 			Return(errMock).
 			Times(1)
 
@@ -701,7 +701,7 @@ func TestManagerImpl_Accessible(t *testing.T) {
 
 		fid := uuid.NewV3(uuid.Nil, "f1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		repo.EXPECT().IsFileAccessible(context.TODO(), fid, uid).Return(false, errMock).Times(1)
+		repo.EXPECT().IsFileAccessible(gomock.Any(), fid, uid).Return(false, errMock).Times(1)
 
 		ok, err := fm.Accessible(context.TODO(), fid, uid)
 		if assert.Error(t, err) {
@@ -718,7 +718,7 @@ func TestManagerImpl_Accessible(t *testing.T) {
 
 		fid := uuid.NewV3(uuid.Nil, "f1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		repo.EXPECT().IsFileAccessible(context.TODO(), fid, uid).Return(true, nil).Times(1)
+		repo.EXPECT().IsFileAccessible(gomock.Any(), fid, uid).Return(true, nil).Times(1)
 
 		ok, err := fm.Accessible(context.TODO(), fid, uid)
 		if assert.NoError(t, err) {
@@ -734,7 +734,7 @@ func TestManagerImpl_Accessible(t *testing.T) {
 
 		fid := uuid.NewV3(uuid.Nil, "f1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		repo.EXPECT().IsFileAccessible(context.TODO(), fid, uid).Return(false, nil).Times(1)
+		repo.EXPECT().IsFileAccessible(gomock.Any(), fid, uid).Return(false, nil).Times(1)
 
 		ok, err := fm.Accessible(context.TODO(), fid, uid)
 		if assert.NoError(t, err) {
