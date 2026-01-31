@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -220,7 +221,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				continue
 			}
 
-			us, err := ns.repo.GetNotifyCitation(uid)
+			us, err := ns.repo.GetNotifyCitation(context.TODO(), uid)
 			if err != nil {
 				logger.Error("failed to GetNotifyCitation", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
