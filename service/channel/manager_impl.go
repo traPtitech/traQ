@@ -32,7 +32,7 @@ type managerImpl struct {
 }
 
 func InitChannelManager(repo repository.ChannelRepository, logger *zap.Logger) (Manager, error) {
-	channels, err := repo.GetPublicChannels(context.TODO())
+	channels, err := repo.GetPublicChannels(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to init channel.Manager: %w", err)
 	}
@@ -56,7 +56,7 @@ func (m *managerImpl) GetChannel(id uuid.UUID) (*model.Channel, error) {
 		return ch, nil
 	}
 
-	ch, err = m.R.GetChannel(context.TODO(), id)
+	ch, err = m.R.GetChannel(context.Background(), id)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return nil, ErrChannelNotFound
@@ -109,7 +109,7 @@ func (m *managerImpl) CreatePublicChannel(name string, parent, creatorID uuid.UU
 	}
 
 	// チャンネル作成
-	ch, err := m.R.CreateChannel(context.TODO(), model.Channel{
+	ch, err := m.R.CreateChannel(context.Background(), model.Channel{
 		Name:      name,
 		ParentID:  parent,
 		CreatorID: creatorID,
@@ -236,7 +236,7 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 		}
 	}
 
-	ch, err = m.R.UpdateChannel(context.TODO(), id, args)
+	ch, err = m.R.UpdateChannel(context.Background(), id, args)
 	if err != nil {
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}
@@ -285,7 +285,7 @@ func (m *managerImpl) ArchiveChannel(id uuid.UUID, updaterID uuid.UUID) error {
 		queue = append(queue, m.T.getChildrenIDs(id)...)
 	}
 
-	chs, err := m.R.ArchiveChannels(context.TODO(), targets)
+	chs, err := m.R.ArchiveChannels(context.Background(), targets)
 	if err != nil {
 		return fmt.Errorf("failed to ArchiveChannels: %w", err)
 	}
@@ -318,7 +318,7 @@ func (m *managerImpl) UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error 
 		return ErrInvalidParentChannel // 親チャンネルがアーカイブされている
 	}
 
-	ch, err = m.R.UpdateChannel(context.TODO(), id, repository.UpdateChannelArgs{Visibility: optional.From(true)})
+	ch, err = m.R.UpdateChannel(context.Background(), id, repository.UpdateChannelArgs{Visibility: optional.From(true)})
 	if err != nil {
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}
@@ -344,7 +344,7 @@ func (m *managerImpl) ChangeChannelSubscriptions(channelID uuid.UUID, subscripti
 		return ErrForcedNotification
 	}
 
-	on, off, err := m.R.ChangeChannelSubscription(context.TODO(), channelID, repository.ChangeChannelSubscriptionArgs{
+	on, off, err := m.R.ChangeChannelSubscription(context.Background(), channelID, repository.ChangeChannelSubscriptionArgs{
 		Subscription: subscriptions,
 		KeepOffLevel: keepOffLevel,
 	})
@@ -366,7 +366,7 @@ func (m *managerImpl) GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, erro
 		return nil, ErrChannelNotFound
 	}
 
-	ch, err := m.R.GetDirectMessageChannel(context.TODO(), user1, user2)
+	ch, err := m.R.GetDirectMessageChannel(context.Background(), user1, user2)
 	if err == nil {
 		return ch, nil
 	} else if err != repository.ErrNotFound {
@@ -374,7 +374,7 @@ func (m *managerImpl) GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, erro
 	}
 
 	// 存在しなかったので作成
-	ch, err = m.R.CreateChannel(context.TODO(), model.Channel{
+	ch, err = m.R.CreateChannel(context.Background(), model.Channel{
 		Name:      "dm_" + random.AlphaNumeric(17),
 		IsVisible: true,
 	},
@@ -388,7 +388,7 @@ func (m *managerImpl) GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, erro
 }
 
 func (m *managerImpl) GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error) {
-	members, err := m.R.GetPrivateChannelMemberIDs(context.TODO(), id)
+	members, err := m.R.GetPrivateChannelMemberIDs(context.Background(), id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDMCHannelMembers: %w", err)
 	}
@@ -396,7 +396,7 @@ func (m *managerImpl) GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error) {
 }
 
 func (m *managerImpl) GetDMChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
-	mappings, err := m.R.GetDirectMessageChannelMapping(context.TODO(), userID)
+	mappings, err := m.R.GetDirectMessageChannelMapping(context.Background(), userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDMChannelMapping: %w", err)
 	}
@@ -418,7 +418,7 @@ func (m *managerImpl) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bo
 	}
 
 	// DMチャンネル
-	members, err := m.R.GetPrivateChannelMemberIDs(context.TODO(), channelID)
+	members, err := m.R.GetPrivateChannelMemberIDs(context.Background(), channelID)
 	if err != nil {
 		return false, fmt.Errorf("failed to IsChannelAccessibleToUser: %w", err)
 	}
@@ -443,7 +443,7 @@ func (m *managerImpl) recordChannelEvent(channelID uuid.UUID, eventType model.Ch
 	go func() {
 		defer m.P.Done()
 
-		err := m.R.RecordChannelEvent(context.TODO(), channelID, eventType, detail, datetime)
+		err := m.R.RecordChannelEvent(context.Background(), channelID, eventType, detail, datetime)
 		if err != nil {
 			m.L.Warn("failed to record channel event", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
 		}
