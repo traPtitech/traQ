@@ -51,7 +51,7 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
 	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
 
-	if err := h.Soundboard.SaveSoundboardItem(uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
+	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
