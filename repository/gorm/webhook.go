@@ -122,7 +122,7 @@ func (repo *Repository) UpdateWebhook(ctx context.Context, id uuid.UUID, args re
 		}
 		if args.CreatorID.Valid {
 			// 作成者検証
-			user, err := repo.GetUser(args.CreatorID.V, false)
+			user, err := repo.GetUser(context.TODO(), args.CreatorID.V, false)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.CreatorID", "the Creator is not found")

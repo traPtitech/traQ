@@ -189,7 +189,7 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string, use
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
 	iconUUID := mustGenerateUUID(useUUIDv4)
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
+	u, err := repo.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
 }

@@ -2,6 +2,7 @@
 package utils
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,7 +32,7 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 	}
 
 	// アイコン変更
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
+	if err := repo.UpdateUser(context.TODO(), userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -64,7 +65,7 @@ func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
 func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
+	if err := repo.UpdateUser(context.TODO(), userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -51,7 +51,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 	w := getParamWebhook(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(w.GetBotUserID(), false)
+	user, err := h.Repo.GetUser(context.TODO(), w.GetBotUserID(), false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

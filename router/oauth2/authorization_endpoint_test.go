@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"testing"
@@ -530,7 +531,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		t.Parallel()
 		assert := assert.New(t)
 		user := env.CreateUser(t, rand, useUUIDV4)
-		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
+		err := env.Repository.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
 
 		env.IssueToken(t, client, user.GetID(), false)

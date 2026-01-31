@@ -1,6 +1,8 @@
 package oidc
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -32,7 +34,7 @@ type ScopeChecker interface {
 }
 
 func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
-	user, err := s.repo.GetUser(userID, true)
+	user, err := s.repo.GetUser(context.TODO(), userID, true)
 	if err != nil {
 		return nil, err
 	}

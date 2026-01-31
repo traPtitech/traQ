@@ -232,7 +232,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
 	require.NoError(t, err)
 	return u
 }
@@ -243,7 +243,7 @@ func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestHandlers_Login(t *testing.T) {
 
 	path := "/api/v3/login"
 	env := Setup(t, common1)
-	user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:        random.AlphaNumeric(20),
 		DisplayName: "po",
 		Role:        role.User,
@@ -71,7 +72,7 @@ func TestHandlers_Login(t *testing.T) {
 		Password:    "testTestTest",
 	})
 	require.NoError(t, err)
-	deactivated, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	deactivated, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:        random.AlphaNumeric(20),
 		DisplayName: "po",
 		Role:        role.User,
@@ -79,11 +80,11 @@ func TestHandlers_Login(t *testing.T) {
 		Password:    "testTestTest",
 	})
 	require.NoError(t, err)
-	err = env.Repository.UpdateUser(deactivated.GetID(), repository.UpdateUserArgs{
+	err = env.Repository.UpdateUser(context.TODO(), deactivated.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusDeactivated),
 	})
 	require.NoError(t, err)
-	suspended, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	suspended, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:        random.AlphaNumeric(20),
 		DisplayName: "po",
 		Role:        role.User,
@@ -91,7 +92,7 @@ func TestHandlers_Login(t *testing.T) {
 		Password:    "testTestTest",
 	})
 	require.NoError(t, err)
-	err = env.Repository.UpdateUser(suspended.GetID(), repository.UpdateUserArgs{
+	err = env.Repository.UpdateUser(context.TODO(), suspended.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusSuspended),
 	})
 	require.NoError(t, err)
@@ -435,7 +436,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+		user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 			Name:        random.AlphaNumeric(20),
 			DisplayName: "po",
 			Role:        role.User,
@@ -443,7 +444,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
-		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+		err = env.Repository.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
 			ProviderName: "traq",
 			ExternalID:   "sappi_red",
 			Extra:        map[string]interface{}{},
@@ -470,7 +471,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 	t.Run("success with external name", func(t *testing.T) {
 		t.Parallel()
 
-		user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+		user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 			Name:        random.AlphaNumeric(20),
 			DisplayName: "po",
 			Role:        role.User,
@@ -478,7 +479,7 @@ func TestHandlers_GetMyExternalAccounts(t *testing.T) {
 			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
-		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+		err = env.Repository.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
 			ProviderName: "traq",
 			ExternalID:   "motoki317",
 			Extra: map[string]interface{}{
@@ -525,7 +526,7 @@ func TestHandlers_LinkExternalAccount(t *testing.T) {
 	t.Run("already linked", func(t *testing.T) {
 		t.Parallel()
 
-		user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+		user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 			Name:        random.AlphaNumeric(20),
 			DisplayName: "po",
 			Role:        role.User,
@@ -533,7 +534,7 @@ func TestHandlers_LinkExternalAccount(t *testing.T) {
 			Password:    "!test_test@test-",
 		})
 		require.NoError(t, err)
-		err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+		err = env.Repository.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
 			ProviderName: "traq",
 			ExternalID:   "takashi_trap",
 			Extra:        map[string]interface{}{},
@@ -577,7 +578,7 @@ func TestHandlers_UnlinkExternalAccount(t *testing.T) {
 	path := "/api/v3/users/me/ex-accounts/unlink"
 	env := Setup(t, common1)
 
-	user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:        random.AlphaNumeric(20),
 		DisplayName: "po",
 		Role:        role.User,
@@ -585,7 +586,7 @@ func TestHandlers_UnlinkExternalAccount(t *testing.T) {
 		Password:    "!test_test@test-",
 	})
 	require.NoError(t, err)
-	err = env.Repository.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+	err = env.Repository.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
 		ProviderName: "traq",
 		ExternalID:   "xxpoxx",
 		Extra:        map[string]interface{}{},
@@ -621,7 +622,7 @@ func TestHandlers_UnlinkExternalAccount(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		externals, err := env.Repository.GetLinkedExternalUserAccounts(user.GetID())
+		externals, err := env.Repository.GetLinkedExternalUserAccounts(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.Len(t, externals, 0)
 	})

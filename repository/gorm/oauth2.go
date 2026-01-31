@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -70,7 +71,7 @@ func (repo *Repository) UpdateClient(clientID string, args repository.UpdateClie
 		}
 		if args.DeveloperID.Valid {
 			// 作成者検証
-			user, err := repo.GetUser(args.DeveloperID.V, false)
+			user, err := repo.GetUser(context.TODO(), args.DeveloperID.V, false)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.DeveloperID", "the Developer is not found")

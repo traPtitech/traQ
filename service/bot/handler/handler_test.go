@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -66,7 +67,7 @@ func registerBot(_ *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bo
 
 func registerUser(repo *Repo, u *model.User) {
 	repo.MockUserRepository.EXPECT().
-		GetUser(u.ID, gomock.Any()).
+		GetUser(context.TODO(), u.ID, gomock.Any()).
 		Return(u, nil).
 		AnyTimes()
 }

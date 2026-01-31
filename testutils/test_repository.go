@@ -92,11 +92,11 @@ func NewTestRepository() *TestRepository {
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
 		OgpCache:              map[int]model.OgpCache{},
 	}
-	_, _ = r.CreateUser(repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
+	_, _ = r.CreateUser(context.TODO(), repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
 }
 
-func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
+func (repo *TestRepository) CreateUser(ctx context.Context, args repository.CreateUserArgs) (model.UserInfo, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
@@ -137,7 +137,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 	return &user, nil
 }
 
-func (repo *TestRepository) GetUser(id uuid.UUID, _ bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUser(ctx context.Context, id uuid.UUID, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	u, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
@@ -147,7 +147,7 @@ func (repo *TestRepository) GetUser(id uuid.UUID, _ bool) (model.UserInfo, error
 	return &u, nil
 }
 
-func (repo *TestRepository) GetUserByName(name string, _ bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUserByName(ctx context.Context, name string, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	defer repo.UsersLock.RUnlock()
 	for _, u := range repo.Users {
@@ -159,7 +159,7 @@ func (repo *TestRepository) GetUserByName(name string, _ bool) (model.UserInfo, 
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserInfo, error) {
+func (repo *TestRepository) GetUsers(ctx context.Context, query repository.UsersQuery) ([]model.UserInfo, error) {
 	result := make([]model.UserInfo, 0, len(repo.Users))
 	repo.UsersLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
@@ -207,7 +207,7 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserI
 	return result, nil
 }
 
-func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDs(ctx context.Context, query repository.UsersQuery) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	repo.UsersLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
@@ -254,14 +254,14 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 	return ids, nil
 }
 
-func (repo *TestRepository) UserExists(id uuid.UUID) (bool, error) {
+func (repo *TestRepository) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	repo.UsersLock.RLock()
 	_, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
 	return ok, nil
 }
 
-func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs) error {
+func (repo *TestRepository) UpdateUser(ctx context.Context, id uuid.UUID, args repository.UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}

@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -229,7 +230,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	user, err := h.Repo.GetUserByName(req.Username, false)
+	user, err := h.Repo.GetUserByName(context.TODO(), req.Username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:

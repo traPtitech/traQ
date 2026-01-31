@@ -165,11 +165,11 @@ func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
 		return pr.checkOnlyByUUID(consts.ParamUserID, func(_ echo.Context, v uuid.UUID) (bool, error) {
-			return pr.repo.UserExists(v)
+			return pr.repo.UserExists(context.TODO(), v)
 		})
 	}
 	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUser(v, true)
+		return pr.repo.GetUser(context.TODO(), v, true)
 	})
 }
 

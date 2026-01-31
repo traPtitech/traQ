@@ -68,7 +68,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 			}
 
 			// ユーザー取得
-			user, err := repo.GetUser(uid, true)
+			user, err := repo.GetUser(context.TODO(), uid, true)
 			if err != nil {
 				return herror.InternalServerError(err)
 			}

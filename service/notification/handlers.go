@@ -86,7 +86,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	forceNotify := chTree.IsForceChannel(chID)
 
 	// 投稿ユーザー情報を取得
-	mUser, err := ns.repo.GetUser(m.UserID, false)
+	mUser, err := ns.repo.GetUser(context.TODO(), m.UserID, false)
 	if err != nil {
 		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", m.UserID)) // 失敗
 		return
@@ -140,7 +140,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	q := repository.UsersQuery{}.Active().NotBot()
 	switch {
 	case forceNotify: // 強制通知チャンネル
-		users, err := ns.repo.GetUserIDs(q)
+		users, err := ns.repo.GetUserIDs(context.TODO(), q)
 		if err != nil {
 			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
 			return
@@ -150,7 +150,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		noticeable.Add(users...)
 
 	case isDM: // DM
-		users, err := ns.repo.GetUserIDs(q.CMemberOf(chID))
+		users, err := ns.repo.GetUserIDs(context.TODO(), q.CMemberOf(chID))
 		if err != nil {
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -161,7 +161,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知購読者取得
-		notify, err := ns.repo.GetUserIDs(q.SubscriberAtNotifyLevelOf(chID))
+		notify, err := ns.repo.GetUserIDs(context.TODO(), q.SubscriberAtNotifyLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -169,7 +169,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		notifiedUsers.Add(notify...)
 
 		// チャンネル未読管理購読者取得
-		mark, err := ns.repo.GetUserIDs(q.SubscriberAtMarkLevelOf(chID))
+		mark, err := ns.repo.GetUserIDs(context.TODO(), q.SubscriberAtMarkLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -178,7 +178,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, uid := range parsed.Mentions {
-			user, err := ns.repo.GetUser(uid, false)
+			user, err := ns.repo.GetUser(context.TODO(), uid, false)
 			if err != nil {
 				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
@@ -193,7 +193,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			noticeable.Add(uid)
 		}
 		for _, gid := range parsed.GroupMentions {
-			gs, err := ns.repo.GetUserIDs(q.GMemberOf(gid))
+			gs, err := ns.repo.GetUserIDs(context.TODO(), q.GMemberOf(gid))
 			if err != nil {
 				logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.Stringer("groupId", gid)) // 失敗
 				return
@@ -211,7 +211,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			}
 			uid := m.UserID
 
-			user, err := ns.repo.GetUser(uid, false)
+			user, err := ns.repo.GetUser(context.TODO(), uid, false)
 			if err != nil {
 				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue

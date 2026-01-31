@@ -119,7 +119,7 @@ func serveCommand() *cobra.Command {
 				if err != nil {
 					logger.Fatal("failed to generate icon file", zap.Error(err))
 				}
-				u, err := repo.CreateUser(repository.CreateUserArgs{
+				u, err := repo.CreateUser(context.TODO(), repository.CreateUserArgs{
 					Name:       "traq",
 					Password:   "traq",
 					Role:       role.Admin,
@@ -188,7 +188,7 @@ func (s *Server) Start(address string) error {
 		for ev := range sub.Receiver {
 			userID := ev.Fields["user_id"].(uuid.UUID)
 			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
+			_ = s.Repo.UpdateUser(context.TODO(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
 		}
 	}()
 	s.SS.StampThrottler.Start()

@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -168,7 +169,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	if se != nil {
-		u, err := h.Repo.GetUser(se.UserID(), false)
+		u, err := h.Repo.GetUser(context.TODO(), se.UserID(), false)
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)

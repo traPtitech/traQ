@@ -41,7 +41,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 	var isBot, ok bool
 	if isBot, ok = userCache[m.UserID]; !ok {
 		// 新規ユーザー or キャッシュが存在しない
-		user, err := e.repo.GetUser(m.UserID, false)
+		user, err := e.repo.GetUser(context.TODO(), m.UserID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ loop:
 }
 
 func (e *esEngine) newUserCache() (userCache, error) {
-	users, err := e.repo.GetUsers(repository.UsersQuery{})
+	users, err := e.repo.GetUsers(context.TODO(), repository.UsersQuery{})
 	if err != nil {
 		return nil, err
 	}

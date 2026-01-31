@@ -139,7 +139,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	m := getParamMessage(c)
 
 	if muid := m.GetUserID(); muid != userID {
-		mUser, err := h.Repo.GetUser(muid, false)
+		mUser, err := h.Repo.GetUser(context.TODO(), muid, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

@@ -75,7 +75,7 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if _, err := h.Repo.GetUserByName("BOT_"+req.Name, false); err == nil {
+	if _, err := h.Repo.GetUserByName(context.TODO(), "BOT_"+req.Name, false); err == nil {
 		return herror.Conflict("this name is already used")
 	} else if err != repository.ErrNotFound {
 		return herror.InternalServerError(err)
@@ -212,7 +212,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 	w := getParamBot(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(w.BotUserID, false)
+	user, err := h.Repo.GetUser(context.TODO(), w.BotUserID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

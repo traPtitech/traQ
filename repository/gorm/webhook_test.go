@@ -54,7 +54,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 			assert.Equal(user.GetID(), wb.GetCreatorID())
 			assert.Equal("test", wb.GetSecret())
 
-			u, err := repo.GetUser(wb.GetBotUserID(), false)
+			u, err := repo.GetUser(context.TODO(), wb.GetBotUserID(), false)
 			if assert.NoError(err) {
 				assert.True(u.IsBot())
 				assert.Equal(role.Bot, u.GetRole())
