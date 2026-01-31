@@ -99,6 +99,7 @@ func (r PostMessageRequest) Validate() error {
 
 // EditMessage PUT /messages/:messageID
 func (h *Handlers) EditMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
@@ -122,7 +123,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	if err := h.MessageManager.Edit(m.GetID(), req.Content); err != nil {
+	if err := h.MessageManager.Edit(ctx, m.GetID(), req.Content); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -135,11 +136,12 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 
 // DeleteMessage DELETE /messages/:messageID
 func (h *Handlers) DeleteMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
 	if muid := m.GetUserID(); muid != userID {
-		mUser, err := h.Repo.GetUser(c.Request().Context(), muid, false)
+		mUser, err := h.Repo.GetUser(ctx, muid, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -149,7 +151,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			return herror.Forbidden("you are not allowed to delete this message")
 		case model.UserTypeBot:
 			// BOTのメッセージの削除権限の確認
-			wh, err := h.Repo.GetBotByBotUserID(c.Request().Context(), mUser.GetID())
+			wh, err := h.Repo.GetBotByBotUserID(ctx, mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted bot
@@ -164,7 +166,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			}
 		case model.UserTypeWebhook:
 			// Webhookのメッセージの削除権限の確認
-			wh, err := h.Repo.GetWebhookByBotUserID(c.Request().Context(), mUser.GetID())
+			wh, err := h.Repo.GetWebhookByBotUserID(ctx, mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted webhook
@@ -180,7 +182,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 		}
 	}
 
-	if err := h.MessageManager.Delete(m.GetID()); err != nil {
+	if err := h.MessageManager.Delete(ctx, m.GetID()); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -202,8 +204,9 @@ func (h *Handlers) GetPin(c echo.Context) error {
 
 // CreatePin POST /messages/:messageID/pin
 func (h *Handlers) CreatePin(c echo.Context) error {
+	ctx := c.Request().Context()
 	m := getParamMessage(c)
-	p, err := h.MessageManager.Pin(m.GetID(), getRequestUserID(c))
+	p, err := h.MessageManager.Pin(ctx, m.GetID(), getRequestUserID(c))
 	if err != nil {
 		switch err {
 		case message.ErrAlreadyExists:
@@ -221,8 +224,9 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 
 // RemovePin DELETE /messages/:messageID/pin
 func (h *Handlers) RemovePin(c echo.Context) error {
+	ctx := c.Request().Context()
 	m := getParamMessage(c)
-	if err := h.MessageManager.Unpin(m.GetID(), getRequestUserID(c)); err != nil {
+	if err := h.MessageManager.Unpin(ctx, m.GetID(), getRequestUserID(c)); err != nil {
 		switch err {
 		case message.ErrNotFound:
 			return herror.NotFound("pin was not found")
@@ -256,6 +260,7 @@ func (r *PostMessageStampRequest) Validate() error {
 
 // AddMessageStamp POST /messages/:messageID/stamps/:stampID
 func (h *Handlers) AddMessageStamp(c echo.Context) error {
+	ctx := c.Request().Context()
 	var req PostMessageStampRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -266,7 +271,7 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージに押す
-	if _, err := h.MessageManager.AddStamps(messageID, stampID, userID, req.Count); err != nil {
+	if _, err := h.MessageManager.AddStamps(ctx, messageID, stampID, userID, req.Count); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -280,12 +285,13 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(messageID, stampID, userID); err != nil {
+	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -324,6 +330,7 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	ch := getParamChannel(c)
 
@@ -342,7 +349,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.MessageManager.Create(ch.ID, userID, req.Content)
+	m, err := h.MessageManager.Create(ctx, ch.ID, userID, req.Content)
 	if err != nil {
 		switch err {
 		case message.ErrChannelArchived:
@@ -376,6 +383,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 // PostDirectMessage POST /users/:userId/messages
 func (h *Handlers) PostDirectMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)
 
@@ -394,7 +402,7 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.MessageManager.CreateDM(myID, targetID, req.Content)
+	m, err := h.MessageManager.CreateDM(ctx, myID, targetID, req.Content)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

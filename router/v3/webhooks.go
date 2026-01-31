@@ -162,6 +162,7 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c echo.Context) error {
+	ctx := c.Request().Context()
 	w := getParamWebhook(c)
 	channelID := w.GetChannelID()
 
@@ -202,7 +203,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	if !h.ChannelManager.PublicChannelTree(c.Request().Context()).IsChannelPresent(channelID) {
+	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
 
@@ -212,7 +213,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// メッセージ投稿
-	if _, err := h.MessageManager.Create(channelID, w.GetBotUserID(), string(body)); err != nil {
+	if _, err := h.MessageManager.Create(ctx, channelID, w.GetBotUserID(), string(body)); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel has been archived")

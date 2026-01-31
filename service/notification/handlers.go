@@ -728,7 +728,7 @@ func channelViewerMulticast(ns *Service, cid uuid.UUID, wsEventType string, wsPa
 }
 
 func messageViewerMulticast(ns *Service, mid uuid.UUID, wsEventType string, wsPayload interface{}) {
-	m, err := ns.mm.Get(mid)
+	m, err := ns.mm.Get(context.Background(), mid)
 	if err != nil {
 		ns.logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("messageId", mid)) // 失敗
 		return

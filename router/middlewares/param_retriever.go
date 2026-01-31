@@ -101,7 +101,7 @@ func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
 // MessageID リクエストURLの`messageID`パラメータからMessageを取り出す
 func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamMessageID, consts.KeyParamMessage, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.mm.Get(v)
+		return pr.mm.Get(c.Request().Context(), v)
 	})
 }
 

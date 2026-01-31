@@ -118,7 +118,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 		return err
 	}
 
-	m, err := h.MessageManager.Get(req.MessageID)
+	m, err := h.MessageManager.Get(ctx, req.MessageID)
 	if err != nil {
 		switch err {
 		case message.ErrNotFound:
@@ -136,7 +136,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	var cfm *model.ClipFolderMessage
-	cfm, err = h.Repo.AddClipFolderMessage(c.Request().Context(), cf.ID, req.MessageID)
+	cfm, err = h.Repo.AddClipFolderMessage(ctx, cf.ID, req.MessageID)
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
