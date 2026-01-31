@@ -77,7 +77,12 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	viewerManager := viewer.NewManager(hub2)
 	wsStreamer := ws2.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
-	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, wsStreamer, viewerManager, serverOriginString)
+	esEngineConfig := provideESEngineConfig(c2)
+	engine, err := initSearchServiceIfAvailable(messageManager, manager, repo, logger, esEngineConfig)
+	if err != nil {
+		return nil, err
+	}
+	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, wsStreamer, viewerManager, serverOriginString, engine)
 	ogpService, err := ogp.NewServiceImpl(repo, logger)
 	if err != nil {
 		return nil, err
@@ -87,11 +92,6 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		return nil, err
 	}
 	oidcService := provideOIDCService(c2, repo, rbacRBAC)
-	esEngineConfig := provideESEngineConfig(c2)
-	engine, err := initSearchServiceIfAvailable(messageManager, manager, repo, logger, esEngineConfig)
-	if err != nil {
-		return nil, err
-	}
 	roomStateManager := provideQallRoomStateManager(c2, hub2)
 	soundboard, err := provideQallSoundboard(repo, fs, logger, hub2)
 	if err != nil {
