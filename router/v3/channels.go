@@ -188,7 +188,7 @@ func (h *Handlers) GetChannelViewers(c echo.Context) error {
 func (h *Handlers) GetChannelStats(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
-	stats, err := h.Repo.GetChannelStats(channelID, excludeDeletedMessages)
+	stats, err := h.Repo.GetChannelStats(context.TODO(), channelID, excludeDeletedMessages)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -287,7 +287,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 		return err
 	}
 
-	events, more, err := h.Repo.GetChannelEvents(req.convert(channelID))
+	events, more, err := h.Repo.GetChannelEvents(context.TODO(), req.convert(channelID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -304,7 +304,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -330,7 +330,7 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 		return err
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

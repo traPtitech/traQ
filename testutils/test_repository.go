@@ -60,7 +60,7 @@ type TestRepository struct {
 	OgpCacheLock              sync.RWMutex
 }
 
-func (repo *TestRepository) GetPublicChannels() ([]*model.Channel, error) {
+func (repo *TestRepository) GetPublicChannels(ctx context.Context) ([]*model.Channel, error) {
 	repo.ChannelsLock.RLock()
 	defer repo.ChannelsLock.RUnlock()
 	result := make([]*model.Channel, 0)
@@ -726,7 +726,7 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 	return users, nil
 }
 
-func (repo *TestRepository) CreateChannel(ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
+func (repo *TestRepository) CreateChannel(ctx context.Context, ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
 	ch.ID = uuid.Must(uuid.NewV7())
 	ch.IsPublic = true
 	ch.CreatedAt = time.Now()
@@ -738,7 +738,7 @@ func (repo *TestRepository) CreateChannel(ch model.Channel, _ set.UUID, _ bool) 
 	return &ch, nil
 }
 
-func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
+func (repo *TestRepository) UpdateChannel(ctx context.Context, channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -772,7 +772,7 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error) {
 	repo.ChannelsLock.RLock()
 	ch, ok := repo.Channels[channelID]
 	repo.ChannelsLock.RUnlock()
@@ -782,7 +782,7 @@ func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetPrivateChannelMemberIDs(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
 	repo.PrivateChannelMembersLock.RLock()
 	for uid := range repo.PrivateChannelMembers[channelID] {
@@ -792,7 +792,7 @@ func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]u
 	return result, nil
 }
 
-func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
+func (repo *TestRepository) ChangeChannelSubscription(ctx context.Context, channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
 	if channelID == uuid.Nil {
 		return nil, nil, repository.ErrNilID
 	}
@@ -855,7 +855,7 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	return on, off, nil
 }
 
-func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
+func (repo *TestRepository) GetChannelSubscriptions(ctx context.Context, query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
 	repo.ChannelSubscribesLock.Lock()
 	result := make([]*model.UserSubscribeChannel, 0)
 
@@ -1488,6 +1488,6 @@ func (repo *TestRepository) GetWebhooksByCreator(ctx context.Context, creatorID 
 	return arr, nil
 }
 
-func (repo *TestRepository) RecordChannelEvent(_ uuid.UUID, _ model.ChannelEventType, _ model.ChannelEventDetail, _ time.Time) error {
+func (repo *TestRepository) RecordChannelEvent(_ context.Context, _ uuid.UUID, _ model.ChannelEventType, _ model.ChannelEventDetail, _ time.Time) error {
 	return nil
 }

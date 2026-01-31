@@ -450,7 +450,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 
 // GetMyChannelSubscriptions GET /users/me/subscriptions
 func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

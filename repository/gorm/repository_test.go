@@ -160,7 +160,7 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := repo.CreateChannel(model.Channel{
+	ch, err := repo.CreateChannel(context.TODO(), model.Channel{
 		Name:      name,
 		IsForced:  false,
 		IsVisible: true,
@@ -301,7 +301,7 @@ func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, chan
 
 func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
 	t.Helper()
-	_, _, err := repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
+	_, _, err := repo.ChangeChannelSubscription(context.TODO(), channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
 	require.NoError(t, err)
 }
 

@@ -326,7 +326,7 @@ func (m *manager) recordChannelEvent(channelID uuid.UUID, eventType model.Channe
 	go func() {
 		defer m.P.Done()
 
-		err := m.R.RecordChannelEvent(channelID, eventType, detail, datetime)
+		err := m.R.RecordChannelEvent(context.TODO(), channelID, eventType, detail, datetime)
 		if err != nil {
 			m.L.Warn("failed to record channel event", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
 		}

@@ -1155,7 +1155,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
 		require.NoError(t, err)
 		if assert.Len(t, subs, 1) {
 			sub := subs[0]

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"slices"
 	"strings"
@@ -1050,7 +1051,7 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 1) {
@@ -1150,7 +1151,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 4) {

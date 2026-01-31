@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -135,7 +136,7 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	ch1 := mustMakeChannel(t, repo, rand)
 	ch2 := mustMakeChannel(t, repo, rand)
 
-	_, _, err := repo.ChangeChannelSubscription(ch1.ID, repository.ChangeChannelSubscriptionArgs{
+	_, _, err := repo.ChangeChannelSubscription(context.TODO(), ch1.ID, repository.ChangeChannelSubscriptionArgs{
 		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
 			user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 		},
