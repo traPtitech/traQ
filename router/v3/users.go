@@ -343,7 +343,7 @@ func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(context.TODO(), userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)

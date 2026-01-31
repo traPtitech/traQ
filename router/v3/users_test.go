@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -728,7 +729,7 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tokens, err := env.Repository.GetDeviceTokens(set.UUID{user.GetID(): {}})
+		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
 			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
