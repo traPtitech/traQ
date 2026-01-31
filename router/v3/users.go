@@ -129,7 +129,7 @@ func (h *Handlers) GetMeOIDC(c echo.Context) error {
 	tokenScopes, ok := c.Get(consts.KeyOAuth2AccessScopes).(model.AccessScopes)
 	scopes := lo.Ternary[oidc.ScopeChecker](ok, tokenScopes, userAccessScopes{})
 
-	userInfo, err := h.OIDC.GetUserInfo(getRequestUserID(c), scopes)
+	userInfo, err := h.OIDC.GetUserInfo(c.Request().Context(), getRequestUserID(c), scopes)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
