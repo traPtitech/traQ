@@ -90,7 +90,7 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 		return err
 	}
 
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

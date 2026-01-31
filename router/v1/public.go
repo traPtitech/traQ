@@ -34,7 +34,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルメタ取得
-	meta, err := h.FileManager.Get(user.GetIconFileID())
+	meta, err := h.FileManager.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		switch err {
 		case file.ErrNotFound:
@@ -80,7 +80,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 	s := getStampFromContext(c)
 
-	meta, err := h.FileManager.Get(s.FileID)
+	meta, err := h.FileManager.Get(c.Request().Context(), s.FileID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -412,7 +412,7 @@ func (env *Env) CreateFileWithName(t *testing.T, creatorID, channelID uuid.UUID,
 		args.ACLAllow(member)
 	}
 
-	f, err := env.FM.Save(args)
+	f, err := env.FM.Save(context.TODO(), args)
 	require.NoError(t, err)
 	return f
 }

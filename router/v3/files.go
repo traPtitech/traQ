@@ -73,7 +73,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		q.ChannelID = optional.From(req.ChannelID)
 	}
 
-	files, more, err := h.FileManager.List(q)
+	files, more, err := h.FileManager.List(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -131,7 +131,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	args.ChannelID = optional.From(channelID)
 
 	// 保存
-	file, err := h.FileManager.Save(args)
+	file, err := h.FileManager.Save(c.Request().Context(), args)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -166,7 +166,7 @@ func (h *Handlers) DeleteFile(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	if err := h.FileManager.Delete(f.GetID()); err != nil {
+	if err := h.FileManager.Delete(c.Request().Context(), f.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

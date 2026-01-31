@@ -119,7 +119,7 @@ func TestHandlers_GetWebhookIcon(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
 
-	file, err := file2.GenerateIconFile(env.FM, "wh")
+	file, err := file2.GenerateIconFile(context.TODO(), env.FM, "wh")
 	require.NoError(t, err)
 	wh, err := env.Repository.CreateWebhook(context.TODO(), random2.AlphaNumeric(20), "", ch.ID, file, user.GetID(), "")
 	require.NoError(t, err)

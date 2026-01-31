@@ -165,7 +165,7 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 func (env *Env) mustMakeFile(t *testing.T) model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := env.FileManager.Save(file.SaveArgs{
+	f, err := env.FileManager.Save(context.TODO(), file.SaveArgs{
 		FileName: "test.txt",
 		FileSize: int64(buf.Len()),
 		FileType: model.FileTypeUserFile,

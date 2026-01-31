@@ -167,7 +167,7 @@ func (h *Handlers) GetStampImage(c echo.Context) error {
 	stamp := getParamStamp(c)
 
 	// ファイルメタ取得
-	meta, err := h.FileManager.Get(stamp.FileID)
+	meta, err := h.FileManager.Get(c.Request().Context(), stamp.FileID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -61,7 +61,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
-	iconFileID, err := file2.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file2.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

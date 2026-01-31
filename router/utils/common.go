@@ -42,7 +42,7 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
 func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := fm.Get(user.GetIconFileID())
+	meta, err := fm.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

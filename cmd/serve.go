@@ -115,7 +115,7 @@ func serveCommand() *cobra.Command {
 				}
 
 				// 管理者ユーザーの作成
-				fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
+				fid, err := file.GenerateIconFile(context.Background(), server.SS.FileManager, "traq")
 				if err != nil {
 					logger.Fatal("failed to generate icon file", zap.Error(err))
 				}

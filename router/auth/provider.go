@@ -209,7 +209,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 			}
 			if args.IconFileID == uuid.Nil {
-				fid, err := file.GenerateIconFile(fm, tu.GetName())
+				fid, err := file.GenerateIconFile(context.TODO(), fm, tu.GetName())
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
@@ -269,7 +269,7 @@ func processProfileIcon(m file.Manager, src []byte) (uuid.UUID, error) {
 	_ = png.Encode(b, img)
 
 	// ファイル保存
-	f, err := m.Save(file.SaveArgs{
+	f, err := m.Save(context.TODO(), file.SaveArgs{
 		FileName:  "icon",
 		FileSize:  int64(b.Len()),
 		MimeType:  consts.MimeImagePNG,

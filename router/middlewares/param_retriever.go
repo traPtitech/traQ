@@ -130,8 +130,8 @@ func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 
 // FileID リクエストURLの`fileID`パラメータからFileを取り出す
 func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.fm.Get(v)
+	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.fm.Get(c.Request().Context(), v)
 	})
 }
 

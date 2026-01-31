@@ -136,7 +136,7 @@ func CheckFileAccessPerm(fm file.Manager) echo.MiddlewareFunc {
 			}
 
 			// アクセス権確認
-			if ok, err := fm.Accessible(f.GetID(), userID); err != nil {
+			if ok, err := fm.Accessible(c.Request().Context(), f.GetID(), userID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.Forbidden()

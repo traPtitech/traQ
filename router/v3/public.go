@@ -55,7 +55,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルメタ取得
-	meta, err := h.FileManager.Get(user.GetIconFileID())
+	meta, err := h.FileManager.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		switch err {
 		case file.ErrNotFound:
