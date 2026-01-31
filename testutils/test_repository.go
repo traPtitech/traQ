@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"math"
@@ -1189,7 +1190,7 @@ func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) AddStar(ctx context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1204,7 +1205,7 @@ func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) RemoveStar(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) RemoveStar(ctx context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1218,7 +1219,7 @@ func (repo *TestRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetStaredChannels(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	repo.StarsLock.RLock()
 	result := make([]uuid.UUID, 0)
 	chMap, ok := repo.Stars[userID]

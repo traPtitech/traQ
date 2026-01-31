@@ -2,6 +2,7 @@ package v3
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"net/http"
@@ -311,7 +312,7 @@ func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name strin
 // AddStar 指定したチャンネルをスターします
 func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.AddStar(userID, channelID))
+	require.NoError(t, env.Repository.AddStar(context.TODO(), userID, channelID))
 }
 
 // CreateDMChannel DMチャンネルを必ず作成します
