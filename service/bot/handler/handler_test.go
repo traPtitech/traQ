@@ -81,7 +81,7 @@ func registerChannel(cm *mock_channel.MockManager, ch *model.Channel) {
 
 func registerTag(repo *Repo, t *model.Tag) {
 	repo.MockTagRepository.EXPECT().
-		GetTagByID(t.ID).
+		GetTagByID(context.TODO(), t.ID).
 		Return(t, nil).
 		AnyTimes()
 }

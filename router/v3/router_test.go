@@ -255,12 +255,12 @@ func (env *Env) AddTag(t *testing.T, name string, userID uuid.UUID) model.UserTa
 		name = random.AlphaNumeric(20)
 	}
 
-	tag, err := env.Repository.GetOrCreateTag(name)
+	tag, err := env.Repository.GetOrCreateTag(context.TODO(), name)
 	require.NoError(t, err)
 
-	require.NoError(t, env.Repository.AddUserTag(userID, tag.ID))
+	require.NoError(t, env.Repository.AddUserTag(context.TODO(), userID, tag.ID))
 
-	ut, err := env.Repository.GetUserTag(userID, tag.ID)
+	ut, err := env.Repository.GetUserTag(context.TODO(), userID, tag.ID)
 	require.NoError(t, err)
 	return ut
 }

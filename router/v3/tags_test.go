@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -372,7 +373,7 @@ func TestHandlers_EditUserTag(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ut, err := env.Repository.GetUserTag(user.GetID(), ut.GetTagID())
+		ut, err := env.Repository.GetUserTag(context.TODO(), user.GetID(), ut.GetTagID())
 		require.NoError(t, err)
 		assert.True(t, ut.GetIsLocked())
 	})
@@ -427,7 +428,7 @@ func TestHandlers_EditMyUserTag(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ut, err := env.Repository.GetUserTag(user.GetID(), ut.GetTagID())
+		ut, err := env.Repository.GetUserTag(context.TODO(), user.GetID(), ut.GetTagID())
 		require.NoError(t, err)
 		assert.True(t, ut.GetIsLocked())
 	})
@@ -444,7 +445,7 @@ func TestHandlers_RemoveUserTag(t *testing.T) {
 	ut := env.AddTag(t, "test", user2.GetID())
 	ut2 := env.AddTag(t, "test2", user2.GetID())
 	locked := env.AddTag(t, "test3", user2.GetID())
-	require.NoError(t, env.Repository.ChangeUserTagLock(user2.GetID(), locked.GetTagID(), true))
+	require.NoError(t, env.Repository.ChangeUserTagLock(context.TODO(), user2.GetID(), locked.GetTagID(), true))
 
 	s := env.S(t, user.GetID())
 
@@ -473,7 +474,7 @@ func TestHandlers_RemoveUserTag(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetUserTag(user2.GetID(), ut.GetTagID())
+		_, err := env.Repository.GetUserTag(context.TODO(), user2.GetID(), ut.GetTagID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 
 		// already removed
@@ -494,7 +495,7 @@ func TestHandlers_RemoveMyUserTag(t *testing.T) {
 	ut := env.AddTag(t, "test", user.GetID())
 	ut2 := env.AddTag(t, "test2", user.GetID())
 	locked := env.AddTag(t, "test3", user.GetID())
-	require.NoError(t, env.Repository.ChangeUserTagLock(user.GetID(), locked.GetTagID(), true))
+	require.NoError(t, env.Repository.ChangeUserTagLock(context.TODO(), user.GetID(), locked.GetTagID(), true))
 
 	s := env.S(t, user.GetID())
 
@@ -523,7 +524,7 @@ func TestHandlers_RemoveMyUserTag(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetUserTag(user.GetID(), ut.GetTagID())
+		_, err := env.Repository.GetUserTag(context.TODO(), user.GetID(), ut.GetTagID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 
 		// already removed

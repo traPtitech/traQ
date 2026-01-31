@@ -199,14 +199,14 @@ func mustMakeTag(t *testing.T, repo repository.Repository, name string) *model.T
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	tag, err := repo.GetOrCreateTag(name)
+	tag, err := repo.GetOrCreateTag(context.TODO(), name)
 	require.NoError(t, err)
 	return tag
 }
 
 func mustAddTagToUser(t *testing.T, repo repository.Repository, userID, tagID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserTag(userID, tagID))
+	require.NoError(t, repo.AddUserTag(context.TODO(), userID, tagID))
 }
 
 func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uuid.UUID) {

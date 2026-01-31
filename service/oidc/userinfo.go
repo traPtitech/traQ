@@ -38,7 +38,7 @@ func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string
 	if err != nil {
 		return nil, err
 	}
-	tags, err := s.repo.GetUserTagsByUserID(user.GetID())
+	tags, err := s.repo.GetUserTagsByUserID(context.TODO(), user.GetID())
 	if err != nil {
 		return nil, err
 	}

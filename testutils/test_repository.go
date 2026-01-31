@@ -595,7 +595,7 @@ func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 	return nil
 }
 
-func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
+func (repo *TestRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
 	repo.TagsLock.RLock()
 	t, ok := repo.Tags[id]
 	repo.TagsLock.RUnlock()
@@ -605,7 +605,7 @@ func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	return &t, nil
 }
 
-func (repo *TestRepository) GetOrCreateTag(name string) (*model.Tag, error) {
+func (repo *TestRepository) GetOrCreateTag(ctx context.Context, name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
@@ -629,7 +629,7 @@ func (repo *TestRepository) GetOrCreateTag(name string) (*model.Tag, error) {
 	return &t, nil
 }
 
-func (repo *TestRepository) AddUserTag(userID, tagID uuid.UUID) error {
+func (repo *TestRepository) AddUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -653,7 +653,7 @@ func (repo *TestRepository) AddUserTag(userID, tagID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
+func (repo *TestRepository) ChangeUserTagLock(ctx context.Context, userID, tagID uuid.UUID, locked bool) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -670,7 +670,7 @@ func (repo *TestRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bo
 	return repository.ErrNotFound
 }
 
-func (repo *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
+func (repo *TestRepository) DeleteUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -683,7 +683,7 @@ func (repo *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, error) {
+func (repo *TestRepository) GetUserTag(ctx context.Context, userID, tagID uuid.UUID) (model.UserTag, error) {
 	repo.UserTagsLock.RLock()
 	defer repo.UserTagsLock.RUnlock()
 	tags, ok := repo.UserTags[userID]
@@ -700,7 +700,7 @@ func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, 
 	return &ut, nil
 }
 
-func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]model.UserTag, error) {
+func (repo *TestRepository) GetUserTagsByUserID(ctx context.Context, userID uuid.UUID) ([]model.UserTag, error) {
 	tags := make([]model.UserTag, 0)
 	repo.UserTagsLock.RLock()
 	for tid, ut := range repo.UserTags[userID] {
@@ -714,7 +714,7 @@ func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]model.UserT
 	return tags, nil
 }
 
-func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDsByTagID(ctx context.Context, tagID uuid.UUID) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
 	repo.UserTagsLock.RLock()
 	for uid, tags := range repo.UserTags {

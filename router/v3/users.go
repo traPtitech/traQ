@@ -91,7 +91,7 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(me.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(context.TODO(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -379,7 +379,7 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 func (h *Handlers) GetUser(c echo.Context) error {
 	user := getParamUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(user.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(context.TODO(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
