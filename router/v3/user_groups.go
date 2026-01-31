@@ -25,7 +25,7 @@ import (
 
 // GetUserGroups GET /groups
 func (h *Handlers) GetUserGroups(c echo.Context) error {
-	gs, err := h.Repo.GetAllUserGroups(context.TODO())
+	gs, err := h.Repo.GetAllUserGroups(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -66,7 +66,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	g, err := h.Repo.CreateUserGroup(context.TODO(), req.Name, req.Description, req.Type, reqUserID, iconFileID)
+	g, err := h.Repo.CreateUserGroup(c.Request().Context(), req.Name, req.Description, req.Type, reqUserID, iconFileID)
 	if err != nil {
 		if err == repository.ErrAlreadyExists {
 			return herror.Conflict("group with the name already exists")
@@ -116,7 +116,7 @@ func (h *Handlers) EditUserGroup(c echo.Context) error {
 		Description: req.Description,
 		Type:        req.Type,
 	}
-	if err := h.Repo.UpdateUserGroup(context.TODO(), g.ID, args); err != nil {
+	if err := h.Repo.UpdateUserGroup(c.Request().Context(), g.ID, args); err != nil {
 		if err == repository.ErrAlreadyExists {
 			return herror.Conflict("group with the name already exists")
 		}
@@ -135,7 +135,7 @@ func (h *Handlers) PutUserGroupIcon(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateUserGroup(context.TODO(), g.ID, repository.UpdateUserGroupArgs{Icon: optional.From(fileID)}); err != nil {
+	if err := h.Repo.UpdateUserGroup(c.Request().Context(), g.ID, repository.UpdateUserGroupArgs{Icon: optional.From(fileID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -146,7 +146,7 @@ func (h *Handlers) PutUserGroupIcon(c echo.Context) error {
 func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 	g := getParamGroup(c)
 
-	if err := h.Repo.DeleteUserGroup(context.TODO(), g.ID); err != nil {
+	if err := h.Repo.DeleteUserGroup(c.Request().Context(), g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -182,7 +182,7 @@ func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	var singleReq PostUserGroupMemberRequest
 	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	if err := bindAndValidate(c, &singleReq); err == nil {
-		if err := h.Repo.AddUserToGroup(context.TODO(), singleReq.ID, g.ID, singleReq.Role); err != nil {
+		if err := h.Repo.AddUserToGroup(c.Request().Context(), singleReq.ID, g.ID, singleReq.Role); err != nil {
 			return herror.InternalServerError(err)
 		}
 		return c.NoContent(http.StatusNoContent)
@@ -199,7 +199,7 @@ func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	for i, req := range reqs {
 		users[i] = model.UserGroupMember{UserID: req.ID, Role: req.Role, GroupID: g.ID}
 	}
-	if err := h.Repo.AddUsersToGroup(context.TODO(), users, g.ID); err != nil {
+	if err := h.Repo.AddUsersToGroup(c.Request().Context(), users, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -231,7 +231,7 @@ func (h *Handlers) EditUserGroupMember(c echo.Context) error {
 		return herror.BadRequest("this user is not this group's member")
 	}
 
-	if err := h.Repo.AddUserToGroup(context.TODO(), uid, g.ID, req.Role); err != nil {
+	if err := h.Repo.AddUserToGroup(c.Request().Context(), uid, g.ID, req.Role); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -242,7 +242,7 @@ func (h *Handlers) EditUserGroupMember(c echo.Context) error {
 func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	g := getParamGroup(c)
-	if err := h.Repo.RemoveUserFromGroup(context.TODO(), userID, g.ID); err != nil {
+	if err := h.Repo.RemoveUserFromGroup(c.Request().Context(), userID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -252,7 +252,7 @@ func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 // RemoveUserGroupMembers DELETE /groups/:groupID/members
 func (h *Handlers) RemoveUserGroupMembers(c echo.Context) error {
 	g := getParamGroup(c)
-	if err := h.Repo.RemoveUsersFromGroup(context.TODO(), g.ID); err != nil {
+	if err := h.Repo.RemoveUsersFromGroup(c.Request().Context(), g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -283,7 +283,7 @@ func (h *Handlers) AddUserGroupAdmin(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.AddUserToGroupAdmin(context.TODO(), req.ID, g.ID); err != nil {
+	if err := h.Repo.AddUserToGroupAdmin(c.Request().Context(), req.ID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -295,7 +295,7 @@ func (h *Handlers) RemoveUserGroupAdmin(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	g := getParamGroup(c)
 
-	if err := h.Repo.RemoveUserFromGroupAdmin(context.TODO(), userID, g.ID); err != nil {
+	if err := h.Repo.RemoveUserFromGroupAdmin(c.Request().Context(), userID, g.ID); err != nil {
 		if err == repository.ErrForbidden {
 			return herror.BadRequest()
 		}

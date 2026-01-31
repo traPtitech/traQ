@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -54,7 +53,7 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 		return err
 	}
 
-	cf, err := h.Repo.CreateClipFolder(context.TODO(), userID, req.Name, req.Description)
+	cf, err := h.Repo.CreateClipFolder(c.Request().Context(), userID, req.Name, req.Description)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -66,7 +65,7 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 func (h *Handlers) GetClipFolders(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	cfs, err := h.Repo.GetClipFoldersByUserID(context.TODO(), userID)
+	cfs, err := h.Repo.GetClipFoldersByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -83,7 +82,7 @@ func (h *Handlers) GetClipFolder(c echo.Context) error {
 func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
-	if err := h.Repo.DeleteClipFolder(context.TODO(), folderID); err != nil {
+	if err := h.Repo.DeleteClipFolder(c.Request().Context(), folderID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -98,7 +97,7 @@ func (h *Handlers) EditClipFolder(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateClipFolder(context.TODO(), cf.ID, req.Name, req.Description); err != nil {
+	if err := h.Repo.UpdateClipFolder(c.Request().Context(), cf.ID, req.Name, req.Description); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -136,7 +135,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	var cfm *model.ClipFolderMessage
-	cfm, err = h.Repo.AddClipFolderMessage(context.TODO(), cf.ID, req.MessageID)
+	cfm, err = h.Repo.AddClipFolderMessage(c.Request().Context(), cf.ID, req.MessageID)
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
@@ -182,7 +181,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 		return err
 	}
 
-	messages, more, err := h.Repo.GetClipFolderMessages(context.TODO(), cf.ID, req.convert())
+	messages, more, err := h.Repo.GetClipFolderMessages(c.Request().Context(), cf.ID, req.convert())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -197,7 +196,7 @@ func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
 	cf := getParamClipFolder(c)
-	if err := h.Repo.DeleteClipFolderMessage(context.TODO(), cf.ID, messageID); err != nil {
+	if err := h.Repo.DeleteClipFolderMessage(c.Request().Context(), cf.ID, messageID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

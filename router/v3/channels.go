@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -188,7 +187,7 @@ func (h *Handlers) GetChannelViewers(c echo.Context) error {
 func (h *Handlers) GetChannelStats(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
-	stats, err := h.Repo.GetChannelStats(context.TODO(), channelID, excludeDeletedMessages)
+	stats, err := h.Repo.GetChannelStats(c.Request().Context(), channelID, excludeDeletedMessages)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -239,7 +238,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 func (h *Handlers) GetChannelPins(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	pins, err := h.Repo.GetPinnedMessageByChannelID(context.TODO(), channelID)
+	pins, err := h.Repo.GetPinnedMessageByChannelID(c.Request().Context(), channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -287,7 +286,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 		return err
 	}
 
-	events, more, err := h.Repo.GetChannelEvents(context.TODO(), req.convert(channelID))
+	events, more, err := h.Repo.GetChannelEvents(c.Request().Context(), req.convert(channelID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -304,7 +303,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -330,7 +329,7 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 		return err
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

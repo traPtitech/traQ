@@ -28,7 +28,7 @@ func (h *Handlers) GetQallEndpoints(c echo.Context) error {
 
 // GetSoundboardItems GET /qall/soundboard
 func (h *Handlers) GetSoundboardItems(c echo.Context) error {
-	items, err := h.Repo.GetAllSoundboardItems(context.TODO())
+	items, err := h.Repo.GetAllSoundboardItems(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

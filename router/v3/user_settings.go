@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,7 +22,7 @@ func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateNotifyCitation(context.TODO(), id, us.NotifyCitation); err != nil {
+	if err := h.Repo.UpdateNotifyCitation(c.Request().Context(), id, us.NotifyCitation); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -34,7 +33,7 @@ func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 func (h *Handlers) GetMySettings(c echo.Context) error {
 	id := getRequestUserID(c)
 
-	us, err := h.Repo.GetUserSettings(context.TODO(), id)
+	us, err := h.Repo.GetUserSettings(c.Request().Context(), id)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -46,7 +45,7 @@ func (h *Handlers) GetMySettings(c echo.Context) error {
 func (h *Handlers) GetMyNotifyCitation(c echo.Context) error {
 	id := getRequestUserID(c)
 
-	nc, err := h.Repo.GetNotifyCitation(context.TODO(), id)
+	nc, err := h.Repo.GetNotifyCitation(c.Request().Context(), id)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

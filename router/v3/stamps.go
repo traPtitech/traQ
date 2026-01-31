@@ -66,7 +66,7 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		stampType = repository.StampTypeOriginal
 	}
 
-	stamps, err := h.Repo.GetAllStampsWithThumbnail(context.TODO(), stampType)
+	stamps, err := h.Repo.GetAllStampsWithThumbnail(c.Request().Context(), stampType)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -85,7 +85,7 @@ func (h *Handlers) CreateStamp(c echo.Context) error {
 	}
 
 	// スタンプ作成
-	s, err := h.Repo.CreateStamp(context.TODO(), repository.CreateStampArgs{Name: c.FormValue("name"), FileID: fileID, CreatorID: userID})
+	s, err := h.Repo.CreateStamp(c.Request().Context(), repository.CreateStampArgs{Name: c.FormValue("name"), FileID: fileID, CreatorID: userID})
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -138,7 +138,7 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 	}
 
 	// 更新
-	if err := h.Repo.UpdateStamp(context.TODO(), stamp.ID, args); err != nil {
+	if err := h.Repo.UpdateStamp(c.Request().Context(), stamp.ID, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -155,7 +155,7 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 func (h *Handlers) DeleteStamp(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
-	if err := h.Repo.DeleteStamp(context.TODO(), stampID); err != nil {
+	if err := h.Repo.DeleteStamp(c.Request().Context(), stampID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -203,7 +203,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 
 	args := repository.UpdateStampArgs{FileID: optional.From(fileID)}
 	// 更新
-	if err := h.Repo.UpdateStamp(context.TODO(), stamp.ID, args); err != nil {
+	if err := h.Repo.UpdateStamp(c.Request().Context(), stamp.ID, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -217,7 +217,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 // GetStampStats GET /stamps/:stampID/stats
 func (h *Handlers) GetStampStats(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
-	stats, err := h.Repo.GetStampStats(context.TODO(), stampID)
+	stats, err := h.Repo.GetStampStats(c.Request().Context(), stampID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

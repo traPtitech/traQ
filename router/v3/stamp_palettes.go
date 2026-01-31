@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/traPtitech/traQ/router/extension"
@@ -20,7 +19,7 @@ import (
 func (h *Handlers) GetStampPalettes(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	palettes, err := h.Repo.GetStampPalettes(context.TODO(), userID)
+	palettes, err := h.Repo.GetStampPalettes(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -57,7 +56,7 @@ func (h *Handlers) CreateStampPalette(c echo.Context) error {
 	}
 
 	// スタンプパレット作成
-	sp, err := h.Repo.CreateStampPalette(context.TODO(), req.Name, req.Description, req.Stamps, userID)
+	sp, err := h.Repo.CreateStampPalette(c.Request().Context(), req.Name, req.Description, req.Stamps, userID)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -109,7 +108,7 @@ func (h *Handlers) EditStampPalette(c echo.Context) error {
 	}
 
 	// スタンプパレット更新
-	if err := h.Repo.UpdateStampPalette(context.TODO(), stampPalette.ID, args); err != nil {
+	if err := h.Repo.UpdateStampPalette(c.Request().Context(), stampPalette.ID, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -135,7 +134,7 @@ func (h *Handlers) DeleteStampPalette(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to delete stamp-palette created by others")
 	}
 
-	if err := h.Repo.DeleteStampPalette(context.TODO(), stampPalette.ID); err != nil {
+	if err := h.Repo.DeleteStampPalette(c.Request().Context(), stampPalette.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
