@@ -64,7 +64,7 @@ func (s *ServiceImpl) start() error {
 				if !ok {
 					return
 				}
-				if err := s.repo.DeleteStaleOgpCache(); err != nil {
+				if err := s.repo.DeleteStaleOgpCache(context.TODO()); err != nil {
 					s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
 				}
 			case <-s.serviceDone:
@@ -94,7 +94,7 @@ func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time
 
 // getMetaOrCreate OGP情報をDBのキャッシュから取得し、存在しなかった場合はリクエストを飛ばし新たに作成します。
 func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fetchResult, err error) {
-	cache, err := s.repo.GetOgpCache(urlStr)
+	cache, err := s.repo.GetOgpCache(context.TODO(), urlStr)
 	if err != nil && err != repository.ErrNotFound {
 		return fetchResult{}, err
 	}
@@ -112,7 +112,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 		return fetchResult{nil, cache.ExpiresAt}, nil
 	}
 	if isCacheExpired {
-		if err := s.repo.DeleteOgpCache(urlStr); err != nil && err != repository.ErrNotFound {
+		if err := s.repo.DeleteOgpCache(context.TODO(), urlStr); err != nil && err != repository.ErrNotFound {
 			return fetchResult{}, err
 		}
 	}
@@ -128,7 +128,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 		switch err {
 		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
-			cache, createErr := s.repo.CreateOgpCache(urlStr, nil, DefaultCacheDuration)
+			cache, createErr := s.repo.CreateOgpCache(context.TODO(), urlStr, nil, DefaultCacheDuration)
 			if createErr != nil {
 				return fetchResult{}, createErr
 			}
@@ -141,7 +141,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 
 	// リクエストが成功した場合はキャッシュを作成
 	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
-	cache, err = s.repo.CreateOgpCache(urlStr, content, DefaultCacheDuration)
+	cache, err = s.repo.CreateOgpCache(context.TODO(), urlStr, content, DefaultCacheDuration)
 	if err != nil {
 		return fetchResult{}, err
 	}
@@ -150,7 +150,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 }
 
 func (s *ServiceImpl) DeleteCache(url *url.URL) error {
-	err := s.repo.DeleteOgpCache(url.String())
+	err := s.repo.DeleteOgpCache(context.TODO(), url.String())
 	// キャッシュが見つからなかった場合でも、削除されてはいるので正常とみなす
 	if err != nil && err != repository.ErrNotFound {
 		return err
