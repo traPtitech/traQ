@@ -93,7 +93,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.HasAttachments = len(parseResult.Attachments) != 0
 
 	for _, attachmentID := range parseResult.Attachments {
-		meta, err := e.repo.GetFileMeta(attachmentID)
+		meta, err := e.repo.GetFileMeta(context.TODO(), attachmentID)
 		if err != nil {
 			e.l.Warn(err.Error(), zap.Error(err))
 			continue

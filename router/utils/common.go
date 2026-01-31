@@ -96,7 +96,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 		if errors.Is(err, storage.ErrFileNotFound) {
 			// サムネイルが実際には存在しないのでDBの情報を更新する
 			fileID := meta.GetID()
-			err := repo.DeleteFileThumbnail(fileID, thumbnailType)
+			err := repo.DeleteFileThumbnail(context.TODO(), fileID, thumbnailType)
 			if err != nil {
 				logger.Warn("failed to delete thumbnail from database", zap.Error(err))
 				return herror.InternalServerError(err)

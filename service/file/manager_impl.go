@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -203,7 +204,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		})
 	}
 
-	err := m.repo.SaveFileMeta(f, acl)
+	err := m.repo.SaveFileMeta(context.TODO(), f, acl)
 	if err != nil {
 		if err := m.fs.DeleteByKey(f.ID.String(), f.Type); err != nil {
 			m.l.Warn("failed to delete file from storage during rollback", zap.Error(err), zap.Stringer("fid", f.ID))
@@ -219,7 +220,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 }
 
 func (m *managerImpl) Get(id uuid.UUID) (model.File, error) {
-	meta, err := m.repo.GetFileMeta(id)
+	meta, err := m.repo.GetFileMeta(context.TODO(), id)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return nil, ErrNotFound
@@ -230,7 +231,7 @@ func (m *managerImpl) Get(id uuid.UUID) (model.File, error) {
 }
 
 func (m *managerImpl) List(q repository.FilesQuery) ([]model.File, bool, error) {
-	r, more, err := m.repo.GetFileMetas(q)
+	r, more, err := m.repo.GetFileMetas(context.TODO(), q)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to GetFileMetas: %w", err)
 	}
@@ -238,7 +239,7 @@ func (m *managerImpl) List(q repository.FilesQuery) ([]model.File, bool, error) 
 }
 
 func (m *managerImpl) Delete(id uuid.UUID) error {
-	meta, err := m.repo.GetFileMeta(id)
+	meta, err := m.repo.GetFileMeta(context.TODO(), id)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return ErrNotFound
@@ -246,7 +247,7 @@ func (m *managerImpl) Delete(id uuid.UUID) error {
 		return fmt.Errorf("failed to GetFileMeta: %w", err)
 	}
 
-	if err := m.repo.DeleteFileMeta(id); err != nil {
+	if err := m.repo.DeleteFileMeta(context.TODO(), id); err != nil {
 		return fmt.Errorf("failed to DeleteFileMeta: %w", err)
 	}
 	if err := m.fs.DeleteByKey(meta.ID.String(), meta.Type); err != nil {
@@ -261,7 +262,7 @@ func (m *managerImpl) Delete(id uuid.UUID) error {
 }
 
 func (m *managerImpl) Accessible(fileID, userID uuid.UUID) (bool, error) {
-	ok, err := m.repo.IsFileAccessible(fileID, userID)
+	ok, err := m.repo.IsFileAccessible(context.TODO(), fileID, userID)
 	if err != nil {
 		return false, fmt.Errorf("failed to IsFileAccessible: %w", err)
 	}

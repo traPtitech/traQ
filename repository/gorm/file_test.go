@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"slices"
 	"testing"
 
@@ -19,7 +20,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 	t.Run("nil file", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.SaveFileMeta(nil, nil))
+		assert.Error(t, repo.SaveFileMeta(context.TODO(), nil, nil))
 	})
 
 	t.Run("success with UUIDv4", func(t *testing.T) {
@@ -36,7 +37,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 			{UserID: uuid.Nil, Allow: true},
 		}
 
-		err := repo.SaveFileMeta(meta, acl)
+		err := repo.SaveFileMeta(context.TODO(), meta, acl)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, meta.CreatedAt)
 			assert.False(t, meta.DeletedAt.Valid)
@@ -56,7 +57,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 			{UserID: uuid.Nil, Allow: true},
 		}
 
-		err := repo.SaveFileMeta(meta, acl)
+		err := repo.SaveFileMeta(context.TODO(), meta, acl)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, meta.CreatedAt)
 			assert.False(t, meta.DeletedAt.Valid)
@@ -73,21 +74,21 @@ func TestGormRepository_GetFileMeta(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetFileMeta(uuid.Nil)
+		_, err := repo.GetFileMeta(context.TODO(), uuid.Nil)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetFileMeta(uuid.NewV3(uuid.Nil, "not found"))
+		_, err := repo.GetFileMeta(context.TODO(), uuid.NewV3(uuid.Nil, "not found"))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("found", func(t *testing.T) {
 		t.Parallel()
 
-		meta, err := repo.GetFileMeta(f.ID)
+		meta, err := repo.GetFileMeta(context.TODO(), f.ID)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, f.ID, meta.ID)
 			assert.EqualValues(t, 1, len(meta.Thumbnails))
@@ -103,7 +104,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		err := repo.DeleteFileMeta(uuid.Nil)
+		err := repo.DeleteFileMeta(context.TODO(), uuid.Nil)
 		assert.EqualError(t, err, repository.ErrNilID.Error())
 	})
 
@@ -111,7 +112,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 		t.Parallel()
 		f := mustMakeDummyFile(t, repo, false)
 
-		err := repo.DeleteFileMeta(f.ID)
+		err := repo.DeleteFileMeta(context.TODO(), f.ID)
 		if assert.NoError(t, err) {
 			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.FileMeta{}).Where(&model.FileMeta{ID: f.ID})))
 		}
@@ -120,7 +121,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 	t.Run("success (noop)", func(t *testing.T) {
 		t.Parallel()
 
-		err := repo.DeleteFileMeta(uuid.NewV3(uuid.Nil, "not exists"))
+		err := repo.DeleteFileMeta(context.TODO(), uuid.NewV3(uuid.Nil, "not exists"))
 		assert.NoError(t, err)
 	})
 }
@@ -132,7 +133,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("file which doesn't exist", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.IsFileAccessible(uuid.NewV3(uuid.Nil, "not exists"), uuid.Nil)
+		ok, err := repo.IsFileAccessible(context.TODO(), uuid.NewV3(uuid.Nil, "not exists"), uuid.Nil)
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}
@@ -141,7 +142,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.IsFileAccessible(uuid.Nil, uuid.Nil)
+		ok, err := repo.IsFileAccessible(context.TODO(), uuid.Nil, uuid.Nil)
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}
@@ -154,7 +155,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), f.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -163,7 +164,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("a certain user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, uuid.NewV3(uuid.Nil, "u1"))
+			ok, err := repo.IsFileAccessible(context.TODO(), f.ID, uuid.NewV3(uuid.Nil, "u1"))
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -181,7 +182,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: user.GetID(), Allow: true},
 		})
 		require.NoError(t, err)
@@ -189,7 +190,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -198,7 +199,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -208,7 +209,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, rand, false)
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -226,7 +227,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: user.GetID(), Allow: true},
 		})
 		require.NoError(t, err)
@@ -234,7 +235,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -243,7 +244,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -253,7 +254,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, rand, false)
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -272,7 +273,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: user.GetID(), Allow: true},
 			{UserID: user2.GetID(), Allow: true},
 		})
@@ -281,7 +282,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -290,7 +291,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -299,7 +300,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user2", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user2.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user2.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -309,7 +310,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, rand, false)
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -327,7 +328,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: user.GetID(), Allow: true},
 			{UserID: user2.GetID(), Allow: true},
 		})
@@ -336,7 +337,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any users", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -345,7 +346,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -354,7 +355,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user2", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user2.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user2.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -364,7 +365,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, rand, false)
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -383,7 +384,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: uuid.Nil, Allow: true},
 			{UserID: deniedUser.GetID(), Allow: false},
 		})
@@ -392,7 +393,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -401,7 +402,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -410,7 +411,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, deniedUser.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, deniedUser.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -429,7 +430,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
 			Type: model.FileTypeUserFile,
 		}
-		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 			{UserID: uuid.Nil, Allow: true},
 			{UserID: deniedUser.GetID(), Allow: false},
 		})
@@ -438,7 +439,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("any user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, uuid.Nil)
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, uuid.Nil)
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -447,7 +448,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -456,7 +457,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(meta.ID, deniedUser.GetID())
+			ok, err := repo.IsFileAccessible(context.TODO(), meta.ID, deniedUser.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -528,7 +529,7 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			if !tt.createsFile {
-				err := repo.DeleteFileThumbnail(uuid.Nil, tt.thumbnailTypeToDelete)
+				err := repo.DeleteFileThumbnail(context.TODO(), uuid.Nil, tt.thumbnailTypeToDelete)
 				assert.EqualError(t, err, repository.ErrNilID.Error())
 				return
 			}
@@ -542,23 +543,23 @@ func TestGormRepository_DeleteFileThumbnail(t *testing.T) {
 				} else {
 					nonExistentID = uuid.Must(uuid.NewV7())
 				}
-				err := repo.DeleteFileThumbnail(nonExistentID, tt.thumbnailTypeToDelete)
+				err := repo.DeleteFileThumbnail(context.TODO(), nonExistentID, tt.thumbnailTypeToDelete)
 				assert.NoError(t, err)
-				ff, err := repo.GetFileMeta(f.ID)
+				ff, err := repo.GetFileMeta(context.TODO(), f.ID)
 				assert.NoError(t, err)
 				assert.ElementsMatch(t, f.Thumbnails, ff.Thumbnails)
 				return
 			}
 
-			err := repo.DeleteFileThumbnail(f.ID, tt.thumbnailTypeToDelete)
+			err := repo.DeleteFileThumbnail(context.TODO(), f.ID, tt.thumbnailTypeToDelete)
 			assert.NoError(t, err)
 			if !slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete)) { // f.Thumbnails が tt.thumbnailTypeToDelete を含まない場合, 変更なしを検証
-				ff, err := repo.GetFileMeta(f.ID)
+				ff, err := repo.GetFileMeta(context.TODO(), f.ID)
 				assert.NoError(t, err)
 				assert.ElementsMatch(t, f.Thumbnails, ff.Thumbnails)
 				return
 			}
-			f, err = repo.GetFileMeta(f.ID)
+			f, err = repo.GetFileMeta(context.TODO(), f.ID)
 			assert.NoError(t, err)
 			assert.False(t, slices.ContainsFunc(f.Thumbnails, getThumbnailEqualityComparerByType(tt.thumbnailTypeToDelete))) // f.Thumbnails が tt.thumbnailTypeToDelete を含まない
 		})

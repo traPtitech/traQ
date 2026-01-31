@@ -1232,7 +1232,7 @@ func (repo *TestRepository) GetStaredChannels(ctx context.Context, userID uuid.U
 	return result, nil
 }
 
-func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
+func (repo *TestRepository) GetFileMeta(ctx context.Context, fileID uuid.UUID) (*model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1245,7 +1245,7 @@ func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, erro
 	return &meta, nil
 }
 
-func (repo *TestRepository) DeleteFileMeta(fileID uuid.UUID) error {
+func (repo *TestRepository) DeleteFileMeta(ctx context.Context, fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1255,7 +1255,7 @@ func (repo *TestRepository) DeleteFileMeta(fileID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLEntry) error {
+func (repo *TestRepository) SaveFileMeta(ctx context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error {
 	repo.FilesLock.Lock()
 	repo.FilesACLLock.Lock()
 	meta.CreatedAt = time.Now()
@@ -1273,7 +1273,7 @@ func (repo *TestRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.File
 	return nil
 }
 
-func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+func (repo *TestRepository) IsFileAccessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error) {
 	var allow bool
 	repo.FilesACLLock.RLock()
 	defer repo.FilesACLLock.RUnlock()

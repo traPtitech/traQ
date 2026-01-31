@@ -252,7 +252,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool)
 			},
 		},
 	}
-	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+	err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 		{UserID: uuid.Nil, Allow: true},
 	})
 	require.NoError(t, err)

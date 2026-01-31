@@ -242,7 +242,7 @@ func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 	}
 	for range 10 {
 		stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
-		err := repo.DeleteFileMeta(stamp.FileID)
+		err := repo.DeleteFileMeta(context.TODO(), stamp.FileID)
 		require.NoError(err)
 	}
 
