@@ -313,14 +313,14 @@ func mustMakeClipFolder(t *testing.T, repo repository.Repository, userID uuid.UU
 	if description == rand {
 		description = random.AlphaNumeric(100)
 	}
-	cf, err := repo.CreateClipFolder(userID, name, description)
+	cf, err := repo.CreateClipFolder(context.TODO(), userID, name, description)
 	require.NoError(t, err)
 	return cf
 }
 
 func mustMakeClipFolderMessage(t *testing.T, repo repository.Repository, folderID, messageID uuid.UUID) *model.ClipFolderMessage {
 	t.Helper()
-	cfm, err := repo.AddClipFolderMessage(folderID, messageID)
+	cfm, err := repo.AddClipFolderMessage(context.TODO(), folderID, messageID)
 	require.NoError(t, err)
 	return cfm
 }

@@ -912,7 +912,7 @@ func TestHandlers_GetMessageClips(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	cf := env.CreateClipFolder(t, rand, rand, user.GetID())
-	_, err := env.Repository.AddClipFolderMessage(cf.ID, m.GetID())
+	_, err := env.Repository.AddClipFolderMessage(context.TODO(), cf.ID, m.GetID())
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 

@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.CreateClipFolder(uuid.Nil, random2.AlphaNumeric(20), random2.AlphaNumeric(100))
+		_, err := repo.CreateClipFolder(context.TODO(), uuid.Nil, random2.AlphaNumeric(20), random2.AlphaNumeric(100))
 
 		assert.Error(err)
 	})
@@ -33,7 +34,7 @@ func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 
 		name := random2.AlphaNumeric(20)
 		description := random2.AlphaNumeric(100)
-		cf, err := repo.CreateClipFolder(user.GetID(), name, description)
+		cf, err := repo.CreateClipFolder(context.TODO(), user.GetID(), name, description)
 
 		if assert.NoError(err) {
 			assert.NotEmpty(cf.ID)
@@ -56,28 +57,28 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Nil, optional.Of[string]{}, optional.Of[string]{}), repository.ErrNilID.Error())
+		assert.EqualError(repo.UpdateClipFolder(context.TODO(), uuid.Nil, optional.Of[string]{}, optional.Of[string]{}), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateClipFolder(context.TODO(), uuid.Must(uuid.NewV4()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV7()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateClipFolder(context.TODO(), uuid.Must(uuid.NewV7()), optional.Of[string]{}, optional.Of[string]{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.Of[string]{}, optional.Of[string]{}))
+		assert.NoError(repo.UpdateClipFolder(context.TODO(), clipFolder.ID, optional.Of[string]{}, optional.Of[string]{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -87,8 +88,8 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		newName := random2.AlphaNumeric(20)
 		newDescription := random2.AlphaNumeric(100)
 
-		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.From(newName), optional.From(newDescription))) {
-			newClipFolder, err := repo.GetClipFolder(clipFolder.ID)
+		if assert.NoError(repo.UpdateClipFolder(context.TODO(), clipFolder.ID, optional.From(newName), optional.From(newDescription))) {
+			newClipFolder, err := repo.GetClipFolder(context.TODO(), clipFolder.ID)
 			require.NoError(err)
 			assert.Equal(newDescription, newClipFolder.Description)
 			assert.Equal(newName, newClipFolder.Name)
@@ -104,20 +105,20 @@ func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolder(uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(repo.DeleteClipFolder(context.TODO(), uuid.Nil), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolder(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolder(context.TODO(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolder(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolder(context.TODO(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -126,8 +127,8 @@ func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 
 		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 
-		if assert.NoError(repo.DeleteClipFolder(clipFolder.ID)) {
-			_, err := repo.GetClipFolder(clipFolder.ID)
+		if assert.NoError(repo.DeleteClipFolder(context.TODO(), clipFolder.ID)) {
+			_, err := repo.GetClipFolder(context.TODO(), clipFolder.ID)
 			assert.EqualError(err, repository.ErrNotFound.Error())
 		}
 	})
@@ -142,20 +143,20 @@ func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolderMessage(uuid.Nil, uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(repo.DeleteClipFolderMessage(context.TODO(), uuid.Nil, uuid.Nil), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolderMessage(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolderMessage(context.TODO(), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteClipFolderMessage(uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteClipFolderMessage(context.TODO(), uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -166,8 +167,8 @@ func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		clipFolderMessage := mustMakeClipFolderMessage(t, repo, clipFolder.ID, message.ID)
 
-		if assert.NoError(repo.DeleteClipFolderMessage(clipFolderMessage.FolderID, clipFolderMessage.MessageID)) {
-			messages, _, err := repo.GetClipFolderMessages(clipFolderMessage.FolderID, repository.ClipFolderMessageQuery{})
+		if assert.NoError(repo.DeleteClipFolderMessage(context.TODO(), clipFolderMessage.FolderID, clipFolderMessage.MessageID)) {
+			messages, _, err := repo.GetClipFolderMessages(context.TODO(), clipFolderMessage.FolderID, repository.ClipFolderMessageQuery{})
 			assert.Equal([]*model.ClipFolderMessage{}, messages)
 			assert.NoError(err)
 		}
@@ -181,20 +182,20 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, err := repo.AddClipFolderMessage(uuid.Nil, uuid.Nil)
+		_, err := repo.AddClipFolderMessage(context.TODO(), uuid.Nil, uuid.Nil)
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, err := repo.AddClipFolderMessage(uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()))
+		_, err := repo.AddClipFolderMessage(context.TODO(), uuid.Must(uuid.NewV4()), uuid.Must(uuid.NewV4()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, err := repo.AddClipFolderMessage(uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7()))
+		_, err := repo.AddClipFolderMessage(context.TODO(), uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -205,7 +206,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		clipFolderMessage := mustMakeClipFolderMessage(t, repo, clipFolder.ID, message.ID)
 
-		_, err := repo.AddClipFolderMessage(clipFolderMessage.FolderID, clipFolderMessage.MessageID)
+		_, err := repo.AddClipFolderMessage(context.TODO(), clipFolderMessage.FolderID, clipFolderMessage.MessageID)
 		assert.EqualError(err, repository.ErrAlreadyExists.Error())
 	})
 
@@ -216,7 +217,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
-		cfm, err := repo.AddClipFolderMessage(clipFolder.ID, message.ID)
+		cfm, err := repo.AddClipFolderMessage(context.TODO(), clipFolder.ID, message.ID)
 
 		if assert.NoError(err) {
 			assert.Equal(message.ID, cfm.MessageID)
@@ -233,7 +234,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, err := repo.GetClipFoldersByUserID(uuid.Nil)
+		_, err := repo.GetClipFoldersByUserID(context.TODO(), uuid.Nil)
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
 	t.Run("success", func(t *testing.T) {
@@ -245,7 +246,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
 		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)
-		clipFolders, err := repo.GetClipFoldersByUserID(user.GetID())
+		clipFolders, err := repo.GetClipFoldersByUserID(context.TODO(), user.GetID())
 		if assert.NoError(err) {
 			assert.Len(clipFolders, n)
 			for _, clipFolder := range clipFolders {
@@ -262,7 +263,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetClipFolder(uuid.Nil)
+		_, err := repo.GetClipFolder(context.TODO(), uuid.Nil)
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
 
@@ -270,7 +271,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetClipFolder(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetClipFolder(context.TODO(), uuid.Must(uuid.NewV4()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -278,7 +279,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetClipFolder(uuid.Must(uuid.NewV7()))
+		_, err := repo.GetClipFolder(context.TODO(), uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -287,7 +288,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		assert := assert.New(t)
 
 		createdClipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
-		clipFolder, err := repo.GetClipFolder(createdClipFolder.ID)
+		clipFolder, err := repo.GetClipFolder(context.TODO(), createdClipFolder.ID)
 
 		if assert.NoError(err) {
 			assert.Equal(createdClipFolder.Description, clipFolder.Description)
@@ -305,21 +306,21 @@ func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, _, err := repo.GetClipFolderMessages(uuid.Nil, repository.ClipFolderMessageQuery{})
+		_, _, err := repo.GetClipFolderMessages(context.TODO(), uuid.Nil, repository.ClipFolderMessageQuery{})
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, _, err := repo.GetClipFolderMessages(uuid.Must(uuid.NewV4()), repository.ClipFolderMessageQuery{})
+		_, _, err := repo.GetClipFolderMessages(context.TODO(), uuid.Must(uuid.NewV4()), repository.ClipFolderMessageQuery{})
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		_, _, err := repo.GetClipFolderMessages(uuid.Must(uuid.NewV7()), repository.ClipFolderMessageQuery{})
+		_, _, err := repo.GetClipFolderMessages(context.TODO(), uuid.Must(uuid.NewV7()), repository.ClipFolderMessageQuery{})
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -341,7 +342,7 @@ func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
 		otherCreatedMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		mustMakeClipFolderMessage(t, repo, otherCreatedClipFolder.ID, otherCreatedMessage.ID)
 
-		clipFolderMessages, more, err := repo.GetClipFolderMessages(createdClipFolder.ID, repository.ClipFolderMessageQuery{})
+		clipFolderMessages, more, err := repo.GetClipFolderMessages(context.TODO(), createdClipFolder.ID, repository.ClipFolderMessageQuery{})
 
 		if assert.NoError(err) {
 			assert.EqualValues(false, more)

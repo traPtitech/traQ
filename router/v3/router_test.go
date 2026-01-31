@@ -491,7 +491,7 @@ func (env *Env) CreateClipFolder(t *testing.T, name, desc string, creatorID uuid
 	if desc == rand {
 		desc = random.AlphaNumeric(20)
 	}
-	cf, err := env.Repository.CreateClipFolder(creatorID, name, desc)
+	cf, err := env.Repository.CreateClipFolder(context.TODO(), creatorID, name, desc)
 	require.NoError(t, err)
 	return cf
 }

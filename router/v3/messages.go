@@ -302,7 +302,7 @@ func (h *Handlers) GetMessageClips(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
-	clips, err := h.Repo.GetMessageClips(userID, messageID)
+	clips, err := h.Repo.GetMessageClips(context.TODO(), userID, messageID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
