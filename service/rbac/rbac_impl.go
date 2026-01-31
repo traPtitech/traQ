@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -68,7 +69,7 @@ func (r *rbacImpl) Reload() error {
 }
 
 func (r *rbacImpl) reload() error {
-	rs, err := r.repo.GetAllUserRoles()
+	rs, err := r.repo.GetAllUserRoles(context.TODO())
 	if err != nil {
 		return err
 	}

@@ -110,7 +110,7 @@ func TestMain(m *testing.M) {
 		}
 		if init {
 			// システムユーザーロール投入
-			if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+			if err := repo.CreateUserRoles(context.TODO(), role.SystemRoleModels()...); err != nil {
 				panic(err)
 			}
 		}

@@ -107,7 +107,7 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initializing...")
 
 				// システムユーザーロール投入
-				if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+				if err := repo.CreateUserRoles(context.TODO(), role.SystemRoleModels()...); err != nil {
 					logger.Fatal("failed to init system user roles", zap.Error(err))
 				}
 				if err := server.SS.RBAC.Reload(); err != nil {
