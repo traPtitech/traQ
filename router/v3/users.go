@@ -286,7 +286,7 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	history, err := h.Repo.GetUserStampHistory(userID, req.Limit)
+	history, err := h.Repo.GetUserStampHistory(context.TODO(), userID, req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -316,7 +316,7 @@ func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	recommendations, err := h.Repo.GetUserStampRecommendations(userID, *req.Limit)
+	recommendations, err := h.Repo.GetUserStampRecommendations(context.TODO(), userID, *req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -146,11 +146,11 @@ func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
 		return pr.checkOnlyByUUID(consts.ParamStampID, func(_ echo.Context, v uuid.UUID) (bool, error) {
-			return pr.repo.StampExists(v)
+			return pr.repo.StampExists(context.TODO(), v)
 		})
 	}
 	return pr.byUUID(consts.ParamStampID, consts.KeyParamStamp, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetStamp(v)
+		return pr.repo.GetStamp(context.TODO(), v)
 	})
 }
 

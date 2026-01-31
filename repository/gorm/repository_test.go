@@ -265,7 +265,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 		name = random.AlphaNumeric(20)
 	}
 	fid := mustMakeDummyFile(t, repo, false).ID
-	s, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
+	s, err := repo.CreateStamp(context.TODO(), repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
 	require.NoError(t, err)
 	return s
 }

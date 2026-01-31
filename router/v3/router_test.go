@@ -352,7 +352,7 @@ func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model
 		name = random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creator, uuid.Nil)
-	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{
+	s, err := env.Repository.CreateStamp(context.TODO(), repository.CreateStampArgs{
 		Name:      name,
 		FileID:    f.GetID(),
 		CreatorID: creator,
