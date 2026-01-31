@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -163,7 +164,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			}
 		case model.UserTypeWebhook:
 			// Webhookのメッセージの削除権限の確認
-			wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetWebhookByBotUserID(context.TODO(), mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted webhook

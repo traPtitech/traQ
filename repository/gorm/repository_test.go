@@ -294,7 +294,7 @@ func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, chan
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := repo.CreateWebhook(name, "", channelID, mustMakeDummyFile(t, repo, false).ID, creatorID, secret)
+	w, err := repo.CreateWebhook(context.TODO(), name, "", channelID, mustMakeDummyFile(t, repo, false).ID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }

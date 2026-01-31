@@ -138,7 +138,7 @@ func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
 // WebhookID リクエストURLの`webhookID`パラメータからBotを取り出す
 func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetWebhook(v)
+		return pr.repo.GetWebhook(context.TODO(), v)
 	})
 }
 

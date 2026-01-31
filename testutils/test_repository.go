@@ -1289,7 +1289,7 @@ func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return allow, nil
 }
 
-func (repo *TestRepository) CreateWebhook(name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *TestRepository) CreateWebhook(ctx context.Context, name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
@@ -1343,7 +1343,7 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, i
 	return &wb, nil
 }
 
-func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
+func (repo *TestRepository) UpdateWebhook(ctx context.Context, id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1393,7 +1393,7 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 	return nil
 }
 
-func (repo *TestRepository) DeleteWebhook(id uuid.UUID) error {
+func (repo *TestRepository) DeleteWebhook(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1413,7 +1413,7 @@ func (repo *TestRepository) DeleteWebhook(id uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhook(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1429,7 +1429,7 @@ func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	return &w, nil
 }
 
-func (repo *TestRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhookByBotUserID(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1455,7 +1455,7 @@ func (repo *TestRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, 
 	return &w, nil
 }
 
-func (repo *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
+func (repo *TestRepository) GetAllWebhooks(ctx context.Context) ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	repo.WebhooksLock.RLock()
 	repo.UsersLock.RLock()
@@ -1469,7 +1469,7 @@ func (repo *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
 	return arr, nil
 }
 
-func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.Webhook, error) {
+func (repo *TestRepository) GetWebhooksByCreator(ctx context.Context, creatorID uuid.UUID) ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {
 		return arr, nil

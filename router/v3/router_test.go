@@ -436,7 +436,7 @@ func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uu
 		name = random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creatorID, uuid.Nil)
-	w, err := env.Repository.CreateWebhook(name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
+	w, err := env.Repository.CreateWebhook(context.TODO(), name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
 	require.NoError(t, err)
 	return w
 }
