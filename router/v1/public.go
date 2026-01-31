@@ -23,7 +23,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得
-	user, err := h.Repo.GetUserByName(context.TODO(), username, false)
+	user, err := h.Repo.GetUserByName(c.Request().Context(), username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -116,9 +116,9 @@ func (c *EmojiCache) Purge() {
 	c.css.Purge()
 }
 
-func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
-	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStampsWithThumbnail(context.TODO(), repository.StampTypeAll)
+func emojiJSONGenerator(repo repository.Repository) func(ctx context.Context, _ struct{}) ([]byte, error) {
+	return func(ctx context.Context, _ struct{}) ([]byte, error) {
+		stamps, err := repo.GetAllStampsWithThumbnail(ctx, repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}
@@ -139,9 +139,9 @@ func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ st
 	}
 }
 
-func emojiCSSGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
-	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStampsWithThumbnail(context.TODO(), repository.StampTypeAll)
+func emojiCSSGenerator(repo repository.Repository) func(ctx context.Context, _ struct{}) ([]byte, error) {
+	return func(ctx context.Context, _ struct{}) ([]byte, error) {
+		stamps, err := repo.GetAllStampsWithThumbnail(ctx, repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}
