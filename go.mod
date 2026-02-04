@@ -40,7 +40,7 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/livekit/protocol v1.44.1-0.20260204083634-2bb10a50a4fa
-	github.com/livekit/server-sdk-go/v2 v2.13.2
+	github.com/livekit/server-sdk-go/v2 v2.13.3
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
 	github.com/motoki317/go-waveform v0.0.3
