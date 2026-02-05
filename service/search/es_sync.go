@@ -5,16 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	resMessage "github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/message"
 )
 
@@ -26,6 +29,7 @@ const (
 type attributes struct {
 	To             []uuid.UUID
 	Citation       []uuid.UUID
+	OgpContent     []string
 	HasURL         bool
 	HasAttachments bool
 	HasImage       bool
@@ -48,7 +52,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		isBot = user.IsBot()
 	}
 
-	attr := e.getAttributes(m, parseResult)
+	attr := e.getAttributes(m.Text, parseResult)
 
 	return &esMessageDoc{
 		UserID:         m.UserID,
@@ -60,6 +64,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		UpdatedAt:      m.UpdatedAt,
 		To:             attr.To,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
@@ -70,12 +75,13 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
 func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
-	attr := e.getAttributes(m, parseResult)
+	attr := e.getAttributes(m.Text, parseResult)
 	// Updateする項目のみ
 	return &esMessageDocUpdate{
 		Text:           m.Text,
 		UpdatedAt:      m.UpdatedAt,
 		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 		HasImage:       attr.HasImage,
@@ -84,13 +90,59 @@ func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.
 	}
 }
 
-func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
+// convertResMessageUpdated 既存のesMessage.Message型のメッセージの更新情報をesへ入れる型に変換する
+func (e *esEngine) convertResMessageUpdated(m resMessage.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
+	attr := e.getAttributes(m.GetText(), parseResult)
+	// Updateする項目のみ
+	return &esMessageDocUpdate{
+		Text:           m.GetText(),
+		UpdatedAt:      m.GetUpdatedAt(),
+		Citation:       attr.Citation,
+		OgpContent:     attr.OgpContent,
+		HasURL:         attr.HasURL,
+		HasAttachments: attr.HasAttachments,
+		HasImage:       attr.HasImage,
+		HasVideo:       attr.HasVideo,
+		HasAudio:       attr.HasAudio,
+	}
+}
+
+func (e *esEngine) getAttributes(messageText string, parseResult *message.ParseResult) *attributes {
 	attr := &attributes{}
 
 	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
 	attr.Citation = parseResult.Citation
-	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
+	attr.HasURL = strings.Contains(messageText, "http://") || strings.Contains(messageText, "https://")
 	attr.HasAttachments = len(parseResult.Attachments) != 0
+
+	urlRegex := regexp.MustCompile(`(^https?|[^a-zA-Z0-9:+]https?)://[^\s\(\)\{\}\[\]]+`)
+	urls := lo.Map(urlRegex.FindAllString(messageText, -1), func(url string, _ int) string {
+		if url[0] != 'h' {
+			return url[1:]
+		}
+		return url
+	})
+
+	filteredUrls := lo.Filter(urls, func(url string, _ int) bool {
+		return !strings.HasPrefix(url, "https://q.trap.jp")
+	})
+
+	ogpCache := make([]string, 0, len(filteredUrls))
+	for _, url := range filteredUrls {
+		urlCache, err := e.repo.GetOgpCache(url)
+		if err != nil {
+			e.l.Warn(err.Error(), zap.Error(err))
+			continue
+		}
+		if urlCache.Valid {
+			ogpCache = append(ogpCache, urlCache.Content.Title+"\n"+urlCache.Content.Description)
+		}
+	}
+	if len(ogpCache) == 0 {
+		ogpCache = append(ogpCache, "")
+	}
+
+	attr.OgpContent = ogpCache
 
 	for _, attachmentID := range parseResult.Attachments {
 		meta, err := e.repo.GetFileMeta(attachmentID)
@@ -158,10 +210,18 @@ func (e *esEngine) sync() error {
 		if err != nil {
 			return err
 		}
-		if len(messages) == 0 {
+		if len(messages) != 0 {
+			lastInsert = messages[len(messages)-1].UpdatedAt
+		}
+
+		r, err := e.getNoOgpfieldMessage(syncMessageBulk - len(messages))
+		if err != nil {
+			return fmt.Errorf("failed to get messages without OGP field: %w", err)
+		}
+
+		if r.TotalHits() == 0 && len(messages) == 0 {
 			break
 		}
-		lastInsert = messages[len(messages)-1].UpdatedAt
 
 		// NOTE: index時にBotかどうかを確認するN+1問題へのworkaround
 		// ユーザーキャッシュサービスができたら書き換えても良い
@@ -172,8 +232,7 @@ func (e *esEngine) sync() error {
 				return err
 			}
 		}
-
-		err = syncNewMessages(e, messages, lastInsert, lastSynced, userCache)
+		err = syncNewMessages(e, messages, r.Hits(), lastInsert, lastSynced, userCache)
 		if err != nil {
 			return err
 		}
@@ -210,7 +269,7 @@ func (e *esEngine) sync() error {
 	return nil
 }
 
-func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
+func syncNewMessages(e *esEngine, messages []*model.Message, noOgpMessage []resMessage.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
 	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client: e.client,
 		Index:  getIndexName(esMessageIndex),
@@ -218,6 +277,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	if err != nil {
 		return err
 	}
+	ogpContentUpdateCount := 0
 
 	defer func() {
 		closeErr := bulkIndexer.Close(context.Background())
@@ -230,8 +290,8 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 			return
 		}
 
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
-			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, added ogp field %v message(s), last insert %v",
+			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated-uint64(ogpContentUpdateCount), ogpContentUpdateCount, lastInsert))
 	}()
 
 	for _, v := range messages {
@@ -273,6 +333,24 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 		}
 	}
 
+	for _, v := range noOgpMessage {
+		doc := e.convertResMessageUpdated(v, message.Parse(v.GetText()))
+
+		data, err := json.Marshal(map[string]any{"doc": *doc})
+		if err != nil {
+			return err
+		}
+
+		err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+			Action:     "update",
+			DocumentID: v.GetID().String(),
+			Body:       bytes.NewReader(data),
+		})
+		if err != nil {
+			return err
+		}
+		ogpContentUpdateCount++
+	}
 	return nil
 }
 
@@ -340,4 +418,48 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 	}
 
 	return lastUpdatedDoc[0].Source.UpdatedAt, nil
+}
+
+// getNoOgpfieldMessage OGPフィールドを持っていない過去のメッセージを取得する
+func (e *esEngine) getNoOgpfieldMessage(limit int) (Result, error) {
+
+	type fieldQuery struct {
+		Field string `json:"field"`
+	}
+
+	var mustNots = []searchQuery{
+		{"exists": fieldQuery{Field: "ogpContent"}},
+	}
+	var musts = []searchQuery{
+		{"term": termQuery{"hasURL": termQueryParameter{Value: true}}},
+	}
+
+	body := newSearchBodyWithMustNot(musts, mustNots)
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal search query: %w", err)
+	}
+	// OGP情報がないメッセージを取得する
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithBody(bytes.NewBuffer(b)),
+		e.client.Search.WithSort("updatedAt:desc"),
+		e.client.Search.WithSize(limit), // 一度に取得する件数
+	)
+	if err != nil {
+		return nil, err
+	}
+	if sr.IsError() {
+		return nil, fmt.Errorf("error in search: %s", sr.String())
+	}
+	defer sr.Body.Close()
+
+	var res esSearchResponse
+	err = json.NewDecoder(sr.Body).Decode(&res)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.parseResultFromResponse(res)
 }
