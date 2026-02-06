@@ -1,6 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.24.4
+go 1.25.0
 
 toolchain go1.25.7
 
@@ -36,7 +36,8 @@ require (
 	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-contrib v0.17.4
-	github.com/labstack/echo/v4 v4.15.0
+	github.com/labstack/echo/v4 v4.13.3
+	github.com/labstack/echo/v5 v5.0.3
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/livekit/protocol v1.44.1-0.20260206014335-aec2833dffcb
