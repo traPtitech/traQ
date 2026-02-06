@@ -108,6 +108,12 @@ type Manager interface {
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	RemoveStamps(id, stampID, userID uuid.UUID) error
+	// IsAccessible 指定したユーザーが指定したメッセージにアクセス可能かどうかを確認します
+	//
+	// 成功した場合、アクセス可能かどうかとnilを返します。
+	// 存在しないメッセージを指定した場合、falseとErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	IsAccessible(message Message, userID uuid.UUID) (bool, error)
 
 	Wait(ctx context.Context) error
 }
