@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/qall"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
@@ -283,9 +285,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
+	mid := ev.Fields["message_id"].(uuid.UUID)
+	citedChannels, err := ns.cache.Get(context.Background(), mid)
+	if err != nil {
+		return
+	}
 	wsEventType := "MESSAGE_UPDATED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": mid,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -293,6 +300,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
+			ws.TargetChannelsViewers(citedChannels),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
@@ -305,9 +313,12 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["message"].(*model.Message).ChannelID
+	mid := ev.Fields["message_id"].(uuid.UUID)
+	citedChannels := ns.getCitedChannelIDs(context.Background(), mid)
+
 	wsEventType := "MESSAGE_DELETED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": mid,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -315,6 +326,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
+			ws.TargetChannelsViewers(citedChannels),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
@@ -741,4 +753,20 @@ func broadcast(ns *Service, wsEventType string, wsPayload interface{}) {
 
 func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload interface{}) {
 	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
+}
+
+func (ns *Service) getCitedChannelIDs(_ context.Context, messageId uuid.UUID) []uuid.UUID {
+	query := search.Query{}
+	query.Citation = optional.From(messageId)
+
+	res, err := ns.search.Do(&query)
+	if err != nil {
+		return nil
+	}
+	result := []uuid.UUID{}
+	for _, hit := range res.Hits() {
+		result = append(result, hit.GetChannelID())
+	}
+	return result
+
 }
