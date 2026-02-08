@@ -67,7 +67,7 @@ func (m *managerImpl) GetChannel(ctx context.Context, id uuid.UUID) (*model.Chan
 	return ch, nil
 }
 
-func (m *managerImpl) GetChannelPathFromID(ctx context.Context, id uuid.UUID) string {
+func (m *managerImpl) GetChannelPathFromID(_ context.Context, id uuid.UUID) string {
 	return m.T.getChannelPath(id)
 }
 
@@ -332,7 +332,7 @@ func (m *managerImpl) UnarchiveChannel(ctx context.Context, id uuid.UUID, update
 	return nil
 }
 
-func (m *managerImpl) PublicChannelTree(ctx context.Context) Tree {
+func (m *managerImpl) PublicChannelTree(_ context.Context) Tree {
 	return m.T
 }
 
@@ -430,7 +430,7 @@ func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, cha
 	return false, nil
 }
 
-func (m *managerImpl) IsPublicChannel(ctx context.Context, id uuid.UUID) bool {
+func (m *managerImpl) IsPublicChannel(_ context.Context, id uuid.UUID) bool {
 	return m.T.IsChannelPresent(id)
 }
 
