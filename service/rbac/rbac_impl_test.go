@@ -18,7 +18,7 @@ type Repo struct {
 	testutils.EmptyTestRepository
 }
 
-func (r *Repo) GetAllUserRoles(ctx context.Context) ([]*model.UserRole, error) {
+func (r *Repo) GetAllUserRoles(_ context.Context) ([]*model.UserRole, error) {
 	r1 := &model.UserRole{Name: "r1", Permissions: []model.RolePermission{{Permission: "p1"}}}
 	r2 := &model.UserRole{Name: "r2", Permissions: []model.RolePermission{{Permission: "p2"}}}
 	r3 := &model.UserRole{Name: "r3", Permissions: []model.RolePermission{{Permission: "p3"}}}

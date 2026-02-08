@@ -60,7 +60,7 @@ type TestRepository struct {
 	OgpCacheLock              sync.RWMutex
 }
 
-func (repo *TestRepository) GetPublicChannels(ctx context.Context) ([]*model.Channel, error) {
+func (repo *TestRepository) GetPublicChannels(_ context.Context) ([]*model.Channel, error) {
 	repo.ChannelsLock.RLock()
 	defer repo.ChannelsLock.RUnlock()
 	result := make([]*model.Channel, 0)
@@ -96,7 +96,7 @@ func NewTestRepository() *TestRepository {
 	return r
 }
 
-func (repo *TestRepository) CreateUser(ctx context.Context, args repository.CreateUserArgs) (model.UserInfo, error) {
+func (repo *TestRepository) CreateUser(_ context.Context, args repository.CreateUserArgs) (model.UserInfo, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
@@ -137,7 +137,7 @@ func (repo *TestRepository) CreateUser(ctx context.Context, args repository.Crea
 	return &user, nil
 }
 
-func (repo *TestRepository) GetUser(ctx context.Context, id uuid.UUID, _ bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUser(_ context.Context, id uuid.UUID, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	u, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
@@ -147,7 +147,7 @@ func (repo *TestRepository) GetUser(ctx context.Context, id uuid.UUID, _ bool) (
 	return &u, nil
 }
 
-func (repo *TestRepository) GetUserByName(ctx context.Context, name string, _ bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUserByName(_ context.Context, name string, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	defer repo.UsersLock.RUnlock()
 	for _, u := range repo.Users {
@@ -159,7 +159,7 @@ func (repo *TestRepository) GetUserByName(ctx context.Context, name string, _ bo
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUsers(ctx context.Context, query repository.UsersQuery) ([]model.UserInfo, error) {
+func (repo *TestRepository) GetUsers(_ context.Context, query repository.UsersQuery) ([]model.UserInfo, error) {
 	result := make([]model.UserInfo, 0, len(repo.Users))
 	repo.UsersLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
@@ -207,7 +207,7 @@ func (repo *TestRepository) GetUsers(ctx context.Context, query repository.Users
 	return result, nil
 }
 
-func (repo *TestRepository) GetUserIDs(ctx context.Context, query repository.UsersQuery) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDs(_ context.Context, query repository.UsersQuery) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	repo.UsersLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
@@ -254,14 +254,14 @@ func (repo *TestRepository) GetUserIDs(ctx context.Context, query repository.Use
 	return ids, nil
 }
 
-func (repo *TestRepository) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
+func (repo *TestRepository) UserExists(_ context.Context, id uuid.UUID) (bool, error) {
 	repo.UsersLock.RLock()
 	_, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
 	return ok, nil
 }
 
-func (repo *TestRepository) UpdateUser(ctx context.Context, id uuid.UUID, args repository.UpdateUserArgs) error {
+func (repo *TestRepository) UpdateUser(_ context.Context, id uuid.UUID, args repository.UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -311,7 +311,7 @@ func (repo *TestRepository) UpdateUser(ctx context.Context, id uuid.UUID, args r
 	return nil
 }
 
-func (repo *TestRepository) CreateUserGroup(ctx context.Context, name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) CreateUserGroup(_ context.Context, name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
@@ -349,7 +349,7 @@ func (repo *TestRepository) CreateUserGroup(ctx context.Context, name, descripti
 	return &g, nil
 }
 
-func (repo *TestRepository) UpdateUserGroup(ctx context.Context, id uuid.UUID, args repository.UpdateUserGroupArgs) error {
+func (repo *TestRepository) UpdateUserGroup(_ context.Context, id uuid.UUID, args repository.UpdateUserGroupArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -394,7 +394,7 @@ func (repo *TestRepository) UpdateUserGroup(ctx context.Context, id uuid.UUID, a
 	return nil
 }
 
-func (repo *TestRepository) DeleteUserGroup(ctx context.Context, id uuid.UUID) error {
+func (repo *TestRepository) DeleteUserGroup(_ context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -413,7 +413,7 @@ func (repo *TestRepository) DeleteUserGroup(ctx context.Context, id uuid.UUID) e
 	return nil
 }
 
-func (repo *TestRepository) GetUserGroup(ctx context.Context, id uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroup(_ context.Context, id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -438,7 +438,7 @@ func (repo *TestRepository) GetUserGroup(ctx context.Context, id uuid.UUID) (*mo
 	return &g, nil
 }
 
-func (repo *TestRepository) GetUserGroupByName(ctx context.Context, name string) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroupByName(_ context.Context, name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
@@ -464,7 +464,7 @@ func (repo *TestRepository) GetUserGroupByName(ctx context.Context, name string)
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUserBelongingGroupIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserBelongingGroupIDs(_ context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
@@ -482,7 +482,7 @@ func (repo *TestRepository) GetUserBelongingGroupIDs(ctx context.Context, userID
 	return groups, nil
 }
 
-func (repo *TestRepository) GetAllUserGroups(ctx context.Context) ([]*model.UserGroup, error) {
+func (repo *TestRepository) GetAllUserGroups(_ context.Context) ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	repo.UserGroupsLock.RLock()
 	repo.UserGroupAdminsLock.Lock()
@@ -505,7 +505,7 @@ func (repo *TestRepository) GetAllUserGroups(ctx context.Context) ([]*model.User
 	return groups, nil
 }
 
-func (repo *TestRepository) AddUserToGroup(ctx context.Context, userID, groupID uuid.UUID, _ string) error {
+func (repo *TestRepository) AddUserToGroup(_ context.Context, userID, groupID uuid.UUID, _ string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -530,7 +530,7 @@ func (repo *TestRepository) AddUserToGroup(ctx context.Context, userID, groupID 
 	return nil
 }
 
-func (repo *TestRepository) RemoveUserFromGroup(ctx context.Context, userID, groupID uuid.UUID) error {
+func (repo *TestRepository) RemoveUserFromGroup(_ context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -552,7 +552,7 @@ func (repo *TestRepository) RemoveUserFromGroup(ctx context.Context, userID, gro
 	return nil
 }
 
-func (repo *TestRepository) AddUserToGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
+func (repo *TestRepository) AddUserToGroupAdmin(_ context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -573,7 +573,7 @@ func (repo *TestRepository) AddUserToGroupAdmin(ctx context.Context, userID, gro
 	return nil
 }
 
-func (repo *TestRepository) RemoveUserFromGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
+func (repo *TestRepository) RemoveUserFromGroupAdmin(_ context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -595,7 +595,7 @@ func (repo *TestRepository) RemoveUserFromGroupAdmin(ctx context.Context, userID
 	return nil
 }
 
-func (repo *TestRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
+func (repo *TestRepository) GetTagByID(_ context.Context, id uuid.UUID) (*model.Tag, error) {
 	repo.TagsLock.RLock()
 	t, ok := repo.Tags[id]
 	repo.TagsLock.RUnlock()
@@ -605,7 +605,7 @@ func (repo *TestRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*mode
 	return &t, nil
 }
 
-func (repo *TestRepository) GetOrCreateTag(ctx context.Context, name string) (*model.Tag, error) {
+func (repo *TestRepository) GetOrCreateTag(_ context.Context, name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
@@ -629,7 +629,7 @@ func (repo *TestRepository) GetOrCreateTag(ctx context.Context, name string) (*m
 	return &t, nil
 }
 
-func (repo *TestRepository) AddUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
+func (repo *TestRepository) AddUserTag(_ context.Context, userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -653,7 +653,7 @@ func (repo *TestRepository) AddUserTag(ctx context.Context, userID, tagID uuid.U
 	return nil
 }
 
-func (repo *TestRepository) ChangeUserTagLock(ctx context.Context, userID, tagID uuid.UUID, locked bool) error {
+func (repo *TestRepository) ChangeUserTagLock(_ context.Context, userID, tagID uuid.UUID, locked bool) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -670,7 +670,7 @@ func (repo *TestRepository) ChangeUserTagLock(ctx context.Context, userID, tagID
 	return repository.ErrNotFound
 }
 
-func (repo *TestRepository) DeleteUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
+func (repo *TestRepository) DeleteUserTag(_ context.Context, userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -683,7 +683,7 @@ func (repo *TestRepository) DeleteUserTag(ctx context.Context, userID, tagID uui
 	return nil
 }
 
-func (repo *TestRepository) GetUserTag(ctx context.Context, userID, tagID uuid.UUID) (model.UserTag, error) {
+func (repo *TestRepository) GetUserTag(_ context.Context, userID, tagID uuid.UUID) (model.UserTag, error) {
 	repo.UserTagsLock.RLock()
 	defer repo.UserTagsLock.RUnlock()
 	tags, ok := repo.UserTags[userID]
@@ -700,7 +700,7 @@ func (repo *TestRepository) GetUserTag(ctx context.Context, userID, tagID uuid.U
 	return &ut, nil
 }
 
-func (repo *TestRepository) GetUserTagsByUserID(ctx context.Context, userID uuid.UUID) ([]model.UserTag, error) {
+func (repo *TestRepository) GetUserTagsByUserID(_ context.Context, userID uuid.UUID) ([]model.UserTag, error) {
 	tags := make([]model.UserTag, 0)
 	repo.UserTagsLock.RLock()
 	for tid, ut := range repo.UserTags[userID] {
@@ -714,7 +714,7 @@ func (repo *TestRepository) GetUserTagsByUserID(ctx context.Context, userID uuid
 	return tags, nil
 }
 
-func (repo *TestRepository) GetUserIDsByTagID(ctx context.Context, tagID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDsByTagID(_ context.Context, tagID uuid.UUID) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
 	repo.UserTagsLock.RLock()
 	for uid, tags := range repo.UserTags {
@@ -726,7 +726,7 @@ func (repo *TestRepository) GetUserIDsByTagID(ctx context.Context, tagID uuid.UU
 	return users, nil
 }
 
-func (repo *TestRepository) CreateChannel(ctx context.Context, ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
+func (repo *TestRepository) CreateChannel(_ context.Context, ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
 	ch.ID = uuid.Must(uuid.NewV7())
 	ch.IsPublic = true
 	ch.CreatedAt = time.Now()
@@ -738,7 +738,7 @@ func (repo *TestRepository) CreateChannel(ctx context.Context, ch model.Channel,
 	return &ch, nil
 }
 
-func (repo *TestRepository) UpdateChannel(ctx context.Context, channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
+func (repo *TestRepository) UpdateChannel(_ context.Context, channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -772,7 +772,7 @@ func (repo *TestRepository) UpdateChannel(ctx context.Context, channelID uuid.UU
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) GetChannel(_ context.Context, channelID uuid.UUID) (*model.Channel, error) {
 	repo.ChannelsLock.RLock()
 	ch, ok := repo.Channels[channelID]
 	repo.ChannelsLock.RUnlock()
@@ -782,7 +782,7 @@ func (repo *TestRepository) GetChannel(ctx context.Context, channelID uuid.UUID)
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetPrivateChannelMemberIDs(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetPrivateChannelMemberIDs(_ context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
 	repo.PrivateChannelMembersLock.RLock()
 	for uid := range repo.PrivateChannelMembers[channelID] {
@@ -792,7 +792,7 @@ func (repo *TestRepository) GetPrivateChannelMemberIDs(ctx context.Context, chan
 	return result, nil
 }
 
-func (repo *TestRepository) ChangeChannelSubscription(ctx context.Context, channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
+func (repo *TestRepository) ChangeChannelSubscription(_ context.Context, channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
 	if channelID == uuid.Nil {
 		return nil, nil, repository.ErrNilID
 	}
@@ -855,7 +855,7 @@ func (repo *TestRepository) ChangeChannelSubscription(ctx context.Context, chann
 	return on, off, nil
 }
 
-func (repo *TestRepository) GetChannelSubscriptions(ctx context.Context, query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
+func (repo *TestRepository) GetChannelSubscriptions(_ context.Context, query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
 	repo.ChannelSubscribesLock.Lock()
 	result := make([]*model.UserSubscribeChannel, 0)
 
@@ -896,7 +896,7 @@ func (repo *TestRepository) GetChannelSubscriptions(ctx context.Context, query r
 	return result, nil
 }
 
-func (repo *TestRepository) CreateMessage(ctx context.Context, userID, channelID uuid.UUID, text string) (*model.Message, error) {
+func (repo *TestRepository) CreateMessage(_ context.Context, userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -917,7 +917,7 @@ func (repo *TestRepository) CreateMessage(ctx context.Context, userID, channelID
 	return m, nil
 }
 
-func (repo *TestRepository) UpdateMessage(ctx context.Context, messageID uuid.UUID, text string) error {
+func (repo *TestRepository) UpdateMessage(_ context.Context, messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -934,7 +934,7 @@ func (repo *TestRepository) UpdateMessage(ctx context.Context, messageID uuid.UU
 	return nil
 }
 
-func (repo *TestRepository) DeleteMessage(ctx context.Context, messageID uuid.UUID) error {
+func (repo *TestRepository) DeleteMessage(_ context.Context, messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -948,7 +948,7 @@ func (repo *TestRepository) DeleteMessage(ctx context.Context, messageID uuid.UU
 	return nil
 }
 
-func (repo *TestRepository) GetMessageByID(ctx context.Context, messageID uuid.UUID) (*model.Message, error) {
+func (repo *TestRepository) GetMessageByID(_ context.Context, messageID uuid.UUID) (*model.Message, error) {
 	repo.MessagesLock.RLock()
 	m, ok := repo.Messages[messageID]
 	repo.MessagesLock.RUnlock()
@@ -959,7 +959,7 @@ func (repo *TestRepository) GetMessageByID(ctx context.Context, messageID uuid.U
 	return &m, nil
 }
 
-func (repo *TestRepository) GetMessages(ctx context.Context, query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetMessages(_ context.Context, query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1061,7 +1061,7 @@ func (repo *TestRepository) GetMessages(ctx context.Context, query repository.Me
 	return
 }
 
-func (repo *TestRepository) GetUpdatedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetUpdatedMessagesAfter(_ context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1087,7 +1087,7 @@ func (repo *TestRepository) GetUpdatedMessagesAfter(ctx context.Context, after t
 	return
 }
 
-func (repo *TestRepository) GetDeletedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *TestRepository) GetDeletedMessagesAfter(_ context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
 
 	repo.MessagesLock.RLock()
@@ -1113,7 +1113,7 @@ func (repo *TestRepository) GetDeletedMessagesAfter(ctx context.Context, after t
 	return
 }
 
-func (repo *TestRepository) SetMessageUnreads(ctx context.Context, userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
+func (repo *TestRepository) SetMessageUnreads(_ context.Context, userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
 	if len(userNoticeableMap) == 0 {
 		return nil
 	}
@@ -1139,7 +1139,7 @@ func (repo *TestRepository) SetMessageUnreads(ctx context.Context, userNoticeabl
 	return nil
 }
 
-func (repo *TestRepository) GetUnreadMessagesByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Message, error) {
+func (repo *TestRepository) GetUnreadMessagesByUserID(_ context.Context, userID uuid.UUID) ([]*model.Message, error) {
 	result := make([]*model.Message, 0)
 	repo.MessageUnreadsLock.RLock()
 	repo.MessagesLock.RLock()
@@ -1162,7 +1162,7 @@ func (repo *TestRepository) GetUnreadMessagesByUserID(ctx context.Context, userI
 	return result, nil
 }
 
-func (repo *TestRepository) DeleteUnreadsByChannelID(ctx context.Context, channelID, userID uuid.UUID) error {
+func (repo *TestRepository) DeleteUnreadsByChannelID(_ context.Context, channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1190,7 +1190,7 @@ func (repo *TestRepository) DeleteUnreadsByChannelID(ctx context.Context, channe
 	return nil
 }
 
-func (repo *TestRepository) AddStar(ctx context.Context, userID, channelID uuid.UUID) error {
+func (repo *TestRepository) AddStar(_ context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1205,7 +1205,7 @@ func (repo *TestRepository) AddStar(ctx context.Context, userID, channelID uuid.
 	return nil
 }
 
-func (repo *TestRepository) RemoveStar(ctx context.Context, userID, channelID uuid.UUID) error {
+func (repo *TestRepository) RemoveStar(_ context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1219,7 +1219,7 @@ func (repo *TestRepository) RemoveStar(ctx context.Context, userID, channelID uu
 	return nil
 }
 
-func (repo *TestRepository) GetStaredChannels(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetStaredChannels(_ context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	repo.StarsLock.RLock()
 	result := make([]uuid.UUID, 0)
 	chMap, ok := repo.Stars[userID]
@@ -1232,7 +1232,7 @@ func (repo *TestRepository) GetStaredChannels(ctx context.Context, userID uuid.U
 	return result, nil
 }
 
-func (repo *TestRepository) GetFileMeta(ctx context.Context, fileID uuid.UUID) (*model.FileMeta, error) {
+func (repo *TestRepository) GetFileMeta(_ context.Context, fileID uuid.UUID) (*model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1245,7 +1245,7 @@ func (repo *TestRepository) GetFileMeta(ctx context.Context, fileID uuid.UUID) (
 	return &meta, nil
 }
 
-func (repo *TestRepository) DeleteFileMeta(ctx context.Context, fileID uuid.UUID) error {
+func (repo *TestRepository) DeleteFileMeta(_ context.Context, fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1255,7 +1255,7 @@ func (repo *TestRepository) DeleteFileMeta(ctx context.Context, fileID uuid.UUID
 	return nil
 }
 
-func (repo *TestRepository) SaveFileMeta(ctx context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error {
+func (repo *TestRepository) SaveFileMeta(_ context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error {
 	repo.FilesLock.Lock()
 	repo.FilesACLLock.Lock()
 	meta.CreatedAt = time.Now()
@@ -1273,7 +1273,7 @@ func (repo *TestRepository) SaveFileMeta(ctx context.Context, meta *model.FileMe
 	return nil
 }
 
-func (repo *TestRepository) IsFileAccessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error) {
+func (repo *TestRepository) IsFileAccessible(_ context.Context, fileID, userID uuid.UUID) (bool, error) {
 	var allow bool
 	repo.FilesACLLock.RLock()
 	defer repo.FilesACLLock.RUnlock()
@@ -1289,7 +1289,7 @@ func (repo *TestRepository) IsFileAccessible(ctx context.Context, fileID, userID
 	return allow, nil
 }
 
-func (repo *TestRepository) CreateWebhook(ctx context.Context, name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *TestRepository) CreateWebhook(_ context.Context, name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
@@ -1343,7 +1343,7 @@ func (repo *TestRepository) CreateWebhook(ctx context.Context, name, description
 	return &wb, nil
 }
 
-func (repo *TestRepository) UpdateWebhook(ctx context.Context, id uuid.UUID, args repository.UpdateWebhookArgs) error {
+func (repo *TestRepository) UpdateWebhook(_ context.Context, id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1393,7 +1393,7 @@ func (repo *TestRepository) UpdateWebhook(ctx context.Context, id uuid.UUID, arg
 	return nil
 }
 
-func (repo *TestRepository) DeleteWebhook(ctx context.Context, id uuid.UUID) error {
+func (repo *TestRepository) DeleteWebhook(_ context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1413,7 +1413,7 @@ func (repo *TestRepository) DeleteWebhook(ctx context.Context, id uuid.UUID) err
 	return nil
 }
 
-func (repo *TestRepository) GetWebhook(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhook(_ context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1429,7 +1429,7 @@ func (repo *TestRepository) GetWebhook(ctx context.Context, id uuid.UUID) (model
 	return &w, nil
 }
 
-func (repo *TestRepository) GetWebhookByBotUserID(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhookByBotUserID(_ context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1455,7 +1455,7 @@ func (repo *TestRepository) GetWebhookByBotUserID(ctx context.Context, id uuid.U
 	return &w, nil
 }
 
-func (repo *TestRepository) GetAllWebhooks(ctx context.Context) ([]model.Webhook, error) {
+func (repo *TestRepository) GetAllWebhooks(_ context.Context) ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	repo.WebhooksLock.RLock()
 	repo.UsersLock.RLock()
@@ -1469,7 +1469,7 @@ func (repo *TestRepository) GetAllWebhooks(ctx context.Context) ([]model.Webhook
 	return arr, nil
 }
 
-func (repo *TestRepository) GetWebhooksByCreator(ctx context.Context, creatorID uuid.UUID) ([]model.Webhook, error) {
+func (repo *TestRepository) GetWebhooksByCreator(_ context.Context, creatorID uuid.UUID) ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {
 		return arr, nil

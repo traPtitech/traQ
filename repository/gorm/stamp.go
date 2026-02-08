@@ -114,8 +114,8 @@ func (r *stampRepository) purgeCache() {
 	r.perType.Purge()
 }
 
-func (r *stampRepository) getStamp(id uuid.UUID) (s *model.Stamp, ok bool, err error) {
-	stamps, err := r.stamps.Get(context.Background(), struct{}{})
+func (r *stampRepository) getStamp(ctx context.Context, id uuid.UUID) (s *model.Stamp, ok bool, err error) {
+	stamps, err := r.stamps.Get(ctx, struct{}{})
 	if err != nil {
 		return nil, false, err
 	}
@@ -123,8 +123,8 @@ func (r *stampRepository) getStamp(id uuid.UUID) (s *model.Stamp, ok bool, err e
 	return
 }
 
-func (r *stampRepository) allStampsExist(ids []uuid.UUID) (ok bool, err error) {
-	stamps, err := r.stamps.Get(context.Background(), struct{}{})
+func (r *stampRepository) allStampsExist(ctx context.Context, ids []uuid.UUID) (ok bool, err error) {
+	stamps, err := r.stamps.Get(ctx, struct{}{})
 	if err != nil {
 		return false, err
 	}
@@ -258,7 +258,7 @@ func (r *stampRepository) GetStamp(ctx context.Context, id uuid.UUID) (s *model.
 		return nil, repository.ErrNotFound
 	}
 
-	s, ok, err := r.getStamp(id)
+	s, ok, err := r.getStamp(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func (r *stampRepository) StampExists(ctx context.Context, id uuid.UUID) (bool, 
 		return false, nil
 	}
 
-	_, ok, err := r.getStamp(id)
+	_, ok, err := r.getStamp(ctx, id)
 	if err != nil {
 		return false, err
 	}
@@ -323,7 +323,7 @@ func (r *stampRepository) StampExists(ctx context.Context, id uuid.UUID) (bool, 
 
 // ExistStamps implements StampPaletteRepository interface.
 func (r *stampRepository) ExistStamps(ctx context.Context, stampIDs []uuid.UUID) (err error) {
-	ok, err := r.allStampsExist(stampIDs)
+	ok, err := r.allStampsExist(ctx, stampIDs)
 	if err != nil {
 		return err
 	}
