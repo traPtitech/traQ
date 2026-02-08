@@ -2,6 +2,7 @@ package qall
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -64,7 +65,7 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 		CreatorID: creatorID,
 	}
 
-	err = m.repo.CreateSoundboardItem(args)
+	err = m.repo.CreateSoundboardItem(context.TODO(), args)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func (m *soundboardManager) DeleteSoundboardItem(soundID uuid.UUID) error {
 		return err
 	}
 
-	err = m.repo.DeleteSoundboardItem(soundID)
+	err = m.repo.DeleteSoundboardItem(context.TODO(), soundID)
 	if err != nil {
 		return err
 	}
