@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -19,7 +20,7 @@ import (
 func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	list, err := h.Repo.GetUserUnreadChannels(userID)
+	list, err := h.Repo.GetUserUnreadChannels(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -32,7 +33,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
+	if err := h.Repo.DeleteUnreadsByChannelID(context.TODO(), channelID, userID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -138,7 +139,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	m := getParamMessage(c)
 
 	if muid := m.GetUserID(); muid != userID {
-		mUser, err := h.Repo.GetUser(muid, false)
+		mUser, err := h.Repo.GetUser(context.TODO(), muid, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -148,7 +149,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			return herror.Forbidden("you are not allowed to delete this message")
 		case model.UserTypeBot:
 			// BOTのメッセージの削除権限の確認
-			wh, err := h.Repo.GetBotByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetBotByBotUserID(context.TODO(), mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted bot
@@ -163,7 +164,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			}
 		case model.UserTypeWebhook:
 			// Webhookのメッセージの削除権限の確認
-			wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetWebhookByBotUserID(context.TODO(), mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted webhook
@@ -301,7 +302,7 @@ func (h *Handlers) GetMessageClips(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
-	clips, err := h.Repo.GetMessageClips(userID, messageID)
+	clips, err := h.Repo.GetMessageClips(context.TODO(), userID, messageID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

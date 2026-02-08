@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -41,11 +42,11 @@ func TestHandlers_GetUsers(t *testing.T) {
 	user2 := env.CreateUser(t, "sappi_red")
 	deactivated := env.CreateUser(t, "deactivated")
 	suspended := env.CreateUser(t, "suspended")
-	err := env.Repository.UpdateUser(deactivated.GetID(), repository.UpdateUserArgs{
+	err := env.Repository.UpdateUser(context.TODO(), deactivated.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusDeactivated),
 	})
 	require.NoError(t, err)
-	err = env.Repository.UpdateUser(suspended.GetID(), repository.UpdateUserArgs{
+	err = env.Repository.UpdateUser(context.TODO(), suspended.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusSuspended),
 	})
 	require.NoError(t, err)
@@ -333,7 +334,7 @@ func TestHandlers_EditMe(t *testing.T) {
 				Expect().
 				Status(http.StatusNoContent)
 
-			profile, err := env.Repository.GetUser(user.GetID(), true)
+			profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 			require.NoError(t, err)
 			assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
 		})
@@ -349,7 +350,7 @@ func TestHandlers_EditMe(t *testing.T) {
 				Expect().
 				Status(http.StatusNoContent)
 
-			profile, err := env.Repository.GetUser(user.GetID(), true)
+			profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 			require.NoError(t, err)
 			assert.EqualValues(t, "po", profile.GetDisplayName())
 			if assert.True(t, profile.GetHomeChannel().Valid) {
@@ -477,7 +478,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := env.Repository.GetUser(user.GetID(), false)
+		u, err := env.Repository.GetUser(context.TODO(), user.GetID(), false)
 		require.NoError(t, err)
 		assert.NoError(t, u.Authenticate(newPass))
 	})
@@ -728,7 +729,7 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tokens, err := env.Repository.GetDeviceTokens(set.UUID{user.GetID(): {}})
+		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
 			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
@@ -985,7 +986,7 @@ func TestHandlers_EditUser(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		profile, err := env.Repository.GetUser(user2.GetID(), true)
+		profile, err := env.Repository.GetUser(context.TODO(), user2.GetID(), true)
 		require.NoError(t, err)
 		assert.EqualValues(t, model.UserAccountStatusDeactivated, profile.GetState())
 	})
@@ -999,7 +1000,7 @@ func TestHandlers_EditUser(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		profile, err := env.Repository.GetUser(user.GetID(), true)
+		profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", profile.GetDisplayName())
 	})
@@ -1154,7 +1155,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
 		require.NoError(t, err)
 		if assert.Len(t, subs, 1) {
 			sub := subs[0]

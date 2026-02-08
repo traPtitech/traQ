@@ -23,7 +23,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得
-	user, err := h.Repo.GetUserByName(username, false)
+	user, err := h.Repo.GetUserByName(context.TODO(), username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -118,7 +118,7 @@ func (c *EmojiCache) Purge() {
 
 func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
 	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
+		stamps, err := repo.GetAllStampsWithThumbnail(context.TODO(), repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func emojiJSONGenerator(repo repository.Repository) func(_ context.Context, _ st
 
 func emojiCSSGenerator(repo repository.Repository) func(_ context.Context, _ struct{}) ([]byte, error) {
 	return func(_ context.Context, _ struct{}) ([]byte, error) {
-		stamps, err := repo.GetAllStampsWithThumbnail(repository.StampTypeAll)
+		stamps, err := repo.GetAllStampsWithThumbnail(context.TODO(), repository.StampTypeAll)
 		if err != nil {
 			return nil, err
 		}

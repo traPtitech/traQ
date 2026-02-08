@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"encoding/base64"
 	"unicode/utf8"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // CreateWebhook implements WebhookRepository interface.
-func (repo *Repository) CreateWebhook(name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *Repository) CreateWebhook(ctx context.Context, name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
@@ -41,7 +42,7 @@ func (repo *Repository) CreateWebhook(name, description string, channelID, iconF
 		CreatorID:   creatorID,
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// チャンネル検証
 		var ch model.Channel
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
@@ -83,7 +84,7 @@ func (repo *Repository) CreateWebhook(name, description string, channelID, iconF
 }
 
 // UpdateWebhook implements WebhookRepository interface.
-func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
+func (repo *Repository) UpdateWebhook(ctx context.Context, id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -92,7 +93,7 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 		updated     bool
 		userUpdated bool
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.WebhookBot{ID: id}).First(&w).Error; err != nil {
 			return convertError(err)
 		}
@@ -121,7 +122,7 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 		}
 		if args.CreatorID.Valid {
 			// 作成者検証
-			user, err := repo.GetUser(args.CreatorID.V, false)
+			user, err := repo.GetUser(context.TODO(), args.CreatorID.V, false)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.CreatorID", "the Creator is not found")
@@ -176,11 +177,11 @@ func (repo *Repository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhoo
 }
 
 // DeleteWebhook implements WebhookRepository interface.
-func (repo *Repository) DeleteWebhook(id uuid.UUID) error {
+func (repo *Repository) DeleteWebhook(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var b model.WebhookBot
 		if err := tx.Take(&b, &model.WebhookBot{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -204,33 +205,33 @@ func (repo *Repository) DeleteWebhook(id uuid.UUID) error {
 }
 
 // GetWebhook implements WebhookRepository interface.
-func (repo *Repository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
+func (repo *Repository) GetWebhook(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	b := &model.WebhookBot{}
-	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Preload("BotUser").Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return b, nil
 }
 
 // GetWebhookByBotUserID implements WebhookRepository interface.
-func (repo *Repository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
+func (repo *Repository) GetWebhookByBotUserID(ctx context.Context, id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	b := &model.WebhookBot{}
-	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{BotUserID: id}).Take(b).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Preload("BotUser").Where(&model.WebhookBot{BotUserID: id}).Take(b).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return b, nil
 }
 
 // GetAllWebhooks implements WebhookRepository interface.
-func (repo *Repository) GetAllWebhooks() (arr []model.Webhook, err error) {
+func (repo *Repository) GetAllWebhooks(ctx context.Context) (arr []model.Webhook, err error) {
 	var webhooks []*model.WebhookBot
-	err = repo.db.Preload("BotUser").Find(&webhooks).Error
+	err = repo.db.WithContext(ctx).Preload("BotUser").Find(&webhooks).Error
 	if err != nil {
 		return nil, err
 	}
@@ -242,14 +243,14 @@ func (repo *Repository) GetAllWebhooks() (arr []model.Webhook, err error) {
 }
 
 // GetWebhooksByCreator implements WebhookRepository interface.
-func (repo *Repository) GetWebhooksByCreator(creatorID uuid.UUID) (arr []model.Webhook, err error) {
+func (repo *Repository) GetWebhooksByCreator(ctx context.Context, creatorID uuid.UUID) (arr []model.Webhook, err error) {
 	arr = make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {
 		return arr, nil
 	}
 
 	var webhooks []*model.WebhookBot
-	err = repo.db.Preload("BotUser").Where(&model.WebhookBot{CreatorID: creatorID}).Find(&webhooks).Error
+	err = repo.db.WithContext(ctx).Preload("BotUser").Where(&model.WebhookBot{CreatorID: creatorID}).Find(&webhooks).Error
 	if err != nil {
 		return nil, err
 	}

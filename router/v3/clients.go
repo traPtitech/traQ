@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -25,7 +26,7 @@ func (h *Handlers) GetClients(c echo.Context) error {
 		q = q.IsDevelopedBy(getRequestUserID(c))
 	}
 
-	ocs, err := h.Repo.GetClients(q)
+	ocs, err := h.Repo.GetClients(context.TODO(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -69,7 +70,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       req.Scopes,
 	}
-	if err := h.Repo.SaveClient(client); err != nil {
+	if err := h.Repo.SaveClient(context.TODO(), client); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -125,7 +126,7 @@ func (h *Handlers) EditClient(c echo.Context) error {
 		CallbackURL:  req.CallbackURL,
 		Confidential: req.Confidential,
 	}
-	if err := h.Repo.UpdateClient(oc.ID, args); err != nil {
+	if err := h.Repo.UpdateClient(context.TODO(), oc.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -137,7 +138,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 	oc := getParamClient(c)
 
 	// delete client
-	if err := h.Repo.DeleteClient(oc.ID); err != nil {
+	if err := h.Repo.DeleteClient(context.TODO(), oc.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -149,7 +150,7 @@ func (h *Handlers) RevokeClientTokens(c echo.Context) error {
 	oc := getParamClient(c)
 	userID := getRequestUserID(c)
 
-	err := h.Repo.DeleteUserTokensByClient(userID, oc.ID)
+	err := h.Repo.DeleteUserTokensByClient(context.TODO(), userID, oc.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

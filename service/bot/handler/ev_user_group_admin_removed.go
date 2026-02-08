@@ -2,8 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/leandro-lugaresi/hub"
 

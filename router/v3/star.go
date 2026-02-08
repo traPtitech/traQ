@@ -20,7 +20,7 @@ import (
 func (h *Handlers) GetMyStars(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	stars, err := h.Repo.GetStaredChannels(userID)
+	stars, err := h.Repo.GetStaredChannels(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -47,7 +47,7 @@ func (h *Handlers) PostStar(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.AddStar(getRequestUserID(c), req.ChannelID); err != nil {
+	if err := h.Repo.AddStar(context.TODO(), getRequestUserID(c), req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -59,7 +59,7 @@ func (h *Handlers) RemoveMyStar(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	if err := h.Repo.RemoveStar(userID, channelID); err != nil {
+	if err := h.Repo.RemoveStar(context.TODO(), userID, channelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

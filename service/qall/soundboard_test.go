@@ -89,7 +89,7 @@ func TestSoundboardManager_DeleteSoundboardItem(t *testing.T) {
 
 		// DeleteSoundboardItemが呼ばれることを期待
 		mockRepo.EXPECT().
-			DeleteSoundboardItem(soundID).
+			DeleteSoundboardItem(gomock.Any(), soundID).
 			Return(nil).
 			Times(1)
 
@@ -112,7 +112,7 @@ func TestSoundboardManager_DeleteSoundboardItem(t *testing.T) {
 			Times(1)
 
 		mockRepo.EXPECT().
-			DeleteSoundboardItem(soundID).
+			DeleteSoundboardItem(gomock.Any(), soundID).
 			Return(mockErr).
 			Times(1)
 

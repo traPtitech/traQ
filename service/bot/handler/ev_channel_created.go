@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,7 +23,7 @@ func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 			return nil
 		}
 
-		user, err := ctx.R().GetUser(ch.CreatorID, false)
+		user, err := ctx.R().GetUser(context.TODO(), ch.CreatorID, false)
 		if err != nil {
 			return fmt.Errorf("failed to GetUser: %w", err)
 		}

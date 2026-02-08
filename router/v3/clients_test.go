@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -257,7 +258,7 @@ func TestHandlers_CreateClient(t *testing.T) {
 		obj.Value("secret").String().NotEmpty()
 		obj.Value("confidential").Boolean().IsFalse()
 
-		c, err := env.Repository.GetClient(obj.Value("id").String().Raw())
+		c, err := env.Repository.GetClient(context.TODO(), obj.Value("id").String().Raw())
 		assert.NoError(t, err)
 		oAuth2ClientEquals(t, c, obj)
 	})
@@ -284,7 +285,7 @@ func TestHandlers_CreateClient(t *testing.T) {
 		obj.Value("secret").String().NotEmpty()
 		obj.Value("confidential").Boolean().IsTrue()
 
-		c, err := env.Repository.GetClient(obj.Value("id").String().Raw())
+		c, err := env.Repository.GetClient(context.TODO(), obj.Value("id").String().Raw())
 		assert.NoError(t, err)
 		oAuth2ClientEquals(t, c, obj)
 	})
@@ -546,7 +547,7 @@ func TestHandlers_EditClient(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		c, err := env.Repository.GetClient(c1.ID)
+		c, err := env.Repository.GetClient(context.TODO(), c1.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, c.Name, "po")
 	})
@@ -560,7 +561,7 @@ func TestHandlers_EditClient(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		c, err := env.Repository.GetClient(c2.ID)
+		c, err := env.Repository.GetClient(context.TODO(), c2.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, c.Name, "po2")
 	})
@@ -574,7 +575,7 @@ func TestHandlers_EditClient(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		c, err := env.Repository.GetClient(c3.ID)
+		c, err := env.Repository.GetClient(context.TODO(), c3.ID)
 		require.NoError(t, err)
 		assert.True(t, c.Confidential)
 	})
@@ -629,7 +630,7 @@ func TestHandlers_DeleteClient(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetClient(c1.ID)
+		_, err := env.Repository.GetClient(context.TODO(), c1.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
@@ -641,7 +642,7 @@ func TestHandlers_DeleteClient(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetClient(c2.ID)
+		_, err := env.Repository.GetClient(context.TODO(), c2.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
@@ -743,7 +744,7 @@ func TestHandlers_RevokeClientTokens(t *testing.T) {
 
 			for userID, userTokens := range tokens {
 				for _, userToken := range userTokens {
-					_, err := env.Repository.GetTokenByID(userToken.ID)
+					_, err := env.Repository.GetTokenByID(context.TODO(), userToken.ID)
 					if userToken.ClientID == tt.clientID && userID == tt.user.GetID() && tt.statusCode == http.StatusNoContent {
 						assert.ErrorIs(t, err, repository.ErrNotFound)
 					} else {

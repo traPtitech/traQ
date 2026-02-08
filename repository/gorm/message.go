@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -17,7 +18,7 @@ import (
 )
 
 // CreateMessage implements MessageRepository interface.
-func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
+func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -29,7 +30,7 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 		Text:      text,
 		Stamps:    []model.MessageStamp{},
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
 		}
@@ -72,7 +73,7 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 }
 
 // UpdateMessage implements MessageRepository interface.
-func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
+func (repo *Repository) UpdateMessage(ctx context.Context, messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -81,7 +82,7 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 		oldMes model.Message
 		newMes model.Message
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&oldMes, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -119,7 +120,7 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 }
 
 // DeleteMessage implements MessageRepository interface.
-func (repo *Repository) DeleteMessage(messageID uuid.UUID) error {
+func (repo *Repository) DeleteMessage(ctx context.Context, messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -128,7 +129,7 @@ func (repo *Repository) DeleteMessage(messageID uuid.UUID) error {
 		m       model.Message
 		unreads []*model.Unread
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
 			return convertError(err)
 		}
@@ -182,22 +183,22 @@ func (repo *Repository) DeleteMessage(messageID uuid.UUID) error {
 }
 
 // GetMessageByID implements MessageRepository interface.
-func (repo *Repository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
+func (repo *Repository) GetMessageByID(ctx context.Context, messageID uuid.UUID) (*model.Message, error) {
 	if messageID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	message := &model.Message{}
-	if err := repo.db.Scopes(messagePreloads).Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Scopes(messagePreloads).Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return message, nil
 }
 
 // GetMessages implements MessageRepository interface.
-func (repo *Repository) GetMessages(query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
+func (repo *Repository) GetMessages(ctx context.Context, query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
 	messages = make([]*model.Message, 0)
 
-	tx := repo.db
+	tx := repo.db.WithContext(ctx)
 	if !query.DisablePreload {
 		tx = tx.Scopes(messagePreloads)
 	}
@@ -263,8 +264,9 @@ func (repo *Repository) GetMessages(query repository.MessagesQuery) (messages []
 }
 
 // GetUpdatedMessagesAfter implements MessageRepository interface.
-func (repo *Repository) GetUpdatedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *Repository) GetUpdatedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	err = repo.db.
+		WithContext(ctx).
 		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` IS NULL AND `messages`.`updated_at` > ? ORDER BY `messages`.`updated_at` LIMIT ?", after, limit+1).
 		Scan(&messages).
 		Error
@@ -277,8 +279,9 @@ func (repo *Repository) GetUpdatedMessagesAfter(after time.Time, limit int) (mes
 }
 
 // GetDeletedMessagesAfter implements MessageRepository interface.
-func (repo *Repository) GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+func (repo *Repository) GetDeletedMessagesAfter(ctx context.Context, after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	err = repo.db.
+		WithContext(ctx).
 		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` > ? ORDER BY `messages`.`deleted_at` LIMIT ?", after, limit+1).
 		Scan(&messages).
 		Error
@@ -291,7 +294,7 @@ func (repo *Repository) GetDeletedMessagesAfter(after time.Time, limit int) (mes
 }
 
 // SetMessageUnreads implements MessageRepository interface.
-func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
+func (repo *Repository) SetMessageUnreads(ctx context.Context, userNoticeableMap map[uuid.UUID]bool, messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -308,7 +311,7 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 	}
 
 	unreadListToInsert := make([]*model.Unread, 0, len(userNoticeableMap))
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var msg model.Message
 		err := tx.First(&msg, &model.Message{ID: messageID}).Error
 		if err != nil {
@@ -390,12 +393,13 @@ func (repo *Repository) SetMessageUnreads(userNoticeableMap map[uuid.UUID]bool, 
 }
 
 // GetUnreadMessagesByUserID implements MessageRepository interface.
-func (repo *Repository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*model.Message, err error) {
+func (repo *Repository) GetUnreadMessagesByUserID(ctx context.Context, userID uuid.UUID) (unreads []*model.Message, err error) {
 	unreads = make([]*model.Message, 0)
 	if userID == uuid.Nil {
 		return unreads, nil
 	}
 	err = repo.db.
+		WithContext(ctx).
 		Joins("INNER JOIN unreads ON unreads.message_id = messages.id AND unreads.user_id = ?", userID.String()).
 		Order("messages.created_at").
 		Find(&unreads).
@@ -404,12 +408,12 @@ func (repo *Repository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*
 }
 
 // GetUserUnreadChannels implements MessageRepository interface.
-func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
+func (repo *Repository) GetUserUnreadChannels(ctx context.Context, userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	res := make([]*repository.UserUnreadChannel, 0)
 	if userID == uuid.Nil {
 		return res, nil
 	}
-	return res, repo.db.Raw(`
+	return res, repo.db.WithContext(ctx).Raw(`
 		SELECT
 			channel_id,
 			COUNT(message_id) AS count,
@@ -437,11 +441,11 @@ func (repo *Repository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.U
 }
 
 // DeleteUnreadsByChannelID implements MessageRepository interface.
-func (repo *Repository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+func (repo *Repository) DeleteUnreadsByChannelID(ctx context.Context, channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Where("user_id = ?", userID).Where("channel_id = ?", channelID).Delete(&model.Unread{})
+	result := repo.db.WithContext(ctx).Where("user_id = ?", userID).Where("channel_id = ?", channelID).Delete(&model.Unread{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -459,10 +463,11 @@ func (repo *Repository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) er
 }
 
 // GetChannelLatestMessages implements MessageRepository interface.
-func (repo *Repository) GetChannelLatestMessages(query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
+func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
 	var messages []*model.Message
 
 	tx := repo.db.
+		WithContext(ctx).
 		Unscoped().
 		Select("m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at").
 		Table("channel_latest_messages clm").
@@ -472,7 +477,7 @@ func (repo *Repository) GetChannelLatestMessages(query repository.ChannelLatestM
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {
-		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.V))
+		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.WithContext(ctx).Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.V))
 	}
 
 	if query.Limit > 0 {
@@ -487,12 +492,13 @@ func (repo *Repository) GetChannelLatestMessages(query repository.ChannelLatestM
 }
 
 // AddStampToMessage implements MessageRepository interface.
-func (repo *Repository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
+func (repo *Repository) AddStampToMessage(ctx context.Context, messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 
 	err = repo.db.
+		WithContext(ctx).
 		Clauses(clause.OnConflict{
 			DoUpdates: clause.Assignments(map[string]interface{}{
 				"count":      gorm.Expr(fmt.Sprintf("count + %d", count)),
@@ -507,7 +513,7 @@ func (repo *Repository) AddStampToMessage(messageID, stampID, userID uuid.UUID, 
 
 	// 楽観的に取得し直す。
 	ms = &model.MessageStamp{}
-	if err := repo.db.Take(ms, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(ms, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Error; err != nil {
 		return nil, err
 	}
 	repo.hub.Publish(hub.Message{
@@ -524,11 +530,11 @@ func (repo *Repository) AddStampToMessage(messageID, stampID, userID uuid.UUID, 
 }
 
 // RemoveStampFromMessage implements MessageRepository interface.
-func (repo *Repository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
+func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
+	result := repo.db.WithContext(ctx).Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
 	if result.Error != nil {
 		return result.Error
 	}

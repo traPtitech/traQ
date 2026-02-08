@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -43,7 +44,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得
-	user, err := h.Repo.GetUserByName(username, false)
+	user, err := h.Repo.GetUserByName(context.TODO(), username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:

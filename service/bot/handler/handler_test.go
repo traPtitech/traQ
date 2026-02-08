@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -66,7 +67,7 @@ func registerBot(_ *testing.T, handlerCtx *mock_handler.MockContext, b *model.Bo
 
 func registerUser(repo *Repo, u *model.User) {
 	repo.MockUserRepository.EXPECT().
-		GetUser(u.ID, gomock.Any()).
+		GetUser(context.TODO(), u.ID, gomock.Any()).
 		Return(u, nil).
 		AnyTimes()
 }
@@ -80,7 +81,7 @@ func registerChannel(cm *mock_channel.MockManager, ch *model.Channel) {
 
 func registerTag(repo *Repo, t *model.Tag) {
 	repo.MockTagRepository.EXPECT().
-		GetTagByID(t.ID).
+		GetTagByID(context.TODO(), t.ID).
 		Return(t, nil).
 		AnyTimes()
 }

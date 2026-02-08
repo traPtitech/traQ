@@ -139,7 +139,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// ユーザーアカウント状態を確認
-				user, err := repo.GetUser(sess.UserID(), false)
+				user, err := repo.GetUser(context.TODO(), sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
@@ -148,7 +148,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// アカウントにリンク
-				if err := repo.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+				if err := repo.LinkExternalUserAccount(context.TODO(), user.GetID(), repository.LinkExternalUserAccountArgs{
 					ProviderName: tu.GetProviderName(),
 					ExternalID:   tu.GetID(),
 					Extra:        model.JSON{"externalName": tu.GetRawName()},
@@ -178,7 +178,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return herror.BadRequest("You have already logged in. Please logout once.")
 		}
 
-		user, err := repo.GetUserByExternalID(tu.GetProviderName(), tu.GetID(), false)
+		user, err := repo.GetUserByExternalID(context.TODO(), tu.GetProviderName(), tu.GetID(), false)
 		if err != nil {
 			if err != repository.ErrNotFound {
 				return herror.InternalServerError(err)
@@ -216,7 +216,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				args.IconFileID = fid
 			}
 
-			user, err = repo.CreateUser(args)
+			user, err = repo.CreateUser(context.TODO(), args)
 			if err != nil {
 				if err == repository.ErrAlreadyExists {
 					return herror.Conflict("name conflicts") // TODO 名前被りをどうするか

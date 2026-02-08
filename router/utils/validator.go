@@ -79,16 +79,16 @@ var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interfa
 	case nil:
 		return nil
 	case uuid.UUID:
-		u, err = repo.GetUser(v, false)
+		u, err = repo.GetUser(context.TODO(), v, false)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		u, err = repo.GetUser(v.V, false)
+		u, err = repo.GetUser(context.TODO(), v.V, false)
 	case string:
-		u, err = repo.GetUser(uuid.FromStringOrNil(v), false)
+		u, err = repo.GetUser(context.TODO(), uuid.FromStringOrNil(v), false)
 	case []byte:
-		u, err = repo.GetUser(uuid.FromBytesOrNil(v), false)
+		u, err = repo.GetUser(context.TODO(), uuid.FromBytesOrNil(v), false)
 	default:
 		return errors.New(errMessage)
 	}
@@ -122,16 +122,16 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 	case nil:
 		return nil
 	case uuid.UUID:
-		ok, err = repo.UserExists(v)
+		ok, err = repo.UserExists(context.TODO(), v)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		ok, err = repo.UserExists(v.V)
+		ok, err = repo.UserExists(context.TODO(), v.V)
 	case string:
-		ok, err = repo.UserExists(uuid.FromStringOrNil(v))
+		ok, err = repo.UserExists(context.TODO(), uuid.FromStringOrNil(v))
 	case []byte:
-		ok, err = repo.UserExists(uuid.FromBytesOrNil(v))
+		ok, err = repo.UserExists(context.TODO(), uuid.FromBytesOrNil(v))
 	default:
 		return errors.New(errMessage)
 	}
@@ -161,16 +161,16 @@ var IsNotWebhookUserID = vd.WithContext(func(ctx context.Context, value interfac
 	case nil:
 		return nil
 	case uuid.UUID:
-		user, err = repo.GetUser(v, false)
+		user, err = repo.GetUser(context.TODO(), v, false)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		user, err = repo.GetUser(v.V, false)
+		user, err = repo.GetUser(context.TODO(), v.V, false)
 	case string:
-		user, err = repo.GetUser(uuid.FromStringOrNil(v), false)
+		user, err = repo.GetUser(context.TODO(), uuid.FromStringOrNil(v), false)
 	case []byte:
-		user, err = repo.GetUser(uuid.FromBytesOrNil(v), false)
+		user, err = repo.GetUser(context.TODO(), uuid.FromBytesOrNil(v), false)
 	default:
 		return errors.New(errMessage)
 	}

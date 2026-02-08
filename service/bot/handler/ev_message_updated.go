@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,7 +23,7 @@ func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
-	user, err := ctx.R().GetUser(m.UserID, false)
+	user, err := ctx.R().GetUser(context.TODO(), m.UserID, false)
 	if err != nil {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}

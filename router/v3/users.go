@@ -42,7 +42,7 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 		q = q.Active()
 	}
 
-	users, err := h.Repo.GetUsers(q)
+	users, err := h.Repo.GetUsers(context.TODO(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -74,7 +74,7 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User, IconFileID: iconFileID})
+	user, err := h.Repo.CreateUser(context.TODO(), repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User, IconFileID: iconFileID})
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
@@ -91,12 +91,12 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(me.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(context.TODO(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(me.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(context.TODO(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -176,7 +176,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 		Bio:         req.Bio,
 		HomeChannel: req.HomeChannel,
 	}
-	if err := h.Repo.UpdateUser(userID, args); err != nil {
+	if err := h.Repo.UpdateUser(context.TODO(), userID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -286,7 +286,7 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	history, err := h.Repo.GetUserStampHistory(userID, req.Limit)
+	history, err := h.Repo.GetUserStampHistory(context.TODO(), userID, req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -316,7 +316,7 @@ func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	recommendations, err := h.Repo.GetUserStampRecommendations(userID, *req.Limit)
+	recommendations, err := h.Repo.GetUserStampRecommendations(context.TODO(), userID, *req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -343,7 +343,7 @@ func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(context.TODO(), userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -379,12 +379,12 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 func (h *Handlers) GetUser(c echo.Context) error {
 	user := getParamUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(user.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(context.TODO(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(user.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(context.TODO(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -429,7 +429,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 		deactivate = req.State.V == model.UserAccountStatusDeactivated.Int()
 	}
 
-	if err := h.Repo.UpdateUser(userID, args); err != nil {
+	if err := h.Repo.UpdateUser(context.TODO(), userID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 	// 凍結の際
@@ -450,7 +450,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 
 // GetMyChannelSubscriptions GET /users/me/subscriptions
 func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -512,7 +512,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 // GetUserStats GET /users/me/:userID/stats
 func (h *Handlers) GetUserStats(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
-	stats, err := h.Repo.GetUserStats(userID)
+	stats, err := h.Repo.GetUserStats(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

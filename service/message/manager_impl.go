@@ -39,7 +39,7 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 		R:  repo,
 		L:  logger.Named("message_manager"),
 		cache: sc.NewMust(func(_ context.Context, key uuid.UUID) (*message, error) {
-			m, err := repo.GetMessageByID(key)
+			m, err := repo.GetMessageByID(context.TODO(), key)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return nil, ErrNotFound
@@ -65,7 +65,7 @@ func (m *manager) get(id uuid.UUID) (*message, error) {
 }
 
 func (m *manager) GetIn(ids []uuid.UUID) ([]Message, error) {
-	messages, _, err := m.R.GetMessages(repository.MessagesQuery{IDIn: optional.From(ids)})
+	messages, _, err := m.R.GetMessages(context.TODO(), repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
 		ExcludeDMs:               query.ExcludeDMs,
 		DisablePreload:           query.DisablePreload,
 	}
-	messages, more, err := m.R.GetMessages(q)
+	messages, more, err := m.R.GetMessages(context.TODO(), q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetMessages: %w", err)
 	}
@@ -125,7 +125,7 @@ func (m *manager) Create(channelID, userID uuid.UUID, content string) (Message, 
 
 func (m *manager) create(channelID, userID uuid.UUID, content string) (Message, error) {
 	// 作成
-	msg, err := m.R.CreateMessage(userID, channelID, content)
+	msg, err := m.R.CreateMessage(context.TODO(), userID, channelID, content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateMessage: %w", err)
 	}
@@ -145,7 +145,7 @@ func (m *manager) Edit(id uuid.UUID, content string) error {
 	}
 
 	// 更新
-	if err := m.R.UpdateMessage(id, content); err != nil {
+	if err := m.R.UpdateMessage(context.TODO(), id, content); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return ErrNotFound
@@ -171,7 +171,7 @@ func (m *manager) Delete(id uuid.UUID) error {
 	}
 
 	// 削除
-	if err := m.R.DeleteMessage(id); err != nil {
+	if err := m.R.DeleteMessage(context.TODO(), id); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return ErrNotFound
@@ -202,7 +202,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルに上限数以上のメッセージがピン留めされていないか確認
-	pins, err := m.R.GetPinnedMessageByChannelID(msg.GetChannelID())
+	pins, err := m.R.GetPinnedMessageByChannelID(context.TODO(), msg.GetChannelID())
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// ピン
-	pin, err := m.R.PinMessage(id, userID)
+	pin, err := m.R.PinMessage(context.TODO(), id, userID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -250,7 +250,7 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 	}
 
 	// ピン外し
-	pin, err := m.R.UnpinMessage(id)
+	pin, err := m.R.UnpinMessage(context.TODO(), id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -282,7 +282,7 @@ func (m *manager) AddStamps(id, stampID, userID uuid.UUID, n int) (*model.Messag
 	}
 
 	// スタンプを押す
-	ms, err := m.R.AddStampToMessage(id, stampID, userID, n)
+	ms, err := m.R.AddStampToMessage(context.TODO(), id, stampID, userID, n)
 	if err != nil {
 		return nil, fmt.Errorf("failed to AddStampToMessage: %w", err)
 	}
@@ -306,7 +306,7 @@ func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
 	}
 
 	// スタンプを消す
-	if err := m.R.RemoveStampFromMessage(id, stampID, userID); err != nil {
+	if err := m.R.RemoveStampFromMessage(context.TODO(), id, stampID, userID); err != nil {
 		return fmt.Errorf("failed to RemoveStampFromMessage: %w", err)
 	}
 
@@ -326,7 +326,7 @@ func (m *manager) recordChannelEvent(channelID uuid.UUID, eventType model.Channe
 	go func() {
 		defer m.P.Done()
 
-		err := m.R.RecordChannelEvent(channelID, eventType, detail, datetime)
+		err := m.R.RecordChannelEvent(context.TODO(), channelID, eventType, detail, datetime)
 		if err != nil {
 			m.L.Warn("failed to record channel event", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
 		}

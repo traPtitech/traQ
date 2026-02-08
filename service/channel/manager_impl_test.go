@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -58,7 +59,7 @@ func TestInitChannelManager(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			GetPublicChannels().
+			GetPublicChannels(context.TODO()).
 			Return(nil, mockErr).
 			Times(1)
 
@@ -74,7 +75,7 @@ func TestInitChannelManager(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 
 		repo.EXPECT().
-			GetPublicChannels().
+			GetPublicChannels(context.TODO()).
 			Return([]*model.Channel{
 				{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 				{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
@@ -92,7 +93,7 @@ func TestInitChannelManager(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 
 		repo.EXPECT().
-			GetPublicChannels().
+			GetPublicChannels(context.TODO()).
 			Return([]*model.Channel{}, nil).
 			Times(1)
 
@@ -124,7 +125,7 @@ func TestManagerImpl_GetChannel(t *testing.T) {
 		}
 
 		repo.EXPECT().
-			GetChannel(dm1.ID).
+			GetChannel(context.TODO(), dm1.ID).
 			Return(dm1, nil).
 			Times(1)
 
@@ -153,7 +154,7 @@ func TestManagerImpl_GetChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetChannel(cNotFound).
+			GetChannel(context.TODO(), cNotFound).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
@@ -169,7 +170,7 @@ func TestManagerImpl_GetChannel(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			GetChannel(cNotFound).
+			GetChannel(context.TODO(), cNotFound).
 			Return(nil, mockErr).
 			Times(1)
 
@@ -285,7 +286,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
+			CreateChannel(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil, mockErr).
 			AnyTimes()
 
@@ -336,12 +337,12 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 						}
 
 						repo.EXPECT().
-							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
+							CreateChannel(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).
 							Return(expected, nil).
 							AnyTimes()
 						if c.Parent != uuid.Nil {
 							repo.EXPECT().
-								RecordChannelEvent(c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,
 									"channelId": cid,
 								}), createdAt).
@@ -372,7 +373,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetChannel(gomock.Any()).
+			GetChannel(context.TODO(), gomock.Any()).
 			Return(nil, repository.ErrNotFound).
 			AnyTimes()
 
@@ -448,7 +449,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			UpdateChannel(gomock.Any(), gomock.Any()).
+			UpdateChannel(context.TODO(), gomock.Any(), gomock.Any()).
 			Return(nil, mockErr).
 			AnyTimes()
 
@@ -549,7 +550,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 						if args.Topic.Valid {
 							repo.EXPECT().
-								RecordChannelEvent(c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,
 									"before": ch.Topic,
 									"after":  args.Topic.V,
@@ -560,7 +561,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 						if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
 							repo.EXPECT().
-								RecordChannelEvent(c.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
 									"userId":     args.UpdaterID,
 									"visibility": args.Visibility.V,
 								}, gomock.Any()).
@@ -570,7 +571,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 						if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
 							repo.EXPECT().
-								RecordChannelEvent(c.ID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,
 									"force":  args.ForcedNotification.V,
 								}, gomock.Any()).
@@ -580,7 +581,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 						if args.Name.Valid {
 							repo.EXPECT().
-								RecordChannelEvent(c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,
 									"before": ch.Name,
 									"after":  args.Name.V,
@@ -591,7 +592,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 						if args.Parent.Valid {
 							repo.EXPECT().
-								RecordChannelEvent(c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
+								RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,
 									"before": ch.ParentID,
 									"after":  args.Parent.V,
@@ -602,7 +603,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 						}
 
 						repo.EXPECT().
-							UpdateChannel(c.ID, args).
+							UpdateChannel(context.TODO(), c.ID, args).
 							Return(&newChan, nil).
 							Times(1)
 
@@ -660,7 +661,7 @@ func TestManagerImpl_ChangeChannelSubscriptions(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			ChangeChannelSubscription(gomock.Any(), gomock.Any()).
+			ChangeChannelSubscription(context.TODO(), gomock.Any(), gomock.Any()).
 			Return(nil, nil, mockErr).
 			AnyTimes()
 
@@ -698,11 +699,11 @@ func TestManagerImpl_ChangeChannelSubscriptions(t *testing.T) {
 				}
 
 				repo.EXPECT().
-					ChangeChannelSubscription(c.ID, gomock.Any()).
+					ChangeChannelSubscription(context.TODO(), c.ID, gomock.Any()).
 					Return(on, off, nil).
 					AnyTimes()
 				repo.EXPECT().
-					RecordChannelEvent(c.ID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
+					RecordChannelEvent(context.TODO(), c.ID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
 						"userId": uid1,
 						"on":     on,
 						"off":    off,
@@ -728,7 +729,7 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetChannel(gomock.Any()).
+			GetChannel(context.TODO(), gomock.Any()).
 			Return(nil, repository.ErrNotFound).
 			AnyTimes()
 
@@ -752,7 +753,7 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 		}
 
 		repo.EXPECT().
-			GetChannel(dm1.ID).
+			GetChannel(context.TODO(), dm1.ID).
 			Return(dm1, nil).
 			AnyTimes()
 
@@ -787,11 +788,11 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
 		}
 		repo.EXPECT().
-			ArchiveChannels(gomock.Len(len(expects))).
+			ArchiveChannels(context.TODO(), gomock.Len(len(expects))).
 			Return(expects, nil).
 			Times(1)
 		repo.EXPECT().
-			RecordChannelEvent(gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
+			RecordChannelEvent(context.TODO(), gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
 			Return(nil).
 			Times(len(expects))
 
@@ -816,7 +817,7 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetChannel(gomock.Any()).
+			GetChannel(context.TODO(), gomock.Any()).
 			Return(nil, repository.ErrNotFound).
 			AnyTimes()
 
@@ -851,11 +852,11 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			UpdateChannel(cABB, repository.UpdateChannelArgs{Visibility: optional.From(true)}).
+			UpdateChannel(context.TODO(), cABB, repository.UpdateChannelArgs{Visibility: optional.From(true)}).
 			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true}, nil).
 			Times(1)
 		repo.EXPECT().
-			RecordChannelEvent(gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
+			RecordChannelEvent(context.TODO(), gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
 			Return(nil).
 			Times(1)
 
@@ -896,7 +897,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 
 				mockErr := errors.New("mock error")
 				repo.EXPECT().
-					GetDirectMessageChannel(gomock.Any(), gomock.Any()).
+					GetDirectMessageChannel(context.TODO(), gomock.Any(), gomock.Any()).
 					Return(nil, mockErr).
 					AnyTimes()
 
@@ -914,11 +915,11 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 
 				mockErr := errors.New("mock error")
 				repo.EXPECT().
-					GetDirectMessageChannel(gomock.Any(), gomock.Any()).
+					GetDirectMessageChannel(context.TODO(), gomock.Any(), gomock.Any()).
 					Return(nil, repository.ErrNotFound).
 					Times(1)
 				repo.EXPECT().
-					CreateChannel(gomock.Any(), gomock.Any(), gomock.Any()).
+					CreateChannel(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil, mockErr).
 					Times(1)
 
@@ -945,7 +946,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 					IsVisible: true,
 				}
 				repo.EXPECT().
-					GetDirectMessageChannel(uid1, uid2).
+					GetDirectMessageChannel(context.TODO(), uid1, uid2).
 					Return(dm1, nil).
 					Times(1)
 
@@ -964,12 +965,12 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 				uid1 := uuid.NewV3(uuid.Nil, "u1")
 				uid2 := uuid.NewV3(uuid.Nil, "u2")
 				repo.EXPECT().
-					GetDirectMessageChannel(uid1, uid2).
+					GetDirectMessageChannel(context.TODO(), uid1, uid2).
 					Return(nil, repository.ErrNotFound).
 					Times(1)
 
 				repo.EXPECT().
-					CreateChannel(gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), true).
+					CreateChannel(context.TODO(), gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), true).
 					Return(&model.Channel{
 						ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
 						Name:      "dm_" + random.AlphaNumeric(17),
@@ -1002,12 +1003,12 @@ func TestManagerImpl_GetDMChannelMembers(t *testing.T) {
 				id := mustGenerateUUID(uuidVersion)
 				expected := []uuid.UUID{cA, cE}
 				repo.EXPECT().
-					GetPrivateChannelMemberIDs(id).
+					GetPrivateChannelMemberIDs(context.TODO(), id).
 					Return(expected, nil).
 					Times(1)
 
 				repo.EXPECT().
-					GetPrivateChannelMemberIDs(cNotFound).
+					GetPrivateChannelMemberIDs(context.TODO(), cNotFound).
 					Return([]uuid.UUID{}, nil).
 					Times(1)
 
@@ -1028,7 +1029,7 @@ func TestManagerImpl_GetDMChannelMembers(t *testing.T) {
 
 				mockErr := errors.New("mock error")
 				repo.EXPECT().
-					GetPrivateChannelMemberIDs(gomock.Any()).
+					GetPrivateChannelMemberIDs(context.TODO(), gomock.Any()).
 					Return(nil, mockErr).
 					Times(1)
 
@@ -1059,7 +1060,7 @@ func TestManagerImpl_GetDMChannelMapping(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetDirectMessageChannelMapping(uid1).
+			GetDirectMessageChannelMapping(context.TODO(), uid1).
 			Return([]*model.DMChannelMapping{
 				{ChannelID: cid1, User1: uid1, User2: uid1},
 				{ChannelID: cid2, User1: uid1, User2: uid2},
@@ -1068,14 +1069,14 @@ func TestManagerImpl_GetDMChannelMapping(t *testing.T) {
 			Times(1)
 
 		repo.EXPECT().
-			GetDirectMessageChannelMapping(uid2).
+			GetDirectMessageChannelMapping(context.TODO(), uid2).
 			Return([]*model.DMChannelMapping{
 				{ChannelID: cid2, User1: uid1, User2: uid2},
 			}, nil).
 			Times(1)
 
 		repo.EXPECT().
-			GetDirectMessageChannelMapping(uid4).
+			GetDirectMessageChannelMapping(context.TODO(), uid4).
 			Return([]*model.DMChannelMapping{}, nil).
 			Times(1)
 
@@ -1106,7 +1107,7 @@ func TestManagerImpl_GetDMChannelMapping(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			GetDirectMessageChannelMapping(uid1).
+			GetDirectMessageChannelMapping(context.TODO(), uid1).
 			Return(nil, mockErr).
 			Times(1)
 
@@ -1134,22 +1135,22 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		cm := initCM(t, repo)
 
 		repo.EXPECT().
-			GetPrivateChannelMemberIDs(cNotFound).
+			GetPrivateChannelMemberIDs(context.TODO(), cNotFound).
 			Return([]uuid.UUID{}, nil).
 			AnyTimes()
 
 		repo.EXPECT().
-			GetPrivateChannelMemberIDs(cid1).
+			GetPrivateChannelMemberIDs(context.TODO(), cid1).
 			Return([]uuid.UUID{uid1}, nil).
 			AnyTimes()
 
 		repo.EXPECT().
-			GetPrivateChannelMemberIDs(cid2).
+			GetPrivateChannelMemberIDs(context.TODO(), cid2).
 			Return([]uuid.UUID{uid1, uid2}, nil).
 			AnyTimes()
 
 		repo.EXPECT().
-			GetPrivateChannelMemberIDs(cid3).
+			GetPrivateChannelMemberIDs(context.TODO(), cid3).
 			Return([]uuid.UUID{uid1, uid3}, nil).
 			AnyTimes()
 
@@ -1185,7 +1186,7 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any()).
+			GetPrivateChannelMemberIDs(context.TODO(), gomock.Any()).
 			Return(nil, mockErr).
 			Times(1)
 

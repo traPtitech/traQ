@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -94,7 +96,7 @@ func (pr *ParamRetriever) error(err error) error {
 // GroupID リクエストURLの`groupID`パラメータからGroupを取り出す
 func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUserGroup(v)
+		return pr.repo.GetUserGroup(context.TODO(), v)
 	})
 }
 
@@ -108,14 +110,14 @@ func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
 // ClientID リクエストURLの`clientID`パラメータからOAuth2Clientを取り出す
 func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(_ echo.Context, v string) (interface{}, error) {
-		return pr.repo.GetClient(v)
+		return pr.repo.GetClient(context.TODO(), v)
 	})
 }
 
 // BotID リクエストURLの`botID`パラメータからBotを取り出す
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetBotByID(v)
+		return pr.repo.GetBotByID(context.TODO(), v)
 	})
 }
 
@@ -136,7 +138,7 @@ func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
 // WebhookID リクエストURLの`webhookID`パラメータからBotを取り出す
 func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetWebhook(v)
+		return pr.repo.GetWebhook(context.TODO(), v)
 	})
 }
 
@@ -144,18 +146,18 @@ func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
 		return pr.checkOnlyByUUID(consts.ParamStampID, func(_ echo.Context, v uuid.UUID) (bool, error) {
-			return pr.repo.StampExists(v)
+			return pr.repo.StampExists(context.TODO(), v)
 		})
 	}
 	return pr.byUUID(consts.ParamStampID, consts.KeyParamStamp, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetStamp(v)
+		return pr.repo.GetStamp(context.TODO(), v)
 	})
 }
 
 // StampPalettesID リクエストURLの`paletteID`パラメータからStampPaletteを取り出す
 func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamStampPaletteID, consts.KeyParamStampPalette, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetStampPalette(v)
+		return pr.repo.GetStampPalette(context.TODO(), v)
 	})
 }
 
@@ -163,17 +165,17 @@ func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
 		return pr.checkOnlyByUUID(consts.ParamUserID, func(_ echo.Context, v uuid.UUID) (bool, error) {
-			return pr.repo.UserExists(v)
+			return pr.repo.UserExists(context.TODO(), v)
 		})
 	}
 	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUser(v, true)
+		return pr.repo.GetUser(context.TODO(), v, true)
 	})
 }
 
 // ClipFolderID リクエストURLの`folderID`パラメータからClipFolderを取り出す
 func (pr *ParamRetriever) ClipFolderID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamClipFolderID, consts.KeyParamClipFolder, func(_ echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetClipFolder(v)
+		return pr.repo.GetClipFolder(context.TODO(), v)
 	})
 }

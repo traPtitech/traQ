@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -79,7 +80,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	req.AccessTime = time.Now()
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(req.ClientID)
+	client, err := h.Repo.GetClient(context.TODO(), req.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -168,7 +169,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	if se != nil {
-		u, err := h.Repo.GetUser(se.UserID(), false)
+		u, err := h.Repo.GetUser(context.TODO(), se.UserID(), false)
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -193,7 +194,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		tokens, err := h.Repo.GetTokensByUser(se.UserID())
+		tokens, err := h.Repo.GetTokensByUser(context.TODO(), se.UserID())
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -235,7 +236,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			CodeChallengeMethod: req.CodeChallengeMethod,
 			Nonce:               req.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(context.TODO(), data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -327,7 +328,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(reqAuth.ClientID)
+	client, err := h.Repo.GetClient(context.TODO(), reqAuth.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -375,7 +376,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 			CodeChallengeMethod: reqAuth.CodeChallengeMethod,
 			Nonce:               reqAuth.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(context.TODO(), data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()

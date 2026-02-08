@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -81,7 +82,7 @@ func TestHandlers_ReadChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		chs, err := env.Repository.GetUserUnreadChannels(user.GetID())
+		chs, err := env.Repository.GetUserUnreadChannels(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.Len(t, chs, 0)
 	})
@@ -212,8 +213,8 @@ func TestHandlers_EditMessage(t *testing.T) {
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
-	require.NoError(t, env.Repository.DeleteBot(bot3.ID))
-	require.NoError(t, env.Repository.DeleteWebhook(w3.GetID()))
+	require.NoError(t, env.Repository.DeleteBot(context.TODO(), bot3.ID))
+	require.NoError(t, env.Repository.DeleteWebhook(context.TODO(), w3.GetID()))
 
 	s := env.S(t, user.GetID())
 
@@ -362,8 +363,8 @@ func TestHandlers_DeleteMessage(t *testing.T) {
 
 	bot3M := env.CreateMessage(t, bot3.BotUserID, pub.ID, rand)
 	w3M := env.CreateMessage(t, w3.GetBotUserID(), pub.ID, rand)
-	require.NoError(t, env.Repository.DeleteBot(bot3.ID))
-	require.NoError(t, env.Repository.DeleteWebhook(w3.GetID()))
+	require.NoError(t, env.Repository.DeleteBot(context.TODO(), bot3.ID))
+	require.NoError(t, env.Repository.DeleteWebhook(context.TODO(), w3.GetID()))
 
 	s := env.S(t, user.GetID())
 
@@ -911,7 +912,7 @@ func TestHandlers_GetMessageClips(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	cf := env.CreateClipFolder(t, rand, rand, user.GetID())
-	_, err := env.Repository.AddClipFolderMessage(cf.ID, m.GetID())
+	_, err := env.Repository.AddClipFolderMessage(context.TODO(), cf.ID, m.GetID())
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 

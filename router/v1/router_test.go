@@ -2,6 +2,7 @@ package v1
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"net/http"
 	"net/http/httptest"
@@ -115,7 +116,7 @@ func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Asse
 	assert, require := assertAndRequire(t)
 	repo := env.Repository
 	testUser := env.mustMakeUser(t, rand)
-	adminUser, err := repo.GetUserByName("traq", true)
+	adminUser, err := repo.GetUserByName(context.TODO(), "traq", true)
 	require.NoError(err)
 	return env, assert, require, env.generateSession(t, testUser.GetID()), env.generateSession(t, adminUser.GetID())
 }
@@ -156,7 +157,7 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }

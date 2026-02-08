@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -118,40 +119,40 @@ type UserRepository interface {
 	// 成功した場合、ユーザーとnilを返します。
 	// Nameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateUser(args CreateUserArgs) (model.UserInfo, error)
+	CreateUser(ctx context.Context, args CreateUserArgs) (model.UserInfo, error)
 	// GetUser 指定したIDのユーザーを取得します
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error)
+	GetUser(ctx context.Context, id uuid.UUID, withProfile bool) (model.UserInfo, error)
 	// GetUserByName 指定したNameのユーザーを取得する
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserByName(name string, withProfile bool) (model.UserInfo, error)
+	GetUserByName(ctx context.Context, name string, withProfile bool) (model.UserInfo, error)
 	// GetUserByExternalID 指定したproviderのexternalIDのユーザーを取得する
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error)
+	GetUserByExternalID(ctx context.Context, providerName, externalID string, withProfile bool) (model.UserInfo, error)
 	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUsers(query UsersQuery) ([]model.UserInfo, error)
+	GetUsers(ctx context.Context, query UsersQuery) ([]model.UserInfo, error)
 	// GetUserIDs 指定した条件を満たすユーザーのUUIDの配列を取得します
 	//
 	// 成功した場合、UUIDの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserIDs(query UsersQuery) ([]uuid.UUID, error)
+	GetUserIDs(ctx context.Context, query UsersQuery) ([]uuid.UUID, error)
 	// UserExists 指定したIDのユーザーが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。
 	// DBによるエラーを返すことがあります。
-	UserExists(id uuid.UUID) (bool, error)
+	UserExists(ctx context.Context, id uuid.UUID) (bool, error)
 	// UpdateUser 指定したユーザーの情報を更新します
 	//
 	// 成功した場合、nilを返します。
@@ -159,7 +160,7 @@ type UserRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateUser(id uuid.UUID, args UpdateUserArgs) error
+	UpdateUser(ctx context.Context, id uuid.UUID, args UpdateUserArgs) error
 	// LinkExternalUserAccount 指定したユーザーに外部ログインアカウントを関連付けします
 	//
 	// 成功した場合、nilを返します。
@@ -168,23 +169,23 @@ type UserRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	LinkExternalUserAccount(userID uuid.UUID, args LinkExternalUserAccountArgs) error
+	LinkExternalUserAccount(ctx context.Context, userID uuid.UUID, args LinkExternalUserAccountArgs) error
 	// GetLinkedExternalUserAccounts 指定したユーザーに関連づけられている外部ログインアカウントの配列を返します
 	//
 	// 成功した場合、外部ログインアカウントの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error)
+	GetLinkedExternalUserAccounts(ctx context.Context, userID uuid.UUID) ([]*model.ExternalProviderUser, error)
 	// UnlinkExternalUserAccount 指定したユーザーに関連づけられている指定した外部ログインアカウントの関連付けを解除します
 	//
 	// 成功した場合、nilを返します。
 	// 既に関連付けが無い場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error
+	UnlinkExternalUserAccount(ctx context.Context, userID uuid.UUID, providerName string) error
 	// GetUserStats 成功した場合、(統計情報, nil)を返します。
 	//
 	// ユーザーが存在しない場合、(nil, ErrNotFound)を返します。
 	// 引数にuuid.Nilを指定した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
-	GetUserStats(userID uuid.UUID) (*UserStats, error)
+	GetUserStats(ctx context.Context, userID uuid.UUID) (*UserStats, error)
 }

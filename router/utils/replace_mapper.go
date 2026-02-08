@@ -2,6 +2,8 @@
 package utils
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/repository"
@@ -20,7 +22,7 @@ func (m *replaceMapperImpl) Channel(path string) (uuid.UUID, bool) {
 }
 
 func (m *replaceMapperImpl) Group(name string) (uuid.UUID, bool) {
-	g, err := m.repo.GetUserGroupByName(name)
+	g, err := m.repo.GetUserGroupByName(context.TODO(), name)
 	if err != nil {
 		return uuid.Nil, false
 	}
@@ -28,7 +30,7 @@ func (m *replaceMapperImpl) Group(name string) (uuid.UUID, bool) {
 }
 
 func (m *replaceMapperImpl) User(name string) (uuid.UUID, bool) {
-	u, err := m.repo.GetUserByName(name, false)
+	u, err := m.repo.GetUserByName(context.TODO(), name, false)
 	if err != nil {
 		return uuid.Nil, false
 	}

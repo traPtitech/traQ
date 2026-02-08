@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"testing"
@@ -20,7 +21,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	fid, err := file.GenerateIconFile(env.FileManager, "test")
 	require.NoError(err)
 
-	testUser, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	testUser, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:       random.AlphaNumeric(32),
 		Role:       role.User,
 		IconFileID: fid,

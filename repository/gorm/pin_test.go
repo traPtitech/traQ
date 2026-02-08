@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -16,33 +17,33 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 	t.Run("nil id (message)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Nil, user.GetID())
+		_, err := repo.PinMessage(context.TODO(), uuid.Nil, user.GetID())
 		assert.Error(t, err)
 	})
 	t.Run("nil id (user - UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), uuid.Nil)
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV4()), uuid.Nil)
 		assert.Error(t, err)
 	})
 	t.Run("nil id (user - UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), uuid.Nil)
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV7()), uuid.Nil)
 		assert.Error(t, err)
 	})
 
 	t.Run("message not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV4()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("message not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV7()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -50,7 +51,7 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 		t.Parallel()
 		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
-		p, err := repo.PinMessage(testMessage.ID, user.GetID())
+		p, err := repo.PinMessage(context.TODO(), testMessage.ID, user.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, testMessage.ID, p.MessageID)
 		}
@@ -61,7 +62,7 @@ func TestRepositoryImpl_PinMessage(t *testing.T) {
 		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		mustMakePin(t, repo, testMessage.ID, user.GetID())
 
-		_, err := repo.PinMessage(testMessage.ID, user.GetID())
+		_, err := repo.PinMessage(context.TODO(), testMessage.ID, user.GetID())
 		assert.EqualError(t, err, repository.ErrAlreadyExists.Error())
 	})
 }
@@ -73,19 +74,19 @@ func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.UnpinMessage(uuid.Nil)
+		_, err := repo.UnpinMessage(context.TODO(), uuid.Nil)
 		assert.Error(t, err)
 	})
 	t.Run("pin not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV4()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 	t.Run("pin not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.PinMessage(uuid.Must(uuid.NewV7()), user.GetID())
+		_, err := repo.PinMessage(context.TODO(), uuid.Must(uuid.NewV7()), user.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -94,7 +95,7 @@ func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		mustMakePin(t, repo, testMessage.ID, user.GetID())
 
-		pin, err := repo.UnpinMessage(testMessage.ID)
+		pin, err := repo.UnpinMessage(context.TODO(), testMessage.ID)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, user.GetID(), pin.UserID)
 			assert.EqualValues(t, testMessage.ID, pin.MessageID)
@@ -109,12 +110,12 @@ func TestRepositoryImpl_GetPinnedMessageByChannelID(t *testing.T) {
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	mustMakePin(t, repo, testMessage.ID, user.GetID())
 
-	pins, err := repo.GetPinnedMessageByChannelID(channel.ID)
+	pins, err := repo.GetPinnedMessageByChannelID(context.TODO(), channel.ID)
 	if assert.NoError(err) {
 		assert.Len(pins, 1)
 	}
 
-	pins, err = repo.GetPinnedMessageByChannelID(uuid.Nil)
+	pins, err = repo.GetPinnedMessageByChannelID(context.TODO(), uuid.Nil)
 	if assert.NoError(err) {
 		assert.Empty(pins)
 	}

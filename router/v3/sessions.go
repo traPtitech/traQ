@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -38,7 +39,7 @@ func (h *Handlers) Login(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.Repo.GetUserByName(req.Name, false)
+	user, err := h.Repo.GetUserByName(context.TODO(), req.Name, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -134,7 +135,7 @@ func (h *Handlers) RevokeMySession(c echo.Context) error {
 func (h *Handlers) GetMyTokens(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	ot, err := h.Repo.GetTokensByUser(userID)
+	ot, err := h.Repo.GetTokensByUser(context.TODO(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -164,7 +165,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 	tokenID := getParamAsUUID(c, consts.ParamTokenID)
 	userID := getRequestUserID(c)
 
-	ot, err := h.Repo.GetTokenByID(tokenID)
+	ot, err := h.Repo.GetTokenByID(context.TODO(), tokenID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -177,7 +178,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 		return herror.NotFound()
 	}
 
-	if err := h.Repo.DeleteTokenByAccess(ot.AccessToken); err != nil {
+	if err := h.Repo.DeleteTokenByAccess(context.TODO(), ot.AccessToken); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -186,7 +187,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 
 // GetMyExternalAccounts GET /users/me/ex-accounts
 func (h *Handlers) GetMyExternalAccounts(c echo.Context) error {
-	links, err := h.Repo.GetLinkedExternalUserAccounts(getRequestUserID(c))
+	links, err := h.Repo.GetLinkedExternalUserAccounts(context.TODO(), getRequestUserID(c))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -234,7 +235,7 @@ func (h *Handlers) LinkExternalAccount(c echo.Context) error {
 		return herror.BadRequest("invalid provider name")
 	}
 
-	links, err := h.Repo.GetLinkedExternalUserAccounts(getRequestUserID(c))
+	links, err := h.Repo.GetLinkedExternalUserAccounts(context.TODO(), getRequestUserID(c))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -265,7 +266,7 @@ func (h *Handlers) UnlinkExternalAccount(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UnlinkExternalUserAccount(getRequestUserID(c), req.ProviderName); err != nil {
+	if err := h.Repo.UnlinkExternalUserAccount(context.TODO(), getRequestUserID(c), req.ProviderName); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.BadRequest("invalid provider name")

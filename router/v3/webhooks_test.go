@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -120,7 +121,7 @@ func TestHandlers_GetWebhookIcon(t *testing.T) {
 
 	file, err := file2.GenerateIconFile(env.FM, "wh")
 	require.NoError(t, err)
-	wh, err := env.Repository.CreateWebhook(random2.AlphaNumeric(20), "", ch.ID, file, user.GetID(), "")
+	wh, err := env.Repository.CreateWebhook(context.TODO(), random2.AlphaNumeric(20), "", ch.ID, file, user.GetID(), "")
 	require.NoError(t, err)
 
 	s := env.S(t, user.GetID())
@@ -299,7 +300,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		wh, err := env.Repository.GetWebhook(wh.GetID())
+		wh, err := env.Repository.GetWebhook(context.TODO(), wh.GetID())
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", wh.GetName())
 	})
@@ -484,7 +485,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetWebhook(wh.GetID())
+		_, err := env.Repository.GetWebhook(context.TODO(), wh.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
@@ -596,7 +597,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(message.GetID())
+		_, err := env.Repository.GetMessageByID(context.TODO(), message.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }

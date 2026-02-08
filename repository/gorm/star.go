@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
@@ -11,12 +13,12 @@ import (
 )
 
 // AddStar implements StarRepository interface.
-func (repo *Repository) AddStar(userID, channelID uuid.UUID) error {
+func (repo *Repository) AddStar(ctx context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var s model.Star
-	result := repo.db.FirstOrCreate(&s, &model.Star{UserID: userID, ChannelID: channelID})
+	result := repo.db.WithContext(ctx).FirstOrCreate(&s, &model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
 		if !gormutil.IsMySQLDuplicatedRecordErr(result.Error) {
 			return result.Error
@@ -33,11 +35,11 @@ func (repo *Repository) AddStar(userID, channelID uuid.UUID) error {
 }
 
 // RemoveStar implements StarRepository interface.
-func (repo *Repository) RemoveStar(userID, channelID uuid.UUID) error {
+func (repo *Repository) RemoveStar(ctx context.Context, userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Delete(&model.Star{}, &model.Star{UserID: userID, ChannelID: channelID})
+	result := repo.db.WithContext(ctx).Delete(&model.Star{}, &model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -54,10 +56,10 @@ func (repo *Repository) RemoveStar(userID, channelID uuid.UUID) error {
 }
 
 // GetStaredChannels implements StarRepository interface.
-func (repo *Repository) GetStaredChannels(userID uuid.UUID) (ids []uuid.UUID, err error) {
+func (repo *Repository) GetStaredChannels(ctx context.Context, userID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return ids, nil
 	}
-	return ids, repo.db.Model(&model.Star{}).Where(&model.Star{UserID: userID}).Pluck("channel_id", &ids).Error
+	return ids, repo.db.WithContext(ctx).Model(&model.Star{}).Where(&model.Star{UserID: userID}).Pluck("channel_id", &ids).Error
 }
