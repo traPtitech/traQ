@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/etag"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -96,7 +97,7 @@ type StampRepository interface {
 	//
 	// 成功した場合、スタンプのIDでソートされた配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllStampsWithThumbnail(ctx context.Context, stampType StampType) (stamps []*model.StampWithThumbnail, err error)
+	GetAllStampsWithThumbnail(ctx context.Context, stampType StampType) (stampsWithETag *etag.Entity[[]*model.StampWithThumbnail], err error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。

@@ -254,7 +254,7 @@ func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 		}
 		assert.Len(arr, n*2)
 		cnt := 0
-		for _, s := range arr {
+		for _, s := range arr.Value() {
 			if !s.HasThumbnail {
 				cnt++
 			}
@@ -269,7 +269,7 @@ func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 		}
 		assert.Len(arr, n*2)
 		cnt := 0
-		for _, s := range arr {
+		for _, s := range arr.Value() {
 			if s.HasThumbnail {
 				cnt++
 			}
