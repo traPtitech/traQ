@@ -226,7 +226,7 @@ func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 }
 
 // ServeJSONWithPrecomputedETag 事前に計算されたEtagを付与してJSONを返します。リクエストの条件に合うときは304を返します。
-func ServeJSONWithPrecomputedETag[T any](c echo.Context, e etag.Entity[T]) error {
+func ServeJSONWithPrecomputedETag[T any](c echo.Context, e *etag.Entity[T]) error {
 	// NOTE: prettyクエリがあるときはEtagを無視して整形されたJSONを返す
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
 		return c.JSONPretty(http.StatusOK, e.Value(), "  ")
