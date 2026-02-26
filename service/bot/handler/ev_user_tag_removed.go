@@ -24,7 +24,7 @@ func UserTagRemoved(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		return nil
 	}
 
-	t, err := ctx.R().GetTagByID(context.TODO(), tagID)
+	t, err := ctx.R().GetTagByID(context.Background(), tagID)
 	if err != nil {
 		return fmt.Errorf("failed to GetTagByID: %w", err)
 	}

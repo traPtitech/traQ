@@ -71,7 +71,7 @@ func (repo *Repository) UpdateClient(ctx context.Context, clientID string, args 
 		}
 		if args.DeveloperID.Valid {
 			// 作成者検証
-			user, err := repo.GetUser(context.TODO(), args.DeveloperID.V, false)
+			user, err := repo.GetUser(ctx, args.DeveloperID.V, false)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return repository.ArgError("args.DeveloperID", "the Developer is not found")

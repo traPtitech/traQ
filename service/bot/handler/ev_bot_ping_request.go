@@ -23,12 +23,12 @@ func BotPingRequest(ctx Context, datetime time.Time, _ string, fields hub.Fields
 
 	if ctx.D().Send(bot, event.Ping, buf) {
 		// OK
-		if err := ctx.R().ChangeBotState(context.TODO(), bot.ID, model.BotActive); err != nil {
+		if err := ctx.R().ChangeBotState(context.Background(), bot.ID, model.BotActive); err != nil {
 			return fmt.Errorf("failed to ChangeBotState: %w", err)
 		}
 	} else {
 		// NG
-		if err := ctx.R().ChangeBotState(context.TODO(), bot.ID, model.BotPaused); err != nil {
+		if err := ctx.R().ChangeBotState(context.Background(), bot.ID, model.BotPaused); err != nil {
 			return fmt.Errorf("failed to ChangeBotState: %w", err)
 		}
 	}

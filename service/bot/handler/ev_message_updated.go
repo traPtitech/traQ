@@ -18,18 +18,18 @@ func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 	m := fields["message"].(*model.Message)
 	parsed := message.Parse(m.Text)
 
-	ch, err := ctx.CM().GetChannel(m.ChannelID)
+	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
-	user, err := ctx.R().GetUser(context.TODO(), m.UserID, false)
+	user, err := ctx.R().GetUser(context.Background(), m.UserID, false)
 	if err != nil {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
 	if ch.IsDMChannel() {
-		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
+		ids, err := ctx.CM().GetDMChannelMembers(context.Background(), ch.ID)
 		if err != nil {
 			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
 		}

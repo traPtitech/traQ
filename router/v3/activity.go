@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -43,6 +42,7 @@ func (r *GetActivityTimelineRequest) Validate() error {
 
 // GetActivityTimeline GET /activity/timeline
 func (h *Handlers) GetActivityTimeline(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
 	var req GetActivityTimelineRequest
@@ -61,7 +61,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 			query.ChannelsSubscribedByUser = userID
 		}
 
-		timeline, err := h.MessageManager.GetTimeline(query)
+		timeline, err := h.MessageManager.GetTimeline(ctx, query)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -75,7 +75,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 	if !req.All {
 		query.SubscribedByUser = optional.From(userID)
 	}
-	messages, err := h.Repo.GetChannelLatestMessages(context.TODO(), query)
+	messages, err := h.Repo.GetChannelLatestMessages(ctx, query)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

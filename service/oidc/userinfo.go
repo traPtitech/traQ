@@ -33,16 +33,16 @@ type ScopeChecker interface {
 	Contains(scope model.AccessScope) bool
 }
 
-func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
-	user, err := s.repo.GetUser(context.TODO(), userID, true)
+func (s *Service) GetUserInfo(ctx context.Context, userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
+	user, err := s.repo.GetUser(ctx, userID, true)
 	if err != nil {
 		return nil, err
 	}
-	tags, err := s.repo.GetUserTagsByUserID(context.TODO(), user.GetID())
+	tags, err := s.repo.GetUserTagsByUserID(ctx, user.GetID())
 	if err != nil {
 		return nil, err
 	}
-	groups, err := s.repo.GetUserBelongingGroupIDs(context.TODO(), user.GetID())
+	groups, err := s.repo.GetUserBelongingGroupIDs(ctx, user.GetID())
 	if err != nil {
 		return nil, err
 	}

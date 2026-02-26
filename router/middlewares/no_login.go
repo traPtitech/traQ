@@ -1,8 +1,6 @@
 package middlewares
 
 import (
-	"context"
-
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/repository"
@@ -23,7 +21,7 @@ func NoLogin(sessStore session.Store, repo repository.Repository) echo.Middlewar
 				return herror.InternalServerError(err)
 			}
 			if sess != nil && sess.LoggedIn() {
-				user, err := repo.GetUser(context.TODO(), sess.UserID(), false)
+				user, err := repo.GetUser(c.Request().Context(), sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}

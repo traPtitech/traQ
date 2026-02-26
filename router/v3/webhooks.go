@@ -35,9 +35,9 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		err  error
 	)
 	if isTrue(c.QueryParam("all")) && h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersWebhook) {
-		list, err = h.Repo.GetAllWebhooks(context.TODO())
+		list, err = h.Repo.GetAllWebhooks(c.Request().Context())
 	} else {
-		list, err = h.Repo.GetWebhooksByCreator(context.TODO(), user.GetID())
+		list, err = h.Repo.GetWebhooksByCreator(c.Request().Context(), user.GetID())
 	}
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -51,7 +51,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 	w := getParamWebhook(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(context.TODO(), w.GetBotUserID(), false)
+	user, err := h.Repo.GetUser(c.Request().Context(), w.GetBotUserID(), false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -90,12 +90,12 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 		return err
 	}
 
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	w, err := h.Repo.CreateWebhook(context.TODO(), req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
+	w, err := h.Repo.CreateWebhook(c.Request().Context(), req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -149,7 +149,7 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 		Secret:      req.Secret,
 		CreatorID:   req.OwnerID,
 	}
-	if err := h.Repo.UpdateWebhook(context.TODO(), w.GetID(), args); err != nil {
+	if err := h.Repo.UpdateWebhook(c.Request().Context(), w.GetID(), args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -162,6 +162,7 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c echo.Context) error {
+	ctx := c.Request().Context()
 	w := getParamWebhook(c)
 	channelID := w.GetChannelID()
 
@@ -202,7 +203,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
+	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
 
@@ -212,7 +213,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// メッセージ投稿
-	if _, err := h.MessageManager.Create(channelID, w.GetBotUserID(), string(body)); err != nil {
+	if _, err := h.MessageManager.Create(ctx, channelID, w.GetBotUserID(), string(body)); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel has been archived")
@@ -228,7 +229,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 func (h *Handlers) DeleteWebhook(c echo.Context) error {
 	w := getParamWebhook(c)
 
-	if err := h.Repo.DeleteWebhook(context.TODO(), w.GetID()); err != nil {
+	if err := h.Repo.DeleteWebhook(c.Request().Context(), w.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -256,7 +257,7 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	messageUserID := m.GetUserID()
 
 	if botUserID == messageUserID {
-		if err := h.Repo.DeleteMessage(context.TODO(), messageID); err != nil {
+		if err := h.Repo.DeleteMessage(c.Request().Context(), messageID); err != nil {
 			return herror.InternalServerError(err)
 		}
 	} else {
