@@ -21,7 +21,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/utils/hmac"
+	hmacutil "github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 )
@@ -188,7 +188,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmacutil.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.BadRequest("X-TRAQ-Signature is wrong")
 		}
 	}
