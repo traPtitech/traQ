@@ -43,7 +43,7 @@ func (repo *Repository) CreateStampPalette(ctx context.Context, name, descriptio
 			return repository.ArgError("stamps", "stamps must be 0-200")
 		}
 		// スタンプ存在チェック
-		if err = repo.ExistStamps(context.TODO(), stamps); err != nil {
+		if err = repo.ExistStamps(ctx, stamps); err != nil {
 			return err
 		}
 
@@ -94,7 +94,7 @@ func (repo *Repository) UpdateStampPalette(ctx context.Context, id uuid.UUID, ar
 			if err := vd.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 				return repository.ArgError("args.Stamps", "stamps must be 0-200")
 			}
-			if err := repo.ExistStamps(context.TODO(), args.Stamps); err != nil {
+			if err := repo.ExistStamps(ctx, args.Stamps); err != nil {
 				return err
 			}
 			changes["stamps"] = args.Stamps

@@ -69,7 +69,7 @@ func (r *rbacImpl) Reload() error {
 }
 
 func (r *rbacImpl) reload() error {
-	rs, err := r.repo.GetAllUserRoles(context.TODO())
+	rs, err := r.repo.GetAllUserRoles(context.Background())
 	if err != nil {
 		return err
 	}

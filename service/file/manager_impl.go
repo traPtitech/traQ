@@ -65,7 +65,7 @@ func (m *managerImpl) canGenerateWaveform(mimeType string) bool {
 	}
 }
 
-func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
+func (m *managerImpl) Save(ctx context.Context, args SaveArgs) (model.File, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		})
 	}
 
-	err := m.repo.SaveFileMeta(context.TODO(), f, acl)
+	err := m.repo.SaveFileMeta(ctx, f, acl)
 	if err != nil {
 		if err := m.fs.DeleteByKey(f.ID.String(), f.Type); err != nil {
 			m.l.Warn("failed to delete file from storage during rollback", zap.Error(err), zap.Stringer("fid", f.ID))
@@ -219,8 +219,8 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	return m.makeFileMeta(f), nil
 }
 
-func (m *managerImpl) Get(id uuid.UUID) (model.File, error) {
-	meta, err := m.repo.GetFileMeta(context.TODO(), id)
+func (m *managerImpl) Get(ctx context.Context, id uuid.UUID) (model.File, error) {
+	meta, err := m.repo.GetFileMeta(ctx, id)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return nil, ErrNotFound
@@ -230,16 +230,16 @@ func (m *managerImpl) Get(id uuid.UUID) (model.File, error) {
 	return m.makeFileMeta(meta), nil
 }
 
-func (m *managerImpl) List(q repository.FilesQuery) ([]model.File, bool, error) {
-	r, more, err := m.repo.GetFileMetas(context.TODO(), q)
+func (m *managerImpl) List(ctx context.Context, q repository.FilesQuery) ([]model.File, bool, error) {
+	r, more, err := m.repo.GetFileMetas(ctx, q)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to GetFileMetas: %w", err)
 	}
 	return m.makeFileMetas(r), more, nil
 }
 
-func (m *managerImpl) Delete(id uuid.UUID) error {
-	meta, err := m.repo.GetFileMeta(context.TODO(), id)
+func (m *managerImpl) Delete(ctx context.Context, id uuid.UUID) error {
+	meta, err := m.repo.GetFileMeta(ctx, id)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return ErrNotFound
@@ -247,7 +247,7 @@ func (m *managerImpl) Delete(id uuid.UUID) error {
 		return fmt.Errorf("failed to GetFileMeta: %w", err)
 	}
 
-	if err := m.repo.DeleteFileMeta(context.TODO(), id); err != nil {
+	if err := m.repo.DeleteFileMeta(ctx, id); err != nil {
 		return fmt.Errorf("failed to DeleteFileMeta: %w", err)
 	}
 	if err := m.fs.DeleteByKey(meta.ID.String(), meta.Type); err != nil {
@@ -261,8 +261,8 @@ func (m *managerImpl) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (m *managerImpl) Accessible(fileID, userID uuid.UUID) (bool, error) {
-	ok, err := m.repo.IsFileAccessible(context.TODO(), fileID, userID)
+func (m *managerImpl) Accessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error) {
+	ok, err := m.repo.IsFileAccessible(ctx, fileID, userID)
 	if err != nil {
 		return false, fmt.Errorf("failed to IsFileAccessible: %w", err)
 	}

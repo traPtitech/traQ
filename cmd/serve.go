@@ -107,7 +107,7 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initializing...")
 
 				// システムユーザーロール投入
-				if err := repo.CreateUserRoles(context.TODO(), role.SystemRoleModels()...); err != nil {
+				if err := repo.CreateUserRoles(context.Background(), role.SystemRoleModels()...); err != nil {
 					logger.Fatal("failed to init system user roles", zap.Error(err))
 				}
 				if err := server.SS.RBAC.Reload(); err != nil {
@@ -115,11 +115,11 @@ func serveCommand() *cobra.Command {
 				}
 
 				// 管理者ユーザーの作成
-				fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
+				fid, err := file.GenerateIconFile(context.Background(), server.SS.FileManager, "traq")
 				if err != nil {
 					logger.Fatal("failed to generate icon file", zap.Error(err))
 				}
-				u, err := repo.CreateUser(context.TODO(), repository.CreateUserArgs{
+				u, err := repo.CreateUser(context.Background(), repository.CreateUserArgs{
 					Name:       "traq",
 					Password:   "traq",
 					Role:       role.Admin,
@@ -132,7 +132,7 @@ func serveCommand() *cobra.Command {
 				}
 
 				// generalチャンネル作成
-				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+				if ch, err := server.SS.ChannelManager.CreatePublicChannel(context.Background(), "general", uuid.Nil, uuid.Nil); err == nil {
 					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
 				} else {
 					logger.Error("failed to init general channel", zap.Error(err))
@@ -188,7 +188,7 @@ func (s *Server) Start(address string) error {
 		for ev := range sub.Receiver {
 			userID := ev.Fields["user_id"].(uuid.UUID)
 			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(context.TODO(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
+			_ = s.Repo.UpdateUser(context.Background(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
 		}
 	}()
 	s.SS.StampThrottler.Start()

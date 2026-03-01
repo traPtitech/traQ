@@ -92,7 +92,7 @@ func NewTestRepository() *TestRepository {
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
 		OgpCache:              map[int]model.OgpCache{},
 	}
-	_, _ = r.CreateUser(context.TODO(), repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
+	_, _ = r.CreateUser(context.Background(), repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
 }
 

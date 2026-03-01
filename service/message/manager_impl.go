@@ -38,8 +38,8 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 		CM: cm,
 		R:  repo,
 		L:  logger.Named("message_manager"),
-		cache: sc.NewMust(func(_ context.Context, key uuid.UUID) (*message, error) {
-			m, err := repo.GetMessageByID(context.TODO(), key)
+		cache: sc.NewMust(func(ctx context.Context, key uuid.UUID) (*message, error) {
+			m, err := repo.GetMessageByID(ctx, key)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					return nil, ErrNotFound
@@ -51,21 +51,21 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 	}, nil
 }
 
-func (m *manager) Get(id uuid.UUID) (Message, error) {
-	return m.get(id)
+func (m *manager) Get(ctx context.Context, id uuid.UUID) (Message, error) {
+	return m.get(ctx, id)
 }
 
-func (m *manager) get(id uuid.UUID) (*message, error) {
+func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 
 	// メモリキャッシュから取得。キャッシュに無い場合はキャッシュの replaceFn で自動取得し、キャッシュに追加
-	return m.cache.Get(context.Background(), id)
+	return m.cache.Get(ctx, id)
 }
 
-func (m *manager) GetIn(ids []uuid.UUID) ([]Message, error) {
-	messages, _, err := m.R.GetMessages(context.TODO(), repository.MessagesQuery{IDIn: optional.From(ids)})
+func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error) {
+	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (m *manager) GetIn(ids []uuid.UUID) ([]Message, error) {
 	return ret, nil
 }
 
-func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
+func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error) {
 	q := repository.MessagesQuery{
 		User:                     query.User,
 		Channel:                  query.Channel,
@@ -89,7 +89,7 @@ func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
 		ExcludeDMs:               query.ExcludeDMs,
 		DisablePreload:           query.DisablePreload,
 	}
-	messages, more, err := m.R.GetMessages(context.TODO(), q)
+	messages, more, err := m.R.GetMessages(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetMessages: %w", err)
 	}
@@ -104,48 +104,48 @@ func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
 	}, nil
 }
 
-func (m *manager) CreateDM(from, to uuid.UUID, content string) (Message, error) {
+func (m *manager) CreateDM(ctx context.Context, from, to uuid.UUID, content string) (Message, error) {
 	// DMチャンネルを取得
-	ch, err := m.CM.GetDMChannel(from, to)
+	ch, err := m.CM.GetDMChannel(ctx, from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	return m.create(ch.ID, from, content)
+	return m.create(ctx, ch.ID, from, content)
 }
 
-func (m *manager) Create(channelID, userID uuid.UUID, content string) (Message, error) {
+func (m *manager) Create(ctx context.Context, channelID, userID uuid.UUID, content string) (Message, error) {
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(channelID) && m.CM.PublicChannelTree().IsArchivedChannel(channelID) {
+	if m.CM.IsPublicChannel(ctx, channelID) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(channelID) {
 		return nil, ErrChannelArchived
 	}
 
-	return m.create(channelID, userID, content)
+	return m.create(ctx, channelID, userID, content)
 }
 
-func (m *manager) create(channelID, userID uuid.UUID, content string) (Message, error) {
+func (m *manager) create(ctx context.Context, channelID, userID uuid.UUID, content string) (Message, error) {
 	// 作成
-	msg, err := m.R.CreateMessage(context.TODO(), userID, channelID, content)
+	msg, err := m.R.CreateMessage(ctx, userID, channelID, content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateMessage: %w", err)
 	}
 	return &message{Model: msg}, nil
 }
 
-func (m *manager) Edit(id uuid.UUID, content string) error {
+func (m *manager) Edit(ctx context.Context, id uuid.UUID, content string) error {
 	// メッセージ取得
-	msg, err := m.Get(id)
+	msg, err := m.Get(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
 	// 更新
-	if err := m.R.UpdateMessage(context.TODO(), id, content); err != nil {
+	if err := m.R.UpdateMessage(ctx, id, content); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return ErrNotFound
@@ -158,20 +158,20 @@ func (m *manager) Edit(id uuid.UUID, content string) error {
 	return nil
 }
 
-func (m *manager) Delete(id uuid.UUID) error {
+func (m *manager) Delete(ctx context.Context, id uuid.UUID) error {
 	// メッセージ取得
-	msg, err := m.Get(id)
+	msg, err := m.Get(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
 	// 削除
-	if err := m.R.DeleteMessage(context.TODO(), id); err != nil {
+	if err := m.R.DeleteMessage(ctx, id); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return ErrNotFound
@@ -184,9 +184,9 @@ func (m *manager) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
+func (m *manager) Pin(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	// メッセージ取得
-	msg, err := m.Get(id)
+	msg, err := m.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -197,12 +197,12 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return nil, ErrChannelArchived
 	}
 
 	// チャンネルに上限数以上のメッセージがピン留めされていないか確認
-	pins, err := m.R.GetPinnedMessageByChannelID(context.TODO(), msg.GetChannelID())
+	pins, err := m.R.GetPinnedMessageByChannelID(ctx, msg.GetChannelID())
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// ピン
-	pin, err := m.R.PinMessage(context.TODO(), id, userID)
+	pin, err := m.R.PinMessage(ctx, id, userID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -232,9 +232,9 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	return pin, nil
 }
 
-func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
+func (m *manager) Unpin(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	// メッセージ取得
-	msg, err := m.Get(id)
+	msg, err := m.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -245,12 +245,12 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
 	// ピン外し
-	pin, err := m.R.UnpinMessage(context.TODO(), id)
+	pin, err := m.R.UnpinMessage(ctx, id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -269,20 +269,20 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 	return nil
 }
 
-func (m *manager) AddStamps(id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error) {
+func (m *manager) AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error) {
 	// メッセージ取得
-	msg, err := m.get(id)
+	msg, err := m.get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return nil, ErrChannelArchived
 	}
 
 	// スタンプを押す
-	ms, err := m.R.AddStampToMessage(context.TODO(), id, stampID, userID, n)
+	ms, err := m.R.AddStampToMessage(ctx, id, stampID, userID, n)
 	if err != nil {
 		return nil, fmt.Errorf("failed to AddStampToMessage: %w", err)
 	}
@@ -293,20 +293,20 @@ func (m *manager) AddStamps(id, stampID, userID uuid.UUID, n int) (*model.Messag
 	return ms, nil
 }
 
-func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
+func (m *manager) RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID) error {
 	// メッセージ取得
-	msg, err := m.get(id)
+	msg, err := m.get(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// チャンネルがアーカイブされているかどうか確認
-	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
+	if m.CM.IsPublicChannel(context.Background(), msg.GetChannelID()) && m.CM.PublicChannelTree(context.Background()).IsArchivedChannel(msg.GetChannelID()) {
 		return ErrChannelArchived
 	}
 
 	// スタンプを消す
-	if err := m.R.RemoveStampFromMessage(context.TODO(), id, stampID, userID); err != nil {
+	if err := m.R.RemoveStampFromMessage(ctx, id, stampID, userID); err != nil {
 		return fmt.Errorf("failed to RemoveStampFromMessage: %w", err)
 	}
 
@@ -326,7 +326,7 @@ func (m *manager) recordChannelEvent(channelID uuid.UUID, eventType model.Channe
 	go func() {
 		defer m.P.Done()
 
-		err := m.R.RecordChannelEvent(context.TODO(), channelID, eventType, detail, datetime)
+		err := m.R.RecordChannelEvent(context.Background(), channelID, eventType, detail, datetime)
 		if err != nil {
 			m.L.Warn("failed to record channel event", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
 		}
