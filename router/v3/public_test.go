@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -42,9 +43,9 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 	path := "/api/v3/public/icon/{username}"
 	env := Setup(t, common1)
-	iconFileID, err := file2.GenerateIconFile(env.FM, "test")
+	iconFileID, err := file2.GenerateIconFile(context.TODO(), env.FM, "test")
 	require.NoError(t, err)
-	user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+	user, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
 		Name:       random.AlphaNumeric(20),
 		Password:   "totallyASecurePassword",
 		Role:       role.User,

@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"crypto/sha1"
 	"fmt"
 	"time"
@@ -18,7 +19,7 @@ func getURLHash(url string) (string, error) {
 }
 
 // CreateOgpCache implements OgpRepository interface.
-func (repo *Repository) CreateOgpCache(url string, content *model.Ogp, cacheFor time.Duration) (*model.OgpCache, error) {
+func (repo *Repository) CreateOgpCache(ctx context.Context, url string, content *model.Ogp, cacheFor time.Duration) (*model.OgpCache, error) {
 	urlHash, err := getURLHash(url)
 	if err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ func (repo *Repository) CreateOgpCache(url string, content *model.Ogp, cacheFor 
 		ogpCache.Content = *content
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		return tx.Create(ogpCache).Error
 	})
 	if err != nil {
@@ -46,26 +47,26 @@ func (repo *Repository) CreateOgpCache(url string, content *model.Ogp, cacheFor 
 }
 
 // GetOgpCache implements OgpRepository interface.
-func (repo *Repository) GetOgpCache(url string) (c *model.OgpCache, err error) {
+func (repo *Repository) GetOgpCache(ctx context.Context, url string) (c *model.OgpCache, err error) {
 	urlHash, err := getURLHash(url)
 	if err != nil {
 		return nil, err
 	}
 
 	c = &model.OgpCache{}
-	if err = repo.db.Take(c, &model.OgpCache{URL: url, URLHash: urlHash}).Error; err != nil {
+	if err = repo.db.WithContext(ctx).Take(c, &model.OgpCache{URL: url, URLHash: urlHash}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return c, nil
 }
 
 // DeleteOgpCache implements OgpRepository interface.
-func (repo *Repository) DeleteOgpCache(url string) error {
-	c, err := repo.GetOgpCache(url)
+func (repo *Repository) DeleteOgpCache(ctx context.Context, url string) error {
+	c, err := repo.GetOgpCache(ctx, url)
 	if err != nil {
 		return err
 	}
-	result := repo.db.Delete(c)
+	result := repo.db.WithContext(ctx).Delete(c)
 	if result.Error != nil {
 		return convertError(result.Error)
 	}
@@ -76,8 +77,8 @@ func (repo *Repository) DeleteOgpCache(url string) error {
 }
 
 // DeleteStaleOgpCache implements OgpRepository interface.
-func (repo *Repository) DeleteStaleOgpCache() error {
-	return repo.db.
+func (repo *Repository) DeleteStaleOgpCache(ctx context.Context) error {
+	return repo.db.WithContext(ctx).
 		Where("expires_at < ?", time.Now()).
 		Delete(&model.OgpCache{}).
 		Error

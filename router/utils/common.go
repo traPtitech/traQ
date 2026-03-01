@@ -31,7 +31,7 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 	}
 
 	// アイコン変更
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
+	if err := repo.UpdateUser(c.Request().Context(), userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -41,7 +41,7 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
 func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := fm.Get(user.GetIconFileID())
+	meta, err := fm.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -64,7 +64,7 @@ func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
 func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
+	if err := repo.UpdateUser(c.Request().Context(), userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -95,7 +95,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 		if errors.Is(err, storage.ErrFileNotFound) {
 			// サムネイルが実際には存在しないのでDBの情報を更新する
 			fileID := meta.GetID()
-			err := repo.DeleteFileThumbnail(fileID, thumbnailType)
+			err := repo.DeleteFileThumbnail(c.Request().Context(), fileID, thumbnailType)
 			if err != nil {
 				logger.Warn("failed to delete thumbnail from database", zap.Error(err))
 				return herror.InternalServerError(err)

@@ -1,6 +1,8 @@
 package search
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/samber/lo"
 
@@ -55,7 +57,7 @@ func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, 
 		return uuid.Must(uuid.FromString(hit.ID))
 	})
 
-	messages, err := e.mm.GetIn(messageIDs)
+	messages, err := e.mm.GetIn(context.Background(), messageIDs)
 	if err != nil {
 		return nil, err
 	}

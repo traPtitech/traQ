@@ -2,6 +2,7 @@ package v3
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"net/http"
@@ -109,7 +110,7 @@ func TestMain(m *testing.M) {
 		}
 		if init {
 			// システムユーザーロール投入
-			if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+			if err := repo.CreateUserRoles(context.TODO(), role.SystemRoleModels()...); err != nil {
 				panic(err)
 			}
 		}
@@ -231,7 +232,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: uuid.Must(uuid.NewV7())})
 	require.NoError(t, err)
 	return u
 }
@@ -242,7 +243,7 @@ func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }
@@ -254,12 +255,12 @@ func (env *Env) AddTag(t *testing.T, name string, userID uuid.UUID) model.UserTa
 		name = random.AlphaNumeric(20)
 	}
 
-	tag, err := env.Repository.GetOrCreateTag(name)
+	tag, err := env.Repository.GetOrCreateTag(context.TODO(), name)
 	require.NoError(t, err)
 
-	require.NoError(t, env.Repository.AddUserTag(userID, tag.ID))
+	require.NoError(t, env.Repository.AddUserTag(context.TODO(), userID, tag.ID))
 
-	ut, err := env.Repository.GetUserTag(userID, tag.ID)
+	ut, err := env.Repository.GetUserTag(context.TODO(), userID, tag.ID)
 	require.NoError(t, err)
 	return ut
 }
@@ -271,7 +272,7 @@ func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType strin
 		name = random.AlphaNumeric(20)
 	}
 	icon := env.CreateFile(t, uuid.Nil, uuid.Nil)
-	ug, err := env.Repository.CreateUserGroup(name, description, groupType, adminID, icon.GetID())
+	ug, err := env.Repository.CreateUserGroup(context.TODO(), name, description, groupType, adminID, icon.GetID())
 	require.NoError(t, err)
 	return ug
 }
@@ -279,7 +280,7 @@ func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType strin
 // AddUserToUserGroup ユーザーをユーザーグループに必ず追加します
 func (env *Env) AddUserToUserGroup(t *testing.T, userID, groupID uuid.UUID, role string) {
 	t.Helper()
-	require.NoError(t, env.Repository.AddUserToGroup(userID, groupID, role))
+	require.NoError(t, env.Repository.AddUserToGroup(context.TODO(), userID, groupID, role))
 }
 
 // CreateChannel チャンネルを必ず作成します
@@ -288,7 +289,7 @@ func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.CM.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	ch, err := env.CM.CreatePublicChannel(context.TODO(), name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
@@ -299,10 +300,10 @@ func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name strin
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.CM.CreatePublicChannel(name, parent.ID, uuid.Nil)
+	ch, err := env.CM.CreatePublicChannel(context.TODO(), name, parent.ID, uuid.Nil)
 	require.NoError(t, err)
 	// parent.ChildrenId が更新されるので, 代入しなおす
-	newParent, err := env.CM.GetChannel(parent.ID)
+	newParent, err := env.CM.GetChannel(context.TODO(), parent.ID)
 	require.NoError(t, err)
 	*parent = *newParent
 	return ch
@@ -311,12 +312,12 @@ func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name strin
 // AddStar 指定したチャンネルをスターします
 func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.AddStar(userID, channelID))
+	require.NoError(t, env.Repository.AddStar(context.TODO(), userID, channelID))
 }
 
 // CreateDMChannel DMチャンネルを必ず作成します
 func (env *Env) CreateDMChannel(t *testing.T, user1, user2 uuid.UUID) *model.Channel {
-	dm, err := env.CM.GetDMChannel(user1, user2)
+	dm, err := env.CM.GetDMChannel(context.TODO(), user1, user2)
 	require.NoError(t, err)
 	return dm
 }
@@ -327,7 +328,7 @@ func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text st
 	if text == rand {
 		text = random.AlphaNumeric(20)
 	}
-	m, err := env.MM.Create(channelID, userID, text)
+	m, err := env.MM.Create(context.TODO(), channelID, userID, text)
 	require.NoError(t, err)
 	return m
 }
@@ -335,13 +336,13 @@ func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text st
 // DeleteMessage メッセージを必ず削除します
 func (env *Env) DeleteMessage(t *testing.T, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.MM.Delete(messageID))
+	require.NoError(t, env.MM.Delete(context.TODO(), messageID))
 }
 
 // MakeMessageUnread 指定したメッセージを未読にします
 func (env *Env) MakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
+	require.NoError(t, env.Repository.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{userID: false}, messageID))
 }
 
 // CreateStamp スタンプを必ず作成します
@@ -351,7 +352,7 @@ func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model
 		name = random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creator, uuid.Nil)
-	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{
+	s, err := env.Repository.CreateStamp(context.TODO(), repository.CreateStampArgs{
 		Name:      name,
 		FileID:    f.GetID(),
 		CreatorID: creator,
@@ -366,7 +367,7 @@ func (env *Env) CreateStampPalette(t *testing.T, creator uuid.UUID, name string,
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	sp, err := env.Repository.CreateStampPalette(name, "desc", stamps, creator)
+	sp, err := env.Repository.CreateStampPalette(context.TODO(), name, "desc", stamps, creator)
 	require.NoError(t, err)
 	return sp
 }
@@ -374,7 +375,7 @@ func (env *Env) CreateStampPalette(t *testing.T, creator uuid.UUID, name string,
 // AddStampToMessage メッセージにスタンプを必ず押します
 func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
-	_, err := env.MM.AddStamps(messageID, stampID, userID, 1)
+	_, err := env.MM.AddStamps(context.TODO(), messageID, stampID, userID, 1)
 	require.NoError(t, err)
 }
 
@@ -405,13 +406,13 @@ func (env *Env) CreateFileWithName(t *testing.T, creatorID, channelID uuid.UUID,
 		Src:       buf,
 	}
 
-	members, err := env.CM.GetDMChannelMembers(channelID)
+	members, err := env.CM.GetDMChannelMembers(context.TODO(), channelID)
 	require.NoError(t, err)
 	for _, member := range members {
 		args.ACLAllow(member)
 	}
 
-	f, err := env.FM.Save(args)
+	f, err := env.FM.Save(context.TODO(), args)
 	require.NoError(t, err)
 	return f
 }
@@ -423,7 +424,7 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 		name = random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creatorID, uuid.Nil)
-	b, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, model.BotModeHTTP, model.BotInactive, "https://example.com")
+	b, err := env.Repository.CreateBot(context.TODO(), name, "po", "totally a desc", f.GetID(), creatorID, model.BotModeHTTP, model.BotInactive, "https://example.com")
 	require.NoError(t, err)
 	return b
 }
@@ -435,7 +436,7 @@ func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uu
 		name = random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creatorID, uuid.Nil)
-	w, err := env.Repository.CreateWebhook(name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
+	w, err := env.Repository.CreateWebhook(context.TODO(), name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
 	require.NoError(t, err)
 	return w
 }
@@ -469,14 +470,14 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 	for _, opt := range opts {
 		opt(client)
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 	return client
 }
 
 // IssueToken OAuth2トークンを必ず発行します
 func (env *Env) IssueToken(t *testing.T, client *model.OAuth2Client, userID uuid.UUID) *model.OAuth2Token {
 	t.Helper()
-	tok, err := env.Repository.IssueToken(client, userID, "https://example.com", model.AccessScopes{"read": {}}, 86400, false)
+	tok, err := env.Repository.IssueToken(context.TODO(), client, userID, "https://example.com", model.AccessScopes{"read": {}}, 86400, false)
 	require.NoError(t, err)
 	return tok
 }
@@ -490,7 +491,7 @@ func (env *Env) CreateClipFolder(t *testing.T, name, desc string, creatorID uuid
 	if desc == rand {
 		desc = random.AlphaNumeric(20)
 	}
-	cf, err := env.Repository.CreateClipFolder(creatorID, name, desc)
+	cf, err := env.Repository.CreateClipFolder(context.TODO(), creatorID, name, desc)
 	require.NoError(t, err)
 	return cf
 }

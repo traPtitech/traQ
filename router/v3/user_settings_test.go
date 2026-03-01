@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -36,7 +37,7 @@ func TestHandlers_PutMyNotifyCitation(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		nc, err := env.Repository.GetNotifyCitation(user.GetID())
+		nc, err := env.Repository.GetNotifyCitation(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.True(t, nc)
 	})

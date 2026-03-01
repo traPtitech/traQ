@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -19,7 +20,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	repo, assert, require := setup(t, ex2)
 	mustMakeUser(t, repo, "traq", false)
 
-	u0, err := repo.GetUserByName("traq", false)
+	u0, err := repo.GetUserByName(context.TODO(), "traq", false)
 	require.NoError(err)
 	g1 := mustMakeUserGroup(t, repo, rand, u0.GetID())
 	us := make([]uuid.UUID, 0)
@@ -106,7 +107,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 				q.IsGMemberOf = optional.From(g1.ID)
 			}
 
-			uids, err := repo.GetUserIDs(q)
+			uids, err := repo.GetUserIDs(context.TODO(), q)
 			if assert.NoError(err) {
 				assert.ElementsMatch(uids, ans)
 			}
@@ -116,7 +117,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Run("GetUsers", func(t *testing.T) {
 		t.Parallel()
 
-		users, err := repo.GetUsers(repository.UsersQuery{})
+		users, err := repo.GetUsers(context.TODO(), repository.UsersQuery{})
 		if assert.NoError(err) {
 			assert.Len(users, len(us))
 		}
@@ -127,10 +128,10 @@ func TestRepositoryImpl_GetUser(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common2, false)
 
-	_, err := repo.GetUser(uuid.Nil, false)
+	_, err := repo.GetUser(context.TODO(), uuid.Nil, false)
 	assert.Error(err)
 
-	u, err := repo.GetUser(user.GetID(), false)
+	u, err := repo.GetUser(context.TODO(), user.GetID(), false)
 	if assert.NoError(err) {
 		assert.Equal(user.GetID(), u.GetID())
 		assert.Equal(user.GetName(), u.GetName())
@@ -141,10 +142,10 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common2, false)
 
-	_, err := repo.GetUserByName("", false)
+	_, err := repo.GetUserByName(context.TODO(), "", false)
 	assert.Error(err)
 
-	u, err := repo.GetUserByName(user.GetName(), false)
+	u, err := repo.GetUserByName(context.TODO(), user.GetName(), false)
 	if assert.NoError(err) {
 		assert.Equal(user.GetID(), u.GetID())
 		assert.Equal(user.GetName(), u.GetName())
@@ -159,25 +160,25 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{}))
+		assert.NoError(repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{}))
 	})
 
 	t.Run("Nil ID", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		assert.EqualError(repo.UpdateUser(uuid.Nil, repository.UpdateUserArgs{}), repository.ErrNilID.Error())
+		assert.EqualError(repo.UpdateUser(context.TODO(), uuid.Nil, repository.UpdateUserArgs{}), repository.ErrNilID.Error())
 	})
 
 	t.Run("Unknown User(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateUser(context.TODO(), uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("Unknown User(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV7()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateUser(context.TODO(), uuid.Must(uuid.NewV7()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("DisplayName", func(t *testing.T) {
@@ -189,8 +190,8 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newDN := random2.AlphaNumeric(32)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(newDN)})) {
-				u, err := repo.GetUser(user.GetID(), true)
+			if assert.NoError(repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{DisplayName: optional.From(newDN)})) {
+				u, err := repo.GetUser(context.TODO(), user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newDN, u.GetDisplayName())
 			}
@@ -205,7 +206,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert := assert.New(t)
 
-			err := repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From("ああああ")})
+			err := repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From("ああああ")})
 			if assert.IsType(&repository.ArgumentError{}, err) {
 				assert.Equal("args.TwitterID", err.(*repository.ArgumentError).FieldName)
 			}
@@ -215,8 +216,8 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := "aiueo"
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
-				u, err := repo.GetUser(user.GetID(), true)
+			if assert.NoError(repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
+				u, err := repo.GetUser(context.TODO(), user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
 			}
@@ -226,8 +227,8 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := ""
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
-				u, err := repo.GetUser(user.GetID(), true)
+			if assert.NoError(repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{TwitterID: optional.From(newTwitter)})) {
+				u, err := repo.GetUser(context.TODO(), user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
 			}
@@ -242,8 +243,8 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{Role: optional.From("admin")})) {
-				u, err := repo.GetUser(user.GetID(), false)
+			if assert.NoError(repo.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{Role: optional.From("admin")})) {
+				u, err := repo.GetUser(context.TODO(), user.GetID(), false)
 				require.NoError(err)
 				assert.Equal("admin", u.GetRole())
 			}
@@ -258,21 +259,21 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserStats(uuid.Nil)
+		_, err := repo.GetUserStats(context.TODO(), uuid.Nil)
 		assert.Error(t, err)
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserStats(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetUserStats(context.TODO(), uuid.Must(uuid.NewV4()))
 		assert.Error(t, err)
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserStats(uuid.Must(uuid.NewV7()))
+		_, err := repo.GetUserStats(context.TODO(), uuid.Must(uuid.NewV7()))
 		assert.Error(t, err)
 	})
 
@@ -289,8 +290,8 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 		for i := range 15 {
 			messages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(messages[14].ID))
-		require.NoError(t, repo.DeleteMessage(messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), messages[14].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), messages[13].ID))
 
 		for i := range 5 {
 			for range 3 {
@@ -302,7 +303,7 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, messages[i].ID, stamp2.ID, user.GetID())
 		}
 
-		stats, err := repo.GetUserStats(user.GetID())
+		stats, err := repo.GetUserStats(context.TODO(), user.GetID())
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 

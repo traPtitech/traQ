@@ -83,7 +83,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 
 	logger := c.logger.With(zap.Reflect("payload", p))
 
-	tokensMap, err := c.repo.GetDeviceTokens(targetUserIDs)
+	tokensMap, err := c.repo.GetDeviceTokens(context.Background(), targetUserIDs)
 	if err != nil {
 		logger.Error("failed to GetDeviceTokens", zap.Error(err), zap.Strings("target_user_ids", targetUserIDs.StringArray()))
 		return err
@@ -222,7 +222,7 @@ func (c *clientImpl) sendMessages(messages []*messaging.Message) {
 		}
 	}
 	if len(invalidTokens) > 0 {
-		err := c.repo.DeleteDeviceTokens(invalidTokens)
+		err := c.repo.DeleteDeviceTokens(context.Background(), invalidTokens)
 		if err != nil {
 			c.logger.Error("failed to DeleteDeviceTokens", zap.Error(err), zap.Strings("invalid_tokens", invalidTokens))
 			return

@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -88,90 +89,90 @@ type BotRepository interface {
 	//
 	// 成功した場合、Botとnilを返します。
 	// DBによるエラーを返すことがあります。
-	CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error)
+	CreateBot(ctx context.Context, name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error)
 	// UpdateBot 指定したBotの情報を更新します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないBotを指定した場合、ErrNotFoundを返します。
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateBot(id uuid.UUID, args UpdateBotArgs) error
+	UpdateBot(ctx context.Context, id uuid.UUID, args UpdateBotArgs) error
 	// GetBots 指定した条件を満たすBotを取得します
 	//
 	// 成功した場合、Botの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetBots(query BotsQuery) ([]*model.Bot, error)
+	GetBots(ctx context.Context, query BotsQuery) ([]*model.Bot, error)
 	// GetBotByID 指定したIDのBotを取得します
 	//
 	// 成功した場合、Botとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetBotByID(id uuid.UUID) (*model.Bot, error)
+	GetBotByID(ctx context.Context, id uuid.UUID) (*model.Bot, error)
 	// GetBotByBotUserID 指定したユーザーIDのBotを取得します
 	//
 	// 成功した場合、Botとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetBotByBotUserID(id uuid.UUID) (*model.Bot, error)
+	GetBotByBotUserID(ctx context.Context, id uuid.UUID) (*model.Bot, error)
 	// GetBotByCode 指定したBotCodeのBotを取得します
 	//
 	// 成功した場合、Botとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetBotByCode(code string) (*model.Bot, error)
+	GetBotByCode(ctx context.Context, code string) (*model.Bot, error)
 	// ChangeBotState Botの状態を変更します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないBotを指定した場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	ChangeBotState(id uuid.UUID, state model.BotState) error
+	ChangeBotState(ctx context.Context, id uuid.UUID, state model.BotState) error
 	// ReissueBotTokens 指定したBotの各種トークンを再発行します
 	//
 	// 成功した場合、Botとnilを返します。
 	// 存在しないBotを指定した場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	ReissueBotTokens(id uuid.UUID) (*model.Bot, error)
+	ReissueBotTokens(ctx context.Context, id uuid.UUID) (*model.Bot, error)
 	// DeleteBot 指定したBotを削除します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないBotを指定した場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteBot(id uuid.UUID) error
+	DeleteBot(ctx context.Context, id uuid.UUID) error
 	// AddBotToChannel 指定したBotをチャンネルに参加させます
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	AddBotToChannel(botID, channelID uuid.UUID) error
+	AddBotToChannel(ctx context.Context, botID, channelID uuid.UUID) error
 	// RemoveBotFromChannel 指定したBotを指定したチャンネルから退出させます
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	RemoveBotFromChannel(botID, channelID uuid.UUID) error
+	RemoveBotFromChannel(ctx context.Context, botID, channelID uuid.UUID) error
 	// GetParticipatingChannelIDsByBot 指定したBotが参加しているチャンネルのIDを取得します
 	//
 	// 成功した場合、チャンネルUUIDの配列とnilを返します。
 	// 存在しないBotを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error)
+	GetParticipatingChannelIDsByBot(ctx context.Context, botID uuid.UUID) ([]uuid.UUID, error)
 	// WriteBotEventLog Botイベントログを書き込みます
 	//
 	// 成功した場合、nilを返します。
 	// DBによるエラーを返すことがあります。
-	WriteBotEventLog(log *model.BotEventLog) error
+	WriteBotEventLog(ctx context.Context, log *model.BotEventLog) error
 	// GetBotEventLogs 指定したBotのイベントログを取得します
 	//
 	// 成功した場合、イベントログの配列とnilを返します。負のoffset, limitは無視されます。
 	// 存在しないBotを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error)
+	GetBotEventLogs(ctx context.Context, botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error)
 	// PurgeBotEventLogs 指定した時間以前のBotイベントログを全て消去します
 	//
 	// 成功した場合、nilを返します。
 	// DBによるエラーを返すことがあります。
-	PurgeBotEventLogs(before time.Time) error
+	PurgeBotEventLogs(ctx context.Context, before time.Time) error
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -62,7 +63,7 @@ type StampRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateStamp(args CreateStampArgs) (s *model.Stamp, err error)
+	CreateStamp(ctx context.Context, args CreateStampArgs) (s *model.Stamp, err error)
 	// UpdateStamp 指定したスタンプの情報を更新します
 	//
 	// 成功した場合、nilを返します。
@@ -71,60 +72,60 @@ type StampRepository interface {
 	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// 変更後のNameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateStamp(id uuid.UUID, args UpdateStampArgs) error
+	UpdateStamp(ctx context.Context, id uuid.UUID, args UpdateStampArgs) error
 	// GetStamp 指定したIDのスタンプを取得します
 	//
 	// 成功した場合、スタンプとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetStamp(id uuid.UUID) (s *model.Stamp, err error)
+	GetStamp(ctx context.Context, id uuid.UUID) (s *model.Stamp, err error)
 	// GetStampByName 指定したnameのスタンプを取得します
 	//
 	// 成功した場合、スタンプとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetStampByName(name string) (s *model.Stamp, err error)
+	GetStampByName(ctx context.Context, name string) (s *model.Stamp, err error)
 	// DeleteStamp 指定したIDのスタンプを削除します
 	//
 	// 成功した場合、nilを返します。
 	// 既に存在しない場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteStamp(id uuid.UUID) (err error)
+	DeleteStamp(ctx context.Context, id uuid.UUID) (err error)
 	// GetAllStampsWithThumbnail 全てのスタンプとサムネイルの有無を取得します
 	//
 	// 成功した場合、スタンプのIDでソートされた配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllStampsWithThumbnail(stampType StampType) (stamps []*model.StampWithThumbnail, err error)
+	GetAllStampsWithThumbnail(ctx context.Context, stampType StampType) (stamps []*model.StampWithThumbnail, err error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。
 	// DBによるエラーを返すことがあります。
-	StampExists(id uuid.UUID) (bool, error)
+	StampExists(ctx context.Context, id uuid.UUID) (bool, error)
 	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
 	//
 	// limitに負の値を指定した場合、全て取得します。
 	// 成功した場合、降順のスタンプ履歴の配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
+	GetUserStampHistory(ctx context.Context, userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
 	// GetUserStampRecommendations 指定したユーザーのスタンプレコメンドを最大limit件取得します
 	//
 	// limitに負の値を指定した場合、全て取得します。
 	// 成功した場合、レコメンドスコアの高い順で並んだスタンプIDの配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserStampRecommendations(userID uuid.UUID, limit int) (h []*UserStampRecommendation, err error)
+	GetUserStampRecommendations(ctx context.Context, userID uuid.UUID, limit int) (h []*UserStampRecommendation, err error)
 	// ExistStamps stampIDの配列から指定したスタンプが全て存在するか判定します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	ExistStamps(stampIDs []uuid.UUID) (err error)
+	ExistStamps(ctx context.Context, stampIDs []uuid.UUID) (err error)
 	// GetStampStats 成功した場合、(統計情報, nil)を返します。
 	//
 	// スタンプがない場合、(nil, ErrNotFound)を返します。
 	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
-	GetStampStats(stampID uuid.UUID) (*StampStats, error)
+	GetStampStats(ctx context.Context, stampID uuid.UUID) (*StampStats, error)
 }

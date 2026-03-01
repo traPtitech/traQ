@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"testing"
@@ -77,7 +78,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
@@ -104,7 +105,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 			assert.NotEmpty(loc.Query().Get("code"))
 		}
 
-		a, err := env.Repository.GetAuthorize(loc.Query().Get("code"))
+		a, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
 		if assert.NoError(err) {
 			assert.Equal("nonce", a.Nonce)
 		}
@@ -475,7 +476,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		t.Parallel()
 		assert := assert.New(t)
 		user := env.CreateUser(t, rand, useUUIDV4)
-		_, err := env.Repository.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
+		_, err := env.Repository.IssueToken(context.TODO(), client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
@@ -514,7 +515,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopes,
 		}
-		require.NoError(t, env.Repository.SaveClient(client))
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
@@ -530,7 +531,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		t.Parallel()
 		assert := assert.New(t)
 		user := env.CreateUser(t, rand, useUUIDV4)
-		err := env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
+		err := env.Repository.UpdateUser(context.TODO(), user.GetID(), repository.UpdateUserArgs{UserState: optional.From(model.UserAccountStatusDeactivated)})
 		require.NoError(t, err)
 
 		env.IssueToken(t, client, user.GetID(), false)
@@ -593,7 +594,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client) string {
 		s, err := env.SessStore.IssueSession(uid, map[string]interface{}{
@@ -632,7 +633,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 			assert.NotEmpty(loc.Query().Get("code"))
 		}
 
-		a, err := env.Repository.GetAuthorize(loc.Query().Get("code"))
+		a, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
 		if assert.NoError(err) {
 			assert.Equal("nonce", a.Nonce)
 		}
@@ -695,7 +696,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopesRead,
 		}
-		require.NoError(t, env.Repository.SaveClient(client))
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").

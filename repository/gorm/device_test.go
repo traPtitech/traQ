@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -41,7 +42,7 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	}
 
 	for _, v := range cases {
-		err := repo.RegisterDevice(v.user, v.token)
+		err := repo.RegisterDevice(context.TODO(), v.user, v.token)
 		if v.error {
 			assert.Error(err)
 		} else {
@@ -69,19 +70,19 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	token6 := random2.AlphaNumeric(20)
 	token7 := random2.AlphaNumeric(20)
 
-	err := repo.RegisterDevice(id1, token1)
+	err := repo.RegisterDevice(context.TODO(), id1, token1)
 	require.NoError(err)
-	err = repo.RegisterDevice(id2, token2)
+	err = repo.RegisterDevice(context.TODO(), id2, token2)
 	require.NoError(err)
-	err = repo.RegisterDevice(id1, token3)
+	err = repo.RegisterDevice(context.TODO(), id1, token3)
 	require.NoError(err)
-	err = repo.RegisterDevice(id1, token4)
+	err = repo.RegisterDevice(context.TODO(), id1, token4)
 	require.NoError(err)
-	err = repo.RegisterDevice(id3, token5)
+	err = repo.RegisterDevice(context.TODO(), id3, token5)
 	require.NoError(err)
-	err = repo.RegisterDevice(id4, token6)
+	err = repo.RegisterDevice(context.TODO(), id4, token6)
 	require.NoError(err)
-	err = repo.RegisterDevice(id4, token7)
+	err = repo.RegisterDevice(context.TODO(), id4, token7)
 	require.NoError(err)
 
 	cases := []struct {
@@ -96,7 +97,7 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 		{[]string{token3, token2, token6}, 0},
 	}
 	for _, v := range cases {
-		assert.NoError(repo.DeleteDeviceTokens(v.tokens))
+		assert.NoError(repo.DeleteDeviceTokens(context.TODO(), v.tokens))
 		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?, ?, ?)", id1, id2, id3, id4)))
 	}
 }
@@ -114,13 +115,13 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	token3 := random2.AlphaNumeric(20)
 	token4 := random2.AlphaNumeric(20)
 
-	err := repo.RegisterDevice(id1, token1)
+	err := repo.RegisterDevice(context.TODO(), id1, token1)
 	require.NoError(err)
-	err = repo.RegisterDevice(id2, token2)
+	err = repo.RegisterDevice(context.TODO(), id2, token2)
 	require.NoError(err)
-	err = repo.RegisterDevice(id1, token3)
+	err = repo.RegisterDevice(context.TODO(), id1, token3)
 	require.NoError(err)
-	err = repo.RegisterDevice(id3, token4)
+	err = repo.RegisterDevice(context.TODO(), id3, token4)
 	require.NoError(err)
 
 	cases := []struct {
@@ -141,7 +142,7 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 		t.Run(v.name, func(t *testing.T) {
 			t.Parallel()
 			assert := assert.New(t)
-			devs, err := repo.GetDeviceTokens(set.UUIDSetFromArray(v.users))
+			devs, err := repo.GetDeviceTokens(context.TODO(), set.UUIDSetFromArray(v.users))
 			if assert.NoError(err) {
 				n := 0
 				for _, arr := range devs {
