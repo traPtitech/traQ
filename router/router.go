@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -101,6 +102,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
 	e.Use(middlewares.RequestID())
+	e.Use(otelecho.Middleware("traQ"))
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(logger.Named("access_log"), config.Development))
 	}
