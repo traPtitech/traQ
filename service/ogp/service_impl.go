@@ -11,7 +11,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/ogp/parser"
+	ogpparser "github.com/traPtitech/traQ/service/ogp/parser"
 )
 
 const (
@@ -36,7 +36,7 @@ type ServiceImpl struct {
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
 	// parserパッケージにloggerを設定
-	parser.SetLogger(logger)
+	ogpparser.SetLogger(logger)
 
 	s := &ServiceImpl{
 		repo:   repo,
@@ -122,11 +122,11 @@ func (s *ServiceImpl) getMetaOrCreate(ctx context.Context, urlStr string) (res f
 	if err != nil {
 		return fetchResult{}, err
 	}
-	og, meta, err := parser.ParseMetaForURL(u)
+	og, meta, err := ogpparser.ParseMetaForURL(u)
 	if err != nil {
 		s.logger.Info("failed to fetch OGP meta", zap.String("url", urlStr), zap.Error(err))
 		switch err {
-		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
+		case ogpparser.ErrClient, ogpparser.ErrParse, ogpparser.ErrNetwork, ogpparser.ErrContentTypeNotSupported:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
 			cache, createErr := s.repo.CreateOgpCache(ctx, urlStr, nil, DefaultCacheDuration)
 			if createErr != nil {
@@ -140,7 +140,7 @@ func (s *ServiceImpl) getMetaOrCreate(ctx context.Context, urlStr string) (res f
 	}
 
 	// リクエストが成功した場合はキャッシュを作成
-	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
+	content := ogpparser.MergeDefaultPageMetaAndOpenGraph(og, meta)
 	cache, err = s.repo.CreateOgpCache(ctx, urlStr, content, DefaultCacheDuration)
 	if err != nil {
 		return fetchResult{}, err

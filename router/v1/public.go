@@ -152,7 +152,7 @@ func emojiCSSGenerator(repo repository.Repository) func(ctx context.Context, _ s
 		buf.WriteString(".s24{width:24px;height:24px}")
 		buf.WriteString(".s32{width:32px;height:32px}")
 		for _, stamp := range stamps {
-			buf.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
+			fmt.Fprintf(&buf, ".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID)
 		}
 		return buf.Bytes(), nil
 	}
