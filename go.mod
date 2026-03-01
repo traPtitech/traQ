@@ -1,8 +1,8 @@
 module github.com/traPtitech/traQ
 
-go 1.24.10
+go 1.25.0
 
-toolchain go1.25.7
+toolchain go1.26.0
 
 require (
 	cloud.google.com/go/profiler v0.4.3
@@ -19,7 +19,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a
-	github.com/elastic/go-elasticsearch/v8 v8.19.2
+	github.com/elastic/go-elasticsearch/v8 v8.19.3
 	github.com/gavv/httpexpect/v2 v2.17.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
@@ -35,11 +35,11 @@ require (
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/json-iterator/go v1.1.12
-	github.com/labstack/echo-contrib v0.17.4
-	github.com/labstack/echo/v4 v4.15.0
+	github.com/labstack/echo-contrib v0.50.1
+	github.com/labstack/echo/v4 v4.15.1
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.13
-	github.com/livekit/protocol v1.44.1-0.20260209185238-64ff3e8a9cd9
+	github.com/livekit/protocol v1.44.1
 	github.com/livekit/server-sdk-go/v2 v2.13.3
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
@@ -59,9 +59,9 @@ require (
 	github.com/zitadel/oidc/v3 v3.45.4
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.48.0
-	golang.org/x/exp v0.0.0-20260209203927-2842357ff358
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 	golang.org/x/image v0.36.0
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	golang.org/x/oauth2 v0.35.0
 	golang.org/x/sync v0.19.0
 	google.golang.org/api v0.257.0
@@ -132,7 +132,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 )
 
@@ -233,8 +233,8 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.66.1 // indirect
-	github.com/prometheus/procfs v0.16.1 // indirect
+	github.com/prometheus/common v0.67.5 // indirect
+	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/sanity-io/litter v1.5.5 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect

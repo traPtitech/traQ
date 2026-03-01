@@ -35,7 +35,7 @@ func NewSoundboardManager(repo repository.SoundboardRepository, fs storage.FileS
 	}, nil
 }
 
-func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName string, contentType string, fileType model.FileType, src io.Reader, stampID *uuid.UUID, creatorID uuid.UUID) error {
+func (m *soundboardManager) SaveSoundboardItem(ctx context.Context, soundID uuid.UUID, soundName string, contentType string, fileType model.FileType, src io.Reader, stampID *uuid.UUID, creatorID uuid.UUID) error {
 	// ファイルを全読み込み
 	b, err := io.ReadAll(src)
 	if err != nil {
@@ -65,7 +65,7 @@ func (m *soundboardManager) SaveSoundboardItem(soundID uuid.UUID, soundName stri
 		CreatorID: creatorID,
 	}
 
-	err = m.repo.CreateSoundboardItem(context.TODO(), args)
+	err = m.repo.CreateSoundboardItem(ctx, args)
 	if err != nil {
 		return err
 	}
@@ -89,14 +89,14 @@ func (m *soundboardManager) GetURL(soundID uuid.UUID) (string, error) {
 	return m.fs.GenerateAccessURL(soundID.String(), model.FileTypeSoundboardItem)
 }
 
-func (m *soundboardManager) DeleteSoundboardItem(soundID uuid.UUID) error {
+func (m *soundboardManager) DeleteSoundboardItem(ctx context.Context, soundID uuid.UUID) error {
 	err := m.fs.DeleteByKey(soundID.String(), model.FileTypeSoundboardItem)
 	if err != nil {
 		m.l.Error("failed to delete soundboard item", zap.Error(err))
 		return err
 	}
 
-	err = m.repo.DeleteSoundboardItem(context.TODO(), soundID)
+	err = m.repo.DeleteSoundboardItem(ctx, soundID)
 	if err != nil {
 		return err
 	}

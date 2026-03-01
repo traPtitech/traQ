@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,7 +26,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	file := env.mustMakeFile(t)
 	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := env.FileManager.Save(file2.SaveArgs{
+	secureFile, err := env.FileManager.Save(context.TODO(), file2.SaveArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
@@ -88,9 +89,9 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success with icon file", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
+		iconFileID, err := file2.GenerateIconFile(context.TODO(), env.FileManager, "test")
 		require.NoError(err)
-		iconFile, err := env.FileManager.Get(iconFileID)
+		iconFile, err := env.FileManager.Get(context.TODO(), iconFileID)
 		require.NoError(err)
 
 		e := env.makeExp(t)
@@ -156,7 +157,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	file := env.mustMakeFile(t)
 	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := env.FileManager.Save(file2.SaveArgs{
+	secureFile, err := env.FileManager.Save(context.TODO(), file2.SaveArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
@@ -166,7 +167,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 		Src:       strings.NewReader(secureContent),
 	})
 	require.NoError(err)
-	iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
+	iconFileID, err := file2.GenerateIconFile(context.TODO(), env.FileManager, "test")
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {

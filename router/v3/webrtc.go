@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/service/webrtcv3"
-	"github.com/traPtitech/traQ/utils/hmac"
+	hmacutil "github.com/traPtitech/traQ/utils/hmac"
 )
 
 // PostWebRTCAuthenticateRequest POST /webrtc/authenticate リクエストボディ
@@ -38,7 +38,7 @@ func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
 
 	ts := time.Now().Unix()
 	ttl := 40000
-	hash := hmac.SHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
+	hash := hmacutil.SHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
 	return c.JSON(http.StatusOK, echo.Map{
 		"peerId":    req.PeerID,
 		"timestamp": ts,

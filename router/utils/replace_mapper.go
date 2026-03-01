@@ -17,12 +17,12 @@ type replaceMapperImpl struct {
 }
 
 func (m *replaceMapperImpl) Channel(path string) (uuid.UUID, bool) {
-	id := m.cm.PublicChannelTree().GetChannelIDFromPath(path)
+	id := m.cm.PublicChannelTree(context.Background()).GetChannelIDFromPath(path)
 	return id, id != uuid.Nil
 }
 
 func (m *replaceMapperImpl) Group(name string) (uuid.UUID, bool) {
-	g, err := m.repo.GetUserGroupByName(context.TODO(), name)
+	g, err := m.repo.GetUserGroupByName(context.Background(), name)
 	if err != nil {
 		return uuid.Nil, false
 	}
@@ -30,7 +30,7 @@ func (m *replaceMapperImpl) Group(name string) (uuid.UUID, bool) {
 }
 
 func (m *replaceMapperImpl) User(name string) (uuid.UUID, bool) {
-	u, err := m.repo.GetUserByName(context.TODO(), name, false)
+	u, err := m.repo.GetUserByName(context.Background(), name, false)
 	if err != nil {
 		return uuid.Nil, false
 	}

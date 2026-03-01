@@ -22,18 +22,18 @@ func BotJoined(ctx Context, datetime time.Time, _ string, fields hub.Fields) err
 		return fmt.Errorf("failed to GetBot: %w", err)
 	}
 
-	ch, err := ctx.CM().GetChannel(channelID)
+	ch, err := ctx.CM().GetChannel(context.Background(), channelID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
-	user, err := ctx.R().GetUser(context.TODO(), ch.CreatorID, false)
+	user, err := ctx.R().GetUser(context.Background(), ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
 	err = ctx.Unicast(
 		event.Joined,
-		payload.MakeJoined(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
+		payload.MakeJoined(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(channelID), user),
 		bot,
 	)
 	if err != nil {

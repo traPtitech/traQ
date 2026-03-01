@@ -11,7 +11,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/ogp/parser"
+	ogpparser "github.com/traPtitech/traQ/service/ogp/parser"
 )
 
 const (
@@ -35,9 +35,6 @@ type ServiceImpl struct {
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
-	// parserパッケージにloggerを設定
-	parser.SetLogger(logger)
-
 	s := &ServiceImpl{
 		repo:   repo,
 		logger: logger,
@@ -64,7 +61,7 @@ func (s *ServiceImpl) start() error {
 				if !ok {
 					return
 				}
-				if err := s.repo.DeleteStaleOgpCache(context.TODO()); err != nil {
+				if err := s.repo.DeleteStaleOgpCache(context.Background()); err != nil {
 					s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
 				}
 			case <-s.serviceDone:
@@ -84,8 +81,8 @@ func (s *ServiceImpl) Shutdown() error {
 	return nil
 }
 
-func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error) {
-	res, err := s.inMemCache.Get(context.Background(), url.String())
+func (s *ServiceImpl) GetMeta(ctx context.Context, url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error) {
+	res, err := s.inMemCache.Get(ctx, url.String())
 	if err != nil {
 		return nil, time.Time{}, err
 	}
@@ -93,8 +90,8 @@ func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time
 }
 
 // getMetaOrCreate OGP情報をDBのキャッシュから取得し、存在しなかった場合はリクエストを飛ばし新たに作成します。
-func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fetchResult, err error) {
-	cache, err := s.repo.GetOgpCache(context.TODO(), urlStr)
+func (s *ServiceImpl) getMetaOrCreate(ctx context.Context, urlStr string) (res fetchResult, err error) {
+	cache, err := s.repo.GetOgpCache(ctx, urlStr)
 	if err != nil && err != repository.ErrNotFound {
 		return fetchResult{}, err
 	}
@@ -112,7 +109,7 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 		return fetchResult{nil, cache.ExpiresAt}, nil
 	}
 	if isCacheExpired {
-		if err := s.repo.DeleteOgpCache(context.TODO(), urlStr); err != nil && err != repository.ErrNotFound {
+		if err := s.repo.DeleteOgpCache(ctx, urlStr); err != nil && err != repository.ErrNotFound {
 			return fetchResult{}, err
 		}
 	}
@@ -122,13 +119,12 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	if err != nil {
 		return fetchResult{}, err
 	}
-	og, meta, err := parser.ParseMetaForURL(u)
+	og, meta, err := ogpparser.ParseMetaForURL(u)
 	if err != nil {
-		s.logger.Info("failed to fetch OGP meta", zap.String("url", urlStr), zap.Error(err))
 		switch err {
-		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
+		case ogpparser.ErrClient, ogpparser.ErrParse, ogpparser.ErrNetwork, ogpparser.ErrContentTypeNotSupported, ogpparser.ErrNotAllowed:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
-			cache, createErr := s.repo.CreateOgpCache(context.TODO(), urlStr, nil, DefaultCacheDuration)
+			cache, createErr := s.repo.CreateOgpCache(ctx, urlStr, nil, DefaultCacheDuration)
 			if createErr != nil {
 				return fetchResult{}, createErr
 			}
@@ -140,8 +136,8 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	}
 
 	// リクエストが成功した場合はキャッシュを作成
-	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
-	cache, err = s.repo.CreateOgpCache(context.TODO(), urlStr, content, DefaultCacheDuration)
+	content := ogpparser.MergeDefaultPageMetaAndOpenGraph(og, meta)
+	cache, err = s.repo.CreateOgpCache(ctx, urlStr, content, DefaultCacheDuration)
 	if err != nil {
 		return fetchResult{}, err
 	}
@@ -149,8 +145,8 @@ func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fet
 	return fetchResult{content, cache.ExpiresAt}, nil
 }
 
-func (s *ServiceImpl) DeleteCache(url *url.URL) error {
-	err := s.repo.DeleteOgpCache(context.TODO(), url.String())
+func (s *ServiceImpl) DeleteCache(ctx context.Context, url *url.URL) error {
+	err := s.repo.DeleteOgpCache(ctx, url.String())
 	// キャッシュが見つからなかった場合でも、削除されてはいるので正常とみなす
 	if err != nil && err != repository.ErrNotFound {
 		return err

@@ -18,7 +18,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	t.Parallel()
 	env, _, require, _, _ := setup(t, common2)
 
-	fid, err := file.GenerateIconFile(env.FileManager, "test")
+	fid, err := file.GenerateIconFile(context.TODO(), env.FileManager, "test")
 	require.NoError(err)
 
 	testUser, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{
@@ -40,7 +40,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := env.FileManager.Get(testUser.GetIconFileID())
+		meta, err := env.FileManager.Get(context.TODO(), testUser.GetIconFileID())
 		require.NoError(err)
 		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
@@ -54,7 +54,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := env.FileManager.Get(testUser.GetIconFileID())
+		meta, err := env.FileManager.Get(context.TODO(), testUser.GetIconFileID())
 		require.NoError(err)
 
 		e := env.makeExp(t)

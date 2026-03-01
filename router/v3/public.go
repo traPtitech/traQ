@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -44,7 +43,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得
-	user, err := h.Repo.GetUserByName(context.TODO(), username, false)
+	user, err := h.Repo.GetUserByName(c.Request().Context(), username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -55,7 +54,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルメタ取得
-	meta, err := h.FileManager.Get(user.GetIconFileID())
+	meta, err := h.FileManager.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		switch err {
 		case file.ErrNotFound:

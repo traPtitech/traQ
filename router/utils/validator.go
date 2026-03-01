@@ -25,7 +25,7 @@ const (
 )
 
 func NewRequestValidateContext(c echo.Context) context.Context {
-	return context.WithValue(context.WithValue(context.Background(), repoctxKey, c.Get(consts.KeyRepo)), cmctxKey, c.Get(consts.KeyChannelManager))
+	return context.WithValue(context.WithValue(c.Request().Context(), repoctxKey, c.Get(consts.KeyRepo)), cmctxKey, c.Get(consts.KeyChannelManager))
 }
 
 // IsPublicChannelID 公開チャンネルのUUIDである
@@ -41,19 +41,19 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !cm.IsPublicChannel(v) {
+		if !cm.IsPublicChannel(ctx, v) {
 			return errors.New(errMessage)
 		}
 	case optional.Of[uuid.UUID]:
-		if v.Valid && !cm.IsPublicChannel(v.V) {
+		if v.Valid && !cm.IsPublicChannel(ctx, v.V) {
 			return errors.New(errMessage)
 		}
 	case string:
-		if !cm.IsPublicChannel(uuid.FromStringOrNil(v)) {
+		if !cm.IsPublicChannel(ctx, uuid.FromStringOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	case []byte:
-		if !cm.IsPublicChannel(uuid.FromBytesOrNil(v)) {
+		if !cm.IsPublicChannel(ctx, uuid.FromBytesOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	default:
@@ -79,16 +79,16 @@ var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interfa
 	case nil:
 		return nil
 	case uuid.UUID:
-		u, err = repo.GetUser(context.TODO(), v, false)
+		u, err = repo.GetUser(ctx, v, false)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		u, err = repo.GetUser(context.TODO(), v.V, false)
+		u, err = repo.GetUser(ctx, v.V, false)
 	case string:
-		u, err = repo.GetUser(context.TODO(), uuid.FromStringOrNil(v), false)
+		u, err = repo.GetUser(ctx, uuid.FromStringOrNil(v), false)
 	case []byte:
-		u, err = repo.GetUser(context.TODO(), uuid.FromBytesOrNil(v), false)
+		u, err = repo.GetUser(ctx, uuid.FromBytesOrNil(v), false)
 	default:
 		return errors.New(errMessage)
 	}
@@ -122,16 +122,16 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 	case nil:
 		return nil
 	case uuid.UUID:
-		ok, err = repo.UserExists(context.TODO(), v)
+		ok, err = repo.UserExists(ctx, v)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		ok, err = repo.UserExists(context.TODO(), v.V)
+		ok, err = repo.UserExists(ctx, v.V)
 	case string:
-		ok, err = repo.UserExists(context.TODO(), uuid.FromStringOrNil(v))
+		ok, err = repo.UserExists(ctx, uuid.FromStringOrNil(v))
 	case []byte:
-		ok, err = repo.UserExists(context.TODO(), uuid.FromBytesOrNil(v))
+		ok, err = repo.UserExists(ctx, uuid.FromBytesOrNil(v))
 	default:
 		return errors.New(errMessage)
 	}
@@ -161,16 +161,16 @@ var IsNotWebhookUserID = vd.WithContext(func(ctx context.Context, value interfac
 	case nil:
 		return nil
 	case uuid.UUID:
-		user, err = repo.GetUser(context.TODO(), v, false)
+		user, err = repo.GetUser(ctx, v, false)
 	case optional.Of[uuid.UUID]:
 		if !v.Valid {
 			return nil
 		}
-		user, err = repo.GetUser(context.TODO(), v.V, false)
+		user, err = repo.GetUser(ctx, v.V, false)
 	case string:
-		user, err = repo.GetUser(context.TODO(), uuid.FromStringOrNil(v), false)
+		user, err = repo.GetUser(ctx, uuid.FromStringOrNil(v), false)
 	case []byte:
-		user, err = repo.GetUser(context.TODO(), uuid.FromBytesOrNil(v), false)
+		user, err = repo.GetUser(ctx, uuid.FromBytesOrNil(v), false)
 	default:
 		return errors.New(errMessage)
 	}
