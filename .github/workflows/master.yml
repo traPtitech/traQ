@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   IMAGE_NAME: traq
   IMAGE_TAG: master
