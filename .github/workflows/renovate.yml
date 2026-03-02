@@ -25,9 +25,12 @@ on:
   push:
     branches: ["master"]
 
+permissions:
+  contents: read
+
 env:
-  LOG_LEVEL: debug
-  RENOVATE_DRY_RUN: false
+  LOG_LEVEL: ${{ github.event.inputs.logLevel || 'debug' }}
+  RENOVATE_DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
   RENOVATE_CONFIG_FILE: .github/renovate-bot.json5
 
 jobs:
@@ -44,11 +47,6 @@ jobs:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v6
-      - name: Override default config from dispatch variables
-        shell: bash
-        run: |
-          echo "RENOVATE_DRY_RUN=${{ github.event.inputs.dryRun || env.RENOVATE_DRY_RUN }}" >> "${GITHUB_ENV}"
-          echo "LOG_LEVEL=${{ github.event.inputs.logLevel || env.LOG_LEVEL }}" >> "${GITHUB_ENV}"
       - name: Renovate
         uses: renovatebot/github-action@v46.1.2
         with:

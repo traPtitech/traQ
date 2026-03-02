@@ -12,6 +12,9 @@ on:
       - 'docs/v3-api.yaml'
       - '.github/workflows/swagger-change.yml'
 
+permissions:
+  contents: read
+
 jobs:
   spectral:
     name: Spectral
