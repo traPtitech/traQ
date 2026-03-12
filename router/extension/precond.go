@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/utils/etag"
 )
 
 func scanETag(s string) (eTag string, remain string) {
@@ -222,4 +223,24 @@ func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 		return err
 	}
 	return c.Blob(http.StatusOK, contentType, bytes)
+}
+
+// ServeJSONWithPrecomputedETag 事前に計算されたEtagを付与してJSONを返します。リクエストの条件に合うときは304を返します。
+func ServeJSONWithPrecomputedETag[T any](c echo.Context, e *etag.Entity[T]) error {
+	// NOTE: prettyクエリがあるときはEtagを無視して整形されたJSONを返す
+	if _, pretty := c.QueryParams()["pretty"]; pretty {
+		return c.JSONPretty(http.StatusOK, e.Value(), "  ")
+	}
+
+	c.Response().Header().Set(consts.HeaderETag, "\""+e.ETag()+"\"")
+
+	done, err := CheckPreconditions(c, time.Time{})
+	if err != nil {
+		return err
+	}
+	if done {
+		return nil
+	}
+
+	return c.JSON(http.StatusOK, e.Value())
 }
