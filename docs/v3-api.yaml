@@ -3773,10 +3773,49 @@ paths:
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
       description: 指定されたWebhookが投稿したメッセージのリストを返します。
-  "/webhooks/:webhookID/messages/:messageID":
+  "/webhooks/{webhookId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
       - $ref: "#/components/parameters/messageIdInPath"
+    put:
+      summary: Webhookの投稿メッセージを編集
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "415":
+          description: Unsupported Media Type
+      operationId: editWebhookMessage
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: X-TRAQ-Signature
+          description: リクエストボディシグネチャ(Secretが設定されている場合は必須)
+        - schema:
+            type: integer
+            default: 0
+          in: query
+          name: embed
+          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              description: メッセージ文字列
+        description: ""
+      tags:
+        - webhook
+      description: |-
+        Webhookの投稿メッセージを編集します。
+        secureなウェブフックに対しては`X-TRAQ-Signature`ヘッダーが必須です。
+        アーカイブされているチャンネルのメッセージは編集できません。
     delete:
       summary: Webhookの投稿メッセージを削除
       tags:
