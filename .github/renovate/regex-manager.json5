@@ -51,7 +51,7 @@
       ],
       "matchStrings": [
         // Example: kustomize build https://github.com/argoproj/argo-cd//manifests/crds?ref=v2.7.6 | kubectl create -f -
-        "https://github\\.com/(?<depName>[^/]+/[^/]+)//.*?\\?ref=(?<currentValue>\\S+)",
+        "https://github\\.com/(?<depName>[^/]+/[^/]+)//.*?\\?ref=(?<currentValue>[^\\s\"']+)(?=[\\s\"']|$)",
         // Example: - https://raw.githubusercontent.com/traefik/traefik/v2.10.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
         "https://raw\\.githubusercontent\\.com/(?<depName>[^/]+/[^/]+)/(?<currentValue>[^/]+)",
         // Example: - https://github.com/rancher/system-upgrade-controller/releases/download/v0.11.0/crd.yaml
