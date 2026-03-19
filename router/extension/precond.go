@@ -191,20 +191,12 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 
 // ServeJSONWithETag Etagを付与してJSONを返します。304を返せるときは304を返します。
 func ServeJSONWithETag(c echo.Context, i interface{}) error {
-	j := jsonIter.Config{
-		EscapeHTML:                    false,
-		MarshalFloatWith6Digits:       true,
-		ObjectFieldMustBeSimpleString: true,
-		// ここより上はjsonIter.ConfigFastestと同様
-		SortMapKeys: true, // 順番が一致しないとEtagが一致しないのでソートを有効にする
-	}.Froze()
-
 	var b []byte
 	var err error
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		b, err = j.MarshalIndent(i, "", "  ")
+		b, err = etag.JSONIter.MarshalIndent(i, "", "  ")
 	} else {
-		b, err = j.Marshal(i)
+		b, err = etag.JSONIter.Marshal(i)
 	}
 	if err != nil {
 		return err
@@ -227,20 +219,35 @@ func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 
 // ServeJSONWithPrecomputedETag 事前に計算されたEtagを付与してJSONを返します。リクエストの条件に合うときは304を返します。
 func ServeJSONWithPrecomputedETag[T any](c echo.Context, e *etag.Entity[T]) error {
-	// NOTE: prettyクエリがあるときはEtagを無視して整形されたJSONを返す
+	var b []byte
+	var err error
+	eTag := e.ETag()
+
+	// NOTE: prettyのときはETagを再計算する
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		return c.JSONPretty(http.StatusOK, e.Value(), "  ")
+		b, err = etag.JSONIter.MarshalIndent(e.Value(), "", "  ")
+		if err != nil {
+			return err
+		}
+
+		eTag = etag.FromBytes(b)
 	}
 
-	c.Response().Header().Set(consts.HeaderETag, "\""+e.ETag()+"\"")
+	c.Response().Header().Set(consts.HeaderETag, "\""+eTag+"\"")
 
 	done, err := CheckPreconditions(c, time.Time{})
 	if err != nil {
 		return err
-	}
-	if done {
+	} else if done {
 		return nil
 	}
 
-	return c.JSON(http.StatusOK, e.Value())
+	if len(b) == 0 {
+		b, err = etag.JSONIter.Marshal(e.Value())
+		if err != nil {
+			return err
+		}
+	}
+
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, b)
 }

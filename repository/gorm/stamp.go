@@ -108,7 +108,7 @@ func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repo
 
 	sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
 
-	stampsWithEtag, err := etag.New(arr)
+	stampsWithEtag, err := etag.NewEntity(arr)
 	if err != nil {
 		return nil, err
 	}
