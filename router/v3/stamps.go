@@ -71,7 +71,7 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return extension.ServeJSONWithETag(c, stamps)
+	return extension.ServeJSONWithPrecomputedETag(c, stamps)
 }
 
 // CreateStamp POST /stamps

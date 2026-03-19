@@ -123,8 +123,8 @@ func emojiJSONGenerator(repo repository.Repository) func(ctx context.Context, _ 
 			return nil, err
 		}
 
-		stampNames := make([]string, len(stamps))
-		for i, stamp := range stamps {
+		stampNames := make([]string, len(stamps.Value()))
+		for i, stamp := range stamps.Value() {
 			stampNames[i] = stamp.Name
 		}
 
@@ -151,7 +151,7 @@ func emojiCSSGenerator(repo repository.Repository) func(ctx context.Context, _ s
 		buf.WriteString(".s16{width:16px;height:16px}")
 		buf.WriteString(".s24{width:24px;height:24px}")
 		buf.WriteString(".s32{width:32px;height:32px}")
-		for _, stamp := range stamps {
+		for _, stamp := range stamps.Value() {
 			fmt.Fprintf(&buf, ".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID)
 		}
 		return buf.Bytes(), nil

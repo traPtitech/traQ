@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/etag"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/validator"
 )
@@ -25,7 +26,7 @@ type stampRepository struct {
 	db      *gorm.DB
 	hub     *hub.Hub
 	stamps  *sc.Cache[struct{}, map[uuid.UUID]*model.Stamp]
-	perType *sc.Cache[repository.StampType, []*model.StampWithThumbnail]
+	perType *sc.Cache[repository.StampType, *etag.Entity[[]*model.StampWithThumbnail]]
 }
 
 func makeStampRepository(db *gorm.DB, hub *hub.Hub) *stampRepository {
@@ -48,7 +49,7 @@ func (r *stampRepository) loadStamps(_ context.Context, _ struct{}) (map[uuid.UU
 	return stampsMap, nil
 }
 
-func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repository.StampType) ([]*model.StampWithThumbnail, error) {
+func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repository.StampType) (*etag.Entity[[]*model.StampWithThumbnail], error) {
 	stamps, err := r.stamps.Get(ctx, struct{}{})
 	if err != nil {
 		return nil, err
@@ -106,7 +107,13 @@ func (r *stampRepository) loadFilteredStamps(ctx context.Context, stampType repo
 	}
 
 	sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
-	return arr, nil
+
+	stampsWithEtag, err := etag.NewEntity(arr)
+	if err != nil {
+		return nil, err
+	}
+
+	return stampsWithEtag, nil
 }
 
 func (r *stampRepository) purgeCache() {
@@ -304,7 +311,7 @@ func (r *stampRepository) DeleteStamp(ctx context.Context, id uuid.UUID) (err er
 }
 
 // GetAllStampsWithThumbnail implements StampRepository interface.
-func (r *stampRepository) GetAllStampsWithThumbnail(ctx context.Context, stampType repository.StampType) (stampsWithThumbnail []*model.StampWithThumbnail, err error) {
+func (r *stampRepository) GetAllStampsWithThumbnail(ctx context.Context, stampType repository.StampType) (*etag.Entity[[]*model.StampWithThumbnail], error) {
 	return r.perType.Get(ctx, stampType)
 }
 
