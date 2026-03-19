@@ -28,7 +28,7 @@ type clientImpl struct {
 
 // NewClientWithCredentialsFile Firebase Cloud Messaging Clientを生成します
 func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (Client, error) {
-	return NewClient(repo, logger, unreadCounter, option.WithCredentialsFile(string(file)))
+	return NewClient(repo, logger, unreadCounter, option.WithAuthCredentialsFile(option.ServiceAccount, string(file)))
 }
 
 // NewClient Firebase Cloud Messaging Clientを生成します

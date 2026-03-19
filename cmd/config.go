@@ -448,7 +448,7 @@ func initStackdriverProfiler(c *Config) error {
 		Service:        "traq",
 		ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
 		ProjectID:      c.GCP.ServiceAccount.ProjectID,
-	}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
+	}, option.WithAuthCredentialsFile(option.ServiceAccount, c.GCP.ServiceAccount.File))
 }
 
 func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (fcm.Client, error) {
