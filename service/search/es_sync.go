@@ -459,6 +459,120 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 	return nil
 }
 
+// GetUnprocessedImageMessageIDs hasImage=trueだがimageVectorが未設定のメッセージIDをESから取得する
+func (e *esEngine) GetUnprocessedImageMessageIDs(ctx context.Context) ([]uuid.UUID, error) {
+	const scrollBatchSize = 1000
+	var allIDs []uuid.UUID
+	var searchAfter []any
+
+	for {
+		body := m{
+			"query": m{
+				"bool": m{
+					"must": []m{
+						{"term": m{"hasImage": m{"value": true}}},
+					},
+					"must_not": []m{
+						{"nested": m{
+							"path":  "imageVector",
+							"query": m{"exists": m{"field": "imageVector.vector"}},
+						}},
+					},
+				},
+			},
+			"size":    scrollBatchSize,
+			"sort":    []m{{"_doc": "asc"}},
+			"_source": false,
+		}
+		if searchAfter != nil {
+			body["search_after"] = searchAfter
+		}
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal query: %w", err)
+		}
+
+		sr, err := e.client.Search(
+			e.client.Search.WithContext(ctx),
+			e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+			e.client.Search.WithBody(bytes.NewReader(b)),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search unprocessed images: %w", err)
+		}
+
+		var res esSearchResponse
+		err = json.NewDecoder(sr.Body).Decode(&res)
+		sr.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode search response: %w", err)
+		}
+
+		hits := res.Hits.Hits
+		if len(hits) == 0 {
+			break
+		}
+
+		for _, hit := range hits {
+			id, err := uuid.FromString(hit.ID)
+			if err != nil {
+				e.l.Warn("invalid message ID in ES", zap.String("id", hit.ID))
+				continue
+			}
+			allIDs = append(allIDs, id)
+		}
+
+		lastHit := hits[len(hits)-1]
+		searchAfter = make([]any, len(lastHit.Sort))
+		for i, v := range lastHit.Sort {
+			searchAfter[i] = v
+		}
+
+		if len(hits) < scrollBatchSize {
+			break
+		}
+	}
+
+	return allIDs, nil
+}
+
+// ClearImageIndex hasImage=trueの全ドキュメントからimageTextとimageVectorを削除する
+func (e *esEngine) ClearImageIndex(ctx context.Context) error {
+	body := m{
+		"query": m{
+			"term": m{"hasImage": m{"value": true}},
+		},
+		"script": m{
+			"source": "ctx._source.remove('imageText'); ctx._source.remove('imageVector');",
+			"lang":   "painless",
+		},
+	}
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal update_by_query body: %w", err)
+	}
+
+	res, err := e.client.UpdateByQuery(
+		[]string{getIndexName(esMessageIndex)},
+		e.client.UpdateByQuery.WithContext(ctx),
+		e.client.UpdateByQuery.WithBody(bytes.NewReader(b)),
+		e.client.UpdateByQuery.WithRefresh(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to clear image index: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("ES update_by_query error: %s", res.String())
+	}
+
+	e.l.Info("cleared image index data from all messages")
+	return nil
+}
+
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
 func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 	sr, err := e.client.Search(

@@ -31,6 +31,10 @@ type Engine interface {
 	Close() error
 	// ProcessImagesForMessages バッチ用: 指定メッセージの画像を処理してインデックスを更新します
 	ProcessImagesForMessages(ctx context.Context, messages []*model.Message) error
+	// GetUnprocessedImageMessageIDs 画像付きだがインデックス未処理のメッセージIDを取得します
+	GetUnprocessedImageMessageIDs(ctx context.Context) ([]uuid.UUID, error)
+	// ClearImageIndex 全メッセージの画像インデックスデータ(imageText, imageVector)をクリアします
+	ClearImageIndex(ctx context.Context) error
 }
 
 // Query 検索クエリ

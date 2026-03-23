@@ -3,6 +3,8 @@ package search
 import (
 	"context"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -28,5 +30,13 @@ func (n *nullEngine) Close() error {
 }
 
 func (n *nullEngine) ProcessImagesForMessages(context.Context, []*model.Message) error {
+	return ErrServiceUnavailable
+}
+
+func (n *nullEngine) GetUnprocessedImageMessageIDs(context.Context) ([]uuid.UUID, error) {
+	return nil, ErrServiceUnavailable
+}
+
+func (n *nullEngine) ClearImageIndex(context.Context) error {
 	return ErrServiceUnavailable
 }
