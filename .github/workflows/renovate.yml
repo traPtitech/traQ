@@ -48,7 +48,7 @@ jobs:
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v6
       - name: Renovate
-        uses: renovatebot/github-action@v46.1.5
+        uses: renovatebot/github-action@v46.1.6
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
           renovate-version: "latest"
