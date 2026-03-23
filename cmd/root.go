@@ -75,6 +75,7 @@ func init() {
 		stampCommand(),
 		versionCommand(),
 		healthcheckCommand(),
+		imageIndexCommand(),
 	)
 
 	flags := rootCommand.PersistentFlags()

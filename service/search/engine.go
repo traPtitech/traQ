@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"strings"
@@ -9,12 +10,16 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // ErrServiceUnavailable エラー 現在検索サービスが利用できません
 var ErrServiceUnavailable = errors.New("search service is unavailable")
+
+// ErrImageSearchUnavailable エラー 画像検索サービスが利用できません
+var ErrImageSearchUnavailable = errors.New("image search service is unavailable")
 
 // Engine 検索エンジンインターフェイス
 type Engine interface {
@@ -24,6 +29,8 @@ type Engine interface {
 	Available() bool
 	// Close 検索サービスを終了します
 	Close() error
+	// ProcessImagesForMessages バッチ用: 指定メッセージの画像を処理してインデックスを更新します
+	ProcessImagesForMessages(ctx context.Context, messages []*model.Message) error
 }
 
 // Query 検索クエリ

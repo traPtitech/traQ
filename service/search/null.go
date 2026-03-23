@@ -1,5 +1,11 @@
 package search
 
+import (
+	"context"
+
+	"github.com/traPtitech/traQ/model"
+)
+
 var nullE = &nullEngine{}
 
 type nullEngine struct{}
@@ -19,4 +25,8 @@ func (n *nullEngine) Available() bool {
 
 func (n *nullEngine) Close() error {
 	return nil
+}
+
+func (n *nullEngine) ProcessImagesForMessages(context.Context, []*model.Message) error {
+	return ErrServiceUnavailable
 }

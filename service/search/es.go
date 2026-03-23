@@ -14,9 +14,11 @@ import (
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/storage"
 )
 
 const (
@@ -38,35 +40,47 @@ type ESEngineConfig struct {
 	Username string
 	// Password ESのパスワード
 	Password string
+	// ImageSearch 画像検索設定
+	ImageSearch ImageSearchConfig
 }
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client *elasticsearch.Client
-	mm     message.Manager
-	cm     channel.Manager
-	repo   repository.Repository
-	l      *zap.Logger
-	done   chan<- struct{}
+	client      *elasticsearch.Client
+	mm          message.Manager
+	cm          channel.Manager
+	repo        repository.Repository
+	fs          storage.FileStorage
+	imageClient ImageSearchClient
+	imageConfig ImageSearchConfig
+	l           *zap.Logger
+	done        chan<- struct{}
+}
+
+// esImageVector 画像ごとのEmbeddingベクトル
+type esImageVector struct {
+	Vector []float64 `json:"vector"`
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
 type esMessageDoc struct {
-	ID             uuid.UUID   `json:"-"`
-	UserID         uuid.UUID   `json:"userId"`
-	ChannelID      uuid.UUID   `json:"channelId"`
-	IsPublic       bool        `json:"isPublic"`
-	Bot            bool        `json:"bot"`
-	Text           string      `json:"text"`
-	CreatedAt      time.Time   `json:"createdAt"`
-	UpdatedAt      time.Time   `json:"updatedAt"`
-	To             []uuid.UUID `json:"to"`
-	Citation       []uuid.UUID `json:"citation"`
-	HasURL         bool        `json:"hasURL"`
-	HasAttachments bool        `json:"hasAttachments"`
-	HasImage       bool        `json:"hasImage"`
-	HasVideo       bool        `json:"hasVideo"`
-	HasAudio       bool        `json:"hasAudio"`
+	ID             uuid.UUID       `json:"-"`
+	UserID         uuid.UUID       `json:"userId"`
+	ChannelID      uuid.UUID       `json:"channelId"`
+	IsPublic       bool            `json:"isPublic"`
+	Bot            bool            `json:"bot"`
+	Text           string          `json:"text"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	To             []uuid.UUID     `json:"to"`
+	Citation       []uuid.UUID     `json:"citation"`
+	HasURL         bool            `json:"hasURL"`
+	HasAttachments bool            `json:"hasAttachments"`
+	HasImage       bool            `json:"hasImage"`
+	HasVideo       bool            `json:"hasVideo"`
+	HasAudio       bool            `json:"hasAudio"`
+	ImageText      string          `json:"imageText,omitempty"`
+	ImageVectors   []esImageVector `json:"imageVector,omitempty"`
 }
 
 // esMessageDocUpdate Update用 Elasticsearchに入るメッセージの部分的な情報
@@ -81,6 +95,12 @@ type esMessageDocUpdate struct {
 	HasAudio       bool        `json:"hasAudio"`
 }
 
+// esImageDocUpdate 画像処理結果によるインデックスの部分更新
+type esImageDocUpdate struct {
+	ImageText    string          `json:"imageText,omitempty"`
+	ImageVectors []esImageVector `json:"imageVector,omitempty"`
+}
+
 type esCreateIndexBody struct {
 	Mappings m `json:"mappings"`
 	Settings m `json:"settings"`
@@ -88,10 +108,10 @@ type esCreateIndexBody struct {
 
 type m map[string]any
 
-// esMapping Elasticsearchに入るメッセージの情報
-// esMessageDoc と同じにする
-var esMapping = m{
-	"properties": m{
+// esMessageMapping Elasticsearchに入るメッセージのマッピングを生成する
+// vectorDimension が 0 の場合は画像ベクトル関連フィールドを含めない
+func esMessageMapping(vectorDimension int) m {
+	properties := m{
 		"userId": m{
 			"type": "keyword",
 		},
@@ -137,7 +157,23 @@ var esMapping = m{
 		"hasAudio": m{
 			"type": "boolean",
 		},
-	},
+		"imageText": m{
+			"type":     "text",
+			"analyzer": "sudachi_analyzer",
+		},
+	}
+	if vectorDimension > 0 {
+		properties["imageVector"] = m{
+			"type": "nested",
+			"properties": m{
+				"vector": m{
+					"type": "dense_vector",
+					"dims": vectorDimension,
+				},
+			},
+		}
+	}
+	return m{"properties": properties}
 }
 
 // esSetting Indexに追加するsetting情報
@@ -173,7 +209,7 @@ var esSetting = m{
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// esクライアント作成
 	client, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses: []string{config.URL},
@@ -222,7 +258,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
 		reqBody, err := json.Marshal(esCreateIndexBody{
-			Mappings: esMapping,
+			Mappings: esMessageMapping(config.ImageSearch.VectorDimension),
 			Settings: esSetting,
 		})
 		if err != nil {
@@ -242,14 +278,19 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		defer createIndexRes.Body.Close()
 	}
 
+	imageClient := NewImageSearchClient(config.ImageSearch, logger)
+
 	done := make(chan struct{})
 	engine := &esEngine{
-		client: client,
-		mm:     mm,
-		cm:     cm,
-		repo:   repo,
-		l:      logger.Named("search"),
-		done:   done,
+		client:      client,
+		mm:          mm,
+		cm:          cm,
+		repo:        repo,
+		fs:          fs,
+		imageClient: imageClient,
+		imageConfig: config.ImageSearch,
+		l:           logger.Named("search"),
+		done:        done,
 	}
 
 	go engine.syncLoop(done)
@@ -305,7 +346,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if q.Word.Valid {
 		body := simpleQueryString{
 			Query:           q.Word.V,
-			Fields:          []string{"text"},
+			Fields:          []string{"text", "imageText"},
 			DefaultOperator: "AND",
 		}
 
@@ -403,6 +444,23 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
+	// ベクトル検索が可能かチェックし、ハイブリッド検索を試みる
+	if q.Word.Valid && e.imageClient.Available() && e.imageConfig.VectorDimension > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), e.imageConfig.Timeout)
+		defer cancel()
+
+		queryVector, err := e.imageClient.EmbedText(ctx, q.Word.V)
+		if err == nil && queryVector != nil {
+			return e.doHybridSearch(musts, queryVector, sort, limit, offset)
+		}
+		e.l.Debug("falling back to text-only search", zap.Error(err))
+	}
+
+	return e.doTextSearch(musts, sort, limit, offset)
+}
+
+// doTextSearch 通常のテキスト検索を実行する
+func (e *esEngine) doTextSearch(musts []searchQuery, sort string, limit, offset int) (Result, error) {
 	b, err := json.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
@@ -431,6 +489,69 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
 	return e.parseResultFromResponse(res)
+}
+
+// doHybridSearch RRFによるハイブリッド検索（テキスト + ベクトル）を実行する
+func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
+	// RRF (Reciprocal Rank Fusion) を使ったハイブリッド検索
+	// テキスト検索クエリ
+	textQuery := newSearchBody(musts)
+
+	// knnクエリ（nested field用）
+	knnQuery := m{
+		"field":          "imageVector.vector",
+		"query_vector":   queryVector,
+		"k":              limit + offset,
+		"num_candidates": 100,
+		"nested": m{
+			"path": "imageVector",
+		},
+	}
+
+	hybridBody := m{
+		"query": textQuery.Query,
+		"knn":   knnQuery,
+		"rank": m{
+			"rrf": m{},
+		},
+		"size": limit,
+		"from": offset,
+	}
+
+	b, err := json.Marshal(hybridBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal hybrid search query: %w", err)
+	}
+
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithBody(bytes.NewBuffer(b)),
+	)
+	if err != nil {
+		// ハイブリッド検索に失敗した場合はテキスト検索にフォールバック
+		e.l.Warn("hybrid search failed, falling back to text search", zap.Error(err))
+		return e.doTextSearch(musts, sort, limit, offset)
+	}
+	if sr.IsError() {
+		e.l.Warn("hybrid search returned error, falling back to text search")
+		sr.Body.Close()
+		return e.doTextSearch(musts, sort, limit, offset)
+	}
+	defer sr.Body.Close()
+
+	var res esSearchResponse
+	err = json.NewDecoder(sr.Body).Decode(&res)
+	if err != nil {
+		return nil, err
+	}
+
+	e.l.Debug("hybrid search result", zap.Reflect("hits", res.Hits))
+	return e.parseResultFromResponse(res)
+}
+
+// generateImageURL ファイルの署名付きURLを生成する
+func (e *esEngine) generateImageURL(fileID uuid.UUID) (string, error) {
+	return e.fs.GenerateAccessURL(fileID.String(), model.FileTypeUserFile)
 }
 
 func (e *esEngine) Available() bool {
