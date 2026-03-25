@@ -69,7 +69,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 	}
 
 	// ユーザーの全セッションを破棄(強制ログアウト)
-	_ = seStore.RevokeSessionsByUserID(userID)
+	_ = seStore.RevokeSessionsByUserID(c.Request().Context(), userID)
 	return c.NoContent(http.StatusNoContent)
 }
 

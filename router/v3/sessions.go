@@ -79,7 +79,7 @@ func (h *Handlers) Logout(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if sess != nil && isTrue(c.QueryParam("all")) && sess.LoggedIn() {
-		if err := h.SessStore.RevokeSessionsByUserID(sess.UserID()); err != nil {
+		if err := h.SessStore.RevokeSessionsByUserID(c.Request().Context(), sess.UserID()); err != nil {
 			return herror.InternalServerError(err)
 		}
 	}
@@ -98,7 +98,7 @@ func (h *Handlers) Logout(c echo.Context) error {
 func (h *Handlers) GetMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	ses, err := h.SessStore.GetSessionsByUserID(userID)
+	ses, err := h.SessStore.GetSessionsByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -123,7 +123,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 func (h *Handlers) RevokeMySession(c echo.Context) error {
 	referenceID := getParamAsUUID(c, consts.ParamReferenceID)
 
-	if err := h.SessStore.RevokeSessionByRefID(referenceID); err != nil {
+	if err := h.SessStore.RevokeSessionByRefID(c.Request().Context(), referenceID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
