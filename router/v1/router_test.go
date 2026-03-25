@@ -127,7 +127,7 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 
 func (env *Env) generateSession(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	sess, err := env.SessStore.IssueSession(userID, nil)
+	sess, err := env.SessStore.IssueSession(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	return sess.Token()
 }
