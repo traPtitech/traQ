@@ -1,6 +1,6 @@
 reviews:
   path_instructions:
-    - path: **/*.go
+    - path: "**/*.go"
       instructions: |
         Ensure that `context.Context` is properly propagated throughout the call stack.
         - Functions performing I/O or network requests must accept `context.Context` as their first parameter.
