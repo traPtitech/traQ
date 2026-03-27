@@ -235,7 +235,7 @@ func TestHandlers_Logout(t *testing.T) {
 		c.Name().IsEqual(session.CookieName)
 		c.Value().IsEmpty()
 
-		sess, err := env.SessStore.GetSessionsByUserID(user3.GetID())
+		sess, err := env.SessStore.GetSessionsByUserID(context.TODO(), user3.GetID())
 		require.NoError(t, err)
 		assert.Len(t, sess, 0)
 	})
@@ -283,10 +283,10 @@ func TestHandlers_RevokeMySession(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	s := env.S(t, user.GetID())
 	s2 := env.S(t, user.GetID())
-	sess2, err := env.SessStore.GetSessionByToken(s2)
+	sess2, err := env.SessStore.GetSessionByToken(context.TODO(), s2)
 	require.NoError(t, err)
 	s3 := env.S(t, user.GetID())
-	sess3, err := env.SessStore.GetSessionByToken(s3)
+	sess3, err := env.SessStore.GetSessionByToken(context.TODO(), s3)
 	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -314,7 +314,7 @@ func TestHandlers_RevokeMySession(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.SessStore.GetSessionByToken(s2)
+		_, err := env.SessStore.GetSessionByToken(context.TODO(), s2)
 		assert.ErrorIs(t, err, session.ErrSessionNotFound)
 
 		// already deleted
@@ -323,7 +323,7 @@ func TestHandlers_RevokeMySession(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err = env.SessStore.GetSessionByToken(s2)
+		_, err = env.SessStore.GetSessionByToken(context.TODO(), s2)
 		assert.ErrorIs(t, err, session.ErrSessionNotFound)
 	})
 }

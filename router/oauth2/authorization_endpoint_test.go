@@ -137,7 +137,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		se, err := env.SessStore.GetSessionByToken(s)
+		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
 			v, err := se.Get(oauth2ContextSession)
 			assert.NoError(err)
@@ -171,7 +171,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		se, err := env.SessStore.GetSessionByToken(s)
+		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
 			v, err := se.Get(oauth2ContextSession)
 			assert.NoError(err)
@@ -207,7 +207,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		se, err := env.SessStore.GetSessionByToken(s)
+		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
 			v, err := se.Get(oauth2ContextSession)
 			assert.NoError(err)
@@ -597,7 +597,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client) string {
-		s, err := env.SessStore.IssueSession(uid, map[string]interface{}{
+		s, err := env.SessStore.IssueSession(context.TODO(), uid, map[string]interface{}{
 			oauth2ContextSession: authorizeRequest{
 				ResponseType: "code",
 				ClientID:     client.ID,
@@ -729,7 +729,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	t.Run("Found (unsupported response type)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		s, err := env.SessStore.IssueSession(user.GetID(), map[string]interface{}{
+		s, err := env.SessStore.IssueSession(context.TODO(), user.GetID(), map[string]interface{}{
 			oauth2ContextSession: authorizeRequest{
 				ResponseType: "code",
 				ClientID:     client.ID,
@@ -760,7 +760,7 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	t.Run("Found (timeout)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		s, err := env.SessStore.IssueSession(user.GetID(), map[string]interface{}{
+		s, err := env.SessStore.IssueSession(context.TODO(), user.GetID(), map[string]interface{}{
 			oauth2ContextSession: authorizeRequest{
 				ResponseType: "code",
 				ClientID:     client.ID,
