@@ -262,3 +262,11 @@ func (p *defaultProcessor) WaveformWav(src io.ReadSeeker, width, height int) (io
 		Height:     height,
 	})
 }
+func (p *defaultProcessor) WaveformM4a(src io.ReadSeeker, width, height int) (io.Reader, error) {
+	d := m4a.NewDecoder(src)
+	return waveform.OutputWaveformImageM4a(d, &waveform.Option{
+		Resolution: width / 5,
+		Width:      width,
+		Height:     height,
+	})
+}
