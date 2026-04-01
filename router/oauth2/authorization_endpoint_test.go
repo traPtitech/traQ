@@ -139,7 +139,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 
 		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
-			v, err := se.Get(oauth2ContextSession)
+			v, err := se.Get(context.TODO(), oauth2ContextSession)
 			assert.NoError(err)
 			assert.Equal("state", v.(authorizeRequest).State)
 		}
@@ -173,7 +173,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 
 		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
-			v, err := se.Get(oauth2ContextSession)
+			v, err := se.Get(context.TODO(), oauth2ContextSession)
 			assert.NoError(err)
 			assert.Equal("state", v.(authorizeRequest).State)
 		}
@@ -209,7 +209,7 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 
 		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
 		if assert.NoError(err) {
-			v, err := se.Get(oauth2ContextSession)
+			v, err := se.Get(context.TODO(), oauth2ContextSession)
 			assert.NoError(err)
 			assert.Equal("state", v.(authorizeRequest).State)
 			assert.Equal("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", v.(authorizeRequest).CodeChallenge)

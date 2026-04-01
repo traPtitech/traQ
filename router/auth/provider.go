@@ -65,7 +65,7 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 			if sess == nil || sess.UserID() == uuid.Nil {
 				return herror.Unauthorized("You are not logged in. Please login.")
 			}
-			if err := sess.Set(accountLinkingFlag, true); err != nil {
+			if err := sess.Set(c.Request().Context(), accountLinkingFlag, true); err != nil {
 				return herror.InternalServerError(err)
 			}
 		} else {
@@ -90,6 +90,8 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 
 func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, fm file.Manager, sessStore session.Store, allowSignUp bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		ctx := c.Request().Context()
+
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 			return herror.BadRequest("Authorization Header must not be set.")
 		}
@@ -127,11 +129,11 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return herror.InternalServerError(err)
 		}
 		if sess != nil {
-			if v, err := sess.Get(accountLinkingFlag); err != nil {
+			if v, err := sess.Get(ctx, accountLinkingFlag); err != nil {
 				return herror.InternalServerError(err)
 			} else if v == true {
 				// アカウント関連付けモード
-				if err := sess.Delete(accountLinkingFlag); err != nil {
+				if err := sess.Delete(ctx, accountLinkingFlag); err != nil {
 					return herror.InternalServerError(err)
 				}
 				if sess.UserID() == uuid.Nil {
@@ -139,7 +141,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// ユーザーアカウント状態を確認
-				user, err := repo.GetUser(c.Request().Context(), sess.UserID(), false)
+				user, err := repo.GetUser(ctx, sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
@@ -148,7 +150,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 
 				// アカウントにリンク
-				if err := repo.LinkExternalUserAccount(c.Request().Context(), user.GetID(), repository.LinkExternalUserAccountArgs{
+				if err := repo.LinkExternalUserAccount(ctx, user.GetID(), repository.LinkExternalUserAccountArgs{
 					ProviderName: tu.GetProviderName(),
 					ExternalID:   tu.GetID(),
 					Extra:        model.JSON{"externalName": tu.GetRawName()},
@@ -178,7 +180,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return herror.BadRequest("You have already logged in. Please logout once.")
 		}
 
-		user, err := repo.GetUserByExternalID(c.Request().Context(), tu.GetProviderName(), tu.GetID(), false)
+		user, err := repo.GetUserByExternalID(ctx, tu.GetProviderName(), tu.GetID(), false)
 		if err != nil {
 			if err != repository.ErrNotFound {
 				return herror.InternalServerError(err)
@@ -209,14 +211,14 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				}
 			}
 			if args.IconFileID == uuid.Nil {
-				fid, err := file.GenerateIconFile(c.Request().Context(), fm, tu.GetName())
+				fid, err := file.GenerateIconFile(ctx, fm, tu.GetName())
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
 				args.IconFileID = fid
 			}
 
-			user, err = repo.CreateUser(c.Request().Context(), args)
+			user, err = repo.CreateUser(ctx, args)
 			if err != nil {
 				if err == repository.ErrAlreadyExists {
 					return herror.Conflict("name conflicts") // TODO 名前被りをどうするか

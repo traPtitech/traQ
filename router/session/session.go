@@ -26,9 +26,9 @@ type Session interface {
 	CreatedAt() time.Time
 	LoggedIn() bool
 
-	Get(key string) (interface{}, error)
-	Set(key string, value interface{}) error
-	Delete(key string) error
+	Get(ctx context.Context, key string) (interface{}, error)
+	Set(ctx context.Context, key string, value interface{}) error
+	Delete(ctx context.Context, key string) error
 
 	Expired() bool
 	Refreshable() bool

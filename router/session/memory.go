@@ -51,20 +51,20 @@ func (s *memorySession) LoggedIn() bool {
 	return s.userID != uuid.Nil
 }
 
-func (s *memorySession) Get(key string) (interface{}, error) {
+func (s *memorySession) Get(_ context.Context, key string) (interface{}, error) {
 	s.Lock()
 	defer s.Unlock()
 	return s.data[key], nil
 }
 
-func (s *memorySession) Set(key string, value interface{}) error {
+func (s *memorySession) Set(_ context.Context, key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
 	s.data[key] = value
 	return nil
 }
 
-func (s *memorySession) Delete(key string) error {
+func (s *memorySession) Delete(_ context.Context, key string) error {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.data, key)

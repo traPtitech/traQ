@@ -63,25 +63,25 @@ func (s *session) LoggedIn() bool {
 	return s.userID != uuid.Nil
 }
 
-func (s *session) Get(key string) (interface{}, error) {
+func (s *session) Get(_ context.Context, key string) (interface{}, error) {
 	s.Lock()
 	defer s.Unlock()
 	v := s.data[key]
 	return v, nil
 }
 
-func (s *session) Set(key string, value interface{}) error {
+func (s *session) Set(ctx context.Context, key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
 	s.data[key] = value
-	return s.save()
+	return s.save(ctx)
 }
 
-func (s *session) Delete(key string) error {
+func (s *session) Delete(ctx context.Context, key string) error {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.data, key)
-	return s.save()
+	return s.save(ctx)
 }
 
 func (s *session) Expired() bool {
@@ -92,12 +92,12 @@ func (s *session) Refreshable() bool {
 	return time.Since(s.createdAt) <= time.Duration(sessionMaxAge+sessionKeepAge)*time.Second
 }
 
-func (s *session) save() error {
+func (s *session) save(ctx context.Context) error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(s.data); err != nil {
 		panic(err) // gobにdataの中身の構造体が登録されていない
 	}
-	return s.db.Model(&model.SessionRecord{Token: s.t}).Update("data", buf.Bytes()).Error
+	return s.db.WithContext(ctx).Model(&model.SessionRecord{Token: s.t}).Update("data", buf.Bytes()).Error
 }
 
 type sessionStore struct {
