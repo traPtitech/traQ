@@ -436,7 +436,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 	// 凍結の際
 	if deactivate {
 		// 1. 有効なセッションを削除
-		if err := h.SessStore.RevokeSessionsByUserID(userID); err != nil {
+		if err := h.SessStore.RevokeSessionsByUserID(c.Request().Context(), userID); err != nil {
 			return herror.InternalServerError(err)
 		}
 		// 2. 未読を削除（重いので一時的にコメントアウトしている; Hubのイベント経由などで非同期処理にすべき）

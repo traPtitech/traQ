@@ -158,7 +158,7 @@ func Setup(t *testing.T, server string) *Env {
 // S 指定ユーザーのAPIセッショントークンを発行
 func (env *Env) S(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	s, err := env.SessStore.IssueSession(userID, nil)
+	s, err := env.SessStore.IssueSession(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	return s.Token()
 }
