@@ -29,6 +29,7 @@ func InitTracer(ctx context.Context, serviceName string) (func(context.Context) 
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(serviceName),
 		),
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource: %w", err)
