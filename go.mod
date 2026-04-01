@@ -37,7 +37,8 @@ require (
 	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-contrib v0.50.1
-	github.com/labstack/echo/v4 v4.15.1
+	github.com/labstack/echo/v4 v4.15.0
+	github.com/labstack/echo/v5 v5.0.4
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/livekit/protocol v1.45.1
