@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"image/png"
 	"io"
-
+	"github.com/sapphi-red/midec"
+	_ "github.com/sapphi-red/midec/webp"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -80,6 +81,34 @@ func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name s
 		args.FileSize = int64(b.Len())
 		args.MimeType = consts.MimeImagePNG
 		args.Thumbnail = img // サムネイル画像より小さいという前提
+
+	case consts.MimeImageWebP:
+		isAnimated, _ := midec.IsAnimated(src)
+		if _, seekErr := src.Seek(0, io.SeekStart); seekErr != nil {
+			return uuid.Nil, herror.InternalServerError(seekErr)
+		}
+		if isAnimated {
+			return uuid.Nil, herror.BadRequest("animated WebP is not supported")
+		}
+		img, err := p.Fit(src, maxImageSize, maxImageSize)
+		if err != nil {
+			switch err {
+				case imaging.ErrInvalidImageSrc:
+				return uuid.Nil, herror.BadRequest(badImage)
+				case imaging.ErrPixelLimitExceeded:
+				return uuid.Nil, herror.BadRequest(tooLargeImage)
+				default:
+				return uuid.Nil, herror.InternalServerError(err)
+			}
+		}
+		b := bytes.Buffer{}
+		if err := png.Encode(&b, img); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		args.Src = bytes.NewReader(b.Bytes())
+		args.FileSize = int64(b.Len())
+		args.MimeType = consts.MimeImagePNG
+		args.Thumbnail = img
 
 	case consts.MimeImageGIF:
 		// リサイズ
