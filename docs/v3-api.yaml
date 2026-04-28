@@ -3572,7 +3572,7 @@ paths:
       description: |-
         指定したチャンネルの情報を取得します。
 
-        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        channelIdはPublic ChannelのIDです。
         それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
     patch:
       summary: チャンネル情報を変更
