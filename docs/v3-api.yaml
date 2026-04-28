@@ -34,11 +34,14 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       description: |-
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
       operationId: postMessage
       requestBody:
         content:
@@ -81,7 +84,7 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
   "/messages":
     get:
       summary: メッセージを検索
@@ -367,9 +370,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelStats
-      description: 指定したチャンネルの統計情報を取得します。
+      description: |-
+        指定したチャンネルの統計情報を取得します。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   "/channels/{channelId}/topic":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -387,9 +394,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelTopic
-      description: 指定したチャンネルのトピックを取得します。
+      description: |-
+        指定したチャンネルのトピックを取得します。
+
+        channelIdはPublic ChannelのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
     put:
       summary: チャンネルトピックを編集
       responses:
@@ -402,12 +413,15 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       tags:
         - channel
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
+
+        channelIdはPublic ChannelのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
       requestBody:
         content:
           application/json:
@@ -434,9 +448,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelViewers
-      description: 指定したチャンネルの閲覧者のリストを取得します。
+      description: |-
+        指定したチャンネルの閲覧者のリストを取得します。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /files:
     post:
       summary: ファイルをアップロード
@@ -641,9 +659,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelPins
-      description: 指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+      description: |-
+        指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   "/messages/{messageId}/stamps":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -1425,9 +1447,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelSubscribers
-      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+      description: |-
+        指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1444,7 +1470,7 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       tags:
         - channel
         - notification
@@ -1459,6 +1485,9 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1476,7 +1505,7 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       requestBody:
         content:
           application/json:
@@ -1486,6 +1515,9 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
       tags:
         - channel
         - notification
@@ -1527,7 +1559,7 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       tags:
         - me
         - notification
@@ -1537,7 +1569,11 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
-      description: 自身の指定したチャンネルの購読レベルを設定します。
+      description: |-
+        自身の指定したチャンネルの購読レベルを設定します。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -2328,7 +2364,11 @@ paths:
       tags:
         - me
         - star
-      description: 既にスターから削除されているチャンネルを指定した場合は204を返します。
+      description: |-
+        既にスターから削除されているチャンネルを指定した場合は204を返します。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
       operationId: removeMyStar
   /users/me/unread:
     get:
@@ -3478,9 +3518,13 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelBots
-      description: 指定したチャンネルに参加しているBOTのリストを取得します。
+      description: |-
+        指定したチャンネルに参加しているBOTのリストを取得します。
+
+        channelIdはPublic Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3521,9 +3565,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Channel"
         "404":
-          description: Not Found
+          description: |-
+            Not Found
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannel
-      description: 指定したチャンネルの情報を取得します。
+      description: |-
+        指定したチャンネルの情報を取得します。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3551,6 +3601,9 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -3820,7 +3873,7 @@ paths:
         "404":
           description: |-
             Not Found
-            チャンネルが見つかりません。
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
       operationId: getChannelEvents
       parameters:
         - $ref: "#/components/parameters/limitInQuery"
@@ -3829,7 +3882,11 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したチャンネルのイベントリストを取得します。
+      description: |-
+        指定したチャンネルのイベントリストを取得します。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4018,7 +4075,15 @@ paths:
           description: |-
             No Content
             既読にしました。
-      description: 自分が未読のチャンネルを既読にします。
+        "404":
+          description: |-
+            Not Found
+            チャンネルが見つかりません。もしくはサポートされていない種類のチャンネルです。
+      description: |-
+        自分が未読のチャンネルを既読にします。
+
+        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
       tags:
         - me
         - notification
