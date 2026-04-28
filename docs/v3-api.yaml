@@ -3602,7 +3602,7 @@ paths:
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
 
-        channelIdはPublic Channel, DM Channel, Thread ChannelのいずれかのIDです。
+        channelIdはPublic ChannelIDです。
         それ以外の種類のチャンネルのIDを指定した場合は404 Not Foundが返されます。
   /webrtc/state:
     get:
