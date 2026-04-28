@@ -7377,6 +7377,36 @@ components:
       required:
         - id
         - userId
+    ThreadChannel:
+      title: ThreadChannel
+      type: object
+      description: スレッドチャンネル
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: チャンネルUUID
+        parentMessageId:
+          type: string
+          format: uuid
+          description: スレッドの親メッセージUUID
+        parentChannelId:
+          type: string
+          format: uuid
+          description: 親チャンネルUUID
+        archived:
+          type: boolean
+          description: アーカイブされているかどうか
+        name:
+          type: string
+          description: スレッドチャンネル名
+          pattern: "^\S(?:.*\S)?$"
+      required:
+        - id
+        - messageId
+        - parentId
+        - archived
+        - name
     ActivityTimelineMessage:
       title: ActivityTimelineMessage
       type: object
