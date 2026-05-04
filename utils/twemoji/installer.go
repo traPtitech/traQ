@@ -52,7 +52,7 @@ var replaceNameMap = map[string]string{
 	"woman_in_manual_wheelchair_facing_right":     "woman_manual_wheelchair_right",
 	"woman_in_motorized_wheelchair_facing_right":  "woman_powered_wheelchair_right",
 	"person_in_motorized_wheelchair_facing_right": "person_powered_wheelchair_right",
-	"person_in_manual_wheelchair_facing_right":    "woman_manual_wheelchair_right",
+	"person_in_manual_wheelchair_facing_right":    "person_manual_wheelchair_right",
 	"woman_with_white_cane_facing_right":          "woman_white_cane_facing_right",
 	"person_with_white_cane_facing_right":         "person_white_cane_facing_right",
 }
