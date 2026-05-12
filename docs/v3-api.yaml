@@ -39,7 +39,7 @@ paths:
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       operationId: postMessage
       requestBody:
@@ -55,7 +55,7 @@ paths:
       summary: チャンネルメッセージのリストを取得
       description: |-
         指定したチャンネルのメッセージのリストを取得します。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       operationId: getMessages
       tags:
@@ -399,7 +399,7 @@ paths:
       operationId: getChannelTopic
       description: |-
         指定したチャンネルのトピックを取得します。
-        
+
         channelIdにはPublicチャンネルのIDのみを指定することができます。
     put:
       summary: チャンネルトピックを編集
@@ -419,7 +419,7 @@ paths:
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
-        
+
         channelIdにはPublicチャンネルのIDのみを指定することができます。
       requestBody:
         content:
@@ -451,7 +451,7 @@ paths:
       operationId: getChannelViewers
       description: |-
         指定したチャンネルの閲覧者のリストを取得します。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   /files:
     post:
@@ -661,7 +661,7 @@ paths:
       operationId: getChannelPins
       description: |-
         指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   "/messages/{messageId}/stamps":
     parameters:
@@ -1481,7 +1481,7 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
-        
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
     put:
       summary: チャンネルの通知購読者を設定
@@ -1510,7 +1510,7 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
-        
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
       tags:
         - channel
@@ -1565,7 +1565,7 @@ paths:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
       description: |-
         自身の指定したチャンネルの購読レベルを設定します。
-        
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
   /webhooks:
     get:
@@ -3511,7 +3511,7 @@ paths:
       operationId: getChannelBots
       description: |-
         指定したチャンネルに参加しているBOTのリストを取得します。
-        
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
   /webrtc/authenticate:
     post:
@@ -3557,7 +3557,7 @@ paths:
       operationId: getChannel
       description: |-
         指定したチャンネルの情報を取得します。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
     patch:
       summary: チャンネル情報を変更
@@ -3586,7 +3586,7 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
-        
+
         channelIdにはPublicチャンネルのIDのみを指定することができます。
   /webrtc/state:
     get:
@@ -3868,7 +3868,7 @@ paths:
         - $ref: "#/components/parameters/orderInQuery"
       description: |-
         指定したチャンネルのイベントリストを取得します。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   /stamp-palettes:
     get:
@@ -4060,7 +4060,7 @@ paths:
             既読にしました。
       description: |-
         自分が未読のチャンネルを既読にします。
-        
+
         channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       tags:
         - me
@@ -4639,7 +4639,7 @@ paths:
     post:
       summary: LiveKit Webhook受信
       description: >
-        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
+        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
       operationId: liveKitWebhook
       tags:
@@ -4662,7 +4662,7 @@ paths:
     get:
       summary: サウンドボード用の音声一覧を取得
       description: >
-        DBに保存されたサウンドボード情報を取得します。  
+        DBに保存されたサウンドボード情報を取得します。
         各アイテムには soundId, soundName, stampId が含まれます。
       operationId: getSoundboardList
       tags:
@@ -4680,8 +4680,8 @@ paths:
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
       description: >
-        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
-        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
+        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
+        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
       operationId: postSoundboard
       tags:
@@ -4708,8 +4708,8 @@ paths:
     post:
       summary: アップロード済み音声を LiveKit ルームで再生
       description: >
-        S3上にある音声ファイルの署名付きURLを生成し、  
-        Ingressを介して指定ルームに音声を流します。    
+        S3上にある音声ファイルの署名付きURLを生成し、
+        Ingressを介して指定ルームに音声を流します。
         該当ルームに参加しているユーザであれば再生可能とします。
       operationId: postSoundboardPlay
       tags:
