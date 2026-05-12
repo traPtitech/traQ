@@ -39,6 +39,8 @@ paths:
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       operationId: postMessage
       requestBody:
         content:
@@ -51,7 +53,10 @@ paths:
         - channel
     get:
       summary: チャンネルメッセージのリストを取得
-      description: 指定したチャンネルのメッセージのリストを取得します。
+      description: |-
+        指定したチャンネルのメッセージのリストを取得します。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       operationId: getMessages
       tags:
         - channel
@@ -369,7 +374,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelStats
-      description: 指定したチャンネルの統計情報を取得します。
+      description: |-
+        指定したチャンネルの統計情報を取得します。
+
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   "/channels/{channelId}/topic":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -389,7 +397,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelTopic
-      description: 指定したチャンネルのトピックを取得します。
+      description: |-
+        指定したチャンネルのトピックを取得します。
+        
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
     put:
       summary: チャンネルトピックを編集
       responses:
@@ -408,6 +419,8 @@ paths:
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
+        
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
       requestBody:
         content:
           application/json:
@@ -436,7 +449,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelViewers
-      description: 指定したチャンネルの閲覧者のリストを取得します。
+      description: |-
+        指定したチャンネルの閲覧者のリストを取得します。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   /files:
     post:
       summary: ファイルをアップロード
@@ -643,7 +659,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelPins
-      description: 指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+      description: |-
+        指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   "/messages/{messageId}/stamps":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -1427,7 +1446,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
-      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+      description: |-
+        指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+
+        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1459,6 +1481,8 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
+        
+        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1486,6 +1510,8 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
+        
+        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
       tags:
         - channel
         - notification
@@ -1537,7 +1563,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
-      description: 自身の指定したチャンネルの購読レベルを設定します。
+      description: |-
+        自身の指定したチャンネルの購読レベルを設定します。
+        
+        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -3480,7 +3509,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
-      description: 指定したチャンネルに参加しているBOTのリストを取得します。
+      description: |-
+        指定したチャンネルに参加しているBOTのリストを取得します。
+        
+        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3523,7 +3555,10 @@ paths:
         "404":
           description: Not Found
       operationId: getChannel
-      description: 指定したチャンネルの情報を取得します。
+      description: |-
+        指定したチャンネルの情報を取得します。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3551,6 +3586,8 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
+        
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -3829,7 +3866,10 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したチャンネルのイベントリストを取得します。
+      description: |-
+        指定したチャンネルのイベントリストを取得します。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4018,7 +4058,10 @@ paths:
           description: |-
             No Content
             既読にしました。
-      description: 自分が未読のチャンネルを既読にします。
+      description: |-
+        自分が未読のチャンネルを既読にします。
+        
+        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       tags:
         - me
         - notification
