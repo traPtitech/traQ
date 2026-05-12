@@ -3673,6 +3673,30 @@ paths:
               - createdAt
               - "-createdAt"
           description: "ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`)"
+  /threads/{channelId}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    patch:
+      summary: スレッド情報を変更
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      operationId: editThread
+      tags:
+        - channel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchThreadRequest"
+      description: |-
+        指定したスレッドの情報を変更します。
+
+        channelIdにはThreadチャンネルのIDのみを指定することができます。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -6233,6 +6257,17 @@ components:
           type: string
           format: uuid
           description: 親メッセージのUUID
+    PatchThreadRequest:
+      title: PatchThreadRequest
+      type: object
+      description: スレッド情報変更リクエスト
+      properties:
+        name:
+          type: string
+          description: スレッド名
+        archived:
+          type: boolean
+          description: アーカイブされているかどうか
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
