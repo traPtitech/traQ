@@ -3588,6 +3588,91 @@ paths:
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
 
         channelIdにはPublicチャンネルのIDのみを指定することができます。
+  /channels/{channelId}/threads:
+    post:
+      summary: スレッドを作成
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadChannel"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: |-
+            Conflict
+            指定したメッセージにはすでにスレッドが作成されています。
+      operationId: createThread
+      tags:
+        - channel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostThreadRequest"
+      description: |-
+        スレッドを作成します。
+        指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+    get:
+      summary: スレッドリストを取得
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                title: ThreadList
+                type: array
+                description: スレッド取得結果
+                items:
+                  $ref: "#/components/schemas/ThreadChannel"
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      operationId: getThreads
+      tags:
+        - channel
+      description: |-
+        スレッドのリストを取得します。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: archived
+          description: アーカイブされたスレッドを含めるかどうか
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: 取得するスレッドの最大件数
+        - schema:
+            type: integer
+            minimum: 0
+          in: query
+          name: offset
+          description: 取得するスレッドのオフセット
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: "-createdAt"
+            enum:
+              - createdAt
+              - "-createdAt"
+          description: "ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`)"
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -6136,6 +6221,18 @@ components:
       required:
         - name
         - parent
+    PostThreadRequest:
+      title: PostThreadRequest
+      type: object
+      description: スレッド作成リクエスト
+      properties:
+        name:
+          type: string
+          description: スレッド名
+        parent:
+          type: string
+          format: uuid
+          description: 親メッセージのUUID
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
