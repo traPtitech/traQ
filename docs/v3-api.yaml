@@ -6257,6 +6257,9 @@ components:
           type: string
           format: uuid
           description: 親メッセージのUUID
+      required:
+        - name
+        - parent
     PatchThreadRequest:
       title: PatchThreadRequest
       type: object
