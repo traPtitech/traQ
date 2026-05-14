@@ -3589,6 +3589,8 @@ paths:
 
         channelIdにはPublicチャンネルのIDのみを指定することができます。
   /channels/{channelId}/threads:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
     post:
       summary: スレッドを作成
       responses:
