@@ -98,6 +98,16 @@ type Config struct {
 		Password string `mapstructure:"password" yaml:"password"`
 	} `mapstructure:"es" yaml:"es"`
 
+	// ImageSearch 画像検索用外部サーバー設定
+	ImageSearch struct {
+		// URL 外部サーバーのURL (default: "" = 無効)
+		URL string `mapstructure:"url" yaml:"url"`
+		// Timeout リクエストタイムアウト秒数 (default: 10)
+		Timeout int `mapstructure:"timeout" yaml:"timeout"`
+		// VectorDimension Embeddingベクトルの次元数 (default: 768)
+		VectorDimension int `mapstructure:"vectorDimension" yaml:"vectorDimension"`
+	} `mapstructure:"imageSearch" yaml:"imageSearch"`
+
 	// Storage ファイルストレージ設定
 	Storage struct {
 		// Type ストレージタイプ (default: local)
@@ -289,6 +299,9 @@ func init() {
 	viper.SetDefault("es.url", "")
 	viper.SetDefault("es.username", "elastic")
 	viper.SetDefault("es.password", "password")
+	viper.SetDefault("imageSearch.url", "")
+	viper.SetDefault("imageSearch.timeout", 10)
+	viper.SetDefault("imageSearch.vectorDimension", 768)
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -464,9 +477,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(mm, cm, repo, logger, config)
+		return search.NewESEngine(mm, cm, repo, fs, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
@@ -484,6 +497,11 @@ func provideESEngineConfig(c *Config) search.ESEngineConfig {
 		URL:      c.ES.URL,
 		Username: c.ES.Username,
 		Password: c.ES.Password,
+		ImageSearch: search.ImageSearchConfig{
+			URL:             c.ImageSearch.URL,
+			Timeout:         time.Duration(c.ImageSearch.Timeout) * time.Second,
+			VectorDimension: c.ImageSearch.VectorDimension,
+		},
 	}
 }
 
