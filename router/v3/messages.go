@@ -19,7 +19,7 @@ import (
 func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	list, err := h.Repo.GetUserUnreadChannels(userID)
+	list, err := h.Repo.GetUserUnreadChannels(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -32,7 +32,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
+	if err := h.Repo.DeleteUnreadsByChannelID(c.Request().Context(), channelID, userID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -41,6 +41,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 
 // SearchMessages GET /messages
 func (h *Handlers) SearchMessages(c echo.Context) error {
+	ctx := c.Request().Context()
 	if !h.SearchEngine.Available() {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
 	}
@@ -52,7 +53,7 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 
 	if q.In.Valid {
 		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
-		ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), q.In.V)
+		ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), q.In.V)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -87,6 +88,7 @@ func (h *Handlers) GetMessage(c echo.Context) error {
 type PostMessageRequest struct {
 	Content string `json:"content"`
 	Embed   bool   `json:"embed" query:"embed"`
+	Nonce   string `json:"nonce"`
 }
 
 func (r PostMessageRequest) Validate() error {
@@ -97,12 +99,19 @@ func (r PostMessageRequest) Validate() error {
 
 // EditMessage PUT /messages/:messageID
 func (h *Handlers) EditMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
+	}
+
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
 	}
 
 	// 他人のテキストは編集できない
@@ -114,7 +123,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	if err := h.MessageManager.Edit(m.GetID(), req.Content); err != nil {
+	if err := h.MessageManager.Edit(ctx, m.GetID(), req.Content); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -127,11 +136,12 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 
 // DeleteMessage DELETE /messages/:messageID
 func (h *Handlers) DeleteMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
 	if muid := m.GetUserID(); muid != userID {
-		mUser, err := h.Repo.GetUser(muid, false)
+		mUser, err := h.Repo.GetUser(ctx, muid, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -141,7 +151,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			return herror.Forbidden("you are not allowed to delete this message")
 		case model.UserTypeBot:
 			// BOTのメッセージの削除権限の確認
-			wh, err := h.Repo.GetBotByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetBotByBotUserID(ctx, mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted bot
@@ -156,7 +166,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			}
 		case model.UserTypeWebhook:
 			// Webhookのメッセージの削除権限の確認
-			wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
+			wh, err := h.Repo.GetWebhookByBotUserID(ctx, mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound: // deleted webhook
@@ -172,7 +182,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 		}
 	}
 
-	if err := h.MessageManager.Delete(m.GetID()); err != nil {
+	if err := h.MessageManager.Delete(ctx, m.GetID()); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -194,8 +204,9 @@ func (h *Handlers) GetPin(c echo.Context) error {
 
 // CreatePin POST /messages/:messageID/pin
 func (h *Handlers) CreatePin(c echo.Context) error {
+	ctx := c.Request().Context()
 	m := getParamMessage(c)
-	p, err := h.MessageManager.Pin(m.GetID(), getRequestUserID(c))
+	p, err := h.MessageManager.Pin(ctx, m.GetID(), getRequestUserID(c))
 	if err != nil {
 		switch err {
 		case message.ErrAlreadyExists:
@@ -213,8 +224,9 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 
 // RemovePin DELETE /messages/:messageID/pin
 func (h *Handlers) RemovePin(c echo.Context) error {
+	ctx := c.Request().Context()
 	m := getParamMessage(c)
-	if err := h.MessageManager.Unpin(m.GetID(), getRequestUserID(c)); err != nil {
+	if err := h.MessageManager.Unpin(ctx, m.GetID(), getRequestUserID(c)); err != nil {
 		switch err {
 		case message.ErrNotFound:
 			return herror.NotFound("pin was not found")
@@ -248,6 +260,7 @@ func (r *PostMessageStampRequest) Validate() error {
 
 // AddMessageStamp POST /messages/:messageID/stamps/:stampID
 func (h *Handlers) AddMessageStamp(c echo.Context) error {
+	ctx := c.Request().Context()
 	var req PostMessageStampRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -258,7 +271,7 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージに押す
-	if _, err := h.MessageManager.AddStamps(messageID, stampID, userID, req.Count); err != nil {
+	if _, err := h.MessageManager.AddStamps(ctx, messageID, stampID, userID, req.Count); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -272,12 +285,13 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(messageID, stampID, userID); err != nil {
+	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
@@ -294,7 +308,7 @@ func (h *Handlers) GetMessageClips(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
-	clips, err := h.Repo.GetMessageClips(userID, messageID)
+	clips, err := h.Repo.GetMessageClips(c.Request().Context(), userID, messageID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -316,6 +330,7 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	ch := getParamChannel(c)
 
@@ -324,11 +339,17 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		return err
 	}
 
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
+	}
+
 	if req.Embed {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.MessageManager.Create(ch.ID, userID, req.Content)
+	m, err := h.MessageManager.Create(ctx, ch.ID, userID, req.Content)
 	if err != nil {
 		switch err {
 		case message.ErrChannelArchived:
@@ -342,6 +363,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 
 // GetDirectMessages GET /users/:userId/messages
 func (h *Handlers) GetDirectMessages(c echo.Context) error {
+	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)
 
@@ -351,7 +373,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(ctx, myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -361,6 +383,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 // PostDirectMessage POST /users/:userId/messages
 func (h *Handlers) PostDirectMessage(c echo.Context) error {
+	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)
 
@@ -369,11 +392,17 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		return err
 	}
 
+	if req.Nonce != "" {
+		if !h.NonceManager.NonceChecker(req.Nonce) {
+			return herror.BadRequest("this nonce is duplicated")
+		}
+	}
+
 	if req.Embed {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.MessageManager.CreateDM(myID, targetID, req.Content)
+	m, err := h.MessageManager.CreateDM(ctx, myID, targetID, req.Content)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

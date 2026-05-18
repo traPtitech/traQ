@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image/png"
 
@@ -14,7 +15,7 @@ import (
 // GenerateIconFile アイコンファイルを生成します
 //
 // 成功した場合、そのファイルのUUIDとnilを返します。
-func GenerateIconFile(m Manager, salt string) (uuid.UUID, error) {
+func GenerateIconFile(ctx context.Context, m Manager, salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	icon, err := imaging.GenerateIcon(salt)
 	if err != nil {
@@ -25,7 +26,7 @@ func GenerateIconFile(m Manager, salt string) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	file, err := m.Save(SaveArgs{
+	file, err := m.Save(ctx, SaveArgs{
 		FileName:  fmt.Sprintf("%s.png", salt),
 		FileSize:  int64(img.Len()),
 		MimeType:  "image/png",

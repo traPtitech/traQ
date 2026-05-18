@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	jsonIter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/utils/etag"
 )
 
 func scanETag(s string) (eTag string, remain string) {
@@ -190,20 +190,12 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 
 // ServeJSONWithETag Etagを付与してJSONを返します。304を返せるときは304を返します。
 func ServeJSONWithETag(c echo.Context, i interface{}) error {
-	j := jsonIter.Config{
-		EscapeHTML:                    false,
-		MarshalFloatWith6Digits:       true,
-		ObjectFieldMustBeSimpleString: true,
-		// ここより上はjsonIter.ConfigFastestと同様
-		SortMapKeys: true, // 順番が一致しないとEtagが一致しないのでソートを有効にする
-	}.Froze()
-
 	var b []byte
 	var err error
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		b, err = j.MarshalIndent(i, "", "  ")
+		b, err = etag.JSONIter.MarshalIndent(i, "", "  ")
 	} else {
-		b, err = j.Marshal(i)
+		b, err = etag.JSONIter.Marshal(i)
 	}
 	if err != nil {
 		return err
@@ -222,4 +214,39 @@ func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 		return err
 	}
 	return c.Blob(http.StatusOK, contentType, bytes)
+}
+
+// ServeJSONWithPrecomputedETag 事前に計算されたEtagを付与してJSONを返します。リクエストの条件に合うときは304を返します。
+func ServeJSONWithPrecomputedETag[T any](c echo.Context, e *etag.Entity[T]) error {
+	var b []byte
+	var err error
+	eTag := e.ETag()
+
+	// NOTE: prettyのときはETagを再計算する
+	if _, pretty := c.QueryParams()["pretty"]; pretty {
+		b, err = etag.JSONIter.MarshalIndent(e.Value(), "", "  ")
+		if err != nil {
+			return err
+		}
+
+		eTag = etag.FromBytes(b)
+	}
+
+	c.Response().Header().Set(consts.HeaderETag, "\""+eTag+"\"")
+
+	done, err := CheckPreconditions(c, time.Time{})
+	if err != nil {
+		return err
+	} else if done {
+		return nil
+	}
+
+	if len(b) == 0 {
+		b, err = etag.JSONIter.Marshal(e.Value())
+		if err != nil {
+			return err
+		}
+	}
+
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, b)
 }

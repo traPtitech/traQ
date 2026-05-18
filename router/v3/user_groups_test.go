@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -51,7 +52,7 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 
 	ug := env.CreateUserGroup(t, "SysAd", "po", "", user.GetID())
 	env.AddUserToUserGroup(t, user2.GetID(), ug.ID, "")
-	ug, err := env.Repository.GetUserGroup(ug.ID)
+	ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 	require.NoError(t, err)
 
 	s := env.S(t, user.GetID())
@@ -109,7 +110,42 @@ func TestPostUserGroupRequest_Validate(t *testing.T) {
 		},
 		{
 			"invalid name 2",
+			fields{Name: "＠po"},
+			true,
+		},
+		{
+			"invalid name 3",
 			fields{Name: ":po:"},
+			true,
+		},
+		{
+			"invalid name 4",
+			fields{Name: "po:po"},
+			true,
+		},
+		{
+			"invalid name 5",
+			fields{Name: "：po"},
+			true,
+		},
+		{
+			"invalid name 6",
+			fields{Name: "#po"},
+			true,
+		},
+		{
+			"invalid name 7",
+			fields{Name: "＃po"},
+			true,
+		},
+		{
+			"invalid name 8",
+			fields{Name: "po po"},
+			true,
+		},
+		{
+			"invalid name 9",
+			fields{Name: "po　po"},
 			true,
 		},
 		{
@@ -214,7 +250,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 
 	ug := env.CreateUserGroup(t, rand, "po", "", user.GetID())
 	env.AddUserToUserGroup(t, user2.GetID(), ug.ID, "")
-	ug, err := env.Repository.GetUserGroup(ug.ID)
+	ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 	require.NoError(t, err)
 
 	s := env.S(t, user.GetID())
@@ -384,7 +420,7 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, "testGroup456", ug.Name)
 	})
@@ -437,7 +473,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetUserGroup(ug.ID)
+		_, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
@@ -550,7 +586,7 @@ func TestHandlers_AddUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		if assert.Len(t, ug.Members, 1) {
 			m := ug.Members[0]
@@ -621,7 +657,7 @@ func TestHandlers_AddUsersGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		if assert.Len(t, ug.Members, 2) {
 			m := ug.Members[0]
@@ -747,7 +783,7 @@ func TestHandlers_EditUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		if assert.Len(t, ug.Members, 1) {
 			m := ug.Members[0]
@@ -815,7 +851,7 @@ func TestHandlers_RemoveUserGroupMember(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		assert.Len(t, ug.Members, 0)
 
@@ -885,7 +921,7 @@ func TestHandlers_RemoveUserGroupMembers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		assert.Len(t, ug.Members, 0)
 
@@ -1015,7 +1051,7 @@ func TestHandlers_AddUserGroupAdmin(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 
 		admins := make([]uuid.UUID, len(ug.Admins))
@@ -1038,8 +1074,8 @@ func TestHandlers_RemoveUserGroupAdmin(t *testing.T) {
 	ug := env.CreateUserGroup(t, rand, "", "", user.GetID())
 	ug2 := env.CreateUserGroup(t, rand, "", "", user.GetID())
 	ug3 := env.CreateUserGroup(t, rand, "", "", user2.GetID())
-	require.NoError(t, env.Repository.AddUserToGroupAdmin(user3.GetID(), ug.ID))
-	require.NoError(t, env.Repository.AddUserToGroupAdmin(user3.GetID(), ug3.ID))
+	require.NoError(t, env.Repository.AddUserToGroupAdmin(context.TODO(), user3.GetID(), ug.ID))
+	require.NoError(t, env.Repository.AddUserToGroupAdmin(context.TODO(), user3.GetID(), ug3.ID))
 
 	s := env.S(t, user.GetID())
 
@@ -1077,7 +1113,7 @@ func TestHandlers_RemoveUserGroupAdmin(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ug, err := env.Repository.GetUserGroup(ug.ID)
+		ug, err := env.Repository.GetUserGroup(context.TODO(), ug.ID)
 		require.NoError(t, err)
 		if assert.Len(t, ug.Admins, 1) {
 			admin := ug.Admins[0]

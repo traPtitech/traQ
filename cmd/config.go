@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	otelgorm "gorm.io/plugin/opentelemetry/tracing"
 
 	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/repository"
@@ -440,6 +441,11 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 	if c.DevMode {
 		engine.Logger.LogMode(logger.Info)
 	}
+
+	if err := engine.Use(otelgorm.NewPlugin(otelgorm.WithoutQueryVariables())); err != nil {
+		return nil, fmt.Errorf("failed to setup GORM OpenTelemetry plugin: %w", err)
+	}
+
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").Session(&gorm.Session{}), nil
 }
 
@@ -448,7 +454,7 @@ func initStackdriverProfiler(c *Config) error {
 		Service:        "traq",
 		ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
 		ProjectID:      c.GCP.ServiceAccount.ProjectID,
-	}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
+	}, option.WithAuthCredentialsFile(option.ServiceAccount, c.GCP.ServiceAccount.File))
 }
 
 func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (fcm.Client, error) {

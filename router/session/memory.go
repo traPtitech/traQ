@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
@@ -50,20 +51,20 @@ func (s *memorySession) LoggedIn() bool {
 	return s.userID != uuid.Nil
 }
 
-func (s *memorySession) Get(key string) (interface{}, error) {
+func (s *memorySession) Get(_ context.Context, key string) (interface{}, error) {
 	s.Lock()
 	defer s.Unlock()
 	return s.data[key], nil
 }
 
-func (s *memorySession) Set(key string, value interface{}) error {
+func (s *memorySession) Set(_ context.Context, key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
 	s.data[key] = value
 	return nil
 }
 
-func (s *memorySession) Delete(key string) error {
+func (s *memorySession) Delete(_ context.Context, key string) error {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.data, key)
@@ -98,7 +99,7 @@ func (ms *memoryStore) GetSession(c echo.Context) (Session, error) {
 
 	var s Session
 	if len(token) > 0 {
-		s, err = ms.GetSessionByToken(token)
+		s, err = ms.GetSessionByToken(c.Request().Context(), token)
 		if err != nil && err != ErrSessionNotFound {
 			return nil, err
 		}
@@ -116,7 +117,7 @@ func (ms *memoryStore) GetSession(c echo.Context) (Session, error) {
 	return nil, ms.RevokeSession(c)
 }
 
-func (ms *memoryStore) GetSessionByToken(token string) (Session, error) {
+func (ms *memoryStore) GetSessionByToken(_ context.Context, token string) (Session, error) {
 	if len(token) == 0 {
 		return nil, ErrSessionNotFound
 	}
@@ -130,7 +131,7 @@ func (ms *memoryStore) GetSessionByToken(token string) (Session, error) {
 	return s, nil
 }
 
-func (ms *memoryStore) GetSessionsByUserID(userID uuid.UUID) ([]Session, error) {
+func (ms *memoryStore) GetSessionsByUserID(_ context.Context, userID uuid.UUID) ([]Session, error) {
 	if userID == uuid.Nil {
 		return []Session{}, nil
 	}
@@ -166,7 +167,7 @@ func (ms *memoryStore) RevokeSession(c echo.Context) error {
 	return nil
 }
 
-func (ms *memoryStore) RevokeSessionByRefID(refID uuid.UUID) error {
+func (ms *memoryStore) RevokeSessionByRefID(_ context.Context, refID uuid.UUID) error {
 	if refID == uuid.Nil {
 		return nil
 	}
@@ -181,7 +182,7 @@ func (ms *memoryStore) RevokeSessionByRefID(refID uuid.UUID) error {
 	return nil
 }
 
-func (ms *memoryStore) RevokeSessionsByUserID(userID uuid.UUID) error {
+func (ms *memoryStore) RevokeSessionsByUserID(_ context.Context, userID uuid.UUID) error {
 	if userID == uuid.Nil {
 		return nil
 	}
@@ -196,6 +197,7 @@ func (ms *memoryStore) RevokeSessionsByUserID(userID uuid.UUID) error {
 }
 
 func (ms *memoryStore) RenewSession(c echo.Context, userID uuid.UUID) (Session, error) {
+	ctx := c.Request().Context()
 	cookie, _ := c.Cookie(CookieName)
 	if cookie != nil && len(cookie.Value) > 0 {
 		ms.Lock()
@@ -205,7 +207,7 @@ func (ms *memoryStore) RenewSession(c echo.Context, userID uuid.UUID) (Session, 
 		cookie = &http.Cookie{}
 	}
 
-	s, err := ms.IssueSession(userID, nil)
+	s, err := ms.IssueSession(ctx, userID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +223,7 @@ func (ms *memoryStore) RenewSession(c echo.Context, userID uuid.UUID) (Session, 
 	return s, nil
 }
 
-func (ms *memoryStore) IssueSession(userID uuid.UUID, data map[string]interface{}) (Session, error) {
+func (ms *memoryStore) IssueSession(_ context.Context, userID uuid.UUID, data map[string]interface{}) (Session, error) {
 	if data == nil {
 		data = map[string]interface{}{}
 	}

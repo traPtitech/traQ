@@ -19,10 +19,10 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/tracing"
 	"github.com/traPtitech/traQ/utils/twemoji"
 )
 
@@ -35,10 +35,21 @@ func serveCommand() *cobra.Command {
 		Short: "Serve traQ API",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getLogger()
+			logger, gormLogger := getLogger()
 			defer logger.Sync()
 
 			logger.Info(fmt.Sprintf("traQ %s (revision %s)", Version, Revision))
+
+			// OpenTelemetry Tracing
+			shutdownTracer, err := tracing.InitTracer(context.Background(), "traQ")
+			if err != nil {
+				logger.Fatal("failed to initialize tracer", zap.Error(err))
+			}
+			defer func() {
+				if err := shutdownTracer(context.Background()); err != nil {
+					logger.Error("failed to shutdown tracer", zap.Error(err))
+				}
+			}()
 
 			// Stackdriver Profiler
 			if c.GCP.Stackdriver.Profiler.Enabled {
@@ -57,7 +68,7 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.Logger = gormzap.New(logger.Named("gorm"))
+			engine.Logger = gormLogger
 			db, err := engine.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -108,7 +119,7 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initializing...")
 
 				// システムユーザーロール投入
-				if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+				if err := repo.CreateUserRoles(context.Background(), role.SystemRoleModels()...); err != nil {
 					logger.Fatal("failed to init system user roles", zap.Error(err))
 				}
 				if err := server.SS.RBAC.Reload(); err != nil {
@@ -116,11 +127,11 @@ func serveCommand() *cobra.Command {
 				}
 
 				// 管理者ユーザーの作成
-				fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
+				fid, err := file.GenerateIconFile(context.Background(), server.SS.FileManager, "traq")
 				if err != nil {
 					logger.Fatal("failed to generate icon file", zap.Error(err))
 				}
-				u, err := repo.CreateUser(repository.CreateUserArgs{
+				u, err := repo.CreateUser(context.Background(), repository.CreateUserArgs{
 					Name:       "traq",
 					Password:   "traq",
 					Role:       role.Admin,
@@ -133,7 +144,7 @@ func serveCommand() *cobra.Command {
 				}
 
 				// generalチャンネル作成
-				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+				if ch, err := server.SS.ChannelManager.CreatePublicChannel(context.Background(), "general", uuid.Nil, uuid.Nil); err == nil {
 					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
 				} else {
 					logger.Error("failed to init general channel", zap.Error(err))
@@ -189,7 +200,7 @@ func (s *Server) Start(address string) error {
 		for ev := range sub.Receiver {
 			userID := ev.Fields["user_id"].(uuid.UUID)
 			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
+			_ = s.Repo.UpdateUser(context.Background(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
 		}
 	}()
 	s.SS.StampThrottler.Start()

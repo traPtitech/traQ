@@ -136,7 +136,7 @@ func CheckFileAccessPerm(fm file.Manager) echo.MiddlewareFunc {
 			}
 
 			// アクセス権確認
-			if ok, err := fm.Accessible(f.GetID(), userID); err != nil {
+			if ok, err := fm.Accessible(c.Request().Context(), f.GetID(), userID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.Forbidden()
@@ -172,7 +172,7 @@ func CheckMessageAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 			channelID := c.Get(consts.KeyParamMessage).(message.Message).GetChannelID()
 
 			// アクセス権確認
-			if ok, err := cm.IsChannelAccessibleToUser(userID, channelID); err != nil {
+			if ok, err := cm.IsChannelAccessibleToUser(c.Request().Context(), userID, channelID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.NotFound()
@@ -191,7 +191,7 @@ func CheckChannelAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
 
 			// アクセス権確認
-			if ok, err := cm.IsChannelAccessibleToUser(userID, ch.ID); err != nil {
+			if ok, err := cm.IsChannelAccessibleToUser(c.Request().Context(), userID, ch.ID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.NotFound()

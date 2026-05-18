@@ -14,10 +14,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/traPtitech/traQ/utils/message"
 )
 
 var (
@@ -90,9 +90,9 @@ func Execute() error {
 	return rootCommand.Execute()
 }
 
-func getLogger() (logger *zap.Logger) {
+func getLogger() (*zap.Logger, *gormzap.L) {
 	if c.DevMode {
-		return getCLILogger()
+		return getCLILoggers()
 	}
 	cfg := zap.Config{
 		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
@@ -101,11 +101,14 @@ func getLogger() (logger *zap.Logger) {
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
 	}
-	logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
-	return
+	zapLogger, _ := cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
+
+	gormLogger := gormzap.New(zapLogger.Named("gorm"), gormzap.WithParameterizedQueries(true))
+
+	return zapLogger, gormLogger
 }
 
-func getCLILogger() (logger *zap.Logger) {
+func getCLILoggers() (*zap.Logger, *gormzap.L) {
 	level := zap.NewAtomicLevel()
 	if c.DevMode {
 		level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -130,8 +133,11 @@ func getCLILogger() (logger *zap.Logger) {
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
 	}
-	logger, _ = cfg.Build()
-	return
+	zapLogger, _ := cfg.Build()
+
+	gormLogger := gormzap.New(zapLogger.Named("gorm"), gormzap.WithParameterizedQueries(true))
+
+	return zapLogger, gormLogger
 }
 
 func bindPFlag(flags *pflag.FlagSet, key string, flag ...string) {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"image/png"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -47,7 +47,7 @@ func filePruneCommand() *cobra.Command {
 		Short: "delete files which are not used or linked to anywhere",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -55,7 +55,7 @@ func filePruneCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -115,7 +115,7 @@ func filePruneCommand() *cobra.Command {
 			for _, file := range files {
 				logger.Sugar().Infof("%s - %s", file.ID, file.CreatedAt)
 				if !dryRun {
-					if err := fm.Delete(file.ID); err != nil {
+					if err := fm.Delete(context.Background(), file.ID); err != nil {
 						logger.Fatal(err.Error())
 					}
 				}
@@ -154,7 +154,7 @@ func genMissingThumbnails() *cobra.Command {
 		Short: "Generate missing thumbnails",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -162,7 +162,7 @@ func genMissingThumbnails() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -346,7 +346,7 @@ func genGroupImages() *cobra.Command {
 		Short: "Generate missing icons for user groups",
 		Run: func(_ *cobra.Command, _ []string) {
 			// Logger
-			logger := getCLILogger()
+			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
 			// Database
@@ -354,7 +354,7 @@ func genGroupImages() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.Logger = gormzap.New(logger.Named("gorm"))
+			db.Logger = gormLogger
 			sqlDB, err := db.DB()
 			if err != nil {
 				logger.Fatal("failed to get *sql.DB", zap.Error(err))
@@ -390,11 +390,11 @@ func genGroupImages() *cobra.Command {
 			logger.Info(fmt.Sprintf("Generating default images for %v group(s)", len(groups)))
 
 			for _, group := range groups {
-				iconFileID, err := file.GenerateIconFile(fm, group.Name)
+				iconFileID, err := file.GenerateIconFile(context.Background(), fm, group.Name)
 				if err != nil {
 					logger.Fatal("failed to generate image", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
 				}
-				if err := repo.UpdateUserGroup(group.ID, repository.UpdateUserGroupArgs{Icon: optional.From(iconFileID)}); err != nil {
+				if err := repo.UpdateUserGroup(context.Background(), group.ID, repository.UpdateUserGroupArgs{Icon: optional.From(iconFileID)}); err != nil {
 					logger.Fatal("failed to update user group", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
 				}
 			}

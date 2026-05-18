@@ -52,7 +52,7 @@ var BotUserNameRuleRequired = append([]vd.Rule{
 
 // UserGroupNameRule ユーザーグループ名バリデーションルール
 var UserGroupNameRule = []vd.Rule{
-	vd.Match(regexp.MustCompile(`^[^@＠#＃]*[^@＠#＃:]$`)).Error("must not contain [@＠#＃] and the last character must not be :"),
+	vd.Match(regexp.MustCompile(`^[^@＠#＃:： 　]*$`)).Error("must not contain [@＠#＃:：] and spaces"),
 	vd.RuneLength(1, 30),
 }
 

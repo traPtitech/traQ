@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,9 +36,9 @@ func (m *MockUserRoleRepository) EXPECT() *MockUserRoleRepositoryMockRecorder {
 }
 
 // CreateUserRoles mocks base method.
-func (m *MockUserRoleRepository) CreateUserRoles(roles ...*model.UserRole) error {
+func (m *MockUserRoleRepository) CreateUserRoles(ctx context.Context, roles ...*model.UserRole) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{}
+	varargs := []interface{}{ctx}
 	for _, a := range roles {
 		varargs = append(varargs, a)
 	}
@@ -47,22 +48,23 @@ func (m *MockUserRoleRepository) CreateUserRoles(roles ...*model.UserRole) error
 }
 
 // CreateUserRoles indicates an expected call of CreateUserRoles.
-func (mr *MockUserRoleRepositoryMockRecorder) CreateUserRoles(roles ...interface{}) *gomock.Call {
+func (mr *MockUserRoleRepositoryMockRecorder) CreateUserRoles(ctx interface{}, roles ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).CreateUserRoles), roles...)
+	varargs := append([]interface{}{ctx}, roles...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).CreateUserRoles), varargs...)
 }
 
 // GetAllUserRoles mocks base method.
-func (m *MockUserRoleRepository) GetAllUserRoles() ([]*model.UserRole, error) {
+func (m *MockUserRoleRepository) GetAllUserRoles(ctx context.Context) ([]*model.UserRole, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllUserRoles")
+	ret := m.ctrl.Call(m, "GetAllUserRoles", ctx)
 	ret0, _ := ret[0].([]*model.UserRole)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllUserRoles indicates an expected call of GetAllUserRoles.
-func (mr *MockUserRoleRepositoryMockRecorder) GetAllUserRoles() *gomock.Call {
+func (mr *MockUserRoleRepositoryMockRecorder) GetAllUserRoles(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).GetAllUserRoles))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).GetAllUserRoles), ctx)
 }

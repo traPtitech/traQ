@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -39,15 +40,13 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 		wellKnown.GET("/reset-password", func(c echo.Context) error {
 			return c.Redirect(http.StatusFound, "/settings/session")
 		})
-		wellKnown.GET("/openid-configuration", func(c echo.Context) error {
-			return c.Redirect(http.StatusFound, "/api/v3/oauth2/oidc/discovery")
-		})
+		wellKnown.GET("/openid-configuration", r.oauth2.OIDCDiscovery)
 		wellKnown.GET("/security.txt", func(c echo.Context) error {
 			// Contactなどの情報が古くなっていないかを定期的に確認し、Expiresを*手動で*更新すること
 			// See: https://www.rfc-editor.org/rfc/rfc9116.html#section-5.3
 			return c.String(http.StatusOK, `Contact: mailto:info@trap.jp
 Contact: https://trap.jp/request
-Expires: 2026-03-31T23:59:59+09:00
+Expires: 2027-03-31T23:59:59+09:00
 Preferred-Languages: ja,en`)
 		})
 	}
@@ -103,6 +102,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
 	e.Use(middlewares.RequestID())
+	e.Use(otelecho.Middleware("traQ"))
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(logger.Named("access_log"), config.Development))
 	}

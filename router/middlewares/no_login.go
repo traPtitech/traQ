@@ -21,7 +21,7 @@ func NoLogin(sessStore session.Store, repo repository.Repository) echo.Middlewar
 				return herror.InternalServerError(err)
 			}
 			if sess != nil && sess.LoggedIn() {
-				user, err := repo.GetUser(sess.UserID(), false)
+				user, err := repo.GetUser(c.Request().Context(), sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}

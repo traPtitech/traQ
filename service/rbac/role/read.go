@@ -21,6 +21,7 @@ var readPerms = []permission.Permission{
 	permission.GetUserGroup,
 	permission.GetStamp,
 	permission.GetMyStampHistory,
+	permission.GetMyStampRecommendations,
 	permission.DownloadFile,
 	permission.GetWebhook,
 	permission.GetBot,

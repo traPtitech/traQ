@@ -23,6 +23,7 @@ var botPerms = []permission.Permission{
 	permission.GetOIDCUserInfo,
 	permission.EditMe,
 	permission.GetMyStampHistory,
+	permission.GetMyStampRecommendations,
 	permission.ChangeMyIcon,
 	permission.GetUserTag,
 	permission.EditUserTag,

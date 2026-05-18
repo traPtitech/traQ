@@ -3,6 +3,7 @@ package twemoji
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,9 +25,9 @@ const (
 		twemoji Copyright 2019 Twitter, Inc and other contributors
 		Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
 	*/
-	emojiZipURL  = "https://github.com/twitter/twemoji/archive/v14.0.2.zip"
-	emojiDir     = "twemoji-14.0.2/assets/svg/"
-	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-assets/v7.0.0/emoji.json"
+	emojiZipURL  = "https://github.com/jdecked/twemoji/archive/refs/tags/v15.1.0.zip"
+	emojiDir     = "twemoji-15.1.0/assets/svg/"
+	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-assets/v9.0.0/emoji.json"
 )
 
 type emojiMeta struct {
@@ -44,8 +45,16 @@ var replaceNameMap = map[string]string{
 	// 英数字以外の文字が含まれているので置き換え
 	"pi\u00f1ata": "pinata",
 	// 長すぎるので置き換え
-	"face_with_open_eyes_and_hand_over_mouth":  "face_with_open_eyes_hand",
-	"hand_with_index_finger_and_thumb_crossed": "hand_index_finger_thumb_crossed",
+	"face_with_open_eyes_and_hand_over_mouth":     "face_with_open_eyes_hand",
+	"hand_with_index_finger_and_thumb_crossed":    "hand_index_finger_thumb_crossed",
+	"man_in_motorized_wheelchair_facing_right":    "man_powered_wheelchair_right",
+	"man_in_manual_wheelchair_facing_right":       "man_manual_wheelchair_right",
+	"woman_in_manual_wheelchair_facing_right":     "woman_manual_wheelchair_right",
+	"woman_in_motorized_wheelchair_facing_right":  "woman_powered_wheelchair_right",
+	"person_in_motorized_wheelchair_facing_right": "person_powered_wheelchair_right",
+	"person_in_manual_wheelchair_facing_right":    "person_manual_wheelchair_right",
+	"woman_with_white_cane_facing_right":          "woman_white_cane_facing_right",
+	"person_with_white_cane_facing_right":         "person_white_cane_facing_right",
 }
 
 func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, update bool) error {
@@ -81,7 +90,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 		}
 		defer r.Close()
 
-		return fm.Save(file.SaveArgs{
+		return fm.Save(context.Background(), file.SaveArgs{
 			FileName: filename,
 			FileSize: f.FileInfo().Size(),
 			FileType: model.FileTypeStamp,
@@ -114,7 +123,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 			name = replacedName
 		}
 
-		s, err := repo.GetStampByName(name)
+		s, err := repo.GetStampByName(context.Background(), name)
 		if err != nil && err != repository.ErrNotFound {
 			return err
 		}
@@ -126,7 +135,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 				return err
 			}
 
-			s, err := repo.CreateStamp(repository.CreateStampArgs{
+			s, err := repo.CreateStamp(context.Background(), repository.CreateStampArgs{
 				Name:      name,
 				FileID:    meta.GetID(),
 				CreatorID: uuid.Nil,
@@ -148,7 +157,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 				return err
 			}
 
-			if err := repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
+			if err := repo.UpdateStamp(context.Background(), s.ID, repository.UpdateStampArgs{
 				FileID: optional.From(meta.GetID()),
 			}); err != nil {
 				return err

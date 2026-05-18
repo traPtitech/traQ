@@ -12,25 +12,28 @@ on:
       - 'docs/v3-api.yaml'
       - '.github/workflows/swagger-change.yml'
 
+permissions:
+  contents: read
+
 jobs:
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
       - name: Install spectral
         run: npm install --location=global @stoplight/spectral-cli
       - name: Run spectral
-        run: spectral lint docs/v3-openapi.yaml --ruleset .spectral.yml --verbose
+        run: spectral lint docs/v3-api.yaml --ruleset .spectral.yml --verbose
   node-traq:
     name: node-traq
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -45,7 +48,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -60,7 +63,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -75,7 +78,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |

@@ -39,44 +39,44 @@ type Manager interface {
 	// 成功した場合、メッセージとnilを返します。
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	Get(id uuid.UUID) (Message, error)
+	Get(ctx context.Context, id uuid.UUID) (Message, error)
 	// GetIn 指定したIDのメッセージをすべて取得します
 	// 存在チェックはせず、存在するメッセージだけを返します。
 	// キャッシュをバイパスすることに気をつけてください。
 	//
 	// 成功した場合、メッセージとnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetIn(ids []uuid.UUID) ([]Message, error)
+	GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 	// GetTimeline タイムラインを取得します
 	//
 	// 成功した場合、タイムラインとnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetTimeline(query TimelineQuery) (Timeline, error)
+	GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error)
 	// Create メッセージを作成します
 	//
 	// 成功した場合、メッセージとnilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// DBによるエラーを返すことがあります。
-	Create(channelID, userID uuid.UUID, content string) (Message, error)
+	Create(ctx context.Context, channelID, userID uuid.UUID, content string) (Message, error)
 	// CreateDM ダイレクトメッセージを作成します
 	//
 	// 成功した場合、メッセージとnilを返します。
 	// DBによるエラーを返すことがあります。
-	CreateDM(from, to uuid.UUID, content string) (Message, error)
+	CreateDM(ctx context.Context, from, to uuid.UUID, content string) (Message, error)
 	// Edit 指定したメッセージを編集します
 	//
 	// 成功した場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	Edit(id uuid.UUID, content string) error
+	Edit(ctx context.Context, id uuid.UUID, content string) error
 	// Delete 指定したメッセージを削除します
 	//
 	// 成功した場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	Delete(id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) error
 	// Pin 指定したユーザーによって指定したメッセージをピン留めします
 	//
 	// 成功した場合は、ピンとnilを返します。
@@ -85,7 +85,7 @@ type Manager interface {
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// チャンネルに既に上限数以上のメッセージがピン留めされていた場合、ErrPinLimitExceededを返します。
 	// DBによるエラーを返すことがあります。
-	Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error)
+	Pin(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*model.Pin, error)
 	// Unpin 指定したユーザーによって指定したメッセージのピン留めを外します
 	//
 	// 成功した場合は、nilを返します。
@@ -93,21 +93,21 @@ type Manager interface {
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	Unpin(id uuid.UUID, userID uuid.UUID) error
+	Unpin(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	// AddStamps 指定したメッセージに指定したユーザーの指定したスタンプを追加します
 	//
 	// 成功した場合、そのメッセージスタンプとnilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	AddStamps(id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error)
+	AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error)
 	// RemoveStamps 指定したメッセージから指定したユーザーの指定したスタンプを全て削除します
 	//
-	// 成功した、或いは既に削除されていた場合、nilを返します。
+	// 成功した場合、或いは既に削除されていた場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	RemoveStamps(id, stampID, userID uuid.UUID) error
+	RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID) error
 
 	Wait(ctx context.Context) error
 }

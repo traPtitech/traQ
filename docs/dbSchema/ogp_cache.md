@@ -2,7 +2,7 @@
 
 ## Description
 
-OGPキャッシュテーブルr
+OGPキャッシュテーブル
 
 <details>
 <summary><strong>Table Definition</strong></summary>
