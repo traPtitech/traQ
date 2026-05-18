@@ -5027,6 +5027,7 @@ components:
       required:
         - id
         - parentId
+        - parentMessageId
         - archived
         - force
         - topic
