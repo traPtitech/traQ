@@ -3591,38 +3591,6 @@ paths:
   /channels/{channelId}/threads:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
-    post:
-      summary: スレッドを作成
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ThreadChannel"
-        "400":
-          description: Bad Request
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-        "409":
-          description: |-
-            Conflict
-            指定したメッセージにはすでにスレッドが作成されています。
-      operationId: createThread
-      tags:
-        - channel
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PostThreadRequest"
-      description: |-
-        スレッドを作成します。
-        指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
     get:
       summary: スレッドリストを取得
       responses:
@@ -3675,6 +3643,39 @@ paths:
               - createdAt
               - "-createdAt"
           description: "ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`)"
+  /threads:
+    post:
+      summary: スレッドを作成
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadChannel"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: |-
+            Conflict
+            指定したメッセージにはすでにスレッドが作成されています。
+      operationId: createThread
+      tags:
+        - channel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostThreadRequest"
+      description: |-
+        スレッドを作成します。
+        指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
   /threads/{channelId}:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -6260,9 +6261,6 @@ components:
           type: string
           format: uuid
           description: 親メッセージのUUID
-      required:
-        - name
-        - parent
     PatchThreadRequest:
       title: PatchThreadRequest
       type: object
