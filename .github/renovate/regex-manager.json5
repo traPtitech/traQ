@@ -38,7 +38,7 @@
         // Example:
         // # renovate:image-full-digest
         // fooImage: "ghcr.io/motoki317/k8s-csi-s3:0.35.5-p1@sha256:..."
-        "# renovate:image-full-digest\n.*?\"(?<depName>[^\\s:@]+(?:/[^\\s:@]+)+):(?<currentValue>[^@\\s\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\"\n",
+        "# renovate:image-full-digest\n.*?\"(?<depName>[^\\s:@]+(?:/[^\\s:@]+)*):(?<currentValue>[^@\\s\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\"\n",
       ],
       "datasourceTemplate": "docker",
     },
