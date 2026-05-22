@@ -23,4 +23,11 @@
   "branchConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
+  "packageRules": [
+    {
+      "description": "Pin Docker image digests",
+      "matchDatasources": ["docker"],
+      "pinDigests": true,
+    },
+  ],
 }
