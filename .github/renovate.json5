@@ -3,6 +3,7 @@
   "extends": [
     "config:base",
     "docker:enableMajor",
+    "docker:pinDigests",
     ":disableRateLimiting",
     ":dependencyDashboard",
     ":semanticCommits",
@@ -23,11 +24,4 @@
   "branchConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
-  "packageRules": [
-    {
-      "description": "Pin Docker image digests",
-      "matchDatasources": ["docker"],
-      "pinDigests": true,
-    },
-  ],
 }
