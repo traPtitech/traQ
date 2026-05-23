@@ -21,6 +21,8 @@ jobs:
       image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Set TRAQ_VERSION env
         run: echo "TRAQ_VERSION=master-SNAPSHOT" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
@@ -60,6 +62,8 @@ jobs:
     needs: [image]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Pull docker image
         run: docker pull ghcr.io/traptitech/${IMAGE_NAME}@${{ needs.image.outputs.image-digest }}
       - name: Container image scan
