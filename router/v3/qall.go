@@ -28,7 +28,7 @@ func (h *Handlers) GetQallEndpoints(c echo.Context) error {
 
 // GetSoundboardItems GET /qall/soundboard
 func (h *Handlers) GetSoundboardItems(c echo.Context) error {
-	items, err := h.Repo.GetAllSoundboardItems()
+	items, err := h.Repo.GetAllSoundboardItems(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -51,7 +51,7 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
 	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
 
-	if err := h.Soundboard.SaveSoundboardItem(uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
+	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -306,6 +306,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 
 // GetLiveKitToken GET /qall/token
 func (h *Handlers) GetLiveKitToken(c echo.Context) error {
+	ctx := c.Request().Context()
 	// 1) roomクエリパラメータ取得 (必須)
 	room := c.QueryParam("roomId")
 	if room == "" {
@@ -317,7 +318,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 		return herror.BadRequest("invalid room Id")
 	}
 
-	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(roomID) {
+	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(roomID) {
 		return herror.NotFound("channel not found")
 	}
 

@@ -65,7 +65,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	}
 	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
-		if ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
+		if ok, err := h.ChannelManager.IsChannelAccessibleToUser(c.Request().Context(), getRequestUserID(c), req.ChannelID); err != nil {
 			return herror.InternalServerError(err)
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
@@ -73,7 +73,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		q.ChannelID = optional.From(req.ChannelID)
 	}
 
-	files, more, err := h.FileManager.List(q)
+	files, more, err := h.FileManager.List(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -83,6 +83,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 
 // PostFile POST /files
 func (h *Handlers) PostFile(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
 	// ファイルチェック
@@ -106,21 +107,21 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	// チャンネルアクセス権確認
 	channelID := uuid.FromStringOrNil(c.FormValue("channelId"))
-	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, userID, channelID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid channelId")
 	}
-	ch, err := h.ChannelManager.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(ctx, channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree(ctx).GetChannelPath(ch.ID)))
 	}
 	if !ch.IsPublic {
 		// アクセスコントロール設定
-		members, err := h.ChannelManager.GetDMChannelMembers(ch.ID)
+		members, err := h.ChannelManager.GetDMChannelMembers(ctx, ch.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -131,7 +132,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	args.ChannelID = optional.From(channelID)
 
 	// 保存
-	file, err := h.FileManager.Save(args)
+	file, err := h.FileManager.Save(c.Request().Context(), args)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -166,7 +167,7 @@ func (h *Handlers) DeleteFile(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	if err := h.FileManager.Delete(f.GetID()); err != nil {
+	if err := h.FileManager.Delete(c.Request().Context(), f.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

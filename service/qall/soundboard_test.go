@@ -1,6 +1,7 @@
 package qall
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -89,12 +90,12 @@ func TestSoundboardManager_DeleteSoundboardItem(t *testing.T) {
 
 		// DeleteSoundboardItemが呼ばれることを期待
 		mockRepo.EXPECT().
-			DeleteSoundboardItem(soundID).
+			DeleteSoundboardItem(gomock.Any(), soundID).
 			Return(nil).
 			Times(1)
 
 		// テスト実行
-		err := manager.DeleteSoundboardItem(soundID)
+		err := manager.DeleteSoundboardItem(context.TODO(), soundID)
 		assert.NoError(t, err)
 	})
 
@@ -112,12 +113,12 @@ func TestSoundboardManager_DeleteSoundboardItem(t *testing.T) {
 			Times(1)
 
 		mockRepo.EXPECT().
-			DeleteSoundboardItem(soundID).
+			DeleteSoundboardItem(gomock.Any(), soundID).
 			Return(mockErr).
 			Times(1)
 
 		// テスト実行
-		err := manager.DeleteSoundboardItem(soundID)
+		err := manager.DeleteSoundboardItem(context.TODO(), soundID)
 		assert.Error(t, err)
 		assert.Equal(t, mockErr, err)
 	})
@@ -136,7 +137,7 @@ func TestSoundboardManager_DeleteSoundboardItem(t *testing.T) {
 			Times(1)
 
 		// テスト実行
-		err := manager.DeleteSoundboardItem(soundID)
+		err := manager.DeleteSoundboardItem(context.TODO(), soundID)
 		assert.Error(t, err)
 		assert.Equal(t, mockErr, err)
 	})

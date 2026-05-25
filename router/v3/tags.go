@@ -26,7 +26,7 @@ func (h *Handlers) GetMyUserTags(c echo.Context) error {
 
 // serveUserTags 指定したユーザーのタグ一覧をレスポンスとして返す
 func serveUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) error {
-	tags, err := repo.GetUserTagsByUserID(userID)
+	tags, err := repo.GetUserTagsByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -65,13 +65,13 @@ func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) e
 	}
 
 	// タグの確認
-	t, err := repo.GetOrCreateTag(req.Tag)
+	t, err := repo.GetOrCreateTag(c.Request().Context(), req.Tag)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	// ユーザーにタグを付与
-	if err := repo.AddUserTag(userID, t.ID); err != nil {
+	if err := repo.AddUserTag(c.Request().Context(), userID, t.ID); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusConflict)
@@ -80,7 +80,7 @@ func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) e
 		}
 	}
 
-	ut, err := repo.GetUserTag(userID, t.ID)
+	ut, err := repo.GetUserTag(c.Request().Context(), userID, t.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -111,7 +111,7 @@ func (h *Handlers) EditUserTag(c echo.Context) error {
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, tagID, req.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(c.Request().Context(), userID, tagID, req.IsLocked); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
@@ -134,7 +134,7 @@ func (h *Handlers) EditMyUserTag(c echo.Context) error {
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, tagID, req.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(c.Request().Context(), userID, tagID, req.IsLocked); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
@@ -161,7 +161,7 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
 	// タグがつけられているかを見る
-	ut, err := repo.GetUserTag(userID, tagID)
+	ut, err := repo.GetUserTag(c.Request().Context(), userID, tagID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound: // 既にない
@@ -176,7 +176,7 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 	}
 
 	// 削除
-	if err := repo.DeleteUserTag(userID, ut.GetTagID()); err != nil {
+	if err := repo.DeleteUserTag(c.Request().Context(), userID, ut.GetTagID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -187,7 +187,7 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 func (h *Handlers) GetTag(c echo.Context) error {
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
-	t, err := h.Repo.GetTagByID(tagID)
+	t, err := h.Repo.GetTagByID(c.Request().Context(), tagID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -197,7 +197,7 @@ func (h *Handlers) GetTag(c echo.Context) error {
 		}
 	}
 
-	users, err := h.Repo.GetUserIDsByTagID(t.ID)
+	users, err := h.Repo.GetUserIDsByTagID(c.Request().Context(), t.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

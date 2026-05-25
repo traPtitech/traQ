@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"slices"
 	"strings"
@@ -190,7 +191,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 		e := env.R(t)
 		obj := e.GET(path).
 			WithCookie(session.CookieName, user1Session).
-			WithQuery("path", env.CM.GetChannelPathFromID(channel.ID)).
+			WithQuery("path", env.CM.GetChannelPathFromID(context.TODO(), channel.ID)).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -206,7 +207,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 		e := env.R(t)
 		obj := e.GET(path).
 			WithCookie(session.CookieName, user1Session).
-			WithQuery("path", env.CM.GetChannelPathFromID(subchannel.ID)).
+			WithQuery("path", env.CM.GetChannelPathFromID(context.TODO(), subchannel.ID)).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -339,7 +340,7 @@ func TestHandlers_CreateChannels(t *testing.T) {
 		obj.Value("name").String().IsEqual(cname2)
 		obj.Value("children").Array().Length().IsEqual(0)
 
-		ch, err := env.CM.GetChannel(c1)
+		ch, err := env.CM.GetChannel(context.TODO(), c1)
 		require.NoError(t, err)
 		if assert.Len(t, ch.ChildrenID, 1) {
 			assert.EqualValues(t, ch.ChildrenID[0].String(), obj.Value("id").String().Raw())
@@ -458,7 +459,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 	parent := env.CreateChannel(t, rand)
 	unarchived := env.CreateChannel(t, rand)
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, admin.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, admin.GetID()))
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -508,7 +509,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err := env.CM.GetChannel(unarchived.ID)
+		ch, err := env.CM.GetChannel(context.TODO(), unarchived.ID)
 		require.NoError(t, err)
 		assert.True(t, ch.IsArchived())
 	})
@@ -522,7 +523,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err := env.CM.GetChannel(archived.ID)
+		ch, err := env.CM.GetChannel(context.TODO(), archived.ID)
 		require.NoError(t, err)
 		assert.False(t, ch.IsArchived())
 	})
@@ -537,7 +538,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err := env.CM.GetChannel(channel.ID)
+		ch, err := env.CM.GetChannel(context.TODO(), channel.ID)
 		require.NoError(t, err)
 		assert.True(t, ch.IsForced)
 		assert.EqualValues(t, newName, ch.Name)
@@ -636,7 +637,7 @@ func TestHandlers_GetChannelTopic(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{Topic: optional.From("this is channel topic")}))
+	require.NoError(t, env.CM.UpdateChannel(context.TODO(), channel.ID, repository.UpdateChannelArgs{Topic: optional.From("this is channel topic")}))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -678,7 +679,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -728,7 +729,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err := env.CM.GetChannel(channel.ID)
+		ch, err := env.CM.GetChannel(context.TODO(), channel.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, "test", ch.Topic)
 
@@ -738,7 +739,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err = env.CM.GetChannel(channel.ID)
+		ch, err = env.CM.GetChannel(context.TODO(), channel.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, "", ch.Topic)
 
@@ -748,7 +749,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err = env.CM.GetChannel(channel.ID)
+		ch, err = env.CM.GetChannel(context.TODO(), channel.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, strings.Repeat("a", 500), ch.Topic)
 	})
@@ -763,9 +764,9 @@ func TestHandlers_GetChannelPins(t *testing.T) {
 	channel := env.CreateChannel(t, rand)
 	m1 := env.CreateMessage(t, user.GetID(), channel.ID, rand)
 	env.CreateMessage(t, user.GetID(), channel.ID, rand)
-	_, err := env.MM.Pin(m1.GetID(), user.GetID())
+	_, err := env.MM.Pin(context.TODO(), m1.GetID(), user.GetID())
 	require.NoError(t, err)
-	m1, err = env.MM.Get(m1.GetID())
+	m1, err = env.MM.Get(context.TODO(), m1.GetID())
 	require.NoError(t, err)
 	commonSession := env.S(t, user.GetID())
 
@@ -863,7 +864,7 @@ func TestHandlers_GetChannelEvents(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
 	// TopicChanged
-	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{UpdaterID: user.GetID(), Topic: optional.From("test topic")}))
+	require.NoError(t, env.CM.UpdateChannel(context.TODO(), channel.ID, repository.UpdateChannelArgs{UpdaterID: user.GetID(), Topic: optional.From("test topic")}))
 	commonSession := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -924,12 +925,12 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
 	channel := env.CreateChannel(t, rand)
-	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+	err := env.CM.ChangeChannelSubscriptions(context.TODO(), channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
 		user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
+	require.NoError(t, env.CM.UpdateChannel(context.TODO(), forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -993,12 +994,12 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 	// user: none
 	// user2: mark and notify
 	channel := env.CreateChannel(t, rand)
-	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+	err := env.CM.ChangeChannelSubscriptions(context.TODO(), channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
 		user2.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
+	require.NoError(t, env.CM.UpdateChannel(context.TODO(), forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -1050,7 +1051,7 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 1) {
@@ -1078,7 +1079,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 	// user4: mark and notify
 	// user5: mark and notify
 	channel := env.CreateChannel(t, rand)
-	err := env.CM.ChangeChannelSubscriptions(channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+	err := env.CM.ChangeChannelSubscriptions(context.TODO(), channel.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
 		user2.GetID(): model.ChannelSubscribeLevelMark,
 		user3.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 		user4.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
@@ -1086,7 +1087,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 	}, false, user.GetID())
 	require.NoError(t, err)
 	forced := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
+	require.NoError(t, env.CM.UpdateChannel(context.TODO(), forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)}))
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	commonSession := env.S(t, user.GetID())
 
@@ -1150,7 +1151,7 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(channel.ID)})
 		require.NoError(t, err)
 
 		if assert.Len(t, subs, 4) {

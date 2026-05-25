@@ -2,6 +2,7 @@ package v3
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"math"
@@ -222,7 +223,7 @@ func TestHandlers_PostFile(t *testing.T) {
 	dm1 := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	dm2 := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
 	buf := []byte("test file")
@@ -390,7 +391,7 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 	t.Run("success with image thumbnail", func(t *testing.T) {
 		t.Parallel()
 
-		iconFileID, err := file2.GenerateIconFile(env.FM, "test")
+		iconFileID, err := file2.GenerateIconFile(context.TODO(), env.FM, "test")
 		require.NoError(t, err)
 
 		e := env.R(t)
@@ -415,7 +416,7 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 		t.Parallel()
 
 		sampleAudio := genSampleAudio(t)
-		file, err := env.FM.Save(file2.SaveArgs{
+		file, err := env.FM.Save(context.TODO(), file2.SaveArgs{
 			FileName: "sample.wav",
 			FileSize: sampleAudio.Size(),
 			MimeType: "audio/wav",
@@ -457,11 +458,11 @@ func TestHandlers_GetThumbnailImage(t *testing.T) {
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
 	s := env.S(t, user.GetID())
 
-	iconFile, err := file2.GenerateIconFile(env.FM, "test")
+	iconFile, err := file2.GenerateIconFile(context.TODO(), env.FM, "test")
 	require.NoError(t, err)
 
 	sampleAudio := genSampleAudio(t)
-	audioFile, err := env.FM.Save(file2.SaveArgs{
+	audioFile, err := env.FM.Save(context.TODO(), file2.SaveArgs{
 		FileName: "sample.wav",
 		FileSize: sampleAudio.Size(),
 		MimeType: "audio/wav",
@@ -607,7 +608,7 @@ func TestHandlers_DeleteFile(t *testing.T) {
 	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 	s := env.S(t, user.GetID())
 
-	iconFile, err := file2.GenerateIconFile(env.FM, "test")
+	iconFile, err := file2.GenerateIconFile(context.TODO(), env.FM, "test")
 	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -662,7 +663,7 @@ func TestHandlers_DeleteFile(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.FM.Get(f.GetID())
+		_, err := env.FM.Get(context.TODO(), f.GetID())
 		assert.ErrorIs(t, err, file2.ErrNotFound)
 	})
 }

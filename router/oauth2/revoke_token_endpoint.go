@@ -21,10 +21,10 @@ func (h *Handler) RevokeTokenEndpointHandler(c echo.Context) error {
 		return c.NoContent(http.StatusOK)
 	}
 
-	if err := h.Repo.DeleteTokenByAccess(req.Token); err != nil {
+	if err := h.Repo.DeleteTokenByAccess(c.Request().Context(), req.Token); err != nil {
 		return herror.InternalServerError(err)
 	}
-	if err := h.Repo.DeleteTokenByRefresh(req.Token); err != nil {
+	if err := h.Repo.DeleteTokenByRefresh(c.Request().Context(), req.Token); err != nil {
 		return herror.InternalServerError(err)
 	}
 
