@@ -768,5 +768,4 @@ func (ns *Service) getCitedChannelIDs(_ context.Context, messageId uuid.UUID) []
 		result = append(result, hit.GetChannelID())
 	}
 	return result
-
 }
