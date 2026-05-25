@@ -31,7 +31,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 				}
 
 				// OAuth2 Token検証
-				token, err := repo.GetTokenByAccess(ah[l+1:])
+				token, err := repo.GetTokenByAccess(c.Request().Context(), ah[l+1:])
 				if err != nil {
 					switch err {
 					case repository.ErrNotFound:
@@ -68,7 +68,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 			}
 
 			// ユーザー取得
-			user, err := repo.GetUser(uid, true)
+			user, err := repo.GetUser(c.Request().Context(), uid, true)
 			if err != nil {
 				return herror.InternalServerError(err)
 			}

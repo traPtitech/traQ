@@ -21,7 +21,7 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	}
 
 	// キャッシュの削除に対応するために Cache-Control でのキャッシュはしない
-	res, _, err := h.OGP.GetMeta(u)
+	res, _, err := h.OGP.GetMeta(c.Request().Context(), u)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -41,7 +41,7 @@ func (h *Handlers) DeleteOgpCache(c echo.Context) error {
 		return herror.BadRequest("invalid url")
 	}
 
-	err := h.OGP.DeleteCache(u)
+	err := h.OGP.DeleteCache(c.Request().Context(), u)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

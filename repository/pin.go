@@ -2,6 +2,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -10,9 +12,9 @@ import (
 // PinRepository ピンリポジトリ
 type PinRepository interface {
 	// PinMessage 指定したユーザーによって指定したメッセージをピン留めします
-	PinMessage(messageID, userID uuid.UUID) (*model.Pin, error)
+	PinMessage(ctx context.Context, messageID, userID uuid.UUID) (*model.Pin, error)
 	// UnpinMessage 指定したユーザーによって指定したピン留めを削除します
-	UnpinMessage(messageID uuid.UUID) (*model.Pin, error)
+	UnpinMessage(ctx context.Context, messageID uuid.UUID) (*model.Pin, error)
 	// GetPinnedMessageByChannelID 指定したチャンネルのピン留めを全て取得します
-	GetPinnedMessageByChannelID(channelID uuid.UUID) ([]*model.Pin, error)
+	GetPinnedMessageByChannelID(ctx context.Context, channelID uuid.UUID) ([]*model.Pin, error)
 }

@@ -49,6 +49,7 @@ type Handlers struct {
 	MessageManager message.Manager
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
+	NonceManager   *mutil.NonceManager
 	Soundboard     qall.Soundboard
 	QallRepo       qall.RoomStateManager
 	Config

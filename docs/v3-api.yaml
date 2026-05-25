@@ -16,6 +16,15 @@ servers:
     description: staging
   - url: "http://localhost:3000/api/v3"
     description: local
+x-traq-codegen-schemas:
+  description: HTTPエンドポイントから参照されていないが、クライアントがWebSocketイベントの型を生成するために使用するコンポーネント
+  schemas:
+    QallRoomStateChangedEvent:
+      $ref: "#/components/schemas/QallRoomStateChangedEvent"
+    QallSoundboardItemCreatedEvent:
+      $ref: "#/components/schemas/QallSoundboardItemCreatedEvent"
+    QallSoundboardItemDeletedEvent:
+      $ref: "#/components/schemas/QallSoundboardItemDeletedEvent"
 paths:
   "/channels/{channelId}/messages":
     parameters:
@@ -3773,12 +3782,13 @@ paths:
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
       description: 指定されたWebhookが投稿したメッセージのリストを返します。
-  "/webhooks/:webhookID/messages/:messageID":
+  "/webhooks/{webhookId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
       - $ref: "#/components/parameters/messageIdInPath"
     delete:
       summary: Webhookの投稿メッセージを削除
+      description: 指定されたWebhookが投稿したメッセージを削除します。
       tags:
         - webhook
       operationId: DeleteWebhookMessage
@@ -4440,6 +4450,7 @@ paths:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
       summary: 指定したチャンネルパスを取得
+      description: 指定されたチャンネルのパスを取得します。
       tags:
         - channel
       responses:
@@ -7146,7 +7157,6 @@ components:
           description: 削除されたサウンドボードアイテムのId
       required:
         - soundId
-
     StampPalette:
       title: StampPalette
       type: object
@@ -7821,11 +7831,11 @@ components:
         path:
           type: string
           description: チャンネルパス
-          pattern: '^(\/[a-zA-Z0-9-_]+)+$'
+          pattern: '^[a-zA-Z0-9-_]+(\/[a-zA-Z0-9-_]+)*$'
       required:
         - path
       example:
-        path: "/general"
+        path: "general/sub-channel"
     Session:
       type: object
       properties:

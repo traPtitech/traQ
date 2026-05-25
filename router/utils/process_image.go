@@ -110,7 +110,7 @@ func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name s
 	}
 
 	// ファイル保存
-	f, err := m.Save(args)
+	f, err := m.Save(c.Request().Context(), args)
 	if err != nil {
 		return uuid.Nil, herror.InternalServerError(err)
 	}

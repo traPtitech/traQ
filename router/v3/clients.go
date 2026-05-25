@@ -25,7 +25,7 @@ func (h *Handlers) GetClients(c echo.Context) error {
 		q = q.IsDevelopedBy(getRequestUserID(c))
 	}
 
-	ocs, err := h.Repo.GetClients(q)
+	ocs, err := h.Repo.GetClients(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -69,7 +69,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       req.Scopes,
 	}
-	if err := h.Repo.SaveClient(client); err != nil {
+	if err := h.Repo.SaveClient(c.Request().Context(), client); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -125,7 +125,7 @@ func (h *Handlers) EditClient(c echo.Context) error {
 		CallbackURL:  req.CallbackURL,
 		Confidential: req.Confidential,
 	}
-	if err := h.Repo.UpdateClient(oc.ID, args); err != nil {
+	if err := h.Repo.UpdateClient(c.Request().Context(), oc.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -137,7 +137,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 	oc := getParamClient(c)
 
 	// delete client
-	if err := h.Repo.DeleteClient(oc.ID); err != nil {
+	if err := h.Repo.DeleteClient(c.Request().Context(), oc.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -149,7 +149,7 @@ func (h *Handlers) RevokeClientTokens(c echo.Context) error {
 	oc := getParamClient(c)
 	userID := getRequestUserID(c)
 
-	err := h.Repo.DeleteUserTokensByClient(userID, oc.ID)
+	err := h.Repo.DeleteUserTokensByClient(c.Request().Context(), userID, oc.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

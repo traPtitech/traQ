@@ -81,13 +81,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	parsed := ev.Fields["parse_result"].(*message.ParseResult)
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
-	chTree := ns.cm.PublicChannelTree()
+	chTree := ns.cm.PublicChannelTree(context.Background())
 	chID := m.ChannelID
 	isDM := !chTree.IsChannelPresent(chID)
 	forceNotify := chTree.IsForceChannel(chID)
 
 	// 投稿ユーザー情報を取得
-	mUser, err := ns.repo.GetUser(m.UserID, false)
+	mUser, err := ns.repo.GetUser(context.Background(), m.UserID, false)
 	if err != nil {
 		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", m.UserID)) // 失敗
 		return
@@ -130,7 +130,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	if len(parsed.Attachments) > 0 {
-		if f, _ := ns.fm.Get(parsed.Attachments[0]); f != nil {
+		if f, _ := ns.fm.Get(context.Background(), parsed.Attachments[0]); f != nil {
 			if ok, _ := f.GetThumbnail(model.ThumbnailTypeImage); ok {
 				fcmPayload.Image = optional.From(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 			}
@@ -141,7 +141,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	q := repository.UsersQuery{}.Active().NotBot()
 	switch {
 	case forceNotify: // 強制通知チャンネル
-		users, err := ns.repo.GetUserIDs(q)
+		users, err := ns.repo.GetUserIDs(context.Background(), q)
 		if err != nil {
 			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
 			return
@@ -151,7 +151,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		noticeable.Add(users...)
 
 	case isDM: // DM
-		users, err := ns.repo.GetUserIDs(q.CMemberOf(chID))
+		users, err := ns.repo.GetUserIDs(context.Background(), q.CMemberOf(chID))
 		if err != nil {
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -162,7 +162,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知購読者取得
-		notify, err := ns.repo.GetUserIDs(q.SubscriberAtNotifyLevelOf(chID))
+		notify, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtNotifyLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -170,7 +170,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		notifiedUsers.Add(notify...)
 
 		// チャンネル未読管理購読者取得
-		mark, err := ns.repo.GetUserIDs(q.SubscriberAtMarkLevelOf(chID))
+		mark, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtMarkLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -179,7 +179,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, uid := range parsed.Mentions {
-			user, err := ns.repo.GetUser(uid, false)
+			user, err := ns.repo.GetUser(context.Background(), uid, false)
 			if err != nil {
 				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
@@ -194,7 +194,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			noticeable.Add(uid)
 		}
 		for _, gid := range parsed.GroupMentions {
-			gs, err := ns.repo.GetUserIDs(q.GMemberOf(gid))
+			gs, err := ns.repo.GetUserIDs(context.Background(), q.GMemberOf(gid))
 			if err != nil {
 				logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.Stringer("groupId", gid)) // 失敗
 				return
@@ -205,14 +205,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 		// メッセージを引用されたユーザーへの通知
 		for _, mid := range parsed.Citation {
-			m, err := ns.repo.GetMessageByID(mid)
+			m, err := ns.repo.GetMessageByID(context.Background(), mid)
 			if err != nil {
 				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
 				continue
 			}
 			uid := m.UserID
 
-			user, err := ns.repo.GetUser(uid, false)
+			user, err := ns.repo.GetUser(context.Background(), uid, false)
 			if err != nil {
 				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
@@ -222,7 +222,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				continue
 			}
 
-			us, err := ns.repo.GetNotifyCitation(uid)
+			us, err := ns.repo.GetNotifyCitation(context.Background(), uid)
 			if err != nil {
 				logger.Error("failed to GetNotifyCitation", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
@@ -254,7 +254,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	for uid := range markedUsers {
 		userNoticeableMap[uid] = noticeable.Contains(uid)
 	}
-	if err := ns.repo.SetMessageUnreads(userNoticeableMap, m.ID); err != nil {
+	if err := ns.repo.SetMessageUnreads(context.Background(), userNoticeableMap, m.ID); err != nil {
 		logger.Error("failed to SetMessageUnreads", zap.Error(err), zap.Stringer("message_id", m.ID)) // 失敗
 	}
 
@@ -296,7 +296,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(cid) {
+	if ns.cm.IsPublicChannel(context.Background(), cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
@@ -322,7 +322,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(cid) {
+	if ns.cm.IsPublicChannel(context.Background(), cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
@@ -703,7 +703,7 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	private := ev.Fields["private"].(bool)
 	if private {
-		members, err := ns.cm.GetDMChannelMembers(cid)
+		members, err := ns.cm.GetDMChannelMembers(context.Background(), cid)
 		if err != nil {
 			ns.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("channelId", cid))
 			return
@@ -739,7 +739,7 @@ func channelViewerMulticast(ns *Service, cid uuid.UUID, wsEventType string, wsPa
 }
 
 func messageViewerMulticast(ns *Service, mid uuid.UUID, wsEventType string, wsPayload interface{}) {
-	m, err := ns.mm.Get(mid)
+	m, err := ns.mm.Get(context.Background(), mid)
 	if err != nil {
 		ns.logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("messageId", mid)) // 失敗
 		return
