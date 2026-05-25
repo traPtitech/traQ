@@ -52,7 +52,7 @@ func NewService(repo repository.Repository, cm channel.Manager, mm message.Manag
 		search: search,
 	}
 	service.cache = sc.NewMust(
-		func(ctx context.Context, messageID uuid.UUID) ([]uuid.UUID, error) {
+		func(_ context.Context, messageID uuid.UUID) ([]uuid.UUID, error) {
 			return service.getCitedChannelIDs(context.Background(), messageID), nil
 		},
 		time.Minute,

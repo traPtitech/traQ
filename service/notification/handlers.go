@@ -755,9 +755,9 @@ func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload 
 	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
 }
 
-func (ns *Service) getCitedChannelIDs(_ context.Context, messageId uuid.UUID) []uuid.UUID {
+func (ns *Service) getCitedChannelIDs(_ context.Context, messageID uuid.UUID) []uuid.UUID {
 	query := search.Query{}
-	query.Citation = optional.From(messageId)
+	query.Citation = optional.From(messageID)
 
 	res, err := ns.search.Do(&query)
 	if err != nil {
