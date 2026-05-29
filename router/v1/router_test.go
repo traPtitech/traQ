@@ -66,8 +66,7 @@ func TestMain(m *testing.M) {
 		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), env.ImageProcessor, zap.NewNop())
 
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(env.Repository, env.ChannelManager))
 

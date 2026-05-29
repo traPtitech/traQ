@@ -103,8 +103,7 @@ func TestMain(m *testing.M) {
 
 		// テスト用サーバー作成
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo, nil))
 
