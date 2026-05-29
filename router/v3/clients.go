@@ -6,7 +6,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -18,7 +18,7 @@ import (
 )
 
 // GetClients GET /clients
-func (h *Handlers) GetClients(c echo.Context) error {
+func (h *Handlers) GetClients(c *echo.Context) error {
 	var q repository.GetClientsQuery
 
 	if !isTrue(c.QueryParam("all")) {
@@ -51,7 +51,7 @@ func (r PostClientsRequest) Validate() error {
 }
 
 // CreateClient POST /clients
-func (h *Handlers) CreateClient(c echo.Context) error {
+func (h *Handlers) CreateClient(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostClientsRequest
@@ -77,7 +77,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 }
 
 // GetClient GET /clients/:clientID
-func (h *Handlers) GetClient(c echo.Context) error {
+func (h *Handlers) GetClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	if isTrue(c.QueryParam("detail")) {
@@ -110,7 +110,7 @@ func (r PatchClientRequest) Validate() error {
 }
 
 // EditClient PATCH /clients/:clientID
-func (h *Handlers) EditClient(c echo.Context) error {
+func (h *Handlers) EditClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	var req PatchClientRequest
@@ -133,7 +133,7 @@ func (h *Handlers) EditClient(c echo.Context) error {
 }
 
 // DeleteClient DELETE /clients/:clientID
-func (h *Handlers) DeleteClient(c echo.Context) error {
+func (h *Handlers) DeleteClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	// delete client
@@ -145,7 +145,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 }
 
 // RevokeClientTokens /clients/:clientID/tokens
-func (h *Handlers) RevokeClientTokens(c echo.Context) error {
+func (h *Handlers) RevokeClientTokens(c *echo.Context) error {
 	oc := getParamClient(c)
 	userID := getRequestUserID(c)
 

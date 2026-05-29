@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/utils/etag"
@@ -50,7 +50,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(c echo.Context) condResult {
+func checkIfMatch(c *echo.Context) condResult {
 	im := c.Request().Header.Get(consts.HeaderIfMatch)
 	if im == "" {
 		return condNone
@@ -80,7 +80,7 @@ func checkIfMatch(c echo.Context) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(c echo.Context) condResult {
+func checkIfNoneMatch(c *echo.Context) condResult {
 	inm := c.Request().Header.Get(consts.HeaderIfNoneMatch)
 	if inm == "" {
 		return condNone
@@ -109,7 +109,7 @@ func checkIfNoneMatch(c echo.Context) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(c echo.Context, modtime time.Time) condResult {
+func checkIfModifiedSince(c *echo.Context, modtime time.Time) condResult {
 	if m := c.Request().Method; m != http.MethodGet && m != http.MethodHead {
 		return condNone
 	}
@@ -126,7 +126,7 @@ func checkIfModifiedSince(c echo.Context, modtime time.Time) condResult {
 	return condNone
 }
 
-func checkIfUnmodifiedSince(c echo.Context, modtime time.Time) condResult {
+func checkIfUnmodifiedSince(c *echo.Context, modtime time.Time) condResult {
 	ius := c.Request().Header.Get(consts.HeaderIfUnmodifiedSince)
 	if ius == "" || isZeroTime(modtime) {
 		return condNone
@@ -147,13 +147,13 @@ func isZeroTime(t time.Time) bool {
 }
 
 // SetLastModified レスポンスにLast-Modifiedヘッダを追加します
-func SetLastModified(c echo.Context, modtime time.Time) {
+func SetLastModified(c *echo.Context, modtime time.Time) {
 	if !isZeroTime(modtime) {
 		c.Response().Header().Set(echo.HeaderLastModified, modtime.UTC().Format(http.TimeFormat))
 	}
 }
 
-func writeNotModified(c echo.Context) error {
+func writeNotModified(c *echo.Context) error {
 	h := c.Response().Header()
 	delete(h, echo.HeaderContentType)
 	delete(h, echo.HeaderContentLength)
@@ -164,7 +164,7 @@ func writeNotModified(c echo.Context) error {
 }
 
 // CheckPreconditions HTTPリクエストの事前条件を検査します
-func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error) {
+func CheckPreconditions(c *echo.Context, modtime time.Time) (done bool, err error) {
 	ch := checkIfMatch(c)
 	if ch == condNone {
 		ch = checkIfUnmodifiedSince(c, modtime)
@@ -189,7 +189,7 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 }
 
 // ServeJSONWithETag Etagを付与してJSONを返します。304を返せるときは304を返します。
-func ServeJSONWithETag(c echo.Context, i interface{}) error {
+func ServeJSONWithETag(c *echo.Context, i interface{}) error {
 	var b []byte
 	var err error
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
@@ -205,7 +205,7 @@ func ServeJSONWithETag(c echo.Context, i interface{}) error {
 }
 
 // ServeWithETag Etagを付与して返します。304を返せるときは304を返します。
-func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
+func ServeWithETag(c *echo.Context, contentType string, bytes []byte) error {
 	md5Res := md5.Sum(bytes)
 	eTag := hex.EncodeToString(md5Res[:])
 	c.Response().Header().Set(consts.HeaderETag, "\""+eTag+"\"")
@@ -217,7 +217,7 @@ func ServeWithETag(c echo.Context, contentType string, bytes []byte) error {
 }
 
 // ServeJSONWithPrecomputedETag 事前に計算されたEtagを付与してJSONを返します。リクエストの条件に合うときは304を返します。
-func ServeJSONWithPrecomputedETag[T any](c echo.Context, e *etag.Entity[T]) error {
+func ServeJSONWithPrecomputedETag[T any](c *echo.Context, e *etag.Entity[T]) error {
 	var b []byte
 	var err error
 	eTag := e.ETag()

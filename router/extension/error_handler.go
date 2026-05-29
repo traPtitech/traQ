@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	jsonIter "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -13,7 +13,7 @@ import (
 
 // ErrorHandler カスタムエラーハンドラ
 func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
-	return func(e error, c echo.Context) {
+	return func(e error, c *echo.Context) {
 		var (
 			code int
 			body interface{}
@@ -31,26 +31,26 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 
 			switch m := err.Message.(type) {
 			case string:
-				body = echo.Map{"message": m}
+				body = map[string]any{"message": m}
 			case error:
-				body = echo.Map{"message": m.Error()}
+				body = map[string]any{"message": m.Error()}
 			default:
-				body = echo.Map{"message": m}
+				body = map[string]any{"message": m}
 			}
 
 			code = err.Code
 		case *herror.InternalError:
 			logger.Error(err.Error(), append(err.Fields, zap.String("requestId", GetRequestID(c)))...)
 			code = http.StatusInternalServerError
-			body = echo.Map{"message": http.StatusText(http.StatusInternalServerError)}
+			body = map[string]any{"message": http.StatusText(http.StatusInternalServerError)}
 		case *net.OpError:
 			logger.Warn("network error", zap.Error(err), zap.String("requestId", GetRequestID(c)))
 			code = http.StatusBadGateway
-			body = echo.Map{"message": http.StatusText(http.StatusBadGateway)}
+			body = map[string]any{"message": http.StatusText(http.StatusBadGateway)}
 		default:
 			logger.Error(err.Error(), zap.String("requestId", GetRequestID(c)))
 			code = http.StatusInternalServerError
-			body = echo.Map{"message": http.StatusText(http.StatusInternalServerError)}
+			body = map[string]any{"message": http.StatusText(http.StatusInternalServerError)}
 		}
 
 		if !c.Response().Committed {

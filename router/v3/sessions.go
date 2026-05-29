@@ -6,7 +6,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -32,7 +32,7 @@ func (r PostLoginRequest) Validate() error {
 }
 
 // Login POST /login
-func (h *Handlers) Login(c echo.Context) error {
+func (h *Handlers) Login(c *echo.Context) error {
 	var req PostLoginRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -73,7 +73,7 @@ func (h *Handlers) Login(c echo.Context) error {
 }
 
 // Logout POST /logout
-func (h *Handlers) Logout(c echo.Context) error {
+func (h *Handlers) Logout(c *echo.Context) error {
 	sess, err := h.SessStore.GetSession(c)
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -95,7 +95,7 @@ func (h *Handlers) Logout(c echo.Context) error {
 }
 
 // GetMySessions GET /users/me/sessions
-func (h *Handlers) GetMySessions(c echo.Context) error {
+func (h *Handlers) GetMySessions(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	ses, err := h.SessStore.GetSessionsByUserID(c.Request().Context(), userID)
@@ -120,7 +120,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 }
 
 // RevokeMySession DELETE /users/me/sessions/:referenceID
-func (h *Handlers) RevokeMySession(c echo.Context) error {
+func (h *Handlers) RevokeMySession(c *echo.Context) error {
 	referenceID := getParamAsUUID(c, consts.ParamReferenceID)
 
 	if err := h.SessStore.RevokeSessionByRefID(c.Request().Context(), referenceID); err != nil {
@@ -131,7 +131,7 @@ func (h *Handlers) RevokeMySession(c echo.Context) error {
 }
 
 // GetMyTokens GET /users/me/tokens
-func (h *Handlers) GetMyTokens(c echo.Context) error {
+func (h *Handlers) GetMyTokens(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	ot, err := h.Repo.GetTokensByUser(c.Request().Context(), userID)
@@ -160,7 +160,7 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 }
 
 // RevokeMyToken DELETE /users/me/tokens/:tokenID
-func (h *Handlers) RevokeMyToken(c echo.Context) error {
+func (h *Handlers) RevokeMyToken(c *echo.Context) error {
 	tokenID := getParamAsUUID(c, consts.ParamTokenID)
 	userID := getRequestUserID(c)
 
@@ -185,7 +185,7 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 }
 
 // GetMyExternalAccounts GET /users/me/ex-accounts
-func (h *Handlers) GetMyExternalAccounts(c echo.Context) error {
+func (h *Handlers) GetMyExternalAccounts(c *echo.Context) error {
 	links, err := h.Repo.GetLinkedExternalUserAccounts(c.Request().Context(), getRequestUserID(c))
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -224,7 +224,7 @@ func (r PostLinkExternalAccount) Validate() error {
 }
 
 // LinkExternalAccount POST /users/me/ex-accounts/link
-func (h *Handlers) LinkExternalAccount(c echo.Context) error {
+func (h *Handlers) LinkExternalAccount(c *echo.Context) error {
 	var req PostLinkExternalAccount
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -259,7 +259,7 @@ func (r PostUnlinkExternalAccount) Validate() error {
 }
 
 // UnlinkExternalAccount POST /users/me/ex-accounts/unlink
-func (h *Handlers) UnlinkExternalAccount(c echo.Context) error {
+func (h *Handlers) UnlinkExternalAccount(c *echo.Context) error {
 	var req PostUnlinkExternalAccount
 	if err := bindAndValidate(c, &req); err != nil {
 		return err

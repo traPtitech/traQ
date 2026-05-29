@@ -11,7 +11,7 @@ import (
 	"github.com/disintegration/imaging"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
@@ -34,8 +34,8 @@ const (
 
 type Provider interface {
 	FetchUserInfo(t *oauth2.Token) (UserInfo, error)
-	LoginHandler(c echo.Context) error
-	CallbackHandler(c echo.Context) error
+	LoginHandler(c *echo.Context) error
+	CallbackHandler(c *echo.Context) error
 	L() *zap.Logger
 }
 
@@ -50,7 +50,7 @@ type UserInfo interface {
 }
 
 func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 			return herror.BadRequest("Authorization Header must not be set.")
 		}
@@ -89,7 +89,7 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 }
 
 func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, fm file.Manager, sessStore session.Store, allowSignUp bool) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		ctx := c.Request().Context()
 
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {

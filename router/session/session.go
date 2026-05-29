@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 const (
@@ -35,12 +35,12 @@ type Session interface {
 }
 
 type Store interface {
-	GetSession(c echo.Context) (Session, error)
+	GetSession(c *echo.Context) (Session, error)
 	GetSessionByToken(ctx context.Context, token string) (Session, error)
 	GetSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]Session, error)
-	RevokeSession(c echo.Context) error
+	RevokeSession(c *echo.Context) error
 	RevokeSessionByRefID(ctx context.Context, refID uuid.UUID) error
 	RevokeSessionsByUserID(ctx context.Context, userID uuid.UUID) error
-	RenewSession(c echo.Context, userID uuid.UUID) (Session, error)
+	RenewSession(c *echo.Context, userID uuid.UUID) (Session, error)
 	IssueSession(ctx context.Context, userID uuid.UUID, data map[string]interface{}) (Session, error)
 }

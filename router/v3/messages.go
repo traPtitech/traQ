@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -16,7 +16,7 @@ import (
 )
 
 // GetMyUnreadChannels GET /users/me/unread
-func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
+func (h *Handlers) GetMyUnreadChannels(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	list, err := h.Repo.GetUserUnreadChannels(c.Request().Context(), userID)
@@ -28,7 +28,7 @@ func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 }
 
 // ReadChannel DELETE /users/me/unread/:channelID
-func (h *Handlers) ReadChannel(c echo.Context) error {
+func (h *Handlers) ReadChannel(c *echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
@@ -40,7 +40,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 }
 
 // SearchMessages GET /messages
-func (h *Handlers) SearchMessages(c echo.Context) error {
+func (h *Handlers) SearchMessages(c *echo.Context) error {
 	ctx := c.Request().Context()
 	if !h.SearchEngine.Available() {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
@@ -80,7 +80,7 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 }
 
 // GetMessage GET /messages/:messageID
-func (h *Handlers) GetMessage(c echo.Context) error {
+func (h *Handlers) GetMessage(c *echo.Context) error {
 	return c.JSON(http.StatusOK, getParamMessage(c))
 }
 
@@ -98,7 +98,7 @@ func (r PostMessageRequest) Validate() error {
 }
 
 // EditMessage PUT /messages/:messageID
-func (h *Handlers) EditMessage(c echo.Context) error {
+func (h *Handlers) EditMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
@@ -135,7 +135,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 }
 
 // DeleteMessage DELETE /messages/:messageID
-func (h *Handlers) DeleteMessage(c echo.Context) error {
+func (h *Handlers) DeleteMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
@@ -194,7 +194,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 }
 
 // GetPin GET /messages/:messageID/pin
-func (h *Handlers) GetPin(c echo.Context) error {
+func (h *Handlers) GetPin(c *echo.Context) error {
 	m := getParamMessage(c)
 	if m.GetPin() == nil {
 		return herror.NotFound("this message is not pinned")
@@ -203,7 +203,7 @@ func (h *Handlers) GetPin(c echo.Context) error {
 }
 
 // CreatePin POST /messages/:messageID/pin
-func (h *Handlers) CreatePin(c echo.Context) error {
+func (h *Handlers) CreatePin(c *echo.Context) error {
 	ctx := c.Request().Context()
 	m := getParamMessage(c)
 	p, err := h.MessageManager.Pin(ctx, m.GetID(), getRequestUserID(c))
@@ -223,7 +223,7 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 }
 
 // RemovePin DELETE /messages/:messageID/pin
-func (h *Handlers) RemovePin(c echo.Context) error {
+func (h *Handlers) RemovePin(c *echo.Context) error {
 	ctx := c.Request().Context()
 	m := getParamMessage(c)
 	if err := h.MessageManager.Unpin(ctx, m.GetID(), getRequestUserID(c)); err != nil {
@@ -240,7 +240,7 @@ func (h *Handlers) RemovePin(c echo.Context) error {
 }
 
 // GetMessageStamps GET /messages/:messageID/stamps
-func (h *Handlers) GetMessageStamps(c echo.Context) error {
+func (h *Handlers) GetMessageStamps(c *echo.Context) error {
 	return c.JSON(http.StatusOK, getParamMessage(c).GetStamps())
 }
 
@@ -259,7 +259,7 @@ func (r *PostMessageStampRequest) Validate() error {
 }
 
 // AddMessageStamp POST /messages/:messageID/stamps/:stampID
-func (h *Handlers) AddMessageStamp(c echo.Context) error {
+func (h *Handlers) AddMessageStamp(c *echo.Context) error {
 	ctx := c.Request().Context()
 	var req PostMessageStampRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -284,7 +284,7 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 }
 
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
-func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
+func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
@@ -304,7 +304,7 @@ func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 }
 
 // GetMessageClips GET /messages/:messageID/clips
-func (h *Handlers) GetMessageClips(c echo.Context) error {
+func (h *Handlers) GetMessageClips(c *echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
@@ -317,7 +317,7 @@ func (h *Handlers) GetMessageClips(c echo.Context) error {
 }
 
 // GetMessages GET /channels/:channelID/messages
-func (h *Handlers) GetMessages(c echo.Context) error {
+func (h *Handlers) GetMessages(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req MessagesQuery
@@ -329,7 +329,7 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 }
 
 // PostMessage POST /channels/:channelID/messages
-func (h *Handlers) PostMessage(c echo.Context) error {
+func (h *Handlers) PostMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	ch := getParamChannel(c)
@@ -362,7 +362,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 }
 
 // GetDirectMessages GET /users/:userId/messages
-func (h *Handlers) GetDirectMessages(c echo.Context) error {
+func (h *Handlers) GetDirectMessages(c *echo.Context) error {
 	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)
@@ -382,7 +382,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 }
 
 // PostDirectMessage POST /users/:userId/messages
-func (h *Handlers) PostDirectMessage(c echo.Context) error {
+func (h *Handlers) PostDirectMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	myID := getRequestUserID(c)
 	targetID := getParamAsUUID(c, consts.ParamUserID)

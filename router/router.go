@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo-contrib/echoprometheus"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"github.com/leandro-lugaresi/hub"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.uber.org/zap"
@@ -37,11 +37,11 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 
 	wellKnown := r.e.Group("/.well-known")
 	{
-		wellKnown.GET("/reset-password", func(c echo.Context) error {
+		wellKnown.GET("/reset-password", func(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, "/settings/session")
 		})
 		wellKnown.GET("/openid-configuration", r.oauth2.OIDCDiscovery)
-		wellKnown.GET("/security.txt", func(c echo.Context) error {
+		wellKnown.GET("/security.txt", func(c *echo.Context) error {
 			// Contactなどの情報が古くなっていないかを定期的に確認し、Expiresを*手動で*更新すること
 			// See: https://www.rfc-editor.org/rfc/rfc9116.html#section-5.3
 			return c.String(http.StatusOK, `Contact: mailto:info@trap.jp
@@ -53,7 +53,7 @@ Preferred-Languages: ja,en`)
 
 	api := r.e.Group("/api")
 	api.GET("/metrics", echoprometheus.NewHandler())
-	api.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })
+	api.GET("/ping", func(c *echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })
 	r.v1.Setup(api)
 	r.v3.Setup(api)
 	r.oauth2.Setup(api.Group("/oauth2"))

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -14,15 +14,15 @@ import (
 )
 
 // GetVersion GET /version
-func (h *Handlers) GetVersion(c echo.Context) error {
+func (h *Handlers) GetVersion(c *echo.Context) error {
 	extLogins := make([]string, 0, len(h.EnabledExternalAccountProviders))
 	for p := range h.EnabledExternalAccountProviders {
 		extLogins = append(extLogins, p)
 	}
-	return c.JSON(http.StatusOK, echo.Map{
+	return c.JSON(http.StatusOK, map[string]any{
 		"version":  h.Version,
 		"revision": h.Revision,
-		"flags": echo.Map{
+		"flags": map[string]any{
 			"externalLogin": extLogins,
 			"signUpAllowed": h.AllowSignUp,
 		},
@@ -30,7 +30,7 @@ func (h *Handlers) GetVersion(c echo.Context) error {
 }
 
 // GetJWKS GET /jwks
-func (h *Handlers) GetJWKS(c echo.Context) error {
+func (h *Handlers) GetJWKS(c *echo.Context) error {
 	jwks, err := jwt.JWKSet(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -39,7 +39,7 @@ func (h *Handlers) GetJWKS(c echo.Context) error {
 }
 
 // GetPublicUserIcon GET /public/icon/{username}
-func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
+func (h *Handlers) GetPublicUserIcon(c *echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得

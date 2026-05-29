@@ -4,7 +4,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	jsonIter "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -13,7 +13,7 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 )
 
-// Context echo.Contextのカスタム
+// Context *echo.Contextのカスタム
 type Context struct {
 	echo.Context
 }
@@ -26,7 +26,7 @@ func (c *Context) JSON(code int, i interface{}) (err error) {
 	return json(c, code, i, jsonIter.ConfigFastest)
 }
 
-func json(c echo.Context, code int, i interface{}, cfg jsonIter.API) error {
+func json(c *echo.Context, code int, i interface{}, cfg jsonIter.API) error {
 	stream := cfg.BorrowStream(c.Response())
 	defer cfg.ReturnStream(stream)
 
@@ -40,7 +40,7 @@ func json(c echo.Context, code int, i interface{}, cfg jsonIter.API) error {
 // Wrap カスタムコンテキストラッパー
 func Wrap(repo repository.Repository, cm channel.Manager) echo.MiddlewareFunc {
 	return func(n echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			c.Set(consts.KeyRepo, repo)
 			c.Set(consts.KeyChannelManager, cm)
 			return n(&Context{Context: c})
@@ -49,12 +49,12 @@ func Wrap(repo repository.Repository, cm channel.Manager) echo.MiddlewareFunc {
 }
 
 // GetRequestParamAsUUID 指定したリクエストパラメーターをUUIDとして取得します
-func GetRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
+func GetRequestParamAsUUID(c *echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
 }
 
 // BindAndValidate 構造体iにFormDataまたはJsonをデシリアライズします
-func BindAndValidate(c echo.Context, i interface{}) error {
+func BindAndValidate(c *echo.Context, i interface{}) error {
 	if err := c.Bind(i); err != nil {
 		return err
 	}

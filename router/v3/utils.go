@@ -8,7 +8,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -19,12 +19,12 @@ import (
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
-func NotImplemented(_ echo.Context) error {
+func NotImplemented(_ *echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented)
 }
 
 // bindAndValidate 構造体iにFormDataまたはJsonをデシリアライズします
-func bindAndValidate(c echo.Context, i interface{}) error {
+func bindAndValidate(c *echo.Context, i interface{}) error {
 	return extension.BindAndValidate(c, i)
 }
 
@@ -35,72 +35,72 @@ func isTrue(s string) (b bool) {
 }
 
 // getRequestUser リクエストしてきたユーザーの情報を取得
-func getRequestUser(c echo.Context) model.UserInfo {
+func getRequestUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyUser).(model.UserInfo)
 }
 
 // getRequestUserID リクエストしてきたユーザーUUIDを取得
-func getRequestUserID(c echo.Context) uuid.UUID {
+func getRequestUserID(c *echo.Context) uuid.UUID {
 	return getRequestUser(c).GetID()
 }
 
 // getParamUser URLの:userIDに対応するユーザー構造体を取得
-func getParamUser(c echo.Context) model.UserInfo {
+func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
 // getParamWebhook URLの:webhookIDに対応するWebhookを取得
-func getParamWebhook(c echo.Context) model.Webhook {
+func getParamWebhook(c *echo.Context) model.Webhook {
 	return c.Get(consts.KeyParamWebhook).(model.Webhook)
 }
 
 // getParamBot URLの:botIDに対応するBotを取得
-func getParamBot(c echo.Context) *model.Bot {
+func getParamBot(c *echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
 // getParamClient URLの:clientIDに対応するOAuth2Clientを取得
-func getParamClient(c echo.Context) *model.OAuth2Client {
+func getParamClient(c *echo.Context) *model.OAuth2Client {
 	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 }
 
 // getParamFile URLの:fileIDに対応するFileを取得
-func getParamFile(c echo.Context) model.File {
+func getParamFile(c *echo.Context) model.File {
 	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 // getParamStamp URLの:stampIDに対応するStampを取得
-func getParamStamp(c echo.Context) *model.Stamp {
+func getParamStamp(c *echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
 }
 
 // getParamStampPalette URLの:paletteIDに対応するStampPaletteを取得
-func getParamStampPalette(c echo.Context) *model.StampPalette {
+func getParamStampPalette(c *echo.Context) *model.StampPalette {
 	return c.Get(consts.KeyParamStampPalette).(*model.StampPalette)
 }
 
 // getParamChannel URLの:channelIDに対応するChannelを取得
-func getParamChannel(c echo.Context) *model.Channel {
+func getParamChannel(c *echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
 }
 
 // getParamMessage URLの:messageIDに対応するMessageを取得
-func getParamMessage(c echo.Context) message.Message {
+func getParamMessage(c *echo.Context) message.Message {
 	return c.Get(consts.KeyParamMessage).(message.Message)
 }
 
 // getParamGroup URLの:groupIDに対応するUserGroupを取得
-func getParamGroup(c echo.Context) *model.UserGroup {
+func getParamGroup(c *echo.Context) *model.UserGroup {
 	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
 }
 
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
-func getParamAsUUID(c echo.Context, name string) uuid.UUID {
+func getParamAsUUID(c *echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
 }
 
 // getParamClipFolder URLの:folderIDに対応するClipFolderを取得
-func getParamClipFolder(c echo.Context) *model.ClipFolder {
+func getParamClipFolder(c *echo.Context) *model.ClipFolder {
 	return c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
 }
 
@@ -113,7 +113,7 @@ type MessagesQuery struct {
 	Order     string                 `query:"order"`
 }
 
-func (q *MessagesQuery) bind(c echo.Context) error {
+func (q *MessagesQuery) bind(c *echo.Context) error {
 	return bindAndValidate(c, q)
 }
 
@@ -150,7 +150,7 @@ func (q *MessagesQuery) convertU(uid uuid.UUID) message.TimelineQuery {
 	return r
 }
 
-func serveMessages(c echo.Context, mm message.Manager, query message.TimelineQuery) error {
+func serveMessages(c *echo.Context, mm message.Manager, query message.TimelineQuery) error {
 	ctx := c.Request().Context()
 	timeline, err := mm.GetTimeline(ctx, query)
 	if err != nil {

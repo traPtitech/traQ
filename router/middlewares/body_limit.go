@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // RequestBodyLengthLimit リクエストボディのContentLengthで制限をかけるミドルウェア
 func RequestBodyLengthLimit(kib int64) echo.MiddlewareFunc {
 	limit := kib << 10
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if l := c.Request().Header.Get(echo.HeaderContentLength); len(l) == 0 {
 				return echo.NewHTTPError(http.StatusLengthRequired) // ContentLengthを送ってこないリクエストを殺す
 			}

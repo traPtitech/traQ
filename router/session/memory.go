@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/utils/random"
 )
@@ -90,7 +90,7 @@ func NewMemorySessionStore() Store {
 	}
 }
 
-func (ms *memoryStore) GetSession(c echo.Context) (Session, error) {
+func (ms *memoryStore) GetSession(c *echo.Context) (Session, error) {
 	var token string
 	cookie, err := c.Cookie(CookieName)
 	if err == nil {
@@ -147,7 +147,7 @@ func (ms *memoryStore) GetSessionsByUserID(_ context.Context, userID uuid.UUID) 
 	return result, nil
 }
 
-func (ms *memoryStore) RevokeSession(c echo.Context) error {
+func (ms *memoryStore) RevokeSession(c *echo.Context) error {
 	cookie, err := c.Cookie(CookieName)
 	if err != nil {
 		return nil
@@ -196,7 +196,7 @@ func (ms *memoryStore) RevokeSessionsByUserID(_ context.Context, userID uuid.UUI
 	return nil
 }
 
-func (ms *memoryStore) RenewSession(c echo.Context, userID uuid.UUID) (Session, error) {
+func (ms *memoryStore) RenewSession(c *echo.Context, userID uuid.UUID) (Session, error) {
 	ctx := c.Request().Context()
 	cookie, _ := c.Cookie(CookieName)
 	if cookie != nil && len(cookie.Value) > 0 {

@@ -3,7 +3,7 @@ package v3
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/extension/herror"
 )
@@ -14,7 +14,7 @@ type PutMyNotifyCitationRequest struct {
 }
 
 // PutMyNotifyCitation PUT /user/me/settings/notify-citation
-func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
+func (h *Handlers) PutMyNotifyCitation(c *echo.Context) error {
 	id := getRequestUserID(c)
 
 	var us PutMyNotifyCitationRequest
@@ -30,7 +30,7 @@ func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 }
 
 // GetMySettings GET /user/me/settings
-func (h *Handlers) GetMySettings(c echo.Context) error {
+func (h *Handlers) GetMySettings(c *echo.Context) error {
 	id := getRequestUserID(c)
 
 	us, err := h.Repo.GetUserSettings(c.Request().Context(), id)
@@ -42,7 +42,7 @@ func (h *Handlers) GetMySettings(c echo.Context) error {
 }
 
 // GetMyNotifyCitation GET /user/me/settings/notify-citation
-func (h *Handlers) GetMyNotifyCitation(c echo.Context) error {
+func (h *Handlers) GetMyNotifyCitation(c *echo.Context) error {
 	id := getRequestUserID(c)
 
 	nc, err := h.Repo.GetNotifyCitation(c.Request().Context(), id)

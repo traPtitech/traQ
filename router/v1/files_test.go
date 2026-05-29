@@ -16,7 +16,7 @@ import (
 	file2 "github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func TestHandlers_GetFileByID(t *testing.T) {

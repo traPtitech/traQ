@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gavv/httpexpect/v2"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/consts"
 )
@@ -19,7 +19,7 @@ func TestCheckPreconditions(t *testing.T) {
 	eTag := `"xyz"`
 
 	e := echo.New()
-	e.Any("/", func(c echo.Context) error {
+	e.Any("/", func(c *echo.Context) error {
 		c.Response().Header().Set(consts.HeaderETag, eTag)
 		SetLastModified(c, modTime)
 		if ok, err := CheckPreconditions(c, modTime); err != nil {

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/blendle/zapdriver"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/router/extension"
@@ -15,7 +15,7 @@ import (
 func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 	if dev {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
-			return func(c echo.Context) error {
+			return func(c *echo.Context) error {
 				start := time.Now()
 				if err := next(c); err != nil {
 					c.Error(err)
@@ -30,7 +30,7 @@ func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 		}
 	}
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			start := time.Now()
 			if err := next(c); err != nil {
 				c.Error(err)

@@ -3,7 +3,7 @@ package oauth2
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 
 	"github.com/traPtitech/traQ/utils"
@@ -11,7 +11,7 @@ import (
 )
 
 // OIDCDiscovery OpenID Connect Discovery のハンドラ
-func (h *Handler) OIDCDiscovery(c echo.Context) error {
+func (h *Handler) OIDCDiscovery(c *echo.Context) error {
 	return c.JSON(http.StatusOK, &oidc.DiscoveryConfiguration{
 		Issuer:                           h.Origin,
 		AuthorizationEndpoint:            h.Origin + "/api/v3/oauth2/authorize",
