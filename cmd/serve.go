@@ -237,7 +237,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		if s.routerStopped != nil {
 			select {
 			case <-s.routerStopped:
+				s.L.Info("Router shutdown")
+				return nil
 			case <-ctx.Done():
+				s.L.Warn("Router shutdown timed out", zap.Error(ctx.Err()))
+				return ctx.Err()
 			}
 		}
 		s.L.Info("Router shutdown")
