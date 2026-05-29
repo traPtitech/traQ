@@ -110,6 +110,9 @@ require (
 	github.com/jfreymuth/vorbis v1.0.2 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/labstack/echo-opentelemetry v0.0.2 // indirect
+	github.com/labstack/echo-prometheus v0.0.1 // indirect
+	github.com/labstack/echo/v5 v5.0.4 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc/v3 v3.0.5 // indirect
