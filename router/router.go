@@ -112,6 +112,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 	e.Use(extension.Wrap(repo, cm))
 	e.Use(middlewares.RequestCounter())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:  []string{"*"},
 		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature, consts.HeaderChannelID},
 		MaxAge:        3600,
