@@ -58,7 +58,7 @@ func (h *Handlers) Login(c *echo.Context) error {
 	// パスワード検証
 	if err := user.Authenticate(req.Password); err != nil {
 		h.L(c).Info("an api login attempt failed: wrong password", zap.String("username", req.Name))
-		return echo.NewHTTPError(http.StatusUnauthorized, err)
+		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 	}
 	h.L(c).Info("an api login attempt succeeded", zap.String("username", req.Name))
 

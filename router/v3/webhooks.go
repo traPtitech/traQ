@@ -171,7 +171,7 @@ func (h *Handlers) PostWebhook(c *echo.Context) error {
 	case echo.MIMETextPlain, strings.ToLower(echo.MIMETextPlainCharsetUTF8):
 		break
 	default:
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, http.StatusText(http.StatusUnsupportedMediaType))
 	}
 
 	body, err := io.ReadAll(c.Request().Body)

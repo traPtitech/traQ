@@ -1,6 +1,8 @@
 package extension
 
 import (
+	stdjson "encoding/json"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	jsonIter "github.com/json-iterator/go"
@@ -13,37 +15,58 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 )
 
-// Context *echo.Contextのカスタム
-type Context struct {
-	echo.Context
-}
+// JSONSerializer encoding/jsonの代わりにjsoniterを用いるecho.JSONSerializerの実装。
+// `?pretty` クエリが指定された場合はインデント付きの標準エンコーダを使用する。
+type JSONSerializer struct{}
 
-// JSON encoding/jsonをjsonIter.ConfigCompatibleWithStandardLibraryに置換
-func (c *Context) JSON(code int, i interface{}) (err error) {
-	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		return c.Context.JSON(code, i)
+// Serialize iをJSONとしてレスポンスに書き込む。
+// echoのContext.jsonがContent-Typeとステータスコードを設定するため、ここでは本体のみ書き込む。
+func (JSONSerializer) Serialize(c *echo.Context, i any, indent string) error {
+	if indent == "" {
+		if _, pretty := c.QueryParams()["pretty"]; pretty {
+			indent = "  "
+		}
 	}
-	return json(c, code, i, jsonIter.ConfigFastest)
+	if indent != "" {
+		enc := stdjson.NewEncoder(c.Response())
+		enc.SetIndent("", indent)
+		return enc.Encode(i)
+	}
+	return writeJSON(c.Response(), i, jsonIter.ConfigFastest)
 }
 
-func json(c *echo.Context, code int, i interface{}, cfg jsonIter.API) error {
-	stream := cfg.BorrowStream(c.Response())
+// Deserialize リクエストボディのJSONをiにデシリアライズする。
+func (JSONSerializer) Deserialize(c *echo.Context, i any) error {
+	if err := stdjson.NewDecoder(c.Request().Body).Decode(i); err != nil {
+		return echo.ErrBadRequest.Wrap(err)
+	}
+	return nil
+}
+
+// writeJSON iをjsoniterでwに書き込む（ヘッダー操作は行わない）。
+func writeJSON(w interface{ Write([]byte) (int, error) }, i interface{}, cfg jsonIter.API) error {
+	stream := cfg.BorrowStream(w)
 	defer cfg.ReturnStream(stream)
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	c.Response().WriteHeader(code)
 	stream.WriteVal(i)
 	stream.WriteRaw("\n")
 	return stream.Flush()
 }
 
-// Wrap カスタムコンテキストラッパー
+// json codeでヘッダーを書き込んだ上でiをjsoniterで書き込む（エラーハンドラ用）。
+func json(c *echo.Context, code int, i interface{}, cfg jsonIter.API) error {
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c.Response().WriteHeader(code)
+	return writeJSON(c.Response(), i, cfg)
+}
+
+// Wrap repositoryとchannel.Managerをコンテキストにセットするミドルウェア
 func Wrap(repo repository.Repository, cm channel.Manager) echo.MiddlewareFunc {
 	return func(n echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			c.Set(consts.KeyRepo, repo)
 			c.Set(consts.KeyChannelManager, cm)
-			return n(&Context{Context: c})
+			return n(c)
 		}
 	}
 }

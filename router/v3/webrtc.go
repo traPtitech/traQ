@@ -28,7 +28,7 @@ func (r PostWebRTCAuthenticateRequest) Validate() error {
 // PostWebRTCAuthenticate POST /webrtc/authenticate
 func (h *Handlers) PostWebRTCAuthenticate(c *echo.Context) error {
 	if len(h.SkyWaySecretKey) == 0 {
-		return echo.NewHTTPError(http.StatusServiceUnavailable)
+		return echo.NewHTTPError(http.StatusServiceUnavailable, http.StatusText(http.StatusServiceUnavailable))
 	}
 
 	var req PostWebRTCAuthenticateRequest

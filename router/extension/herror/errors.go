@@ -1,6 +1,7 @@
 package herror
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v5"
@@ -40,8 +41,8 @@ func HTTPError(code int, err interface{}) error {
 	case *repository.ArgumentError:
 		return echo.NewHTTPError(code, v.Error())
 	case nil:
-		return echo.NewHTTPError(code)
+		return echo.NewHTTPError(code, http.StatusText(code))
 	default:
-		return echo.NewHTTPError(code, v)
+		return echo.NewHTTPError(code, fmt.Sprint(v))
 	}
 }

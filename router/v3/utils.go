@@ -20,7 +20,7 @@ import (
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
 func NotImplemented(_ *echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented)
+	return echo.NewHTTPError(http.StatusNotImplemented, http.StatusText(http.StatusNotImplemented))
 }
 
 // bindAndValidate 構造体iにFormDataまたはJsonをデシリアライズします

@@ -23,7 +23,7 @@ func TestCheckPreconditions(t *testing.T) {
 		c.Response().Header().Set(consts.HeaderETag, eTag)
 		SetLastModified(c, modTime)
 		if ok, err := CheckPreconditions(c, modTime); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		} else if ok {
 			return nil
 		}

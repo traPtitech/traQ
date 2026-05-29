@@ -1,6 +1,7 @@
 package extension
 
 import (
+	"errors"
 	"net"
 	"net/http"
 
@@ -13,7 +14,7 @@ import (
 
 // ErrorHandler カスタムエラーハンドラ
 func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
-	return func(e error, c *echo.Context) {
+	return func(c *echo.Context, e error) {
 		var (
 			code int
 			body interface{}
@@ -22,23 +23,6 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 		switch err := e.(type) {
 		case nil:
 			return
-		case *echo.HTTPError:
-			if err.Internal != nil {
-				if herr, ok := err.Internal.(*echo.HTTPError); ok {
-					err = herr
-				}
-			}
-
-			switch m := err.Message.(type) {
-			case string:
-				body = map[string]any{"message": m}
-			case error:
-				body = map[string]any{"message": m.Error()}
-			default:
-				body = map[string]any{"message": m}
-			}
-
-			code = err.Code
 		case *herror.InternalError:
 			logger.Error(err.Error(), append(err.Fields, zap.String("requestId", GetRequestID(c)))...)
 			code = http.StatusInternalServerError
@@ -48,12 +32,32 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 			code = http.StatusBadGateway
 			body = map[string]any{"message": http.StatusText(http.StatusBadGateway)}
 		default:
-			logger.Error(err.Error(), zap.String("requestId", GetRequestID(c)))
-			code = http.StatusInternalServerError
-			body = map[string]any{"message": http.StatusText(http.StatusInternalServerError)}
+			var he *echo.HTTPError
+			switch {
+			case errors.As(e, &he):
+				// Internalに更にHTTPErrorがラップされている場合はそちらを優先する
+				if inner, ok := he.Unwrap().(*echo.HTTPError); ok {
+					he = inner
+				}
+				code = he.Code
+				msg := he.Message
+				if msg == "" {
+					msg = http.StatusText(he.Code)
+				}
+				body = map[string]any{"message": msg}
+			case echo.StatusCode(e) != 0:
+				// echoの定義済みエラー(*httpError)など、HTTPStatusCoderを実装するエラー
+				code = echo.StatusCode(e)
+				body = map[string]any{"message": http.StatusText(code)}
+			default:
+				logger.Error(e.Error(), zap.String("requestId", GetRequestID(c)))
+				code = http.StatusInternalServerError
+				body = map[string]any{"message": http.StatusText(http.StatusInternalServerError)}
+			}
 		}
 
-		if !c.Response().Committed {
+		res, _ := echo.UnwrapResponse(c.Response())
+		if res == nil || !res.Committed {
 			if c.Request().Method == http.MethodHead {
 				e = c.NoContent(code)
 			} else {
