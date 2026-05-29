@@ -2,6 +2,7 @@ package extension
 
 import (
 	stdjson "encoding/json"
+	"io"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -44,7 +45,7 @@ func (JSONSerializer) Deserialize(c *echo.Context, i any) error {
 }
 
 // writeJSON iをjsoniterでwに書き込む（ヘッダー操作は行わない）。
-func writeJSON(w interface{ Write([]byte) (int, error) }, i interface{}, cfg jsonIter.API) error {
+func writeJSON(w io.Writer, i interface{}, cfg jsonIter.API) error {
 	stream := cfg.BorrowStream(w)
 	defer cfg.ReturnStream(stream)
 
