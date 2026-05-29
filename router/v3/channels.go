@@ -304,7 +304,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 	ch := getParamChannel(c)
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
-	if !ch.IsPublic || ch.IsForced {
+	if !ch.CanGetSubscribers() {
 		return herror.Forbidden()
 	}
 

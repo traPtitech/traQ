@@ -102,7 +102,7 @@ func (n *channelNode) convertToModel() *model.Channel {
 		Name:       n.name,
 		Topic:      n.topic,
 		IsForced:   n.force,
-		IsPublic:   true,
+		Type:       model.ChannelTypePublic,
 		IsVisible:  !n.archived,
 		CreatorID:  n.creatorID,
 		UpdaterID:  n.updaterID,

@@ -119,7 +119,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	if ch.IsArchived() {
 		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree(ctx).GetChannelPath(ch.ID)))
 	}
-	if !ch.IsPublic {
+	if ch.IsDMChannel() {
 		// アクセスコントロール設定
 		members, err := h.ChannelManager.GetDMChannelMembers(ctx, ch.ID)
 		if err != nil {

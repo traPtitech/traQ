@@ -23,11 +23,11 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	arr := []interface{}{&ch}
 
 	ch.ID = uuid.Must(uuid.NewV7())
-	ch.IsPublic = true
+	ch.Type = model.ChannelTypePublic
 	ch.DeletedAt = gorm.DeletedAt{}
 
 	if len(privateMembers) > 0 {
-		ch.IsPublic = false
+		ch.Type = model.ChannelTypeDM
 		ch.IsForced = false
 		for uid := range privateMembers {
 			arr = append(arr, &model.UsersPrivateChannel{
@@ -39,7 +39,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 
 	if dm {
 		ch.ParentID = dmChannelRootUUID
-		ch.IsPublic = false
+		ch.Type = model.ChannelTypeDM
 		ch.IsForced = false
 
 		m := &model.DMChannelMapping{
@@ -84,7 +84,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
 			"channel":    &ch,
-			"private":    !ch.IsPublic,
+			"private":    ch.IsDMChannel(),
 		},
 	})
 	return &ch, nil
@@ -132,7 +132,7 @@ func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, 
 		Name: event.ChannelUpdated,
 		Fields: hub.Fields{
 			"channel_id": channelID,
-			"private":    !ch.IsPublic,
+			"private":    ch.IsDMChannel(),
 		},
 	})
 	if args.Topic.Valid {
@@ -180,7 +180,7 @@ func (repo *Repository) ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([
 			Name: event.ChannelUpdated,
 			Fields: hub.Fields{
 				"channel_id": ch.ID,
-				"private":    !ch.IsPublic,
+				"private":    ch.IsDMChannel(),
 			},
 		})
 	}
@@ -204,7 +204,7 @@ func (repo *Repository) GetPublicChannels(ctx context.Context) (channels []*mode
 	channels = make([]*model.Channel, 0)
 	return channels, repo.db.
 		WithContext(ctx).
-		Where(&model.Channel{IsPublic: true}).
+		Where(&model.Channel{Type: model.ChannelTypePublic}).
 		Find(&channels).
 		Error
 }

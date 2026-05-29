@@ -98,6 +98,7 @@ func AllTables() []interface{} {
 		&model.ExternalProviderUser{},
 		&model.UserProfile{},
 		&model.Channel{},
+		&model.Thread{},
 		&model.ClipFolder{},
 		&model.UserSettings{},
 		&model.User{},
