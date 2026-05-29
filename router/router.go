@@ -3,11 +3,11 @@ package router
 import (
 	"net/http"
 
-	"github.com/labstack/echo-contrib/echoprometheus"
+	echootel "github.com/labstack/echo-opentelemetry"
+	echoprometheus "github.com/labstack/echo-prometheus"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 	"github.com/leandro-lugaresi/hub"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -95,14 +95,13 @@ Preferred-Languages: ja,en`)
 
 func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm channel.Manager) *echo.Echo {
 	e := echo.New()
-	e.HideBanner = true
-	e.HidePort = true
+	e.JSONSerializer = extension.JSONSerializer{}
 	e.HTTPErrorHandler = extension.ErrorHandler(logger)
 
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
 	e.Use(middlewares.RequestID())
-	e.Use(otelecho.Middleware("traQ"))
+	e.Use(echootel.NewMiddleware("traQ"))
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(logger.Named("access_log"), config.Development))
 	}

@@ -18,12 +18,12 @@ func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 			return func(c *echo.Context) error {
 				start := time.Now()
 				if err := next(c); err != nil {
-					c.Error(err)
+					c.Echo().HTTPErrorHandler(c, err)
 				}
 				stop := time.Now()
 
 				req := c.Request()
-				res := c.Response()
+				res, _ := echo.UnwrapResponse(c.Response())
 				logger.Sugar().Infof("%3d | %s | %s %s %d", res.Status, stop.Sub(start), req.Method, req.URL, res.Size)
 				return nil
 			}
@@ -33,12 +33,12 @@ func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 		return func(c *echo.Context) error {
 			start := time.Now()
 			if err := next(c); err != nil {
-				c.Error(err)
+				c.Echo().HTTPErrorHandler(c, err)
 			}
 			stop := time.Now()
 
 			req := c.Request()
-			res := c.Response()
+			res, _ := echo.UnwrapResponse(c.Response())
 			logger.Info("",
 				zap.String("requestId", extension.GetRequestID(c)),
 				zapdriver.HTTP(&zapdriver.HTTPPayload{

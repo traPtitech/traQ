@@ -14,7 +14,7 @@ import (
 func RateLimit(limit rate.Limit, burst int, expiresIn time.Duration) echo.MiddlewareFunc {
 	return middleware.RateLimiterWithConfig(middleware.RateLimiterConfig{
 		Store: middleware.NewRateLimiterMemoryStoreWithConfig(middleware.RateLimiterMemoryStoreConfig{
-			Rate:      limit,
+			Rate:      float64(limit),
 			Burst:     burst,
 			ExpiresIn: expiresIn,
 		}),

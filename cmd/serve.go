@@ -160,6 +160,8 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
+			server.routerCtx, server.routerCancel = context.WithCancel(context.Background())
+			server.routerStopped = make(chan struct{})
 			go func() {
 				if err := server.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
 					logger.Info("shutting down the server")
@@ -191,6 +193,12 @@ type Server struct {
 	Router *echo.Echo
 	Hub    *hub.Hub
 	Repo   repository.Repository
+
+	// echo v5はEcho.Shutdownを廃止し、StartConfigにctxを渡してグレースフルシャットダウンを行う。
+	// routerCtxのキャンセルでサーバーの停止を指示し、routerStoppedで停止完了を待つ。
+	routerCtx     context.Context
+	routerCancel  context.CancelFunc
+	routerStopped chan struct{}
 }
 
 func (s *Server) Start(address string) error {
@@ -204,15 +212,36 @@ func (s *Server) Start(address string) error {
 		}
 	}()
 	s.SS.StampThrottler.Start()
-	return s.Router.Start(address)
+
+	if s.routerCtx == nil {
+		s.routerCtx, s.routerCancel = context.WithCancel(context.Background())
+	}
+	if s.routerStopped == nil {
+		s.routerStopped = make(chan struct{})
+	}
+	defer close(s.routerStopped)
+	sc := echo.StartConfig{
+		Address:    address,
+		HideBanner: true,
+		HidePort:   true,
+	}
+	return sc.Start(s.routerCtx, s.Router)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		err := s.Router.Shutdown(ctx)
+		if s.routerCancel != nil {
+			s.routerCancel()
+		}
+		if s.routerStopped != nil {
+			select {
+			case <-s.routerStopped:
+			case <-ctx.Done():
+			}
+		}
 		s.L.Info("Router shutdown")
-		return err
+		return nil
 	})
 	eg.Go(func() error {
 		err := s.SS.WS.Close()
