@@ -160,10 +160,11 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
-			server.routerCtx, server.routerCancel = context.WithCancel(context.Background())
+			serveCtx, serveCancel := context.WithCancel(context.Background())
+			server.routerCancel = serveCancel
 			server.routerStopped = make(chan struct{})
 			go func() {
-				if err := server.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
+				if err := server.Start(serveCtx, fmt.Sprintf(":%d", c.Port), time.Duration(c.ShutdownTimeout)*time.Second); err != nil {
 					logger.Info("shutting down the server")
 				}
 			}()
@@ -188,20 +189,16 @@ func serveCommand() *cobra.Command {
 }
 
 type Server struct {
-	L      *zap.Logger
-	SS     *service.Services
-	Router *echo.Echo
-	Hub    *hub.Hub
-	Repo   repository.Repository
-
-	// echo v5はEcho.Shutdownを廃止し、StartConfigにctxを渡してグレースフルシャットダウンを行う。
-	// routerCtxのキャンセルでサーバーの停止を指示し、routerStoppedで停止完了を待つ。
-	routerCtx     context.Context
+	L             *zap.Logger
+	SS            *service.Services
+	Router        *echo.Echo
+	Hub           *hub.Hub
+	Repo          repository.Repository
 	routerCancel  context.CancelFunc
 	routerStopped chan struct{}
 }
 
-func (s *Server) Start(address string) error {
+func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time.Duration) error {
 	go func() {
 		// TODO 適切なパッケージに移動させる
 		sub := s.Hub.Subscribe(10, event.UserOffline)
@@ -213,22 +210,21 @@ func (s *Server) Start(address string) error {
 	}()
 	s.SS.StampThrottler.Start()
 
-	if s.routerCtx == nil {
-		s.routerCtx, s.routerCancel = context.WithCancel(context.Background())
-	}
 	if s.routerStopped == nil {
 		s.routerStopped = make(chan struct{})
 	}
 	defer close(s.routerStopped)
 	sc := echo.StartConfig{
-		Address:    address,
-		HideBanner: true,
-		HidePort:   true,
+		Address:         address,
+		HideBanner:      true,
+		HidePort:        true,
+		GracefulTimeout: gracefulTimeout,
 	}
-	return sc.Start(s.routerCtx, s.Router)
+	return sc.Start(ctx, s.Router)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	originalCtx := ctx
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		if s.routerCancel != nil {
@@ -239,9 +235,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			case <-s.routerStopped:
 				s.L.Info("Router shutdown")
 				return nil
-			case <-ctx.Done():
-				s.L.Warn("Router shutdown timed out", zap.Error(ctx.Err()))
-				return ctx.Err()
+			case <-originalCtx.Done():
+				s.L.Warn("Router shutdown timed out", zap.Error(originalCtx.Err()))
+				return originalCtx.Err()
 			}
 		}
 		s.L.Info("Router shutdown")
