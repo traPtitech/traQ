@@ -54,6 +54,7 @@ func Migrations() []*gormigrate.Migration {
 		v41(), // ユーザーグループ名受付規則変更に伴う既存ユーザーグループ名の更新
 		v42(), // get_my_stamp_recommendationsパーミッションの追加とmessages_stampsテーブルへの (user_id, updated_at) の複合インデックスの追加
 		v43(), // messages_stampsテーブルのインデックス (user_id, updated_at) を (user_id, updated_at, stamp_id) に変更
+		v44(), // スレッド機能: channels.type 追加・threads テーブル追加
 	}
 }
 
