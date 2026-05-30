@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -24,7 +24,7 @@ import (
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
-func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
+func ChangeUserIcon(p imaging2.Processor, c *echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
 	iconID, err := SaveUploadIconImage(p, c, m, "file")
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 }
 
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
-func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
+func ServeUserIcon(c *echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
 	meta, err := fm.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
@@ -63,7 +63,7 @@ func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 }
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
-func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
+func ChangeUserPassword(c *echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
 	if err := repo.UpdateUser(c.Request().Context(), userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -76,7 +76,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
+func ServeFileThumbnail(c *echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
 	typeStr := c.QueryParam("type")
 	if len(typeStr) == 0 {
 		typeStr = "image"
@@ -116,7 +116,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 }
 
 // ServeFile metaのファイル本体をレスポンスとして返す
-func ServeFile(c echo.Context, meta model.File) error {
+func ServeFile(c *echo.Context, meta model.File) error {
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	if url := meta.GetAlternativeURL(); len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)

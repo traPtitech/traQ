@@ -8,7 +8,6 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -421,7 +420,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": 111, "newPassword": false}).
+			WithJSON(map[string]any{"password": 111, "newPassword": false}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -431,7 +430,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "a"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "a"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -441,7 +440,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "アイウエオ"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "アイウエオ"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -451,7 +450,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": strings.Repeat("a", 33)}).
+			WithJSON(map[string]any{"password": "test", "newPassword": strings.Repeat("a", 33)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -461,7 +460,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
+			WithJSON(map[string]any{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -474,7 +473,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		newPass := strings.Repeat("a", 20)
 		e.PUT(path).
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			WithJSON(echo.Map{"password": "!test_test@test-", "newPassword": newPass}).
+			WithJSON(map[string]any{"password": "!test_test@test-", "newPassword": newPass}).
 			Expect().
 			Status(http.StatusNoContent)
 

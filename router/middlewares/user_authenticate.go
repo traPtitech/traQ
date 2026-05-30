@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -18,7 +18,7 @@ const authScheme = "Bearer"
 // UserAuthenticate リクエスト認証ミドルウェア
 func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			var uid uuid.UUID
 
 			if ah := c.Request().Header.Get(echo.HeaderAuthorization); len(ah) > 0 {

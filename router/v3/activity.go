@@ -6,7 +6,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -20,7 +20,7 @@ const (
 )
 
 // GetOnlineUsers GET /activity/onlines
-func (h *Handlers) GetOnlineUsers(c echo.Context) error {
+func (h *Handlers) GetOnlineUsers(c *echo.Context) error {
 	return c.JSON(http.StatusOK, h.OC.GetOnlineUserIDs())
 }
 
@@ -41,7 +41,7 @@ func (r *GetActivityTimelineRequest) Validate() error {
 }
 
 // GetActivityTimeline GET /activity/timeline
-func (h *Handlers) GetActivityTimeline(c echo.Context) error {
+func (h *Handlers) GetActivityTimeline(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 

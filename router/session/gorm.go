@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/motoki317/sc"
 	"gorm.io/gorm"
 
@@ -111,7 +111,7 @@ func NewGormStore(db *gorm.DB) Store {
 	return ss
 }
 
-func (ss *sessionStore) GetSession(c echo.Context) (Session, error) {
+func (ss *sessionStore) GetSession(c *echo.Context) (Session, error) {
 	var token string
 	cookie, err := c.Cookie(CookieName)
 	if err == nil {
@@ -186,7 +186,7 @@ func (ss *sessionStore) GetSessionsByUserID(ctx context.Context, userID uuid.UUI
 	return result, nil
 }
 
-func (ss *sessionStore) RevokeSession(c echo.Context) error {
+func (ss *sessionStore) RevokeSession(c *echo.Context) error {
 	cookie, err := c.Cookie(CookieName)
 	if err != nil {
 		return nil
@@ -246,7 +246,7 @@ func (ss *sessionStore) RevokeSessionsByUserID(ctx context.Context, userID uuid.
 	return nil
 }
 
-func (ss *sessionStore) RenewSession(c echo.Context, userID uuid.UUID) (Session, error) {
+func (ss *sessionStore) RenewSession(c *echo.Context, userID uuid.UUID) (Session, error) {
 	ctx := c.Request().Context()
 	cookie, _ := c.Cookie(CookieName)
 	if cookie != nil && len(cookie.Value) > 0 {

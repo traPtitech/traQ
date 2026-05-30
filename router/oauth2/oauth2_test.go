@@ -12,7 +12,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -103,8 +103,7 @@ func TestMain(m *testing.M) {
 
 		// テスト用サーバー作成
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo, nil))
 
