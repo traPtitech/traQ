@@ -77,9 +77,9 @@ func TestInitChannelManager(t *testing.T) {
 		repo.EXPECT().
 			GetPublicChannels(gomock.Any()).
 			Return([]*model.Channel{
-				{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
-				{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
-				{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
+				{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
+				{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
+				{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
 			}, nil).
 			Times(1)
 
@@ -120,7 +120,7 @@ func TestManagerImpl_GetChannel(t *testing.T) {
 			Name:      "a",
 			ParentID:  dmChannelRootUUID,
 			IsForced:  false,
-			IsPublic:  false,
+			Type:      model.ChannelTypeDM,
 			IsVisible: true,
 		}
 
@@ -327,7 +327,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 							ParentID:   c.Parent,
 							CreatorID:  c.Creator,
 							UpdaterID:  c.Creator,
-							IsPublic:   true,
+							Type:       model.ChannelTypePublic,
 							IsForced:   false,
 							IsVisible:  true,
 							CreatedAt:  createdAt,
@@ -748,7 +748,7 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 			Name:      "a",
 			ParentID:  dmChannelRootUUID,
 			IsForced:  false,
-			IsPublic:  false,
+			Type:      model.ChannelTypeDM,
 			IsVisible: true,
 		}
 
@@ -778,14 +778,14 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		expects := []*model.Channel{
-			{ID: cA, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cAB, Name: "b", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
-			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cA, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cAB, Name: "b", ParentID: cA, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
 		}
 		repo.EXPECT().
 			ArchiveChannels(gomock.Any(), gomock.Len(len(expects))).
@@ -853,7 +853,7 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 
 		repo.EXPECT().
 			UpdateChannel(gomock.Any(), cABB, repository.UpdateChannelArgs{Visibility: optional.From(true)}).
-			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true}, nil).
+			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true}, nil).
 			Times(1)
 		repo.EXPECT().
 			RecordChannelEvent(gomock.Any(), gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
@@ -942,7 +942,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 					Name:      "a",
 					ParentID:  dmChannelRootUUID,
 					IsForced:  false,
-					IsPublic:  false,
+					Type:      model.ChannelTypeDM,
 					IsVisible: true,
 				}
 				repo.EXPECT().
@@ -976,7 +976,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 						Name:      "dm_" + random.AlphaNumeric(17),
 						ParentID:  dmChannelRootUUID,
 						IsForced:  false,
-						IsPublic:  false,
+						Type:      model.ChannelTypeDM,
 						IsVisible: true,
 					}, nil).
 					Times(1)

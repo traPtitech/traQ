@@ -65,7 +65,7 @@ func (repo *TestRepository) GetPublicChannels(_ context.Context) ([]*model.Chann
 	defer repo.ChannelsLock.RUnlock()
 	result := make([]*model.Channel, 0)
 	for _, c := range repo.Channels {
-		if c.IsPublic {
+		if c.IsPublic() {
 			c := c
 			result = append(result, &c)
 		}
@@ -728,7 +728,7 @@ func (repo *TestRepository) GetUserIDsByTagID(_ context.Context, tagID uuid.UUID
 
 func (repo *TestRepository) CreateChannel(_ context.Context, ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
 	ch.ID = uuid.Must(uuid.NewV7())
-	ch.IsPublic = true
+	ch.Type = model.ChannelTypePublic
 	ch.CreatedAt = time.Now()
 	ch.UpdatedAt = time.Now()
 	ch.DeletedAt = gorm.DeletedAt{}
@@ -1332,7 +1332,7 @@ func (repo *TestRepository) CreateWebhook(_ context.Context, name, description s
 	if !ok {
 		return nil, repository.ArgError("channelID", "the Channel is not found")
 	}
-	if !ch.IsPublic {
+	if !ch.IsPublic() {
 		return nil, repository.ArgError("channelID", "private channels are not allowed")
 	}
 
@@ -1370,7 +1370,7 @@ func (repo *TestRepository) UpdateWebhook(_ context.Context, id uuid.UUID, args 
 		if !ok {
 			return repository.ArgError("args.ChannelID", "the Channel is not found")
 		}
-		if !ch.IsPublic {
+		if !ch.IsPublic() {
 			return repository.ArgError("args.ChannelID", "private channels are not allowed")
 		}
 		wb.ChannelID = args.ChannelID.V

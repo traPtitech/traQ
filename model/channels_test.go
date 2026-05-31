@@ -18,6 +18,29 @@ func TestChannel_IsDMChannel(t *testing.T) {
 	assert.True(t, (&Channel{ParentID: dmChannelRootUUID}).IsDMChannel())
 }
 
+func TestChannelType_String(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "public", ChannelTypePublic.String())
+}
+
+func TestChannel_IsPublic(t *testing.T) {
+	t.Parallel()
+	assert.True(t, (&Channel{Type: ChannelTypePublic}).IsPublic())
+	assert.False(t, (&Channel{Type: ChannelTypeDM}).IsPublic())
+	assert.False(t, (&Channel{Type: ChannelTypeThread}).IsPublic())
+}
+
+func TestChannel_IsThread(t *testing.T) {
+	t.Parallel()
+	assert.True(t, (&Channel{Type: ChannelTypeThread}).IsThread())
+	assert.False(t, (&Channel{Type: ChannelTypePublic}).IsThread())
+}
+
+func TestThread_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "threads", (&Thread{}).TableName())
+}
+
 func TestUsersPrivateChannel_TableName(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())

@@ -35,9 +35,9 @@ func TestMessageCreated(t *testing.T) {
 		Bot:    true,
 	}
 	ch := &model.Channel{
-		ID:       uuid.NewV3(uuid.Nil, "c"),
-		Name:     "test",
-		IsPublic: true,
+		ID:   uuid.NewV3(uuid.Nil, "c"),
+		Name: "test",
+		Type: model.ChannelTypePublic,
 	}
 
 	t.Run("success (public message, sent)", func(t *testing.T) {
