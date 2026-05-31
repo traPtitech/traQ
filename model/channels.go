@@ -68,7 +68,7 @@ func (ch *Channel) IsThread() bool {
 
 // IsDMChannel ダイレクトメッセージ用チャンネルかどうかを返します
 func (ch *Channel) IsDMChannel() bool {
-	return ch.Type == ChannelTypeDM
+	return ch.Type == ChannelTypeDM || ch.ParentID == dmChannelRootUUID
 }
 
 // CanGetSubscribers このチャンネルから購読者を取得することができるかを返します
