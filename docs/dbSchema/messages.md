@@ -68,7 +68,7 @@ erDiagram
 "clip_folder_messages" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "messages_stamps" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "pins" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
-"threads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"threads" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"

@@ -82,7 +82,7 @@ erDiagram
 "stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "stars" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "threads" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
-"threads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"threads" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "unreads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
