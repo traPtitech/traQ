@@ -34,6 +34,7 @@
 | [stamp_palettes](stamp_palettes.md) | 7 | スタンプパレットテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
+| [threads](threads.md) | 2 | スレッドテーブル | BASE TABLE |
 | [unreads](unreads.md) | 5 | メッセージ未読テーブル | BASE TABLE |
 | [users](users.md) | 11 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
@@ -80,6 +81,8 @@ erDiagram
 "stamp_palettes" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
 "stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "stars" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"threads" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"threads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "unreads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
@@ -147,11 +150,11 @@ erDiagram
 }
 "channels" {
   char_36_ id PK
-  varchar_20_ name
+  text name
   char_36_ parent_id
   text topic
   tinyint_1_ is_forced
-  tinyint_1_ is_public
+  enum__public___dm___thread__ type
   tinyint_1_ is_visible
   char_36_ creator_id
   char_36_ updater_id
@@ -348,6 +351,10 @@ erDiagram
   varchar_30_ name
   datetime_6_ created_at
   datetime_6_ updated_at
+}
+"threads" {
+  char_36_ channel_id PK
+  char_36_ message_id FK
 }
 "unreads" {
   char_36_ user_id PK
