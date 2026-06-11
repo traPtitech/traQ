@@ -1332,7 +1332,7 @@ func (repo *TestRepository) CreateWebhook(_ context.Context, name, description s
 	if !ok {
 		return nil, repository.ArgError("channelID", "the Channel is not found")
 	}
-	if !ch.IsPublic() {
+	if !ch.CanReceiveWebhookMessage() {
 		return nil, repository.ArgError("channelID", "private channels are not allowed")
 	}
 
@@ -1370,7 +1370,7 @@ func (repo *TestRepository) UpdateWebhook(_ context.Context, id uuid.UUID, args 
 		if !ok {
 			return repository.ArgError("args.ChannelID", "the Channel is not found")
 		}
-		if !ch.IsPublic() {
+		if !ch.CanReceiveWebhookMessage() {
 			return repository.ArgError("args.ChannelID", "private channels are not allowed")
 		}
 		wb.ChannelID = args.ChannelID.V
