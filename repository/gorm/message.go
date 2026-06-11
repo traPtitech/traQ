@@ -249,7 +249,7 @@ func (repo *Repository) GetMessages(ctx context.Context, query repository.Messag
 	}
 
 	if query.ExcludeDMs {
-		tx = tx.Where("channels.is_public = true")
+		tx = tx.Where("channels.type != ?", model.ChannelTypeDM)
 	}
 
 	if query.Limit > 0 {
@@ -473,7 +473,7 @@ func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repo
 		Table("channel_latest_messages clm").
 		Joins("INNER JOIN messages m ON clm.message_id = m.id").
 		Joins("INNER JOIN channels c ON clm.channel_id = c.id").
-		Where("c.deleted_at IS NULL AND c.is_public = TRUE AND m.deleted_at IS NULL").
+		Where("c.deleted_at IS NULL AND c.type = ? AND m.deleted_at IS NULL", model.ChannelTypePublic).
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {

@@ -32,13 +32,13 @@ type channelCounterImpl struct {
 // NewChannelCounter 公開チャンネル数カウンタを生成します
 func NewChannelCounter(db *gorm.DB, hub *hub.Hub) (ChannelCounter, error) {
 	counter := &channelCounterImpl{}
-	if err := db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{IsPublic: true}).Count(&counter.count).Error; err != nil {
+	if err := db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{Type: model.ChannelTypePublic}).Count(&counter.count).Error; err != nil {
 		return nil, fmt.Errorf("failed to load public channels count: %w", err)
 	}
 	channelsCounter.Add(float64(counter.count))
 	go func() {
 		for e := range hub.Subscribe(1, event.ChannelCreated).Receiver {
-			if e.Fields["channel"].(*model.Channel).IsPublic {
+			if e.Fields["channel"].(*model.Channel).IsPublic() {
 				counter.inc()
 			}
 		}

@@ -16,14 +16,31 @@ const (
 
 var dmChannelRootUUID = uuid.Must(uuid.FromString(DirectMessageChannelRootID))
 
+// ChannelType チャンネル種別
+type ChannelType string
+
+const (
+	// ChannelTypePublic 公開チャンネル
+	ChannelTypePublic ChannelType = "public"
+	// ChannelTypeDM DMチャンネル
+	ChannelTypeDM ChannelType = "dm"
+	// ChannelTypeThread スレッド
+	ChannelTypeThread ChannelType = "thread"
+)
+
+// String stringに変換します
+func (t ChannelType) String() string {
+	return string(t)
+}
+
 // Channel チャンネルの構造体
 type Channel struct {
-	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_is_public_is_forced,priority:1"`
-	Name      string         `gorm:"type:varchar(20);not null;uniqueIndex:name_parent"`
+	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_type_is_forced,priority:1"`
+	Name      string         `gorm:"type:text;not null;uniqueIndex:name_parent,length:191"`
 	ParentID  uuid.UUID      `gorm:"type:char(36);not null;uniqueIndex:name_parent"`
 	Topic     string         `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:3"`
-	IsPublic  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:2"`
+	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_type_is_forced,priority:3"`
+	Type      ChannelType    `gorm:"type:enum('public','dm','thread');not null;default:public;index:idx_channel_channels_id_type_is_forced,priority:2"`
 	IsVisible bool           `gorm:"type:boolean;not null;default:false"`
 	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
 	UpdaterID uuid.UUID      `gorm:"type:char(36);not null"`
@@ -39,9 +56,29 @@ func (ch *Channel) TableName() string {
 	return "channels"
 }
 
+// IsPublic 公開チャンネルかどうかを返します
+func (ch *Channel) IsPublic() bool {
+	return ch.Type == ChannelTypePublic
+}
+
+// IsThread スレッドチャンネルかどうかを返します
+func (ch *Channel) IsThread() bool {
+	return ch.Type == ChannelTypeThread
+}
+
 // IsDMChannel ダイレクトメッセージ用チャンネルかどうかを返します
 func (ch *Channel) IsDMChannel() bool {
-	return ch.ParentID == dmChannelRootUUID
+	return ch.Type == ChannelTypeDM || ch.ParentID == dmChannelRootUUID
+}
+
+// CanGetSubscribers このチャンネルから購読者を取得することができるかを返します
+func (ch *Channel) CanGetSubscribers() bool {
+	return (ch.Type == ChannelTypePublic || ch.Type == ChannelTypeThread) && !ch.IsForced
+}
+
+// CanReceiveWebhookMessage このチャンネルがWebhookメッセージを受け取れるかどうかを返します
+func (ch *Channel) CanReceiveWebhookMessage() bool {
+	return ch.Type == ChannelTypePublic || ch.Type == ChannelTypeThread
 }
 
 // IsArchived アーカイブされているチャンネルかどうか
@@ -121,6 +158,20 @@ type DMChannelMapping struct {
 // TableName DMChannelMapping構造体のテーブル名
 func (*DMChannelMapping) TableName() string {
 	return "dm_channel_mappings"
+}
+
+// Thread スレッド
+type Thread struct {
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;index:idx_threads_message_id"`
+
+	Channel *Channel `gorm:"constraint:threads_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Message *Message `gorm:"constraint:threads_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName Thread構造体のテーブル名
+func (*Thread) TableName() string {
+	return "threads"
 }
 
 // ChannelEventType チャンネルイベントタイプ

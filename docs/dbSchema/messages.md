@@ -33,7 +33,7 @@ CREATE TABLE `messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [clip_folder_messages](clip_folder_messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [unreads](unreads.md) |  | メッセージUUID |
+| id | char(36) |  | false | [clip_folder_messages](clip_folder_messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [threads](threads.md) [unreads](unreads.md) |  | メッセージUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | 投稿ユーザーUUID |
 | channel_id | char(36) |  | false |  | [channels](channels.md) | 投稿先チャンネルUUID |
 | text | text |  | false |  |  | 本文 |
@@ -68,6 +68,7 @@ erDiagram
 "clip_folder_messages" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "messages_stamps" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "pins" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"threads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "unreads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
@@ -100,6 +101,10 @@ erDiagram
   char_36_ user_id FK
   datetime_6_ created_at
 }
+"threads" {
+  char_36_ channel_id PK
+  char_36_ message_id FK
+}
 "unreads" {
   char_36_ user_id PK
   char_36_ channel_id PK
@@ -122,11 +127,11 @@ erDiagram
 }
 "channels" {
   char_36_ id PK
-  varchar_20_ name
+  text name
   char_36_ parent_id
   text topic
   tinyint_1_ is_forced
-  tinyint_1_ is_public
+  enum__public___dm___thread__ type
   tinyint_1_ is_visible
   char_36_ creator_id
   char_36_ updater_id

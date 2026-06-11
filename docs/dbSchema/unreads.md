@@ -83,11 +83,11 @@ erDiagram
 }
 "channels" {
   char_36_ id PK
-  varchar_20_ name
+  text name
   char_36_ parent_id
   text topic
   tinyint_1_ is_forced
-  tinyint_1_ is_public
+  enum__public___dm___thread__ type
   tinyint_1_ is_visible
   char_36_ creator_id
   char_36_ updater_id
