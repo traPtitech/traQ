@@ -10,7 +10,7 @@ import (
 
 type v44Thread struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
-	MessageID uuid.UUID `gorm:"type:char(36);not null;index:idx_threads_message_id"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:idx_threads_message_id"`
 }
 
 func (*v44Thread) TableName() string {

@@ -163,7 +163,7 @@ func (*DMChannelMapping) TableName() string {
 // Thread スレッド
 type Thread struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
-	MessageID uuid.UUID `gorm:"type:char(36);not null;index:idx_threads_message_id"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:idx_threads_message_id"`
 
 	Channel *Channel `gorm:"constraint:threads_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Message *Message `gorm:"constraint:threads_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`

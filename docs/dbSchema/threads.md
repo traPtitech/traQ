@@ -12,7 +12,7 @@ CREATE TABLE `threads` (
   `channel_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   PRIMARY KEY (`channel_id`),
-  KEY `idx_threads_message_id` (`message_id`),
+  UNIQUE KEY `idx_threads_message_id` (`message_id`),
   CONSTRAINT `threads_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `threads_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -31,6 +31,7 @@ CREATE TABLE `threads` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| idx_threads_message_id | UNIQUE | UNIQUE KEY idx_threads_message_id (message_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (channel_id) |
 | threads_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
 | threads_message_id_messages_id_foreign | FOREIGN KEY | FOREIGN KEY (message_id) REFERENCES messages (id) |
@@ -39,8 +40,8 @@ CREATE TABLE `threads` (
 
 | Name | Definition |
 | ---- | ---------- |
-| idx_threads_message_id | KEY idx_threads_message_id (message_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (channel_id) USING BTREE |
+| idx_threads_message_id | UNIQUE KEY idx_threads_message_id (message_id) USING BTREE |
 
 ## Relations
 
@@ -48,7 +49,7 @@ CREATE TABLE `threads` (
 erDiagram
 
 "threads" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
-"threads" }o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
+"threads" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 
 "threads" {
   char_36_ channel_id PK
