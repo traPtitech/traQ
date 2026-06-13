@@ -50,6 +50,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/ory/dockertest/v3 v3.12.0
+	github.com/ory/dockertest/v4 v4.0.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/samber/lo v1.53.0
 	github.com/sapphi-red/midec v0.5.2
@@ -120,8 +121,8 @@ require (
 	github.com/livekit/mediatransportutil v0.0.0-20260521165806-8004f10ad0c5 // indirect
 	github.com/livekit/psrpc v0.7.1 // indirect
 	github.com/magefile/mage v1.17.0 // indirect
-	github.com/moby/moby/api v1.52.0 // indirect
-	github.com/moby/moby/client v0.1.0 // indirect
+	github.com/moby/moby/api v1.54.1 // indirect
+	github.com/moby/moby/client v0.4.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/nats-io/nats.go v1.48.0 // indirect
 	github.com/nats-io/nkeys v0.4.15 // indirect
