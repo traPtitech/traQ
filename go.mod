@@ -38,7 +38,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-opentelemetry v0.0.2
 	github.com/labstack/echo-prometheus v0.0.1
-	github.com/labstack/echo/v5 v5.2.0
+	github.com/labstack/echo/v5 v5.2.1
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.1.1
 	github.com/livekit/protocol v1.46.6
