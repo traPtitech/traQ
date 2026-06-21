@@ -39,9 +39,9 @@ var UserNameRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, UserNameRule...)
 
-var ThreadNameRuleRequired = append([]vd.Rule{
+var ThreadNameRuleRequired = []vd.Rule{
 	vd.Required,
-})
+}
 
 // BotUserNameRule BOTユーザー名バリデーションルール
 var BotUserNameRule = []vd.Rule{
