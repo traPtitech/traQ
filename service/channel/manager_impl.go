@@ -422,7 +422,7 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 			return nil, ErrInvalidParentChannel
 		}
 		// 親チャンネルがスレッドかどうか確認
-		if m.T.isThreadChannel(parent){
+		if m.T.isThreadChannel(parent) {
 			return nil, ErrChannelThreadParent
 		}
 		// 親チャンネルがアーカイブされているかどうか確認
