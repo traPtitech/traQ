@@ -15,6 +15,11 @@ import (
 	"github.com/traPtitech/traQ/service/search"
 )
 
+type DeleteStampsQuery struct {
+	IncludeMe		string `query:"include-me"`
+	IncludeOther	string `query:"include-other"`
+}
+
 // GetMyUnreadChannels GET /users/me/unread
 func (h *Handlers) GetMyUnreadChannels(c *echo.Context) error {
 	userID := getRequestUserID(c)
@@ -285,16 +290,30 @@ func (h *Handlers) AddMessageStamp(c *echo.Context) error {
 
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
+	var q DeleteStampsQuery
+	if err := bindAndValidate(c, &q); err != nil {
+		return herror.BadRequest(err)
+	}
+
+	if len(q.IncludeMe) == 0 {
+		q.IncludeMe = "1"
+	}
+	if len(q.IncludeOther) == 0 {
+		q.IncludeOther = "0"
+	}
+
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID); err != nil {
+	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID, isTrue(q.IncludeMe), isTrue(q.IncludeOther)); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
+		case message.ErrCannotRemoveStamp:
+			return herror.Forbidden("non-bot user cannot remove stamps")
 		default:
 			return herror.InternalServerError(err)
 		}

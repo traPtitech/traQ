@@ -714,10 +714,23 @@ paths:
             Not Found
             メッセージ、またはスタンプが見つかりません。
       operationId: removeMessageStamp
+      parameters:
+        - schema:
+            type: boolean
+            default: true
+          in: query
+          name: include-me
+          description: "自分が押したスタンプを削除します"
+        - schema:
+            type: boolean
+            default: false
+          in: query
+          name: include-other
+          description: "自分以外が押したスタンプを削除します"
       tags:
         - message
         - stamp
-      description: 指定したメッセージから指定した自身が押したスタンプを削除します。
+      description: 指定したメッセージから指定したスタンプを削除します。
   "/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
@@ -4607,7 +4620,7 @@ paths:
     post:
       summary: LiveKit Webhook受信
       description: >
-        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
+        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
       operationId: liveKitWebhook
       tags:
@@ -4630,7 +4643,7 @@ paths:
     get:
       summary: サウンドボード用の音声一覧を取得
       description: >
-        DBに保存されたサウンドボード情報を取得します。  
+        DBに保存されたサウンドボード情報を取得します。
         各アイテムには soundId, soundName, stampId が含まれます。
       operationId: getSoundboardList
       tags:
@@ -4648,8 +4661,8 @@ paths:
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
       description: >
-        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
-        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
+        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
+        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
       operationId: postSoundboard
       tags:
@@ -4676,8 +4689,8 @@ paths:
     post:
       summary: アップロード済み音声を LiveKit ルームで再生
       description: >
-        S3上にある音声ファイルの署名付きURLを生成し、  
-        Ingressを介して指定ルームに音声を流します。    
+        S3上にある音声ファイルの署名付きURLを生成し、
+        Ingressを介して指定ルームに音声を流します。
         該当ルームに参加しているユーザであれば再生可能とします。
       operationId: postSoundboardPlay
       tags:
