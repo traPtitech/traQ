@@ -28,6 +28,7 @@ var (
 	cEFGHI    = uuid.Must(uuid.FromString("55339fb1-c3c8-4c52-a053-8af0845c45e9"))
 	cEFGJ     = uuid.Must(uuid.FromString("071eefb9-0a77-4cc4-8d38-5c214aca85f0"))
 	cEK       = uuid.Must(uuid.FromString("2636a1e1-5356-4c5f-8822-c52eeb914689"))
+	cEKL      = uuid.Must(uuid.FromString("d1c8e5b7-9a1c-4f0b-9c3e-2a1b2c3d4e5f"))
 	cNotFound = uuid.Must(uuid.FromString("44bf0189-e3d5-4946-92e7-a196a2a94f98"))
 )
 
@@ -51,6 +52,8 @@ e : 6301b259-2a3e-4a30-9ec8-78737c4b539d force
 │ 　 │ └ i : 55339fb1-c3c8-4c52-a053-8af0845c45e9
 │ 　 └ j : 071eefb9-0a77-4cc4-8d38-5c214aca85f0
 └ k : 2636a1e1-5356-4c5f-8822-c52eeb914689
+
+	└ l : d1c8e5b7-9a1c-4f0b-9c3e-2a1b2c3d4e5f thread
 */
 func makeTestChannelTree(t *testing.T) *treeImpl {
 	t.Helper()
@@ -72,6 +75,7 @@ func makeTestChannelTree(t *testing.T) *treeImpl {
 		{ID: cEFGHI, Name: "i", ParentID: cEFGH, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
 		{ID: cEFGJ, Name: "j", ParentID: cEFG, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
 		{ID: cEK, Name: "k", ParentID: cE, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
+		{ID: cEKL, Name: "l", ParentID: cEK, Topic: "", IsForced: false, Type: model.ChannelTypeThread, IsVisible: true},
 	})
 	assert.NoError(t, err)
 	return tree
@@ -122,7 +126,7 @@ func TestChannelTreeImpl_GetDescendantIDs(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
-	assert.ElementsMatch(t, tree.GetDescendantIDs(uuid.Nil), []uuid.UUID{cA, cAB, cABC, cABCD, cABCE, cABF, cABFA, cABB, cABBC, cAD, cE, cEF, cEFG, cEFGH, cEFGHI, cEFGJ, cEK})
+	assert.ElementsMatch(t, tree.GetDescendantIDs(uuid.Nil), []uuid.UUID{cA, cAB, cABC, cABCD, cABCE, cABF, cABFA, cABB, cABBC, cAD, cE, cEF, cEFG, cEFGH, cEFGHI, cEFGJ, cEK, cEKL})
 	assert.ElementsMatch(t, tree.GetDescendantIDs(cA), []uuid.UUID{cAB, cABC, cABCD, cABCE, cABF, cABFA, cABB, cABBC, cAD})
 	assert.ElementsMatch(t, tree.GetDescendantIDs(cAB), []uuid.UUID{cABC, cABCD, cABCE, cABF, cABFA, cABB, cABBC})
 	assert.ElementsMatch(t, tree.GetDescendantIDs(cABCD), []uuid.UUID{})

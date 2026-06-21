@@ -214,6 +214,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.GET("/path", h.GetChannelPath, requires(permission.GetChannel))
 			}
 		}
+		apiThreads := api.Group("/threads")
+		{
+			apiThreads.POST("", h.CreateThreads, requires(permission.CreateChannel))
+		}
 		apiMessages := api.Group("/messages")
 		{
 			apiMessages.GET("", h.SearchMessages, requires(permission.GetMessage))
