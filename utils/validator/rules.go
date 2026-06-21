@@ -39,6 +39,10 @@ var UserNameRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, UserNameRule...)
 
+var ThreadNameRuleRequired = append([]vd.Rule{
+	vd.Required,
+})
+
 // BotUserNameRule BOTユーザー名バリデーションルール
 var BotUserNameRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),
