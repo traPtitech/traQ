@@ -15,8 +15,8 @@ CREATE TABLE `unreads` (
   `noticeable` tinyint(1) NOT NULL DEFAULT 0,
   `message_created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`user_id`,`channel_id`,`message_id`),
-  KEY `unreads_channel_id_channels_id_foreign` (`channel_id`),
   KEY `unreads_message_id_messages_id_foreign` (`message_id`),
+  KEY `unreads_channel_id_channels_id_foreign` (`channel_id`),
   CONSTRAINT `unreads_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `unreads_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `unreads_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE

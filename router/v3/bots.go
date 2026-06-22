@@ -7,7 +7,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
@@ -24,13 +24,13 @@ import (
 )
 
 // GetBots GET /bots
-func (h *Handlers) GetBots(c echo.Context) error {
+func (h *Handlers) GetBots(c *echo.Context) error {
 	var q repository.BotsQuery
 	if !isTrue(c.QueryParam("all")) {
 		q = q.CreatedBy(getRequestUserID(c))
 	}
 
-	list, err := h.Repo.GetBots(q)
+	list, err := h.Repo.GetBots(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -64,18 +64,18 @@ func (r PostBotRequest) Validate() error {
 }
 
 // CreateBot POST /bots
-func (h *Handlers) CreateBot(c echo.Context) error {
+func (h *Handlers) CreateBot(c *echo.Context) error {
 	var req PostBotRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	if _, err := h.Repo.GetUserByName("BOT_"+req.Name, false); err == nil {
+	if _, err := h.Repo.GetUserByName(c.Request().Context(), "BOT_"+req.Name, false); err == nil {
 		return herror.Conflict("this name is already used")
 	} else if err != repository.ErrNotFound {
 		return herror.InternalServerError(err)
@@ -89,12 +89,12 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		initialState = model.BotActive
 	}
 
-	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), model.BotMode(req.Mode), initialState, req.Endpoint)
+	b, err := h.Repo.CreateBot(c.Request().Context(), req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), model.BotMode(req.Mode), initialState, req.Endpoint)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	t, err := h.Repo.GetTokenByID(c.Request().Context(), b.AccessTokenID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -103,7 +103,7 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 }
 
 // GetBot GET /bots/:botID
-func (h *Handlers) GetBot(c echo.Context) error {
+func (h *Handlers) GetBot(c *echo.Context) error {
 	b := getParamBot(c)
 
 	if isTrue(c.QueryParam("detail")) {
@@ -114,7 +114,7 @@ func (h *Handlers) GetBot(c echo.Context) error {
 			return herror.Forbidden()
 		}
 
-		t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+		t, err := h.Repo.GetTokenByID(c.Request().Context(), b.AccessTokenID)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -124,7 +124,7 @@ func (h *Handlers) GetBot(c echo.Context) error {
 			}
 		}
 
-		ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
+		ids, err := h.Repo.GetParticipatingChannelIDsByBot(c.Request().Context(), b.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -160,7 +160,7 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditBot PATCH /bots/:botID
-func (h *Handlers) EditBot(c echo.Context) error {
+func (h *Handlers) EditBot(c *echo.Context) error {
 	b := getParamBot(c)
 
 	var req PatchBotRequest
@@ -189,7 +189,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 		Bio:             req.Bio,
 	}
 
-	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
+	if err := h.Repo.UpdateBot(c.Request().Context(), b.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -197,10 +197,10 @@ func (h *Handlers) EditBot(c echo.Context) error {
 }
 
 // DeleteBot DELETE /bots/:botID
-func (h *Handlers) DeleteBot(c echo.Context) error {
+func (h *Handlers) DeleteBot(c *echo.Context) error {
 	b := getParamBot(c)
 
-	if err := h.Repo.DeleteBot(b.ID); err != nil {
+	if err := h.Repo.DeleteBot(c.Request().Context(), b.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -208,11 +208,11 @@ func (h *Handlers) DeleteBot(c echo.Context) error {
 }
 
 // GetBotIcon GET /bots/:botID/icon
-func (h *Handlers) GetBotIcon(c echo.Context) error {
+func (h *Handlers) GetBotIcon(c *echo.Context) error {
 	w := getParamBot(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(w.BotUserID, false)
+	user, err := h.Repo.GetUser(c.Request().Context(), w.BotUserID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -221,7 +221,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 }
 
 // ChangeBotIcon PUT /bots/:botID/icon
-func (h *Handlers) ChangeBotIcon(c echo.Context) error {
+func (h *Handlers) ChangeBotIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamBot(c).BotUserID)
 }
 
@@ -242,7 +242,7 @@ func (r *GetBotLogsRequest) Validate() error {
 }
 
 // GetBotLogs GET /bots/:botID/logs
-func (h *Handlers) GetBotLogs(c echo.Context) error {
+func (h *Handlers) GetBotLogs(c *echo.Context) error {
 	b := getParamBot(c)
 
 	var req GetBotLogsRequest
@@ -250,7 +250,7 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 		return err
 	}
 
-	logs, err := h.Repo.GetBotEventLogs(b.ID, req.Limit, req.Offset)
+	logs, err := h.Repo.GetBotEventLogs(c.Request().Context(), b.ID, req.Limit, req.Offset)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -259,17 +259,17 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 }
 
 // GetChannelBots GET /channels/:channelID/bots
-func (h *Handlers) GetChannelBots(c echo.Context) error {
+func (h *Handlers) GetChannelBots(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	bots, err := h.Repo.GetBots(repository.BotsQuery{}.CMemberOf(channelID))
+	bots, err := h.Repo.GetBots(c.Request().Context(), repository.BotsQuery{}.CMemberOf(channelID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	res := make([]echo.Map, len(bots))
+	res := make([]map[string]any, len(bots))
 	for i, v := range bots {
-		res[i] = echo.Map{
+		res[i] = map[string]any{
 			"id":        v.ID,
 			"botUserId": v.BotUserID,
 		}
@@ -278,7 +278,7 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 }
 
 // ActivateBot POST /bots/:botID/actions/activate
-func (h *Handlers) ActivateBot(c echo.Context) error {
+func (h *Handlers) ActivateBot(c *echo.Context) error {
 	b := getParamBot(c)
 
 	h.Hub.Publish(hub.Message{
@@ -292,30 +292,30 @@ func (h *Handlers) ActivateBot(c echo.Context) error {
 }
 
 // InactivateBot POST /bots/:botID/actions/inactivate
-func (h *Handlers) InactivateBot(c echo.Context) error {
+func (h *Handlers) InactivateBot(c *echo.Context) error {
 	b := getParamBot(c)
 
-	if err := h.Repo.ChangeBotState(b.ID, model.BotInactive); err != nil {
+	if err := h.Repo.ChangeBotState(c.Request().Context(), b.ID, model.BotInactive); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
 
 // ReissueBot POST /bots/:botID/actions/reissue
-func (h *Handlers) ReissueBot(c echo.Context) error {
+func (h *Handlers) ReissueBot(c *echo.Context) error {
 	b := getParamBot(c)
 
-	b, err := h.Repo.ReissueBotTokens(b.ID)
+	b, err := h.Repo.ReissueBotTokens(c.Request().Context(), b.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	t, err := h.Repo.GetTokenByID(c.Request().Context(), b.AccessTokenID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return c.JSON(http.StatusOK, map[string]any{
 		"verificationToken": b.VerificationToken,
 		"accessToken":       t.AccessToken,
 	})
@@ -333,7 +333,7 @@ func (r PostBotActionJoinRequest) ValidateWithContext(ctx context.Context) error
 }
 
 // LetBotJoinChannel POST /bots/:botID/actions/join
-func (h *Handlers) LetBotJoinChannel(c echo.Context) error {
+func (h *Handlers) LetBotJoinChannel(c *echo.Context) error {
 	var req PostBotActionJoinRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -342,7 +342,7 @@ func (h *Handlers) LetBotJoinChannel(c echo.Context) error {
 	b := getParamBot(c)
 
 	// 参加
-	if err := h.Repo.AddBotToChannel(b.ID, req.ChannelID); err != nil {
+	if err := h.Repo.AddBotToChannel(c.Request().Context(), b.ID, req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -361,7 +361,7 @@ func (r PostBotActionLeaveRequest) Validate() error {
 }
 
 // LetBotLeaveChannel POST /bots/:botID/actions/leave
-func (h *Handlers) LetBotLeaveChannel(c echo.Context) error {
+func (h *Handlers) LetBotLeaveChannel(c *echo.Context) error {
 	var req PostBotActionLeaveRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -370,7 +370,7 @@ func (h *Handlers) LetBotLeaveChannel(c echo.Context) error {
 	b := getParamBot(c)
 
 	// 退出
-	if err := h.Repo.RemoveBotFromChannel(b.ID, req.ChannelID); err != nil {
+	if err := h.Repo.RemoveBotFromChannel(c.Request().Context(), b.ID, req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

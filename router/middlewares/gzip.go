@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // Gzip Gzipミドルウェア
@@ -23,14 +23,19 @@ func Gzip() echo.MiddlewareFunc {
 		gziphandler.CompressionLevel(gzip.BestSpeed),
 	)
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) (err error) {
+		return func(c *echo.Context) (err error) {
+			res, uerr := echo.UnwrapResponse(c.Response())
+			if uerr != nil {
+				return next(c)
+			}
+			orig := res.ResponseWriter
 			gzh(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				c.SetRequest(r)
-				c.Response().Writer = w
+				res.ResponseWriter = w
 				if err := next(c); err != nil {
-					c.Error(err)
+					c.Echo().HTTPErrorHandler(c, err)
 				}
-			})).ServeHTTP(c.Response().Writer, c.Request())
+			})).ServeHTTP(orig, c.Request())
 			return
 		}
 	}

@@ -374,7 +374,7 @@ comments:
       external_id: 認証プロバイダ上でのID
       extra: 追加データ
   - table: ogp_cache
-    tableComment: OGPキャッシュテーブルr
+    tableComment: OGPキャッシュテーブル
     columnComments:
       url: 対象ページのURL
       url_hash: URLのSHA-1ハッシュ

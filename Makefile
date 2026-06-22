@@ -1,10 +1,10 @@
 SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
 TEST_DB_PORT := 3100
-# renovate:image-tag imageName=ghcr.io/k1low/tbls
-TBLS_VERSION := "v1.88.0"
-# renovate:image-tag imageName=index.docker.io/stoplight/spectral
-SPECTRAL_VERSION := "6.15.1"
+# renovate:image-full-digest
+TBLS_IMAGE := "ghcr.io/k1low/tbls:v1.94.5@sha256:ae8a3bff6d4f8495d13a7982cd71fac3e8a3d1dd394888f2c44ef82216aa14e4"
+# renovate:image-full-digest
+SPECTRAL_IMAGE := "index.docker.io/stoplight/spectral:6.15.1@sha256:b3d5a530f83c4a72df69e682c5ac928bc9821b5ca3c42529e81d926c80fa50ab"
 
 .DEFAULT_GOAL := help
 
@@ -49,22 +49,22 @@ golangci-lint: ## Lint go files
 
 .PHONY: swagger-lint
 swagger-lint: ## Lint swagger file
-	@docker run --rm -it -v $$PWD:/tmp stoplight/spectral:$(SPECTRAL_VERSION) lint -r /tmp/.spectral.yml -q /tmp/docs/v3-api.yaml
+	@docker run --rm -it -v $$PWD:/tmp $(SPECTRAL_IMAGE) lint -r /tmp/.spectral.yml -q /tmp/docs/v3-api.yaml
 
 .PHONY: db-gen-docs
 db-gen-docs: ## Generate db docs in docs/dbSchema
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc -c .tbls.yml --rm-dist
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work $(TBLS_IMAGE) doc -c .tbls.yml --rm-dist
 
 .PHONY: db-diff-docs
 db-diff-docs: ## List diff of db docs
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) diff -c .tbls.yml
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work $(TBLS_IMAGE) diff -c .tbls.yml
 
 .PHONY: db-lint
 db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint -c .tbls.yml
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work $(TBLS_IMAGE) lint -c .tbls.yml
 
 .PHONY: up
 up: ## Build and start the app containers

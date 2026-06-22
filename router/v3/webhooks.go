@@ -12,7 +12,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -22,13 +22,13 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/utils/hmac"
+	hmacutil "github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // GetWebhooks GET /webhooks
-func (h *Handlers) GetWebhooks(c echo.Context) error {
+func (h *Handlers) GetWebhooks(c *echo.Context) error {
 	user := getRequestUser(c)
 
 	var (
@@ -36,9 +36,9 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		err  error
 	)
 	if isTrue(c.QueryParam("all")) && h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersWebhook) {
-		list, err = h.Repo.GetAllWebhooks()
+		list, err = h.Repo.GetAllWebhooks(c.Request().Context())
 	} else {
-		list, err = h.Repo.GetWebhooksByCreator(user.GetID())
+		list, err = h.Repo.GetWebhooksByCreator(c.Request().Context(), user.GetID())
 	}
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -48,11 +48,11 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 }
 
 // GetWebhookIcon GET /webhooks/:webhookID/icon
-func (h *Handlers) GetWebhookIcon(c echo.Context) error {
+func (h *Handlers) GetWebhookIcon(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(w.GetBotUserID(), false)
+	user, err := h.Repo.GetUser(c.Request().Context(), w.GetBotUserID(), false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -61,7 +61,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 }
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
-func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
+func (h *Handlers) ChangeWebhookIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamWebhook(c).GetBotUserID())
 }
 
@@ -83,7 +83,7 @@ func (r PostWebhooksRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // CreateWebhook POST /webhooks
-func (h *Handlers) CreateWebhook(c echo.Context) error {
+func (h *Handlers) CreateWebhook(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostWebhooksRequest
@@ -91,12 +91,12 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 		return err
 	}
 
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
+	w, err := h.Repo.CreateWebhook(c.Request().Context(), req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -110,7 +110,7 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 }
 
 // GetWebhook GET /webhooks/:webhookID
-func (h *Handlers) GetWebhook(c echo.Context) error {
+func (h *Handlers) GetWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
@@ -135,7 +135,7 @@ func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditWebhook PATCH /webhooks/:webhookID
-func (h *Handlers) EditWebhook(c echo.Context) error {
+func (h *Handlers) EditWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	var req PatchWebhookRequest
@@ -150,7 +150,7 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 		Secret:      req.Secret,
 		CreatorID:   req.OwnerID,
 	}
-	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
+	if err := h.Repo.UpdateWebhook(c.Request().Context(), w.GetID(), args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -162,7 +162,8 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 }
 
 // PostWebhook POST /webhooks/:webhookID
-func (h *Handlers) PostWebhook(c echo.Context) error {
+func (h *Handlers) PostWebhook(c *echo.Context) error {
+	ctx := c.Request().Context()
 	w := getParamWebhook(c)
 	channelID := w.GetChannelID()
 
@@ -171,7 +172,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	case echo.MIMETextPlain, strings.ToLower(echo.MIMETextPlainCharsetUTF8):
 		break
 	default:
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, http.StatusText(http.StatusUnsupportedMediaType))
 	}
 
 	body, err := io.ReadAll(c.Request().Body)
@@ -188,7 +189,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmacutil.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.BadRequest("X-TRAQ-Signature is wrong")
 		}
 	}
@@ -203,7 +204,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
+	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
 
@@ -213,7 +214,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// メッセージ投稿
-	if _, err := h.MessageManager.Create(channelID, w.GetBotUserID(), string(body)); err != nil {
+	if _, err := h.MessageManager.Create(ctx, channelID, w.GetBotUserID(), string(body)); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel has been archived")
@@ -226,10 +227,10 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 }
 
 // DeleteWebhook DELETE /webhooks/:webhookID
-func (h *Handlers) DeleteWebhook(c echo.Context) error {
+func (h *Handlers) DeleteWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 
-	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
+	if err := h.Repo.DeleteWebhook(c.Request().Context(), w.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -237,7 +238,7 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 }
 
 // GetWebhookMessages GET /webhooks/:webhookID/messages
-func (h *Handlers) GetWebhookMessages(c echo.Context) error {
+func (h *Handlers) GetWebhookMessages(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	var req MessagesQuery
@@ -304,7 +305,7 @@ func (h *Handlers) EditWebhookMessage(c echo.Context) error {
 }
 
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
-func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
+func (h *Handlers) DeleteWebhookMessage(c *echo.Context) error {
 	w := getParamWebhook(c)
 	m := getParamMessage(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
@@ -312,7 +313,7 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	messageUserID := m.GetUserID()
 
 	if botUserID == messageUserID {
-		if err := h.Repo.DeleteMessage(messageID); err != nil {
+		if err := h.Repo.DeleteMessage(c.Request().Context(), messageID); err != nil {
 			return herror.InternalServerError(err)
 		}
 	} else {

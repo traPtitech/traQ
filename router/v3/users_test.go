@@ -1,13 +1,13 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -41,11 +41,11 @@ func TestHandlers_GetUsers(t *testing.T) {
 	user2 := env.CreateUser(t, "sappi_red")
 	deactivated := env.CreateUser(t, "deactivated")
 	suspended := env.CreateUser(t, "suspended")
-	err := env.Repository.UpdateUser(deactivated.GetID(), repository.UpdateUserArgs{
+	err := env.Repository.UpdateUser(context.TODO(), deactivated.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusDeactivated),
 	})
 	require.NoError(t, err)
-	err = env.Repository.UpdateUser(suspended.GetID(), repository.UpdateUserArgs{
+	err = env.Repository.UpdateUser(context.TODO(), suspended.GetID(), repository.UpdateUserArgs{
 		UserState: optional.From(model.UserAccountStatusSuspended),
 	})
 	require.NoError(t, err)
@@ -333,7 +333,7 @@ func TestHandlers_EditMe(t *testing.T) {
 				Expect().
 				Status(http.StatusNoContent)
 
-			profile, err := env.Repository.GetUser(user.GetID(), true)
+			profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 			require.NoError(t, err)
 			assert.EqualValues(t, strings.Repeat("a", 32), profile.GetDisplayName())
 		})
@@ -349,7 +349,7 @@ func TestHandlers_EditMe(t *testing.T) {
 				Expect().
 				Status(http.StatusNoContent)
 
-			profile, err := env.Repository.GetUser(user.GetID(), true)
+			profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 			require.NoError(t, err)
 			assert.EqualValues(t, "po", profile.GetDisplayName())
 			if assert.True(t, profile.GetHomeChannel().Valid) {
@@ -420,7 +420,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": 111, "newPassword": false}).
+			WithJSON(map[string]any{"password": 111, "newPassword": false}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -430,7 +430,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "a"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "a"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -440,7 +440,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "アイウエオ"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "アイウエオ"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -450,7 +450,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": strings.Repeat("a", 33)}).
+			WithJSON(map[string]any{"password": "test", "newPassword": strings.Repeat("a", 33)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -460,7 +460,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
+			WithJSON(map[string]any{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -473,11 +473,11 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		newPass := strings.Repeat("a", 20)
 		e.PUT(path).
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			WithJSON(echo.Map{"password": "!test_test@test-", "newPassword": newPass}).
+			WithJSON(map[string]any{"password": "!test_test@test-", "newPassword": newPass}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := env.Repository.GetUser(user.GetID(), false)
+		u, err := env.Repository.GetUser(context.TODO(), user.GetID(), false)
 		require.NoError(t, err)
 		assert.NoError(t, u.Authenticate(newPass))
 	})
@@ -611,6 +611,53 @@ func TestHandlers_GetMyStampHistory(t *testing.T) {
 	})
 }
 
+func TestHandlers_GetMyStampRecommendations(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/users/me/stamp-recommendations"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	stamp := env.CreateStamp(t, user.GetID(), rand)
+	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			WithCookie(session.CookieName, s).
+			WithQuery("limit", 500).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+
+		obj.Value(0).Object().Value("stampId").String().IsEqual(stamp.ID.String())
+		obj.Value(0).Object().Value("score").Number()
+	})
+}
+
 func TestPostMyFCMDeviceRequest_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -681,7 +728,7 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tokens, err := env.Repository.GetDeviceTokens(set.UUID{user.GetID(): {}})
+		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
 			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
@@ -938,7 +985,7 @@ func TestHandlers_EditUser(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		profile, err := env.Repository.GetUser(user2.GetID(), true)
+		profile, err := env.Repository.GetUser(context.TODO(), user2.GetID(), true)
 		require.NoError(t, err)
 		assert.EqualValues(t, model.UserAccountStatusDeactivated, profile.GetState())
 	})
@@ -952,7 +999,7 @@ func TestHandlers_EditUser(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		profile, err := env.Repository.GetUser(user.GetID(), true)
+		profile, err := env.Repository.GetUser(context.TODO(), user.GetID(), true)
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", profile.GetDisplayName())
 	})
@@ -965,7 +1012,7 @@ func TestHandlers_GetMyChannelSubscriptions(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
-	err := env.CM.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
+	err := env.CM.ChangeChannelSubscriptions(context.TODO(), ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{
 		user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 	}, false, user.GetID())
 	require.NoError(t, err)
@@ -1046,7 +1093,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 	ch := env.CreateChannel(t, rand)
 	forced := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
-	err := env.CM.UpdateChannel(forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)})
+	err := env.CM.UpdateChannel(context.TODO(), forced.ID, repository.UpdateChannelArgs{ForcedNotification: optional.From(true)})
 	require.NoError(t, err)
 	s := env.S(t, user.GetID())
 
@@ -1107,7 +1154,7 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		subs, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
+		subs, err := env.Repository.GetChannelSubscriptions(context.TODO(), repository.ChannelSubscriptionQuery{ChannelID: optional.From(ch.ID)})
 		require.NoError(t, err)
 		if assert.Len(t, subs, 1) {
 			sub := subs[0]

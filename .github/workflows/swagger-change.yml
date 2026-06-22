@@ -12,25 +12,31 @@ on:
       - 'docs/v3-api.yaml'
       - '.github/workflows/swagger-change.yml'
 
+permissions:
+  contents: read
+
 jobs:
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - name: Setup Node
-        uses: actions/setup-node@v5
-      - name: Install spectral
-        run: npm install --location=global @stoplight/spectral-cli
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Run spectral
-        run: spectral lint docs/v3-openapi.yaml --ruleset .spectral.yml --verbose
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            stoplight/spectral:6.15.1@sha256:b3d5a530f83c4a72df69e682c5ac928bc9821b5ca3c42529e81d926c80fa50ab \
+            lint docs/v3-api.yaml --ruleset .spectral.yml --verbose
   node-traq:
     name: node-traq
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -45,7 +51,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -60,7 +66,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -75,7 +81,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
