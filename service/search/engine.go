@@ -35,6 +35,7 @@ type Query struct {
 	To             []uuid.UUID            `query:"to"`             // メンション先
 	From           []uuid.UUID            `query:"from"`           // 投稿者
 	Citation       optional.Of[uuid.UUID] `query:"citation"`       // 引用しているメッセージ
+	Ogp            optional.Of[bool]      `query:"ogp"`            // OGPコンテンツを含めるか
 	Bot            optional.Of[bool]      `query:"bot"`            // 投稿者がBotか
 	HasURL         optional.Of[bool]      `query:"hasURL"`         // URLの存在
 	HasAttachments optional.Of[bool]      `query:"hasAttachments"` // 添付ファイル

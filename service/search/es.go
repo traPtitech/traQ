@@ -62,6 +62,7 @@ type esMessageDoc struct {
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	To             []uuid.UUID `json:"to"`
 	Citation       []uuid.UUID `json:"citation"`
+	OgpContent     []string    `json:"ogpContent"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 	HasImage       bool        `json:"hasImage"`
@@ -74,6 +75,7 @@ type esMessageDocUpdate struct {
 	Text           string      `json:"text"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	Citation       []uuid.UUID `json:"citation"`
+	OgpContent     []string    `json:"ogpContent"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 	HasImage       bool        `json:"hasImage"`
@@ -121,6 +123,10 @@ var esMapping = m{
 		},
 		"citation": m{
 			"type": "keyword",
+		},
+		"ogpContent": m{
+			"type":     "text",
+			"analyzer": "sudachi_analyzer",
 		},
 		"hasURL": m{
 			"type": "boolean",
@@ -273,6 +279,17 @@ func newSearchBody(andQueries []searchQuery) searchBody {
 	}
 }
 
+func newSearchBodyWithMustNot(andQueries []searchQuery, notQueries []searchQuery) searchBody {
+	return searchBody{
+		Query: searchQuery{
+			"bool": boolQuery{
+				Must:    andQueries,
+				Mustnot: notQueries,
+			},
+		},
+	}
+}
+
 type simpleQueryString struct {
 	Query           string   `json:"query"`
 	Fields          []string `json:"fields"`
@@ -280,8 +297,9 @@ type simpleQueryString struct {
 }
 
 type boolQuery struct {
-	Must   []searchQuery `json:"must,omitempty"`
-	Should []searchQuery `json:"should,omitempty"`
+	Must    []searchQuery `json:"must,omitempty"`
+	Should  []searchQuery `json:"should,omitempty"`
+	Mustnot []searchQuery `json:"must_not,omitempty"`
 }
 
 type rangeQuery map[string]rangeParameters
@@ -302,13 +320,29 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	var musts []searchQuery
 
-	if q.Word.Valid {
+	if q.Word.Valid && q.Ogp.Valid && q.Ogp.V {
+		wordBody := simpleQueryString{
+			Query:           q.Word.V,
+			Fields:          []string{"text"},
+			DefaultOperator: "AND",
+		}
+		ogpBody := simpleQueryString{
+			Query:           q.Word.V,
+			Fields:          []string{"ogpContent"},
+			DefaultOperator: "AND",
+		}
+		orQueries := []searchQuery{
+			{"simple_query_string": wordBody},
+			{"simple_query_string": ogpBody},
+		}
+		musts = append(musts, searchQuery{"bool": boolQuery{Should: orQueries}})
+
+	} else if q.Word.Valid {
 		body := simpleQueryString{
 			Query:           q.Word.V,
 			Fields:          []string{"text"},
 			DefaultOperator: "AND",
 		}
-
 		musts = append(musts, searchQuery{"simple_query_string": body})
 	}
 
