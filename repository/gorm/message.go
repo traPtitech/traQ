@@ -473,7 +473,7 @@ func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repo
 		Table("channel_latest_messages clm").
 		Joins("INNER JOIN messages m ON clm.message_id = m.id").
 		Joins("INNER JOIN channels c ON clm.channel_id = c.id").
-		Where("c.deleted_at IS NULL AND c.type = ? AND m.deleted_at IS NULL", model.ChannelTypePublic).
+		Where("c.deleted_at IS NULL AND c.type IN ? AND m.deleted_at IS NULL", []model.ChannelType{model.ChannelTypePublic, model.ChannelTypeThread}).
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {
