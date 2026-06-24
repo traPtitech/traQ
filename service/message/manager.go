@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	ErrNotFound         = errors.New("not found")
-	ErrAlreadyExists    = errors.New("already exists")
-	ErrChannelArchived  = errors.New("channel archived")
-	ErrPinLimitExceeded = errors.New("the pin limit exceeded")
-	ErrCannotRemoveStamp= errors.New("cannot remove stamps")
+	ErrNotFound          = errors.New("not found")
+	ErrAlreadyExists     = errors.New("already exists")
+	ErrChannelArchived   = errors.New("channel archived")
+	ErrPinLimitExceeded  = errors.New("the pin limit exceeded")
+	ErrCannotRemoveStamp = errors.New("cannot remove stamps")
 )
 
 type TimelineQuery struct {
@@ -105,11 +105,12 @@ type Manager interface {
 	// RemoveStamps 指定したメッセージから指定したスタンプを削除します
 	// includeMeをtrueに指定すると自分のスタンプを全て削除します。
 	// includeOtherをtrueに指定すると自分以外のスタンプを全て削除します。
+	// 自分以外のスタンプを削除できるのは、そのメッセージの投稿者であるBotのみです。
 	//
 	// 成功した場合、或いは既に削除されていた場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
-	// Bot以外が自分以外のスタンプを削除しようとした場合は、ErrCannotRemoveStampを返します。
+	// スタンプを削除する権限がない場合は、ErrCannotRemoveStampを返します。
 	// DBによるエラーを返すことがあります。
 	RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID, includeMe bool, includeOther bool) error
 

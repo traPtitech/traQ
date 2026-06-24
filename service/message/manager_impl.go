@@ -305,10 +305,13 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUI
 		return ErrChannelArchived
 	}
 
-	// Bot以外がIncludeOtherを指定したらエラーを返す
+	// 自分以外のスタンプは、ボットかつ自分のメッセージしか削除できない
 	if includeOther {
-		user, _ := m.R.GetUser(ctx, userID, false)
-		if !user.IsBot() {
+		user, err := m.R.GetUser(ctx, userID, false)
+		if err != nil {
+			return fmt.Errorf("failed to GetUser: %w", err)
+		}
+		if !user.IsBot() && msg.GetUserID() != userID {
 			return ErrCannotRemoveStamp
 		}
 	}

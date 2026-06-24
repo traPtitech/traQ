@@ -16,8 +16,8 @@ import (
 )
 
 type DeleteStampsQuery struct {
-	IncludeMe		string `query:"include-me"`
-	IncludeOther	string `query:"include-other"`
+	IncludeMe    string `query:"include-me"`
+	IncludeOther string `query:"include-other"`
 }
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -313,7 +313,7 @@ func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
 		case message.ErrCannotRemoveStamp:
-			return herror.Forbidden("non-bot user cannot remove stamps")
+			return herror.Forbidden("you are not allowed to remove this stamp")
 		default:
 			return herror.InternalServerError(err)
 		}
