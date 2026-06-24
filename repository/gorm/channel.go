@@ -19,7 +19,7 @@ import (
 var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
 
 // CreateChannel implements ChannelRepository interface.
-func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
+func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, channelType model.ChannelType) (*model.Channel, error) {
 	arr := []interface{}{&ch}
 
 	ch.ID = uuid.Must(uuid.NewV7())
@@ -37,7 +37,11 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 		}
 	}
 
-	if dm {
+	if channelType == model.ChannelTypeThread {
+		ch.Type = model.ChannelTypeThread
+	}
+
+	if channelType == model.ChannelTypeDM {
 		ch.ParentID = dmChannelRootUUID
 		ch.Type = model.ChannelTypeDM
 		ch.IsForced = false

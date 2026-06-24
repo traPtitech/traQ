@@ -81,6 +81,21 @@ func (mr *MockManagerMockRecorder) CreatePublicChannel(ctx, name, parent, creato
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePublicChannel", reflect.TypeOf((*MockManager)(nil).CreatePublicChannel), ctx, name, parent, creatorID)
 }
 
+// CreateThreadChannel mocks base method.
+func (m *MockManager) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateThreadChannel", ctx, name, parent, creatorID)
+	ret0, _ := ret[0].(*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateThreadChannel indicates an expected call of CreateThreadChannel.
+func (mr *MockManagerMockRecorder) CreateThreadChannel(ctx, name, parent, creatorID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateThreadChannel", reflect.TypeOf((*MockManager)(nil).CreateThreadChannel), ctx, name, parent, creatorID)
+}
+
 // GetChannel mocks base method.
 func (m *MockManager) GetChannel(ctx context.Context, id uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()

@@ -82,8 +82,8 @@ type ChannelRepository interface {
 	GetPublicChannels(ctx context.Context) ([]*model.Channel, error)
 	// CreateChannel チャンネルを作成します
 	//
-	// dmがtrueの場合、privateMembersに1人または2人のユーザーが入っている必要があります。
-	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error)
+	// channelType が repository.ChannelTypePublic の場合、privateMembersに1人または2人のユーザーが入っている必要があります。
+	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, channelType model.ChannelType) (*model.Channel, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。

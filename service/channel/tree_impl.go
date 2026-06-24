@@ -33,6 +33,7 @@ type channelNode struct {
 	force     bool                       // Nodeでロック
 	updaterID uuid.UUID                  // Nodeでロック
 	updatedAt time.Time                  // Nodeでロック
+	thread    bool                       // Nodeでロック
 	sync.RWMutex
 }
 
@@ -97,12 +98,16 @@ func (n *channelNode) getAscendantIDs() []uuid.UUID {
 func (n *channelNode) convertToModel() *model.Channel {
 	n.RLock()
 	defer n.RUnlock()
+	channelType := model.ChannelTypePublic
+	if n.thread {
+		channelType = model.ChannelTypeThread
+	}
 	ch := &model.Channel{
 		ID:         n.id,
 		Name:       n.name,
 		Topic:      n.topic,
 		IsForced:   n.force,
-		Type:       model.ChannelTypePublic,
+		Type:       channelType,
 		IsVisible:  !n.archived,
 		CreatorID:  n.creatorID,
 		UpdaterID:  n.updaterID,
@@ -140,6 +145,7 @@ func constructChannelNode(chMap map[uuid.UUID]*model.Channel, tree *treeImpl, id
 		updaterID: ch.UpdaterID,
 		createdAt: ch.CreatedAt,
 		updatedAt: ch.UpdatedAt,
+		thread:    ch.Type == model.ChannelTypeThread,
 	}
 	if ch.ParentID != uuid.Nil {
 		p, err := constructChannelNode(chMap, tree, ch.ParentID)
@@ -194,6 +200,7 @@ func (ct *treeImpl) add(ch *model.Channel) {
 		updaterID: ch.UpdaterID,
 		createdAt: ch.CreatedAt,
 		updatedAt: ch.UpdatedAt,
+		thread:    ch.Type == model.ChannelTypeThread,
 	}
 	if ch.ParentID == uuid.Nil {
 		// ルート
@@ -473,6 +480,11 @@ func (ct *treeImpl) IsArchivedChannel(id uuid.UUID) bool {
 	defer ct.RUnlock()
 	return ct.isArchivedChannel(id)
 }
+func (ct *treeImpl) IsThreadChannel(id uuid.UUID) bool {
+	ct.RLock()
+	defer ct.RUnlock()
+	return ct.isThreadChannel(id)
+}
 
 func (ct *treeImpl) isArchivedChannel(id uuid.UUID) bool {
 	n, ok := ct.nodes[id]
@@ -482,6 +494,16 @@ func (ct *treeImpl) isArchivedChannel(id uuid.UUID) bool {
 	n.RLock()
 	defer n.RUnlock()
 	return n.archived
+}
+
+func (ct *treeImpl) isThreadChannel(id uuid.UUID) bool {
+	n, ok := ct.nodes[id]
+	if !ok {
+		return false
+	}
+	n.RLock()
+	defer n.RUnlock()
+	return n.thread
 }
 
 // MarshalJSON implements json.Marshaler interface
