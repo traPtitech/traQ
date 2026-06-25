@@ -553,8 +553,6 @@ func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, s
 
 // RemoveOtherStampFromMessage implements MessageRepository interface.
 func (repo *Repository) RemoveOtherStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
-	fmt.Println()
-
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -563,8 +561,6 @@ func (repo *Repository) RemoveOtherStampFromMessage(ctx context.Context, message
 	if err := repo.db.WithContext(ctx).Find(&ms, &model.MessageStamp{MessageID: messageID, StampID: stampID}).Error; err != nil {
 		return err
 	}
-
-	repo.logger.Info(userID.String())
 
 	result := repo.db.WithContext(ctx).
 		Where("user_id <> ? AND message_id = ? AND stamp_id = ?", userID, messageID, stampID).

@@ -324,7 +324,7 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUI
 	}
 	if includeOther {
 		if err := m.R.RemoveOtherStampFromMessage(ctx, id, stampID, userID); err != nil {
-			return fmt.Errorf("failed to RemoveStampFromMessage: %w", err)
+			return fmt.Errorf("failed to RemoveOtherStampFromMessage: %w", err)
 		}
 	}
 
