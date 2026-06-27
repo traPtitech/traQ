@@ -1,6 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.26
+go 1.26.0
 
 toolchain go1.26.4
 
@@ -41,6 +41,7 @@ require (
 	github.com/labstack/echo/v5 v5.2.1
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lestrrat-go/jwx/v3 v3.1.1
+	github.com/lestrrat-go/jwx/v4 v4.0.2
 	github.com/livekit/protocol v1.48.1-0.20260625001142-39fc751df610
 	github.com/livekit/server-sdk-go/v2 v2.16.7
 	github.com/lthibault/jitterbug/v2 v2.2.2
