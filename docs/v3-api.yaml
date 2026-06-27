@@ -608,7 +608,8 @@ paths:
             type: integer
           in: query
           name: dl
-          description: 1を指定するとレスポンスにContent-Dispositionヘッダーが付与されます
+          deprecated: true
+          description: このクエリパラメータは廃止されており、意味を持ちません（現在、このパラメータが0の場合も1の場合もレスポンスにはContent-Dispositionヘッダーが付与されます）
       operationId: getFile
       description: |-
         指定したファイル本体を取得します。
