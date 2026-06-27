@@ -469,7 +469,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
+		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), true, false)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -488,7 +488,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
+		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), true, false)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -540,7 +540,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			Return(nil).
 			Times(1)
 
-		err := m.RemoveStamps(context.TODO(), id, sid, uid)
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, true, false)
 		if assert.NoError(t, err) {
 			msg, err := m.Get(context.TODO(), id)
 			if assert.NoError(t, err) {
@@ -554,5 +554,179 @@ func TestManager_RemoveStamps(t *testing.T) {
 				}, msg.GetStamps())
 			}
 		}
+	})
+
+	t.Run("includeOther: non-bot cannot remove others' stamps from another user's message", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		msgOwnerID := uuid.NewV3(uuid.Nil, "u2")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: msgOwnerID}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(&model.User{Bot: false}, nil).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, false, true)
+		assert.EqualError(t, err, ErrCannotRemoveStamp.Error())
+	})
+
+	t.Run("includeOther: non-bot cannot remove others' stamps even from own message", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: uid}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(&model.User{Bot: false}, nil).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, false, true)
+		assert.EqualError(t, err, ErrCannotRemoveStamp.Error())
+	})
+
+	t.Run("includeOther: bot cannot remove others' stamps from another user's message", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		msgOwnerID := uuid.NewV3(uuid.Nil, "u2")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: msgOwnerID}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(&model.User{Bot: true}, nil).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, false, true)
+		assert.EqualError(t, err, ErrCannotRemoveStamp.Error())
+	})
+
+	t.Run("includeOther: bot can remove others' stamps from own message", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: uid}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(&model.User{Bot: true}, nil).
+			Times(1)
+		repo.MockMessageRepository.
+			EXPECT().
+			RemoveOtherStampFromMessage(gomock.Any(), id, sid, uid).
+			Return(nil).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, false, true)
+		assert.NoError(t, err)
+	})
+
+	t.Run("includeOther+includeMe: bot can remove all stamps from own message", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: uid}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(&model.User{Bot: true}, nil).
+			Times(1)
+		repo.MockMessageRepository.
+			EXPECT().
+			RemoveStampFromMessage(gomock.Any(), id, sid, uid).
+			Return(nil).
+			Times(1)
+		repo.MockMessageRepository.
+			EXPECT().
+			RemoveOtherStampFromMessage(gomock.Any(), id, sid, uid).
+			Return(nil).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, true, true)
+		assert.NoError(t, err)
+	})
+
+	t.Run("includeOther: GetUser error is propagated", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, repo, tree := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "m1")
+		cid := uuid.NewV3(uuid.Nil, "c1")
+		sid := uuid.NewV3(uuid.Nil, "s1")
+		msgOwnerID := uuid.NewV3(uuid.Nil, "u2")
+		uid := uuid.NewV3(uuid.Nil, "u1")
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(gomock.Any(), id).
+			Return(&model.Message{ID: id, ChannelID: cid, UserID: msgOwnerID}, nil).
+			Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
+		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		repo.MockUserRepository.
+			EXPECT().
+			GetUser(gomock.Any(), uid, false).
+			Return(nil, repository.ErrNotFound).
+			Times(1)
+
+		err := m.RemoveStamps(context.TODO(), id, sid, uid, false, true)
+		assert.ErrorContains(t, err, "failed to GetUser")
 	})
 }
