@@ -130,7 +130,6 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 			src = io.TeeReader(src, file)
 		}
 	}
-	fmt.Println(fs.bucket)
 	input := &transfermanager.UploadObjectInput{
 		Bucket:             aws.String(fs.bucket),
 		Key:                aws.String(key),
