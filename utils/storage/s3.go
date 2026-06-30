@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
@@ -130,8 +130,7 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 			src = io.TeeReader(src, file)
 		}
 	}
-
-	input := &s3.PutObjectInput{
+	input := &transfermanager.UploadObjectInput{
 		Bucket:             aws.String(fs.bucket),
 		Key:                aws.String(key),
 		Body:               src,
@@ -139,9 +138,9 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 		ContentDisposition: aws.String(fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name))),
 	}
 
-	uploader := manager.NewUploader(fs.client)
+	tmClient := transfermanager.New(fs.client)
 
-	_, err = uploader.Upload(context.Background(), input)
+	_, err = tmClient.UploadObject(context.Background(), input)
 	return
 }
 
