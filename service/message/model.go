@@ -22,7 +22,7 @@ type Message interface {
 	json.Marshaler
 }
 
-type MessageNew interface {
+type MessageWithAttachmentsAndQuotes interface {
 	GetID() uuid.UUID
 	GetUserID() uuid.UUID
 	GetChannelID() uuid.UUID
