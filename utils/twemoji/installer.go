@@ -134,8 +134,8 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 			name = replacedName
 		}
 
-		long_name := strings.Trim(emoji.Name, ":")
-		if replacedName, ok := replaceShortnameMap[long_name]; ok {
+		longName := strings.Trim(emoji.Name, ":")
+		if replacedName, ok := replaceShortnameMap[longName]; ok {
 			name = replacedName
 		}
 
