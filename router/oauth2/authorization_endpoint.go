@@ -203,10 +203,14 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
+		requiredScopes := req.Scopes
+		if len(requiredScopes) == 0 {
+			requiredScopes = req.ValidScopes
+		}
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for s := range req.Scopes {
+				for s := range requiredScopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
