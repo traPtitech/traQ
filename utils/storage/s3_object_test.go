@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/testdata/images"
@@ -205,17 +205,16 @@ func setupObject(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	input := &s3.PutObjectInput{
+	input := &transfermanager.UploadObjectInput{
 		Bucket:      aws.String(bucketName),
 		Key:         aws.String(testObjKey),
 		Body:        f,
 		ContentType: aws.String("image/png"),
 	}
 
-	uploader := manager.NewUploader(cli)
+	tmClient := transfermanager.New(cli)
 
-	_, err = uploader.Upload(context.Background(), input)
-
+	_, err = tmClient.UploadObject(context.Background(), input)
 	assert.NoError(t, err)
 }
 

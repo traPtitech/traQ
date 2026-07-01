@@ -6,7 +6,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -18,14 +18,14 @@ import (
 )
 
 // GetClients GET /clients
-func (h *Handlers) GetClients(c echo.Context) error {
+func (h *Handlers) GetClients(c *echo.Context) error {
 	var q repository.GetClientsQuery
 
 	if !isTrue(c.QueryParam("all")) {
 		q = q.IsDevelopedBy(getRequestUserID(c))
 	}
 
-	ocs, err := h.Repo.GetClients(q)
+	ocs, err := h.Repo.GetClients(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -51,7 +51,7 @@ func (r PostClientsRequest) Validate() error {
 }
 
 // CreateClient POST /clients
-func (h *Handlers) CreateClient(c echo.Context) error {
+func (h *Handlers) CreateClient(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostClientsRequest
@@ -69,7 +69,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       req.Scopes,
 	}
-	if err := h.Repo.SaveClient(client); err != nil {
+	if err := h.Repo.SaveClient(c.Request().Context(), client); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -77,7 +77,7 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 }
 
 // GetClient GET /clients/:clientID
-func (h *Handlers) GetClient(c echo.Context) error {
+func (h *Handlers) GetClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	if isTrue(c.QueryParam("detail")) {
@@ -110,7 +110,7 @@ func (r PatchClientRequest) Validate() error {
 }
 
 // EditClient PATCH /clients/:clientID
-func (h *Handlers) EditClient(c echo.Context) error {
+func (h *Handlers) EditClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	var req PatchClientRequest
@@ -125,7 +125,7 @@ func (h *Handlers) EditClient(c echo.Context) error {
 		CallbackURL:  req.CallbackURL,
 		Confidential: req.Confidential,
 	}
-	if err := h.Repo.UpdateClient(oc.ID, args); err != nil {
+	if err := h.Repo.UpdateClient(c.Request().Context(), oc.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -133,11 +133,11 @@ func (h *Handlers) EditClient(c echo.Context) error {
 }
 
 // DeleteClient DELETE /clients/:clientID
-func (h *Handlers) DeleteClient(c echo.Context) error {
+func (h *Handlers) DeleteClient(c *echo.Context) error {
 	oc := getParamClient(c)
 
 	// delete client
-	if err := h.Repo.DeleteClient(oc.ID); err != nil {
+	if err := h.Repo.DeleteClient(c.Request().Context(), oc.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -145,11 +145,11 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 }
 
 // RevokeClientTokens /clients/:clientID/tokens
-func (h *Handlers) RevokeClientTokens(c echo.Context) error {
+func (h *Handlers) RevokeClientTokens(c *echo.Context) error {
 	oc := getParamClient(c)
 	userID := getRequestUserID(c)
 
-	err := h.Repo.DeleteUserTokensByClient(userID, oc.ID)
+	err := h.Repo.DeleteUserTokensByClient(c.Request().Context(), userID, oc.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

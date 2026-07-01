@@ -3,6 +3,7 @@ package twemoji
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -51,7 +52,7 @@ var replaceNameMap = map[string]string{
 	"woman_in_manual_wheelchair_facing_right":     "woman_manual_wheelchair_right",
 	"woman_in_motorized_wheelchair_facing_right":  "woman_powered_wheelchair_right",
 	"person_in_motorized_wheelchair_facing_right": "person_powered_wheelchair_right",
-	"person_in_manual_wheelchair_facing_right":    "woman_manual_wheelchair_right",
+	"person_in_manual_wheelchair_facing_right":    "person_manual_wheelchair_right",
 	"woman_with_white_cane_facing_right":          "woman_white_cane_facing_right",
 	"person_with_white_cane_facing_right":         "person_white_cane_facing_right",
 }
@@ -89,7 +90,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 		}
 		defer r.Close()
 
-		return fm.Save(file.SaveArgs{
+		return fm.Save(context.Background(), file.SaveArgs{
 			FileName: filename,
 			FileSize: f.FileInfo().Size(),
 			FileType: model.FileTypeStamp,
@@ -122,7 +123,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 			name = replacedName
 		}
 
-		s, err := repo.GetStampByName(name)
+		s, err := repo.GetStampByName(context.Background(), name)
 		if err != nil && err != repository.ErrNotFound {
 			return err
 		}
@@ -134,7 +135,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 				return err
 			}
 
-			s, err := repo.CreateStamp(repository.CreateStampArgs{
+			s, err := repo.CreateStamp(context.Background(), repository.CreateStampArgs{
 				Name:      name,
 				FileID:    meta.GetID(),
 				CreatorID: uuid.Nil,
@@ -156,7 +157,7 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 				return err
 			}
 
-			if err := repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
+			if err := repo.UpdateStamp(context.Background(), s.ID, repository.UpdateStampArgs{
 				FileID: optional.From(meta.GetID()),
 			}); err != nil {
 				return err

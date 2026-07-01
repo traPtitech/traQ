@@ -11,7 +11,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -45,7 +45,7 @@ func (r UpdateClipFolderRequest) Validate() error {
 }
 
 // CreateClipFolder POST /clip-folders
-func (h *Handlers) CreateClipFolder(c echo.Context) error {
+func (h *Handlers) CreateClipFolder(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostClipFolderRequest
@@ -53,7 +53,7 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 		return err
 	}
 
-	cf, err := h.Repo.CreateClipFolder(userID, req.Name, req.Description)
+	cf, err := h.Repo.CreateClipFolder(c.Request().Context(), userID, req.Name, req.Description)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -62,10 +62,10 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 }
 
 // GetClipFolders GET /clip-folders
-func (h *Handlers) GetClipFolders(c echo.Context) error {
+func (h *Handlers) GetClipFolders(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
-	cfs, err := h.Repo.GetClipFoldersByUserID(userID)
+	cfs, err := h.Repo.GetClipFoldersByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -74,22 +74,22 @@ func (h *Handlers) GetClipFolders(c echo.Context) error {
 }
 
 // GetClipFolder GET /clip-folders/:folderID
-func (h *Handlers) GetClipFolder(c echo.Context) error {
+func (h *Handlers) GetClipFolder(c *echo.Context) error {
 	return c.JSON(http.StatusOK, formatClipFolder(getParamClipFolder(c)))
 }
 
 // DeleteClipFolder DELETE /clip-folders/:folderID
-func (h *Handlers) DeleteClipFolder(c echo.Context) error {
+func (h *Handlers) DeleteClipFolder(c *echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
-	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
+	if err := h.Repo.DeleteClipFolder(c.Request().Context(), folderID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
 
 // EditClipFolder PATCH /clip-folders/:folderID
-func (h *Handlers) EditClipFolder(c echo.Context) error {
+func (h *Handlers) EditClipFolder(c *echo.Context) error {
 	cf := getParamClipFolder(c)
 
 	var req UpdateClipFolderRequest
@@ -97,7 +97,7 @@ func (h *Handlers) EditClipFolder(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateClipFolder(cf.ID, req.Name, req.Description); err != nil {
+	if err := h.Repo.UpdateClipFolder(c.Request().Context(), cf.ID, req.Name, req.Description); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -108,7 +108,8 @@ type PostClipFolderMessageRequest struct {
 }
 
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
-func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
+func (h *Handlers) PostClipFolderMessage(c *echo.Context) error {
+	ctx := c.Request().Context()
 	cf := getParamClipFolder(c)
 	userID := getRequestUserID(c)
 
@@ -117,7 +118,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 		return err
 	}
 
-	m, err := h.MessageManager.Get(req.MessageID)
+	m, err := h.MessageManager.Get(ctx, req.MessageID)
 	if err != nil {
 		switch err {
 		case message.ErrNotFound:
@@ -128,14 +129,14 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	// ユーザーがアクセスできるか
-	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, m.GetChannelID()); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, userID, m.GetChannelID()); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid messageId")
 	}
 
 	var cfm *model.ClipFolderMessage
-	cfm, err = h.Repo.AddClipFolderMessage(cf.ID, req.MessageID)
+	cfm, err = h.Repo.AddClipFolderMessage(ctx, cf.ID, req.MessageID)
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
@@ -173,7 +174,7 @@ func (q *clipFolderMessageQuery) Validate() error {
 }
 
 // GetClipFolderMessages GET /clip-folders/:folderID/messages
-func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
+func (h *Handlers) GetClipFolderMessages(c *echo.Context) error {
 	cf := getParamClipFolder(c)
 
 	var req clipFolderMessageQuery
@@ -181,7 +182,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 		return err
 	}
 
-	messages, more, err := h.Repo.GetClipFolderMessages(cf.ID, req.convert())
+	messages, more, err := h.Repo.GetClipFolderMessages(c.Request().Context(), cf.ID, req.convert())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -192,11 +193,11 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 }
 
 // DeleteClipFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
-func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
+func (h *Handlers) DeleteClipFolderMessages(c *echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
 	cf := getParamClipFolder(c)
-	if err := h.Repo.DeleteClipFolderMessage(cf.ID, messageID); err != nil {
+	if err := h.Repo.DeleteClipFolderMessage(c.Request().Context(), cf.ID, messageID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

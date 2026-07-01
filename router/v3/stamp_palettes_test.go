@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -292,7 +293,7 @@ func TestHandlers_EditStampPalette(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		updated, err := env.Repository.GetStampPalette(sp.ID)
+		updated, err := env.Repository.GetStampPalette(context.TODO(), sp.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, sp.ID.String(), updated.ID.String())
 		assert.EqualValues(t, "test", updated.Name)
@@ -386,7 +387,7 @@ func TestHandlers_DeleteStampPalette(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetStampPalette(sp.ID)
+		_, err := env.Repository.GetStampPalette(context.TODO(), sp.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }

@@ -25,9 +25,12 @@ on:
   push:
     branches: ["master"]
 
+permissions:
+  contents: read
+
 env:
-  LOG_LEVEL: debug
-  RENOVATE_DRY_RUN: false
+  LOG_LEVEL: ${{ github.event.inputs.logLevel || 'debug' }}
+  RENOVATE_DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
   RENOVATE_CONFIG_FILE: .github/renovate-bot.json5
 
 jobs:
@@ -39,20 +42,18 @@ jobs:
     steps:
       - name: Generate a token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
-      - uses: actions/checkout@v6
-      - name: Override default config from dispatch variables
-        shell: bash
-        run: |
-          echo "RENOVATE_DRY_RUN=${{ github.event.inputs.dryRun || env.RENOVATE_DRY_RUN }}" >> "${GITHUB_ENV}"
-          echo "LOG_LEVEL=${{ github.event.inputs.logLevel || env.LOG_LEVEL }}" >> "${GITHUB_ENV}"
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Renovate
-        uses: renovatebot/github-action@v44.2.5
+        uses: renovatebot/github-action@dd5302ec17783b2fc721b19ae7209b57b1587765 # v46.1.17
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
-          renovate-version: "latest"
+          # renovate:image-tag-digest imageName=ghcr.io/renovatebot/renovate
+          renovate-version: "43.249.5@sha256:984194f63a22cf192a5f89b910851b32d1dec00cba9c85d357e687846095edf4"
           configurationFile: "${{ env.RENOVATE_CONFIG_FILE }}"
           token: "${{ steps.generate-token.outputs.token }}"

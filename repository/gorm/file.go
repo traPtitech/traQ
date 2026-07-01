@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 
@@ -9,9 +11,9 @@ import (
 )
 
 // GetFileMetas implements FileRepository interface.
-func (repo *Repository) GetFileMetas(q repository.FilesQuery) (result []*model.FileMeta, more bool, err error) {
+func (repo *Repository) GetFileMetas(ctx context.Context, q repository.FilesQuery) (result []*model.FileMeta, more bool, err error) {
 	files := make([]*model.FileMeta, 0)
-	tx := repo.db.
+	tx := repo.db.WithContext(ctx).
 		Where("files.type = ?", q.Type.String()).
 		Scopes(filePreloads)
 
@@ -67,11 +69,11 @@ func (repo *Repository) GetFileMetas(q repository.FilesQuery) (result []*model.F
 	return files, false, err
 }
 
-func (repo *Repository) SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLEntry) error {
+func (repo *Repository) SaveFileMeta(ctx context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error {
 	if meta == nil || meta.ID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	return repo.db.Transaction(func(tx *gorm.DB) error {
+	return repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create files, files_thumbnails
 		if err := tx.Create(meta).Error; err != nil {
 			return err
@@ -84,12 +86,12 @@ func (repo *Repository) SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLE
 }
 
 // GetFileMeta implements FileRepository interface.
-func (repo *Repository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
+func (repo *Repository) GetFileMeta(ctx context.Context, fileID uuid.UUID) (*model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	f := &model.FileMeta{}
-	if err := repo.db.
+	if err := repo.db.WithContext(ctx).
 		Scopes(filePreloads).
 		First(f, &model.FileMeta{ID: fileID}).
 		Error; err != nil {
@@ -99,24 +101,24 @@ func (repo *Repository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
 }
 
 // DeleteFileMeta implements FileRepository interface.
-func (repo *Repository) DeleteFileMeta(fileID uuid.UUID) error {
+func (repo *Repository) DeleteFileMeta(ctx context.Context, fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	if err := repo.db.Delete(&model.FileMeta{ID: fileID}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Delete(&model.FileMeta{ID: fileID}).Error; err != nil {
 		return err
 	}
-	return repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error
+	return repo.db.WithContext(ctx).Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error
 }
 
 // IsFileAccessible implements FileRepository interface.
-func (repo *Repository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+func (repo *Repository) IsFileAccessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error) {
 	var result struct {
 		Allow int
 		Deny  int
 	}
-	err := repo.db.
+	err := repo.db.WithContext(ctx).
 		Model(&model.FileACLEntry{}).
 		Select("COUNT(allow = TRUE OR NULL) AS allow, COUNT(allow = FALSE OR NULL) AS deny").
 		Where("file_id = ? AND user_id IN (?)", fileID, []uuid.UUID{userID, uuid.Nil}).
@@ -133,11 +135,11 @@ func filePreloads(db *gorm.DB) *gorm.DB {
 }
 
 // DeleteFileThumbnail implements FileRepository interface.
-func (repo *Repository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
+func (repo *Repository) DeleteFileThumbnail(ctx context.Context, fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID, Type: thumbnailType}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID, Type: thumbnailType}).Error; err != nil {
 		return err
 	}
 	return nil

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 	ch1 := env.CreateChannel(t, rand)
 	ch2 := env.CreateChannel(t, rand)
-	_, _, err := env.Repository.ChangeChannelSubscription(ch1.ID, repository.ChangeChannelSubscriptionArgs{
+	_, _, err := env.Repository.ChangeChannelSubscription(context.TODO(), ch1.ID, repository.ChangeChannelSubscriptionArgs{
 		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
 			user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
 		},

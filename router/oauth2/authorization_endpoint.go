@@ -11,7 +11,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/go-querystring/query"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
@@ -68,7 +68,9 @@ func (t responseType) valid() bool {
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
-func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
+func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -79,7 +81,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	req.AccessTime = time.Now()
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(req.ClientID)
+	client, err := h.Repo.GetClient(ctx, req.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -168,7 +170,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	if se != nil {
-		u, err := h.Repo.GetUser(se.UserID(), false)
+		u, err := h.Repo.GetUser(ctx, se.UserID(), false)
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -193,7 +195,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		tokens, err := h.Repo.GetTokensByUser(se.UserID())
+		tokens, err := h.Repo.GetTokensByUser(ctx, se.UserID())
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -201,10 +203,14 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
+		requiredScopes := req.Scopes
+		if len(requiredScopes) == 0 {
+			requiredScopes = req.ValidScopes
+		}
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for s := range req.Scopes {
+				for s := range requiredScopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
@@ -235,7 +241,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			CodeChallengeMethod: req.CodeChallengeMethod,
 			Nonce:               req.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(ctx, data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -268,7 +274,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, loginURL.String())
 		}
 
-		if err := se.Set(oauth2ContextSession, req); err != nil {
+		if err := se.Set(ctx, oauth2ContextSession, req); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -296,7 +302,9 @@ func (r authorizationDecideHandlerRequest) Validate() error {
 }
 
 // AuthorizationDecideHandler 認可エンドポイントの確認フォームのハンドラ
-func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
+func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -314,7 +322,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return herror.Forbidden("bad session")
 	}
 
-	_reqAuth, err := se.Get(oauth2ContextSession)
+	_reqAuth, err := se.Get(ctx, oauth2ContextSession)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -322,12 +330,12 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return herror.Forbidden("bad session")
 	}
 	reqAuth := _reqAuth.(authorizeRequest)
-	if err := se.Delete(oauth2ContextSession); err != nil {
+	if err := se.Delete(ctx, oauth2ContextSession); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(reqAuth.ClientID)
+	client, err := h.Repo.GetClient(ctx, reqAuth.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -375,7 +383,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 			CodeChallengeMethod: reqAuth.CodeChallengeMethod,
 			Nonce:               reqAuth.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(c.Request().Context(), data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()

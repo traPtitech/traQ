@@ -1,12 +1,13 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -32,7 +33,7 @@ type tokenResponse struct {
 }
 
 // TokenEndpointHandler トークンエンドポイントのハンドラ
-func (h *Handler) TokenEndpointHandler(c echo.Context) error {
+func (h *Handler) TokenEndpointHandler(c *echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -50,7 +51,7 @@ func (h *Handler) TokenEndpointHandler(c echo.Context) error {
 	}
 }
 
-func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID, nonce string) (string, error) {
+func (h *Handler) issueIDToken(ctx context.Context, client *model.OAuth2Client, token *model.OAuth2Token, userID uuid.UUID, nonce string) (string, error) {
 	// Base claims
 	claims := jwt.MapClaims{
 		"iss": h.Origin,
@@ -63,7 +64,7 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 		claims["nonce"] = nonce
 	}
 	// Extra claims according to scopes (profile)
-	userInfo, err := h.OIDC.GetUserInfo(userID, token.Scopes)
+	userInfo, err := h.OIDC.GetUserInfo(ctx, userID, token.Scopes)
 	if err != nil {
 		return "", err
 	}
@@ -72,11 +73,11 @@ func (h *Handler) issueIDToken(client *model.OAuth2Client, token *model.OAuth2To
 	return jwt2.Sign(claims)
 }
 
-func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool, nonce string) (*tokenResponse, error) {
+func (h *Handler) issueToken(ctx context.Context, client *model.OAuth2Client, userID uuid.UUID, scopes, originalScopes model.AccessScopes, grantTypeRefreshAllowed bool, nonce string) (*tokenResponse, error) {
 	isOIDC := scopes.Contains("openid")
 	// OIDCの場合は、Refresh TokenのScopeの管理（主にoffline_access周り）が面倒なので、一律で発行しないことにする
 	refresh := h.IsRefreshEnabled && grantTypeRefreshAllowed && !isOIDC
-	token, err := h.Repo.IssueToken(client, userID, client.RedirectURI, scopes, h.AccessTokenExp, refresh)
+	token, err := h.Repo.IssueToken(ctx, client, userID, client.RedirectURI, scopes, h.AccessTokenExp, refresh)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func (h *Handler) issueToken(client *model.OAuth2Client, userID uuid.UUID, scope
 		res.RefreshToken = token.RefreshToken
 	}
 	if scopes.Contains("openid") {
-		idToken, err := h.issueIDToken(client, token, userID, nonce)
+		idToken, err := h.issueIDToken(ctx, client, token, userID, nonce)
 		if err != nil {
 			return nil, err
 		}
@@ -115,14 +116,14 @@ func (r tokenEndpointAuthorizationCodeHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointAuthorizationCodeHandler(c *echo.Context) error {
 	var req tokenEndpointAuthorizationCodeHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
 	}
 
 	// 認可コード確認
-	code, err := h.Repo.GetAuthorize(req.Code)
+	code, err := h.Repo.GetAuthorize(c.Request().Context(), req.Code)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -133,7 +134,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 		}
 	}
 	// 認可コードは２回使えない
-	if err := h.Repo.DeleteAuthorize(code.Code); err != nil {
+	if err := h.Repo.DeleteAuthorize(c.Request().Context(), code.Code); err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
@@ -142,7 +143,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(code.ClientID)
+	client, err := h.Repo.GetClient(c.Request().Context(), code.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -175,7 +176,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, code.UserID, code.Scopes, code.OriginalScopes, true, code.Nonce)
+	res, err := h.issueToken(c.Request().Context(), client, code.UserID, code.Scopes, code.OriginalScopes, true, code.Nonce)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -198,7 +199,7 @@ func (r tokenEndpointPasswordHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointPasswordHandler(c *echo.Context) error {
 	var req tokenEndpointPasswordHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
@@ -214,7 +215,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(cid)
+	client, err := h.Repo.GetClient(c.Request().Context(), cid)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -229,7 +230,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	user, err := h.Repo.GetUserByName(req.Username, false)
+	user, err := h.Repo.GetUserByName(c.Request().Context(), req.Username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -256,7 +257,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, user.GetID(), validScopes, reqScopes, true, "")
+	res, err := h.issueToken(c.Request().Context(), client, user.GetID(), validScopes, reqScopes, true, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -264,7 +265,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointClientCredentialsHandler(c *echo.Context) error {
 	var req struct {
 		Scope        string `form:"scope"`
 		ClientID     string `form:"client_id"`
@@ -284,7 +285,7 @@ func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(id)
+	client, err := h.Repo.GetClient(c.Request().Context(), id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -314,7 +315,7 @@ func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, uuid.Nil, validScopes, reqScopes, false, "")
+	res, err := h.issueToken(c.Request().Context(), client, uuid.Nil, validScopes, reqScopes, false, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
@@ -335,14 +336,14 @@ func (r tokenEndpointRefreshTokenHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointRefreshTokenHandler(c *echo.Context) error {
 	var req tokenEndpointRefreshTokenHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
 	}
 
 	// リフレッシュトークン確認
-	token, err := h.Repo.GetTokenByRefresh(req.RefreshToken)
+	token, err := h.Repo.GetTokenByRefresh(c.Request().Context(), req.RefreshToken)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -354,7 +355,7 @@ func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(token.ClientID)
+	client, err := h.Repo.GetClient(c.Request().Context(), token.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -391,13 +392,13 @@ func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	res, err := h.issueToken(client, token.UserID, newScopes, token.Scopes, true, "")
+	res, err := h.issueToken(c.Request().Context(), client, token.UserID, newScopes, token.Scopes, true, "")
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 	// 旧リフレッシュトークン削除
-	if err := h.Repo.DeleteTokenByRefresh(req.RefreshToken); err != nil {
+	if err := h.Repo.DeleteTokenByRefresh(c.Request().Context(), req.RefreshToken); err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}

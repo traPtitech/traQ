@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,7 +16,7 @@ import (
 )
 
 // CreateUserGroup implements UserGroupRepository interface.
-func (repo *Repository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
+func (repo *Repository) CreateUserGroup(ctx context.Context, name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
 		ID:          uuid.Must(uuid.NewV7()),
 		Name:        name,
@@ -23,7 +24,7 @@ func (repo *Repository) CreateUserGroup(name, description, gType string, adminID
 		Icon:        iconFileID,
 		Type:        gType,
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(g).Error
 		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return repository.ErrAlreadyExists
@@ -47,13 +48,13 @@ func (repo *Repository) CreateUserGroup(name, description, gType string, adminID
 }
 
 // UpdateUserGroup implements UserGroupRepository interface.
-func (repo *Repository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupArgs) error {
+func (repo *Repository) UpdateUserGroup(ctx context.Context, id uuid.UUID, args repository.UpdateUserGroupArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	var updated bool
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -100,11 +101,11 @@ func (repo *Repository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUser
 }
 
 // DeleteUserGroup implements UserGroupRepository interface.
-func (repo *Repository) DeleteUserGroup(id uuid.UUID) error {
+func (repo *Repository) DeleteUserGroup(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.UserGroupMember{GroupID: id}).Delete(&model.UserGroupMember{}).Error; err != nil {
 			return err
 		}
@@ -133,36 +134,36 @@ func (repo *Repository) DeleteUserGroup(id uuid.UUID) error {
 }
 
 // GetUserGroup implements UserGroupRepository interface.
-func (repo *Repository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
+func (repo *Repository) GetUserGroup(ctx context.Context, id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: id}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: id}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &g, nil
 }
 
 // GetUserGroupByName implements UserGroupRepository interface.
-func (repo *Repository) GetUserGroupByName(name string) (*model.UserGroup, error) {
+func (repo *Repository) GetUserGroupByName(ctx context.Context, name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.Scopes(userGroupPreloads).First(&g, &model.UserGroup{Name: name}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Scopes(userGroupPreloads).First(&g, &model.UserGroup{Name: name}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &g, nil
 }
 
 // GetUserBelongingGroupIDs implements UserGroupRepository interface.
-func (repo *Repository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *Repository) GetUserBelongingGroupIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
 	}
-	err := repo.db.
+	err := repo.db.WithContext(ctx).
 		Model(&model.UserGroupMember{}).
 		Where(&model.UserGroupMember{UserID: userID}).
 		Pluck("group_id", &groups).
@@ -171,14 +172,14 @@ func (repo *Repository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID,
 }
 
 // GetAllUserGroups implements UserGroupRepository interface.
-func (repo *Repository) GetAllUserGroups() ([]*model.UserGroup, error) {
+func (repo *Repository) GetAllUserGroups(ctx context.Context) ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
-	err := repo.db.Scopes(userGroupPreloads).Find(&groups).Error
+	err := repo.db.WithContext(ctx).Scopes(userGroupPreloads).Find(&groups).Error
 	return groups, err
 }
 
 // AddUserToGroup implements UserGroupRepository interface.
-func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) error {
+func (repo *Repository) AddUserToGroup(ctx context.Context, userID, groupID uuid.UUID, role string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -186,7 +187,7 @@ func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) e
 		added   bool
 		updated bool
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
@@ -230,12 +231,12 @@ func (repo *Repository) AddUserToGroup(userID, groupID uuid.UUID, role string) e
 }
 
 // AddUsersToGroup implements UserGroupRepository interface.
-func (repo *Repository) AddUsersToGroup(users []model.UserGroupMember, groupID uuid.UUID) error {
+func (repo *Repository) AddUsersToGroup(ctx context.Context, users []model.UserGroupMember, groupID uuid.UUID) error {
 	if groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
@@ -277,12 +278,12 @@ func (repo *Repository) AddUsersToGroup(users []model.UserGroupMember, groupID u
 }
 
 // RemoveUserFromGroup implements UserGroupRepository interface.
-func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
+func (repo *Repository) RemoveUserFromGroup(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var changed bool
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
@@ -314,14 +315,14 @@ func (repo *Repository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 }
 
 // RemoveUsersFromGroup implements UserGroupRepository interface.
-func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
+func (repo *Repository) RemoveUsersFromGroup(ctx context.Context, groupID uuid.UUID) error {
 	if groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	var removedUsers []model.UserGroupMember
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("group_id = ?", groupID).Find(&removedUsers).Delete(&model.UserGroupMember{}).Error; err != nil {
 			return err
 		}
@@ -344,13 +345,13 @@ func (repo *Repository) RemoveUsersFromGroup(groupID uuid.UUID) error {
 }
 
 // AddUserToGroupAdmin implements UserGroupRepository interface.
-func (repo *Repository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
+func (repo *Repository) AddUserToGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	var added bool
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
@@ -382,13 +383,13 @@ func (repo *Repository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
 }
 
 // RemoveUserFromGroupAdmin implements UserGroupRepository interface.
-func (repo *Repository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error {
+func (repo *Repository) RemoveUserFromGroupAdmin(ctx context.Context, userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	var removed bool
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
