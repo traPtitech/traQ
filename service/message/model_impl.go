@@ -21,7 +21,22 @@ type message struct {
 	sync.RWMutex
 }
 
+type messageNew struct {
+	Model *model.MessageNew
+
+	stampMap      map[uuid.UUID]map[uuid.UUID]model.MessageStamp
+	stampMapDirty bool
+
+	sync.RWMutex
+}
+
 func (m *message) GetID() uuid.UUID {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.ID
+}
+
+func (m *messageNew) GetID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.ID
@@ -33,7 +48,19 @@ func (m *message) GetUserID() uuid.UUID {
 	return m.Model.UserID
 }
 
+func (m *messageNew) GetUserID() uuid.UUID {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.UserID
+}
+
 func (m *message) GetChannelID() uuid.UUID {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.ChannelID
+}
+
+func (m *messageNew) GetChannelID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.ChannelID
@@ -45,13 +72,31 @@ func (m *message) GetText() string {
 	return m.Model.Text
 }
 
+func (m *messageNew) GetText() string {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.Text
+}
+
 func (m *message) GetCreatedAt() time.Time {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.CreatedAt
 }
 
+func (m *messageNew) GetCreatedAt() time.Time {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.CreatedAt
+}
+
 func (m *message) GetUpdatedAt() time.Time {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.UpdatedAt
+}
+
+func (m *messageNew) GetUpdatedAt() time.Time {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.UpdatedAt
@@ -74,6 +119,37 @@ func (m *message) GetStamps() []model.MessageStamp {
 	m.Model.Stamps = result
 	m.stampMapDirty = false
 	return result
+}
+
+func (m *messageNew) GetStamps() []model.MessageStamp {
+	m.Lock()
+	defer m.Unlock()
+	if !m.stampMapDirty {
+		return m.Model.Stamps
+	}
+
+	result := make([]model.MessageStamp, 0)
+	for _, us := range m.stampMap {
+		for _, ms := range us {
+			result = append(result, ms)
+		}
+	}
+
+	m.Model.Stamps = result
+	m.stampMapDirty = false
+	return result
+}
+
+func (m *messageNew) GetAttachments() []*model.FileMeta {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.Attachments
+}
+
+func (m *messageNew) GetQuotes() []*model.Message {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.Quotes
 }
 
 func (m *message) initStampMap() {
@@ -124,7 +200,41 @@ func (m *message) GetPin() *model.Pin {
 	return m.Model.Pin
 }
 
+func (m *messageNew) GetPin() *model.Pin {
+	m.RLock()
+	defer m.RUnlock()
+	return m.Model.Pin
+}
+
 func (m *message) MarshalJSON() ([]byte, error) {
+	type obj struct {
+		ID        uuid.UUID              `json:"id"`
+		UserID    uuid.UUID              `json:"userId"`
+		ChannelID uuid.UUID              `json:"channelId"`
+		Content   string                 `json:"content"`
+		CreatedAt time.Time              `json:"createdAt"`
+		UpdatedAt time.Time              `json:"updatedAt"`
+		Pinned    bool                   `json:"pinned"`
+		Stamps    []model.MessageStamp   `json:"stamps"`
+		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
+	}
+	stamps := m.GetStamps()
+	m.RLock()
+	v := &obj{
+		ID:        m.Model.ID,
+		UserID:    m.Model.UserID,
+		ChannelID: m.Model.ChannelID,
+		Content:   m.Model.Text,
+		CreatedAt: m.Model.CreatedAt,
+		UpdatedAt: m.Model.UpdatedAt,
+		Pinned:    m.Model.Pin != nil,
+		Stamps:    stamps,
+	}
+	m.RUnlock()
+	return jsonIter.ConfigFastest.Marshal(v)
+}
+
+func (m *messageNew) MarshalJSON() ([]byte, error) {
 	type obj struct {
 		ID        uuid.UUID              `json:"id"`
 		UserID    uuid.UUID              `json:"userId"`

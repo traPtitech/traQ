@@ -21,3 +21,18 @@ type Message interface {
 
 	json.Marshaler
 }
+
+type MessageNew interface {
+	GetID() uuid.UUID
+	GetUserID() uuid.UUID
+	GetChannelID() uuid.UUID
+	GetText() string
+	GetCreatedAt() time.Time
+	GetUpdatedAt() time.Time
+	GetStamps() []model.MessageStamp
+	GetPin() *model.Pin
+	GetAttachments() []*model.FileMeta
+	GetQuotes() []*model.Message
+
+	json.Marshaler
+}

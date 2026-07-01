@@ -72,6 +72,8 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
+        - $ref: "#/components/parameters/includeAttachments"
+        - $ref: "#/components/parameters/includeQuotes"
       responses:
         "200":
           description: OK
@@ -8241,6 +8243,21 @@ components:
         type: boolean
       required: false
       description: 削除されたメッセージを除外するかどうか(デフォルト false)
+    includeAttachments:
+      in: query
+      name: include-attachments
+      schema:
+        type: boolean
+      required: false
+      description: 添付ファイルを含めるかどうか (デフォルト false)
+    includeQuotes:
+      in: query
+      name: include-quotes
+      schema:
+        type: boolean
+      required: false
+      description: 引用メッセージを含めるかどうか (デフォルト false)
+
 
 tags:
   - name: user

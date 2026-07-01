@@ -27,6 +27,9 @@ type MessagesQuery struct {
 	Asc                      bool
 	ExcludeDMs               bool
 	DisablePreload           bool
+	IncludeAttachments       bool
+	IncludeQuotes            bool
+	IncludeOGPs              bool
 }
 
 // ChannelLatestMessagesQuery GetChannelLatestMessages用クエリ

@@ -57,12 +57,12 @@ func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, 
 		return uuid.Must(uuid.FromString(hit.ID))
 	})
 
-	messages, err := e.mm.GetIn(context.Background(), messageIDs)
+	messages, err := e.mm.GetIn(context.Background(), messageIDs, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	messagesMap := lo.SliceToMap(messages, func(m message.Message) (uuid.UUID, message.Message) {
+	messagesMap := lo.SliceToMap(messages, func(m message.MessageNew) (uuid.UUID, message.Message) {
 		return m.GetID(), m
 	})
 	// sort result
