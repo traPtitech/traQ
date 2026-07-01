@@ -65,12 +65,12 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
-func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID, ia bool, iq bool) ([]MessageWithAttachmentsAndQuotes, error) {
-	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids), IncludeAttachments: ia, IncludeQuotes: iq})
+func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error) {
+	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
-	ret := utils.Map(messages, func(mm *model.Message) MessageWithAttachmentsAndQuotes {
+	ret := utils.Map(messages, func(mm *model.Message) Detailed {
 		parseResult := messageParse.Parse(mm.Text)
 		pRa := parseResult.Attachments
 		aR := []*model.FileMeta{}

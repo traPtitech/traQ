@@ -22,15 +22,9 @@ type Message interface {
 	json.Marshaler
 }
 
-type MessageWithAttachmentsAndQuotes interface {
-	GetID() uuid.UUID
-	GetUserID() uuid.UUID
-	GetChannelID() uuid.UUID
-	GetText() string
-	GetCreatedAt() time.Time
-	GetUpdatedAt() time.Time
-	GetStamps() []model.MessageStamp
-	GetPin() *model.Pin
+type Detailed interface {
+	Message
+
 	GetAttachments() []*model.FileMeta
 	GetQuotes() []*model.Message
 
