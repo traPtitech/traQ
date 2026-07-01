@@ -25,9 +25,9 @@ const (
 		twemoji Copyright 2019 Twitter, Inc and other contributors
 		Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
 	*/
-	emojiZipURL  = "https://github.com/jdecked/twemoji/archive/refs/tags/v15.1.0.zip"
-	emojiDir     = "twemoji-15.1.0/assets/svg/"
-	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-assets/v9.0.0/emoji.json"
+	emojiZipURL  = "https://github.com/jdecked/twemoji/archive/refs/tags/v17.0.3.zip"
+	emojiDir     = "twemoji-17.0.3/assets/svg/"
+	emojiMetaURL = "https://raw.githubusercontent.com/joypixels/emoji-assets/v10.0.0/emoji.json"
 )
 
 type emojiMeta struct {
@@ -55,6 +55,17 @@ var replaceNameMap = map[string]string{
 	"person_in_manual_wheelchair_facing_right":    "person_manual_wheelchair_right",
 	"woman_with_white_cane_facing_right":          "woman_white_cane_facing_right",
 	"person_with_white_cane_facing_right":         "person_white_cane_facing_right",
+}
+
+var replaceShortnameMap = map[string]string{
+	"face with bags under eyes": "face_with_bags_under_eyes",
+	"fingerprint":               "fingerprint",
+	"leafless tree":             "leafless_tree",
+	"root vegetable":            "root_vegetable",
+	"splatter":                  "splatter",
+	"harp":                      "harp",
+	"shovel":                    "shovel",
+	"flag: Sark":                "flag_cq",
 }
 
 func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, update bool) error {
@@ -120,6 +131,11 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 
 		name := strings.Trim(emoji.ShortName, ":")
 		if replacedName, ok := replaceNameMap[name]; ok {
+			name = replacedName
+		}
+
+		long_name := strings.Trim(emoji.Name, ":")
+		if replacedName, ok := replaceShortnameMap[long_name]; ok {
 			name = replacedName
 		}
 
