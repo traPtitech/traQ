@@ -65,43 +65,46 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
+func (m *manager) buildMessageNew(ctx context.Context, mm *model.Message) *model.MessageNew {
+	parseResult := messageParse.Parse(mm.Text)
+	pRa := parseResult.Attachments
+	aR := []*model.FileMeta{}
+	for i := 0; i < len(pRa); i++ {
+		attachment, err := m.R.GetFileMeta(ctx, pRa[i])
+		if err != nil {
+			break
+		}
+		aR = append(aR, attachment)
+	}
+	pRc := parseResult.Citation
+	quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((pRc))})
+	if err != nil {
+		return nil
+	}
+	return &model.MessageNew{
+		ID:          mm.ID,
+		UserID:      mm.UserID,
+		ChannelID:   mm.ChannelID,
+		Text:        mm.Text,
+		CreatedAt:   mm.CreatedAt,
+		UpdatedAt:   mm.UpdatedAt,
+		DeletedAt:   mm.DeletedAt,
+		User:        mm.User,
+		Channel:     mm.Channel,
+		Stamps:      mm.Stamps,
+		Pin:         mm.Pin,
+		Attachments: aR,
+		Quotes:      quotes,
+	}
+}
+
 func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error) {
 	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
 	ret := utils.Map(messages, func(mm *model.Message) Detailed {
-		parseResult := messageParse.Parse(mm.Text)
-		pRa := parseResult.Attachments
-		aR := []*model.FileMeta{}
-		for i := 0; i < len(pRa); i++ {
-			attachment, err := m.R.GetFileMeta(ctx, pRa[i])
-			if err != nil {
-				break
-			}
-			aR = append(aR, attachment)
-		}
-		pRc := parseResult.Citation
-		quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((pRc))})
-		if err != nil {
-			return nil
-		}
-		mn := &model.MessageNew{
-			ID:          mm.ID,
-			UserID:      mm.UserID,
-			ChannelID:   mm.ChannelID,
-			Text:        mm.Text,
-			CreatedAt:   mm.CreatedAt,
-			UpdatedAt:   mm.UpdatedAt,
-			DeletedAt:   mm.DeletedAt,
-			User:        mm.User,
-			Channel:     mm.Channel,
-			Stamps:      mm.Stamps,
-			Pin:         mm.Pin,
-			Attachments: aR,
-			Quotes:      quotes,
-		}
-		return &messageNew{Model: mn}
+		return &messageNew{Model: m.buildMessageNew(ctx, mm)}
 	})
 	return ret, nil
 }
@@ -124,10 +127,13 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetMessages: %w", err)
 	}
-
+	records := make([]*model.MessageNew, len(messages))
+	for i, mm := range messages {
+		records[i] = m.buildMessageNew(ctx, mm)
+	}
 	return &timeline{
 		query:       query,
-		records:     messages,
+		records:     records,
 		more:        more,
 		preloaded:   !q.DisablePreload,
 		retrievedAt: time.Now(),

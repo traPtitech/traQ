@@ -236,15 +236,17 @@ func (m *message) MarshalJSON() ([]byte, error) {
 
 func (m *messageNew) MarshalJSON() ([]byte, error) {
 	type obj struct {
-		ID        uuid.UUID              `json:"id"`
-		UserID    uuid.UUID              `json:"userId"`
-		ChannelID uuid.UUID              `json:"channelId"`
-		Content   string                 `json:"content"`
-		CreatedAt time.Time              `json:"createdAt"`
-		UpdatedAt time.Time              `json:"updatedAt"`
-		Pinned    bool                   `json:"pinned"`
-		Stamps    []model.MessageStamp   `json:"stamps"`
-		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		ID          uuid.UUID              `json:"id"`
+		UserID      uuid.UUID              `json:"userId"`
+		ChannelID   uuid.UUID              `json:"channelId"`
+		Content     string                 `json:"content"`
+		CreatedAt   time.Time              `json:"createdAt"`
+		UpdatedAt   time.Time              `json:"updatedAt"`
+		Pinned      bool                   `json:"pinned"`
+		Stamps      []model.MessageStamp   `json:"stamps"`
+		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		Attachments []*model.FileMeta      `json:"attachments"`
+		Quotes      []*model.Message       `json:"quotes"`
 	}
 	stamps := m.GetStamps()
 	m.RLock()

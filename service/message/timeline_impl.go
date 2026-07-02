@@ -12,7 +12,7 @@ import (
 
 type timeline struct {
 	query       TimelineQuery
-	records     []*model.Message
+	records     []*model.MessageNew
 	more        bool
 	preloaded   bool
 	retrievedAt time.Time
@@ -40,7 +40,7 @@ func (t *timeline) RetrievedAt() time.Time {
 }
 
 type timelineMessage struct {
-	Model     *model.Message
+	Model     *model.MessageNew
 	preloaded bool
 }
 
@@ -87,9 +87,11 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 	}
 	type objectWithPreload struct {
 		object
-		Pinned   bool                   `json:"pinned"`
-		Stamps   []model.MessageStamp   `json:"stamps"`
-		ThreadID optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		Pinned      bool                   `json:"pinned"`
+		Stamps      []model.MessageStamp   `json:"stamps"`
+		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		Attachments []*model.FileMeta      `json:"attachments"`
+		Quotes      []*model.Message       `json:"quotes"`
 	}
 	var v interface{}
 	if m.preloaded {
@@ -102,8 +104,10 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 				CreatedAt: m.Model.CreatedAt,
 				UpdatedAt: m.Model.UpdatedAt,
 			},
-			Pinned: m.Model.Pin != nil,
-			Stamps: m.Model.Stamps,
+			Pinned:      m.Model.Pin != nil,
+			Stamps:      m.Model.Stamps,
+			Attachments: m.Model.Attachments,
+			Quotes:      m.Model.Quotes,
 		}
 	} else {
 		v = &object{
