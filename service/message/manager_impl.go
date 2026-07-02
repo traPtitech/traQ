@@ -65,7 +65,7 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
-func (m *manager) buildMessageNew(ctx context.Context, mm *model.Message) *model.MessageNew {
+func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message) *model.DetailedMessage {
 	parseResult := messageParse.Parse(mm.Text)
 	pRa := parseResult.Attachments
 	aR := []*model.FileMeta{}
@@ -81,7 +81,7 @@ func (m *manager) buildMessageNew(ctx context.Context, mm *model.Message) *model
 	if err != nil {
 		return nil
 	}
-	return &model.MessageNew{
+	return &model.DetailedMessage{
 		ID:          mm.ID,
 		UserID:      mm.UserID,
 		ChannelID:   mm.ChannelID,
@@ -104,7 +104,7 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error
 		return nil, err
 	}
 	ret := utils.Map(messages, func(mm *model.Message) Detailed {
-		return &messageNew{Model: m.buildMessageNew(ctx, mm)}
+		return &DetailedMessage{Model: m.buildDetailedMessage(ctx, mm)}
 	})
 	return ret, nil
 }
@@ -127,9 +127,9 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetMessages: %w", err)
 	}
-	records := make([]*model.MessageNew, len(messages))
+	records := make([]*model.DetailedMessage, len(messages))
 	for i, mm := range messages {
-		records[i] = m.buildMessageNew(ctx, mm)
+		records[i] = m.buildDetailedMessage(ctx, mm)
 	}
 	return &timeline{
 		query:       query,

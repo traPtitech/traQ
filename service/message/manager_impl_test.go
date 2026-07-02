@@ -82,6 +82,14 @@ func TestManager_Get(t *testing.T) {
 			assert.EqualValues(t, msg.Stamps, result.GetStamps())
 		}
 	})
+	t.Run("quote", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, _, repo, _ := setupM(ctrl)
+
+		id := uuid.NewV3(uuid.Nil, "c1")
+		repo.Mock
+	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()

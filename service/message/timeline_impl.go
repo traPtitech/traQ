@@ -12,7 +12,7 @@ import (
 
 type timeline struct {
 	query       TimelineQuery
-	records     []*model.MessageNew
+	records     []*model.DetailedMessage
 	more        bool
 	preloaded   bool
 	retrievedAt time.Time
@@ -40,7 +40,7 @@ func (t *timeline) RetrievedAt() time.Time {
 }
 
 type timelineMessage struct {
-	Model     *model.MessageNew
+	Model     *model.DetailedMessage
 	preloaded bool
 }
 

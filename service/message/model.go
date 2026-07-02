@@ -22,6 +22,11 @@ type Message interface {
 	json.Marshaler
 }
 
+type Quoted interface {
+	message
+	GetAttachments() []*model.FileMeta
+}
+
 type Detailed interface {
 	Message
 

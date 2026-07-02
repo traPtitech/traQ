@@ -23,7 +23,7 @@ type Message struct {
 	Pin     *Pin           `gorm:"constraint:pins_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-type MessageNew struct {
+type DetailedMessage struct {
 	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
 	UserID    uuid.UUID      `gorm:"type:char(36);not null;"`
 	ChannelID uuid.UUID      `gorm:"type:char(36);not null;index:idx_messages_channel_id_deleted_at_created_at,priority:1"`

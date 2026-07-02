@@ -2058,7 +2058,7 @@ components:
           description: メッセージスタンプ配列
           items:
             $ref: '#/components/schemas/MessageStamp'
-    MessageNew:
+    DetailedMessage:
       type: object
       properties:
         messageId:

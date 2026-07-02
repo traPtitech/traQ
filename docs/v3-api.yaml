@@ -83,7 +83,7 @@ paths:
                 type: array
                 description: メッセージの配列
                 items:
-                  $ref: "#/components/schemas/MessageNew"
+                  $ref: "#/components/schemas/DetailedMessage"
           headers:
             X-TRAQ-MORE:
               $ref: "#/components/headers/X-TRAQ-MORE"
@@ -4779,8 +4779,8 @@ components:
         - pinned
         - stamps
         - threadId
-    MessageNew:
-      title: MessageNew
+    DetailedMessage:
+      title: DetailedMessage
       type: object
       description: メッセージ 詳細
       properties:
