@@ -83,7 +83,7 @@ paths:
                 type: array
                 description: メッセージの配列
                 items:
-                  $ref: "#/components/schemas/Message"
+                  $ref: "#/components/schemas/MessageNew"
           headers:
             X-TRAQ-MORE:
               $ref: "#/components/headers/X-TRAQ-MORE"
@@ -4778,6 +4778,73 @@ components:
         - updatedAt
         - pinned
         - stamps
+        - threadId
+    MessageNew:
+      title: MessageNew
+      type: object
+      description: メッセージ 詳細
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: メッセージUUID
+        userId:
+          type: string
+          description: 投稿者UUID
+          format: uuid
+        channelId:
+          type: string
+          description: チャンネルUUID
+          format: uuid
+        content:
+          type: string
+          description: メッセージ本文
+        createdAt:
+          type: string
+          format: date-time
+          description: 投稿日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 編集日時
+        pinned:
+          description: ピン留めされているかどうか
+          type: boolean
+        stamps:
+          type: array
+          description: 押されているスタンプの配列
+          items:
+            $ref: "#/components/schemas/MessageStamp"
+        attachments:
+          type: array
+          description: 添付ファイルの配列
+          items:
+            $ref: "#/components/schemas/FileInfo"
+        quotes:
+          type: array
+          description: 引用メッセージの配列
+          items:
+            $ref: "#/components/schemas/Message"
+        threadId:
+          type: string
+          format: uuid
+          description: スレッドUUID
+          nullable: true
+        nonce:
+          type: string
+          pattern: "^[a-zA-Z0-9_-]{1,32}$"
+          description: メッセージ送信の確認に使うことができる任意の識別子(投稿でのみ使用可)
+      required:
+        - id
+        - userId
+        - channelId
+        - content
+        - createdAt
+        - updatedAt
+        - pinned
+        - stamps
+        - attachments
+        - quotes
         - threadId
     MessageStamp:
       title: MessageStamp
