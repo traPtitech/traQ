@@ -198,14 +198,6 @@ type Server struct {
 	routerStopped chan struct{}
 }
 
-func provideCancelFunc(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithCancel(ctx)
-}
-
-func provideShutdownChan() chan struct{} {
-	return make(chan struct{})
-}
-
 func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time.Duration) error {
 	go func() {
 		// TODO 適切なパッケージに移動させる
