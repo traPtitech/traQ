@@ -143,6 +143,8 @@ func (q *MessagesQuery) convert() message.TimelineQuery {
 func (q *MessagesQuery) convertC(cid uuid.UUID) message.TimelineQuery {
 	r := q.convert()
 	r.Channel = cid
+	r.IncludeAttachments = true
+	r.IncludeQuotes = true
 	return r
 }
 

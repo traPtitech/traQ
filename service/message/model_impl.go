@@ -316,19 +316,25 @@ func (m *DetailedMessage) MarshalJSON() ([]byte, error) {
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
 		Attachments []*model.FileMeta      `json:"attachments"`
-		Quotes      []*model.QuotedMessage `json:"quotes"`
+		Quotes      []*QuotedMessage       `json:"quotes"`
 	}
 	stamps := m.GetStamps()
 	m.RLock()
+	quotes := make([]*QuotedMessage, len(m.Model.Quotes))
+	for i, q := range m.Model.Quotes {
+		quotes[i] = &QuotedMessage{Model: q}
+	}
 	v := &obj{
-		ID:        m.Model.ID,
-		UserID:    m.Model.UserID,
-		ChannelID: m.Model.ChannelID,
-		Content:   m.Model.Text,
-		CreatedAt: m.Model.CreatedAt,
-		UpdatedAt: m.Model.UpdatedAt,
-		Pinned:    m.Model.Pin != nil,
-		Stamps:    stamps,
+		ID:          m.Model.ID,
+		UserID:      m.Model.UserID,
+		ChannelID:   m.Model.ChannelID,
+		Content:     m.Model.Text,
+		CreatedAt:   m.Model.CreatedAt,
+		UpdatedAt:   m.Model.UpdatedAt,
+		Pinned:      m.Model.Pin != nil,
+		Stamps:      stamps,
+		Attachments: m.Model.Attachments,
+		Quotes:      quotes,
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)
@@ -350,14 +356,15 @@ func (m *QuotedMessage) MarshalJSON() ([]byte, error) {
 	stamps := m.GetStamps()
 	m.RLock()
 	v := &obj{
-		ID:        m.Model.ID,
-		UserID:    m.Model.UserID,
-		ChannelID: m.Model.ChannelID,
-		Content:   m.Model.Text,
-		CreatedAt: m.Model.CreatedAt,
-		UpdatedAt: m.Model.UpdatedAt,
-		Pinned:    m.Model.Pin != nil,
-		Stamps:    stamps,
+		ID:          m.Model.ID,
+		UserID:      m.Model.UserID,
+		ChannelID:   m.Model.ChannelID,
+		Content:     m.Model.Text,
+		CreatedAt:   m.Model.CreatedAt,
+		UpdatedAt:   m.Model.UpdatedAt,
+		Pinned:      m.Model.Pin != nil,
+		Stamps:      stamps,
+		Attachments: m.Model.Attachments,
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)

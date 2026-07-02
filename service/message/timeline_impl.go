@@ -91,10 +91,14 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
 		Attachments []*model.FileMeta      `json:"attachments"`
-		Quotes      []*model.QuotedMessage `json:"quotes"`
+		Quotes      []*QuotedMessage       `json:"quotes"`
 	}
 	var v interface{}
 	if m.preloaded {
+		quotes := make([]*QuotedMessage, len(m.Model.Quotes))
+		for i, q := range m.Model.Quotes {
+			quotes[i] = &QuotedMessage{Model: q}
+		}
 		v = &objectWithPreload{
 			object: object{
 				ID:        m.Model.ID,
@@ -107,7 +111,7 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 			Pinned:      m.Model.Pin != nil,
 			Stamps:      m.Model.Stamps,
 			Attachments: m.Model.Attachments,
-			Quotes:      m.Model.Quotes,
+			Quotes:      quotes,
 		}
 	} else {
 		v = &object{
