@@ -141,7 +141,7 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error
 		return nil, err
 	}
 	ret := utils.Map(messages, func(mm *model.Message) Detailed {
-		return &DetailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, false)}
+		return &DetailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, true)}
 	})
 	return ret, nil
 }
