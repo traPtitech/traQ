@@ -65,9 +65,35 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
+func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *model.QuotedMessage {
+	parseResult := messageParse.Parse(mm.Text)
+	aR := []*model.FileMeta{}
+	for _, fid := range parseResult.Attachments {
+		attachment, err := m.R.GetFileMeta(ctx, fid)
+		if err != nil {
+			break
+		}
+		aR = append(aR, attachment)
+	}
+	return &model.QuotedMessage{
+		ID:          mm.ID,
+		UserID:      mm.UserID,
+		ChannelID:   mm.ChannelID,
+		Text:        mm.Text,
+		CreatedAt:   mm.CreatedAt,
+		UpdatedAt:   mm.UpdatedAt,
+		DeletedAt:   mm.DeletedAt,
+		User:        mm.User,
+		Channel:     mm.Channel,
+		Stamps:      mm.Stamps,
+		Pin:         mm.Pin,
+		Attachments: aR,
+	}
+}
+
 func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a bool, q bool) *model.DetailedMessage {
 	var aR []*model.FileMeta
-	var quotes []*model.Message
+	var aC []*model.QuotedMessage
 	if a || q {
 		parseResult := messageParse.Parse(mm.Text)
 		if a {
@@ -81,10 +107,14 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a
 			}
 		}
 		if q {
+			aC = []*model.QuotedMessage{}
 			var err error
-			quotes, _, err = m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
+			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
 			if err != nil {
-				return nil
+				quotes = nil
+			}
+			for _, quote := range quotes {
+				aC = append(aC, m.buildQuotedMessage(ctx, quote))
 			}
 		}
 	}
@@ -101,7 +131,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a
 		Stamps:      mm.Stamps,
 		Pin:         mm.Pin,
 		Attachments: aR,
-		Quotes:      quotes,
+		Quotes:      aC,
 	}
 }
 

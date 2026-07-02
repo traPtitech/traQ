@@ -31,7 +31,7 @@ type Detailed interface {
 	Message
 
 	GetAttachments() []*model.FileMeta
-	GetQuotes() []*model.Message
+	GetQuotes() []*model.QuotedMessage
 
 	json.Marshaler
 }

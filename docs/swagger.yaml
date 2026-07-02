@@ -2103,7 +2103,48 @@ components:
           type: array
           description: 引用メッセージの配列
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: '#/components/schemas/QuotedMessage'
+    QuotedMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: メッセージUUID
+        userId:
+          type: string
+          format: uuid
+          description: 投稿者UUID
+        parentChannelId:
+          type: string
+          description: 投稿先チャンネルUUID
+        content:
+          type: string
+          description: メッセージ本体
+        createdAt:
+          type: string
+          format: date-time
+          description: メッセージ投稿日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: メッセージ更新日時
+        pin:
+          type: boolean
+          description: ピン留めされているかどうか
+        reported:
+          type: boolean
+          description: 自分が通報しているかどうか
+        stampList:
+          type: array
+          description: メッセージスタンプ配列
+          items:
+            $ref: '#/components/schemas/MessageStamp'
+        attachments:
+          type: array
+          description: 添付ファイルの配列
+          items:
+            $ref: '#/components/schemas/FileInfo'
     MessageList:
       type: array
       items:

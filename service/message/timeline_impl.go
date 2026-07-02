@@ -91,7 +91,7 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
 		Attachments []*model.FileMeta      `json:"attachments"`
-		Quotes      []*model.Message       `json:"quotes"`
+		Quotes      []*model.QuotedMessage `json:"quotes"`
 	}
 	var v interface{}
 	if m.preloaded {
