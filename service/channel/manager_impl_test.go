@@ -384,6 +384,42 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 		}
 	})
 
+	t.Run("RootParentChannel", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		cases := []struct {
+			Name   string
+			Parent uuid.UUID
+		}{
+			{Name: "b", Parent: pubChannelRootUUID},
+		}
+		for _, c := range cases {
+			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
+			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
+		}
+	})
+
+	t.Run("ErrThreadNameConflicts", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		cases := []struct {
+			Name   string
+			Parent uuid.UUID
+		}{
+			{Name: "l", Parent: cEK},
+		}
+		for _, c := range cases {
+			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
+			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
+		}
+	})
+
 	t.Run("ErrChannelArchived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -462,7 +498,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							ParentID:   c.Parent,
 							CreatorID:  c.Creator,
 							UpdaterID:  c.Creator,
-							Type:       model.ChannelTypePublic,
+							Type:       model.ChannelTypeThread,
 							IsForced:   false,
 							IsVisible:  true,
 							CreatedAt:  createdAt,
@@ -472,7 +508,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 						}
 
 						repo.EXPECT().
-							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypeThread).
 							Return(expected, nil).
 							AnyTimes()
 						if c.Parent != uuid.Nil {

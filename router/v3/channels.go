@@ -135,6 +135,8 @@ func (h *Handlers) CreateThreads(c echo.Context) error {
 			return herror.BadRequest("invalid channel name")
 		case channel.ErrInvalidParentChannel:
 			return herror.BadRequest("invalid parent channel")
+		case channel.ErrChannelThreadParent:
+			return herror.BadRequest("parent channel is a thread channel")
 		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
 		case channel.ErrChannelNameConflicts:
