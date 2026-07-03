@@ -508,13 +508,11 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
 	m.T.add(ch)
-	if parent != pubChannelRootUUID {
-		// ロギング
-		m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
-			"userId":    ch.CreatorID,
-			"channelId": ch.ID,
-		}, ch.CreatedAt)
-	}
+	// ロギング
+	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
+		"userId":    ch.CreatorID,
+		"channelId": ch.ID,
+	}, ch.CreatedAt)
 	m.L.Info(fmt.Sprintf("channel #%s was created", m.T.getChannelPath(ch.ID)), zap.Stringer("cid", ch.ID))
 	return ch, nil
 }
