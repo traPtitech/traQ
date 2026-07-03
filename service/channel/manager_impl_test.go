@@ -461,7 +461,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			Return(nil, mockErr).
 			AnyTimes()
 
-		_, err := cm.CreateThreadChannel(context.TODO(), "test", uuid.Nil, uuid.Nil)
+		_, err := cm.CreateThreadChannel(context.TODO(), "test", cEK, uuid.Nil)
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
 		}
@@ -475,7 +475,6 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			Parent  uuid.UUID
 			Creator uuid.UUID
 		}{
-			{Name: "test1", Parent: uuid.Nil, Creator: cA},
 			{Name: "test1", Parent: cA, Creator: cAB},
 			{Name: "test2", Parent: cA, Creator: cABC},
 			{Name: "test2", Parent: cEFGJ, Creator: cABCD},
