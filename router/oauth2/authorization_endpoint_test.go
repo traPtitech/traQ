@@ -453,6 +453,42 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		}
 	})
 
+	t.Run("Found (prompt=none with empty scope and partial consent)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		user := env.CreateUser(t, rand, useUUIDV4)
+		scopesReadWrite := model.AccessScopes{}
+		scopesReadWrite.Add("read", "write")
+		clientReadWrite := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "test client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "http://example.com",
+			Scopes:       scopesReadWrite,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), clientReadWrite))
+		_, err := env.Repository.IssueToken(context.TODO(), clientReadWrite, user.GetID(), clientReadWrite.RedirectURI, scopesRead, 1000, false)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize").
+			WithFormField("client_id", clientReadWrite.ID).
+			WithFormField("response_type", "code").
+			WithFormField("prompt", "none").
+			WithFormField("scope", "").
+			WithCookie(session.CookieName, env.S(t, user.GetID())).
+			Expect()
+		res.Status(http.StatusFound)
+		res.Header("Cache-Control").IsEqual("no-store")
+		res.Header("Pragma").IsEqual("no-cache")
+		loc, err := res.Raw().Location()
+		if assert.NoError(err) {
+			assert.Equal(errConsentRequired, loc.Query().Get("error"))
+		}
+	})
+
 	t.Run("Found (invalid prompt)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
