@@ -507,8 +507,8 @@ github.com/livekit/protocol v1.49.0 h1:Q5nthDO1v7c0JHiWjMhgUQTlsKmCsBL/KCKxdHVaz
 github.com/livekit/protocol v1.49.0/go.mod h1:jO+y05AU9Ec4JswDyuzKCZ4bhziOS0CzMqgnbj60Dzs=
 github.com/livekit/psrpc v0.7.2 h1:6oZ+NODJ2pLyaT6VqDq1F4Qc/3TpDUSpyphj/P9MhQc=
 github.com/livekit/psrpc v0.7.2/go.mod h1:rAI+m2+/cb4x9RXhLRtUx5ZwdfjjXOl4zi46IjEetaw=
-github.com/livekit/server-sdk-go/v2 v2.16.7 h1:oYnp2o3YTBdL4xVkq5NpLwqnCijZVfVJU9ddFl+BW/Y=
-github.com/livekit/server-sdk-go/v2 v2.16.7/go.mod h1:B3qlhVBZ4olBWRN/KxokLZE2d4LujNk4n2yYDL3+u2s=
+github.com/livekit/server-sdk-go/v2 v2.17.0 h1:FzVQMoxHv0WIg164yGqSxLeV+h3aJomjAv1lFeR9MMw=
+github.com/livekit/server-sdk-go/v2 v2.17.0/go.mod h1:5nzTfVBH2Jz+TW1SrfpqC7wrbcD1lT94KZCJ9hOMyvk=
 github.com/lthibault/jitterbug/v2 v2.2.2 h1:v4+0tqryaI/TlYzgYE0Vhz7ha6Jtz4yRjmBP+PcqWPQ=
 github.com/lthibault/jitterbug/v2 v2.2.2/go.mod h1:evaHKX+60nFbFnEvGNPybQMJ5vXay9auziApDGo47Sw=
 github.com/magefile/mage v1.17.2 h1:fyXVu1eadI8Ap1HCCNgEhJ5McIWiYhLR8uol64ZZc40=
