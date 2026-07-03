@@ -416,19 +416,27 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	m.T.Lock()
 	defer m.T.Unlock()
 
-	if parent != pubChannelRootUUID {
-		// 親チャンネルの存在を確認
-		if !m.T.isChannelPresent(parent) {
-			return nil, ErrInvalidParentChannel
-		}
-		// 親チャンネルがスレッドかどうか確認
-		if m.T.isThreadChannel(parent) {
-			return nil, ErrChannelThreadParent
-		}
-		// 親チャンネルがアーカイブされているかどうか確認
-		if m.T.isArchivedChannel(parent) {
-			return nil, ErrChannelArchived
-		}
+	// ルートチャンネルの下にスレッドは作れない
+	if parent == pubChannelRootUUID {
+		return nil, ErrInvalidParentChannel
+	}
+
+	// 既にある名前のスレッドは作れない
+	if m.T.isChildPresent(name, parent) {
+		return nil, ErrChannelNameConflicts
+	}
+
+	// 親チャンネルの存在を確認
+	if !m.T.isChannelPresent(parent) {
+		return nil, ErrInvalidParentChannel
+	}
+	// 親チャンネルがスレッドかどうか確認
+	if m.T.isThreadChannel(parent) {
+		return nil, ErrChannelThreadParent
+	}
+	// 親チャンネルがアーカイブされているかどうか確認
+	if m.T.isArchivedChannel(parent) {
+		return nil, ErrChannelArchived
 	}
 
 	// チャンネル作成
