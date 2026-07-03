@@ -23,8 +23,8 @@ func (t *timeline) Query() TimelineQuery {
 	return t.query
 }
 
-func (t *timeline) Records() []Message {
-	arr := make([]Message, len(t.records))
+func (t *timeline) Records() []DetailedBecauseAttachmentsAndQuotesAreIncluded {
+	arr := make([]DetailedBecauseAttachmentsAndQuotesAreIncluded, len(t.records))
 	for i, record := range t.records {
 		arr[i] = &timelineMessage{Model: record, preloaded: t.preloaded}
 	}
@@ -74,6 +74,19 @@ func (m *timelineMessage) GetStamps() []model.MessageStamp {
 
 func (m *timelineMessage) GetPin() *model.Pin {
 	return m.Model.Pin
+}
+
+func (m *timelineMessage) GetAttachments() []*model.FileMeta {
+	return m.Model.Attachments
+}
+
+func (m *timelineMessage) GetQuotes() []model.QuotedMessage {
+	quotes := m.Model.Quotes
+	ret := make([]model.QuotedMessage, len(quotes))
+	for i, q := range quotes {
+		ret[i] = *q
+	}
+	return ret
 }
 
 func (m *timelineMessage) MarshalJSON() ([]byte, error) {

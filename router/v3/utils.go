@@ -111,8 +111,8 @@ type MessagesQuery struct {
 	Until              optional.Of[time.Time] `query:"until"`
 	Inclusive          bool                   `query:"inclusive"`
 	Order              string                 `query:"order"`
-	IncludeAttachments bool                   `query:"includeAttachments"`
-	IncludeQuotes      bool                   `query:"includeQuotes"`
+	IncludeAttachments bool                   `query:"include-attachments"`
+	IncludeQuotes      bool                   `query:"include-quotes"`
 }
 
 func (q *MessagesQuery) bind(c *echo.Context) error {
@@ -143,8 +143,6 @@ func (q *MessagesQuery) convert() message.TimelineQuery {
 func (q *MessagesQuery) convertC(cid uuid.UUID) message.TimelineQuery {
 	r := q.convert()
 	r.Channel = cid
-	r.IncludeAttachments = true
-	r.IncludeQuotes = true
 	return r
 }
 

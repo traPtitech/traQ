@@ -48,7 +48,7 @@ type Manager interface {
 	//
 	// 成功した場合、メッセージとnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error)
+	GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 	// GetTimeline タイムラインを取得します
 	//
 	// 成功した場合、タイムラインとnilを返します。

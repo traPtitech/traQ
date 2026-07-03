@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils"
-	messageParse "github.com/traPtitech/traQ/utils/message"
+	messageParser "github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -66,14 +66,14 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 }
 
 func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *model.QuotedMessage {
-	parseResult := messageParse.Parse(mm.Text)
-	aR := []*model.FileMeta{}
+	parseResult := messageParser.Parse(mm.Text)
+	attachmentsResult := []*model.FileMeta{}
 	for _, fid := range parseResult.Attachments {
 		attachment, err := m.R.GetFileMeta(ctx, fid)
 		if err != nil {
 			break
 		}
-		aR = append(aR, attachment)
+		attachmentsResult = append(attachmentsResult, attachment)
 	}
 	return &model.QuotedMessage{
 		ID:          mm.ID,
@@ -87,60 +87,50 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *mo
 		Channel:     mm.Channel,
 		Stamps:      mm.Stamps,
 		Pin:         mm.Pin,
-		Attachments: aR,
+		Attachments: attachmentsResult,
 	}
 }
 
 func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a bool, q bool) *model.DetailedMessage {
-	var aR []*model.FileMeta
-	var aC []*model.QuotedMessage
+	var attachmentsResult []*model.FileMeta
+	var citationResult []*model.QuotedMessage
 	if a || q {
-		parseResult := messageParse.Parse(mm.Text)
+		parseResult := messageParser.Parse(mm.Text)
 		if a {
-			aR = []*model.FileMeta{}
+			attachmentsResult = []*model.FileMeta{}
 			for _, fid := range parseResult.Attachments {
 				attachment, err := m.R.GetFileMeta(ctx, fid)
 				if err != nil {
 					break
 				}
-				aR = append(aR, attachment)
+				attachmentsResult = append(attachmentsResult, attachment)
 			}
 		}
 		if q {
-			aC = []*model.QuotedMessage{}
+			citationResult = []*model.QuotedMessage{}
 			var err error
 			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
 			if err != nil {
 				quotes = nil
 			}
 			for _, quote := range quotes {
-				aC = append(aC, m.buildQuotedMessage(ctx, quote))
+				citationResult = append(citationResult, m.buildQuotedMessage(ctx, quote))
 			}
 		}
 	}
 	return &model.DetailedMessage{
-		ID:          mm.ID,
-		UserID:      mm.UserID,
-		ChannelID:   mm.ChannelID,
-		Text:        mm.Text,
-		CreatedAt:   mm.CreatedAt,
-		UpdatedAt:   mm.UpdatedAt,
-		DeletedAt:   mm.DeletedAt,
-		User:        mm.User,
-		Channel:     mm.Channel,
-		Stamps:      mm.Stamps,
-		Pin:         mm.Pin,
-		Attachments: aR,
-		Quotes:      aC,
+		Message:     *mm,
+		Attachments: attachmentsResult,
+		Quotes:      citationResult,
 	}
 }
 
-func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Detailed, error) {
+func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error) {
 	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
-	ret := utils.Map(messages, func(mm *model.Message) Detailed {
+	ret := utils.Map(messages, func(mm *model.Message) Message {
 		return &DetailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, true)}
 	})
 	return ret, nil

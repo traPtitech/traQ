@@ -62,7 +62,7 @@ func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, 
 		return nil, err
 	}
 
-	messagesMap := lo.SliceToMap(messages, func(m message.Detailed) (uuid.UUID, message.Message) {
+	messagesMap := lo.SliceToMap(messages, func(m message.Message) (uuid.UUID, message.Message) {
 		return m.GetID(), m
 	})
 	// sort result
