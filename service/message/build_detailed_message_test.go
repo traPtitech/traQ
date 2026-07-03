@@ -1,3 +1,5 @@
+// atode fairu kuttsukeru
+
 package message
 
 import (
