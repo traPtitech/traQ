@@ -76,27 +76,17 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *mo
 		attachmentsResult = append(attachmentsResult, attachment)
 	}
 	return &model.QuotedMessage{
-		ID:          mm.ID,
-		UserID:      mm.UserID,
-		ChannelID:   mm.ChannelID,
-		Text:        mm.Text,
-		CreatedAt:   mm.CreatedAt,
-		UpdatedAt:   mm.UpdatedAt,
-		DeletedAt:   mm.DeletedAt,
-		User:        mm.User,
-		Channel:     mm.Channel,
-		Stamps:      mm.Stamps,
-		Pin:         mm.Pin,
+		Message:     *mm,
 		Attachments: attachmentsResult,
 	}
 }
 
-func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a bool, q bool) *model.DetailedMessage {
+func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool) *model.DetailedMessage {
 	var attachmentsResult []*model.FileMeta
 	var citationResult []*model.QuotedMessage
-	if a || q {
+	if includeAttachments || includeQuotes {
 		parseResult := messageParser.Parse(mm.Text)
-		if a {
+		if includeAttachments {
 			attachmentsResult = []*model.FileMeta{}
 			for _, fid := range parseResult.Attachments {
 				attachment, err := m.R.GetFileMeta(ctx, fid)
@@ -106,7 +96,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, a
 				attachmentsResult = append(attachmentsResult, attachment)
 			}
 		}
-		if q {
+		if includeQuotes {
 			citationResult = []*model.QuotedMessage{}
 			var err error
 			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
@@ -131,7 +121,7 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 		return nil, err
 	}
 	ret := utils.Map(messages, func(mm *model.Message) Message {
-		return &DetailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, true)}
+		return &detailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, true)}
 	})
 	return ret, nil
 }

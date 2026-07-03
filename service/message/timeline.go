@@ -6,7 +6,7 @@ import (
 
 type Timeline interface {
 	Query() TimelineQuery
-	Records() []DetailedBecauseAttachmentsAndQuotesAreIncluded
+	Records() []DetailedMessage
 	HasMore() bool
 	RetrievedAt() time.Time
 }

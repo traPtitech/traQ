@@ -23,8 +23,8 @@ func (t *timeline) Query() TimelineQuery {
 	return t.query
 }
 
-func (t *timeline) Records() []DetailedBecauseAttachmentsAndQuotesAreIncluded {
-	arr := make([]DetailedBecauseAttachmentsAndQuotesAreIncluded, len(t.records))
+func (t *timeline) Records() []DetailedMessage {
+	arr := make([]DetailedMessage, len(t.records))
 	for i, record := range t.records {
 		arr[i] = &timelineMessage{Model: record, preloaded: t.preloaded}
 	}
@@ -104,13 +104,13 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
 		Attachments []*model.FileMeta      `json:"attachments"`
-		Quotes      []*QuotedMessage       `json:"quotes"`
+		Quotes      []*quotedMessage       `json:"quotes"`
 	}
 	var v interface{}
 	if m.preloaded {
-		quotes := make([]*QuotedMessage, len(m.Model.Quotes))
+		quotes := make([]*quotedMessage, len(m.Model.Quotes))
 		for i, q := range m.Model.Quotes {
-			quotes[i] = &QuotedMessage{Model: q}
+			quotes[i] = &quotedMessage{Model: q}
 		}
 		v = &objectWithPreload{
 			object: object{

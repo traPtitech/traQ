@@ -22,7 +22,7 @@ type Message interface {
 	json.Marshaler
 }
 
-type DetailedBecauseAttachmentsAndQuotesAreIncluded interface {
+type DetailedMessage interface {
 	Message
 	GetAttachments() []*model.FileMeta
 	GetQuotes() []model.QuotedMessage
