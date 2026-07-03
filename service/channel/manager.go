@@ -21,6 +21,7 @@ var (
 	ErrChannelArchived      = errors.New("channel archived")
 	ErrForcedNotification   = errors.New("forced notification channel")
 	ErrInvalidChannel       = errors.New("invalid channel")
+	ErrChannelThreadParent  = errors.New("parent channel is a thread channel")
 )
 
 type Manager interface {
@@ -39,6 +40,8 @@ type Manager interface {
 	GetDMChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error)
 	GetDMChannelMembers(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetDMChannelMapping(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
+
+	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error)
 
 	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
 	IsPublicChannel(ctx context.Context, id uuid.UUID) bool

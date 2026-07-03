@@ -726,9 +726,9 @@ func (repo *TestRepository) GetUserIDsByTagID(_ context.Context, tagID uuid.UUID
 	return users, nil
 }
 
-func (repo *TestRepository) CreateChannel(_ context.Context, ch model.Channel, _ set.UUID, _ bool) (*model.Channel, error) {
+func (repo *TestRepository) CreateChannel(_ context.Context, ch model.Channel, _ set.UUID, channelType model.ChannelType) (*model.Channel, error) {
 	ch.ID = uuid.Must(uuid.NewV7())
-	ch.Type = model.ChannelTypePublic
+	ch.Type = channelType
 	ch.CreatedAt = time.Now()
 	ch.UpdatedAt = time.Now()
 	ch.DeletedAt = gorm.DeletedAt{}
