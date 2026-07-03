@@ -52,6 +52,7 @@ e : 6301b259-2a3e-4a30-9ec8-78737c4b539d force
 │ 　 │ └ i : 55339fb1-c3c8-4c52-a053-8af0845c45e9
 │ 　 └ j : 071eefb9-0a77-4cc4-8d38-5c214aca85f0
 └ k : 2636a1e1-5356-4c5f-8822-c52eeb914689
+
 	└ l : d1c8e5b7-9a1c-4f0b-9c3e-2a1b2c3d4e5f thread
 */
 func makeTestChannelTree(t *testing.T) *treeImpl {
