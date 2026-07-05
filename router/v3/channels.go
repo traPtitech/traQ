@@ -153,10 +153,11 @@ type PatchThreadRequest struct {
 	Archived optional.Of[bool]   `json:"archived"`
 }
 
-func (h *Handlers) EditThreads(c echo.Context) error {
+func (h *Handlers) EditThread(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
 	var req PatchThreadRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -165,11 +166,12 @@ func (h *Handlers) EditThreads(c echo.Context) error {
 		V:     !req.Archived.V,
 		Valid: req.Archived.Valid,
 	}
-	args := repository.UpdateChannelArgs{
+	args := repository.UpdateThreadArgs{
 		UpdaterID:  userID,
+		Name:       req.Name,
 		Visibility: visibility,
 	}
-	if err := h.ChannelManager.UpdateChannel(ctx, channelID, args); err != nil {
+	if err := h.ChannelManager.UpdateThread(ctx, channelID, args); err != nil {
 		switch err {
 		case channel.ErrInvalidChannelName:
 			return herror.BadRequest("invalid channel name")

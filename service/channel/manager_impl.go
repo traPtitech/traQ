@@ -163,12 +163,6 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 			"visibility": args.Visibility.V,
 		}
 	}
-	if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
-		eventRecords[model.ChannelEventForcedNotificationChanged] = model.ChannelEventDetail{
-			"userId": args.UpdaterID,
-			"force":  args.ForcedNotification.V,
-		}
-	}
 	if args.Name.Valid || args.Parent.Valid {
 		// チャンネル名重複を確認
 		{
@@ -244,6 +238,68 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 	if args.Name.Valid || args.Parent.Valid {
 		m.T.move(id, args.Parent, args.Name)
 	}
+	m.T.updateSingle(id, ch)
+
+	updated := time.Now()
+	for eventType, detail := range eventRecords {
+		m.recordChannelEvent(id, eventType, detail, updated)
+	}
+	return nil
+}
+
+func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return ErrChannelNotFound
+	}
+
+	if ch.Type != model.ChannelTypeThread {
+		return ErrInvalidChannelType
+	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
+	_, err = m.GetChannel(ctx, ch.ParentID)
+	if err != nil {
+		return fmt.Errorf("failed to UpdateThread: %w", err)
+	}
+
+	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
+	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
+		eventRecords[model.ChannelEventVisibilityChanged] = model.ChannelEventDetail{
+			"userId":     args.UpdaterID,
+			"visibility": args.Visibility.V,
+		}
+	}
+
+	if args.Name.Valid {
+		// スレッド名重複を確認
+		{
+			if m.T.isChildPresent(args.Name.V, ch.ParentID) {
+				return ErrChannelNameConflicts
+			}
+		}
+
+		// スレッド名検証
+		if !validator.ChannelRegex.MatchString(args.Name.V) {
+			return ErrInvalidChannelName
+		}
+		eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
+			"userId": args.UpdaterID,
+			"before": ch.Name,
+			"after":  args.Name.V,
+		}
+	}
+
+	ch, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
+		UpdaterID:  args.UpdaterID,
+		Name:       args.Name,
+		Visibility: args.Visibility,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to UpdateChannel: %w", err)
+	}
+
 	m.T.updateSingle(id, ch)
 
 	updated := time.Now()
