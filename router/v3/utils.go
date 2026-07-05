@@ -137,6 +137,8 @@ func (q *MessagesQuery) convert() message.TimelineQuery {
 		Limit:     q.Limit,
 		Offset:    q.Offset,
 		Asc:       strings.ToLower(q.Order) == "asc",
+		IncludeAttachments: q.IncludeAttachments,
+		IncludeQuotes: q.IncludeQuotes,
 	}
 }
 
