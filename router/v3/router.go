@@ -217,7 +217,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiThreads := api.Group("/threads")
 		{
 			apiThreads.POST("", h.CreateThreads, requires(permission.CreateChannel))
-			apiThreads.PATCH("", h.EditThreads, requires(permission.EditChannel))
+			apiThreads.PATCH("/:channelID", h.EditThread, requires(permission.EditChannel))
 		}
 		apiMessages := api.Group("/messages")
 		{

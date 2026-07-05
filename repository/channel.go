@@ -28,6 +28,13 @@ type UpdateChannelArgs struct {
 	Parent             optional.Of[uuid.UUID]
 }
 
+// UpdateChannelArgs スレッド情報更新引数
+type UpdateThreadArgs struct {
+	UpdaterID  uuid.UUID
+	Name       optional.Of[string]
+	Visibility optional.Of[bool]
+}
+
 // ChannelEventsQuery GetChannelEvents用クエリ
 type ChannelEventsQuery struct {
 	Channel   uuid.UUID
