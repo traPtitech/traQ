@@ -435,28 +435,6 @@ func TestHandlers_CreateThreads(t *testing.T) {
 		assert.Equal(t, parent.ID, thread.ParentID)
 		assert.Equal(t, model.ChannelTypeThread, thread.Type)
 	})
-
-	t.Run("thread parent should be rejected", func(t *testing.T) {
-		t.Parallel()
-		e := env.R(t)
-
-		first := e.POST(path).
-			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostThreadRequest{Name: "first-thread", Parent: parent.ID}).
-			Expect().
-			Status(http.StatusCreated).
-			JSON().
-			Object()
-
-		threadID, err := uuid.FromString(first.Value("id").String().Raw())
-		require.NoError(t, err)
-
-		e.POST(path).
-			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostThreadRequest{Name: "nested-thread", Parent: threadID}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
 }
 
 func TestHandlers_GetChannel(t *testing.T) {

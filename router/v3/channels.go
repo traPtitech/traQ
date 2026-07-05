@@ -135,8 +135,6 @@ func (h *Handlers) CreateThreads(c echo.Context) error {
 			return herror.BadRequest("invalid channel name")
 		case channel.ErrInvalidParentChannel:
 			return herror.BadRequest("invalid parent channel")
-		case channel.ErrChannelThreadParent:
-			return herror.BadRequest("parent channel is a thread channel")
 		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
 		case channel.ErrChannelNameConflicts:
@@ -147,6 +145,43 @@ func (h *Handlers) CreateThreads(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, formatChannel(ch, make([]uuid.UUID, 0)))
+}
+
+// PatchThreadChannel Patch /threads/{channelId}
+type PatchThreadRequest struct {
+	Name     optional.Of[string] `json:"name"`
+	Archived optional.Of[bool]   `json:"archived"`
+}
+
+func (h *Handlers) EditThread(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID := getRequestUserID(c)
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PatchThreadRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+	visibility := optional.Of[bool]{
+		V:     !req.Archived.V,
+		Valid: req.Archived.Valid,
+	}
+	args := repository.UpdateThreadArgs{
+		UpdaterID:  userID,
+		Name:       req.Name,
+		Visibility: visibility,
+	}
+	if err := h.ChannelManager.UpdateThread(ctx, channelID, args); err != nil {
+		switch err {
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetChannel GET /channels/:channelID

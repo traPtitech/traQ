@@ -28,6 +28,13 @@ type UpdateChannelArgs struct {
 	Parent             optional.Of[uuid.UUID]
 }
 
+// UpdateChannelArgs スレッド情報更新引数
+type UpdateThreadArgs struct {
+	UpdaterID  uuid.UUID
+	Name       optional.Of[string]
+	Visibility optional.Of[bool]
+}
+
 // ChannelEventsQuery GetChannelEvents用クエリ
 type ChannelEventsQuery struct {
 	Channel   uuid.UUID
@@ -82,7 +89,7 @@ type ChannelRepository interface {
 	GetPublicChannels(ctx context.Context) ([]*model.Channel, error)
 	// CreateChannel チャンネルを作成します
 	//
-	// channelType が model.ChannelTypeDM の場合、privateMembersに1人または2人のユーザーが入っている必要があります。
+	// channelType が repository.ChannelTypePublic の場合、privateMembersに1人または2人のユーザーが入っている必要があります。
 	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, channelType model.ChannelType) (*model.Channel, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
