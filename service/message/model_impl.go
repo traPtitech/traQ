@@ -1,6 +1,7 @@
 package message
 
 import (
+	"sort"
 	"sync"
 	"time"
 
@@ -213,6 +214,10 @@ func (m *quotedMessage) GetAttachments() []*model.FileMeta {
 func (m *detailedMessage) GetQuotes() []*model.QuotedMessage {
 	m.RLock()
 	defer m.RUnlock()
+	mq := m.Model.Quotes
+	sort.SliceStable(mq, func(i, j int) bool {
+		return (*mq[i]).CreatedAt.Before((*mq[j]).CreatedAt)
+	})
 	return m.Model.Quotes
 }
 

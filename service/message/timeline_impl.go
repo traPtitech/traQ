@@ -109,10 +109,7 @@ func (m *timelineMessage) GetAttachments() []*model.FileMeta {
 }
 
 func (m *timelineMessage) GetQuotes() []*model.QuotedMessage {
-	quotes := m.Model.Quotes
-	ret := make([]*model.QuotedMessage, len(quotes))
-	copy(ret, quotes)
-	return ret
+	return m.Model.Quotes
 }
 
 func (m *timelineMessage) MarshalJSON() ([]byte, error) {
