@@ -108,12 +108,10 @@ func (m *timelineMessage) GetAttachments() []*model.FileMeta {
 	return m.Model.Attachments
 }
 
-func (m *timelineMessage) GetQuotes() []model.QuotedMessage {
+func (m *timelineMessage) GetQuotes() []*model.QuotedMessage {
 	quotes := m.Model.Quotes
-	ret := make([]model.QuotedMessage, len(quotes))
-	for i, q := range quotes {
-		ret[i] = *q
-	}
+	ret := make([]*model.QuotedMessage, len(quotes))
+	copy(ret, quotes)
 	return ret
 }
 

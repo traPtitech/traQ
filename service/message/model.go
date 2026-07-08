@@ -25,5 +25,5 @@ type Message interface {
 type DetailedMessage interface {
 	Message
 	GetAttachments() []*model.FileMeta
-	GetQuotes() []model.QuotedMessage
+	GetQuotes() []*model.QuotedMessage
 }
