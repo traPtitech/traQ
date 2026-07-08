@@ -65,22 +65,25 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
-func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, uid uuid.UUID) (*model.QuotedMessage, error) {
-	parseResult := messageParser.Parse(mm.Text)
+func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, uid uuid.UUID) (*model.QuotedMessage, error) {
 	attachmentsResult := []*model.FileMeta{}
-	for _, fid := range parseResult.Attachments {
-		auth, err := m.R.IsFileAccessible(ctx, fid, uid)
-		if err != nil {
-			return nil, err
-		}
-		if auth {
-			attachment, err := m.R.GetFileMeta(ctx, fid)
+	if includeAttachments {
+		parseResult := messageParser.Parse(mm.Text)
+		attachmentsResult = []*model.FileMeta{}
+		for _, fid := range parseResult.Attachments {
+			auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 			if err != nil {
 				return nil, err
 			}
-			attachmentsResult = append(attachmentsResult, attachment)
-		} else {
-			return nil, err
+			if auth {
+				attachment, err := m.R.GetFileMeta(ctx, fid)
+				if err != nil {
+					return nil, err
+				}
+				attachmentsResult = append(attachmentsResult, attachment)
+			} else {
+				return nil, err
+			}
 		}
 	}
 	return &model.QuotedMessage{
@@ -121,7 +124,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 			}
 			for _, quote := range quotes {
 				//auth, err := channel.Manager.IsChannelAccessibleToUser(quote.Channel.ChannelManager, ctx, uid, quote.ChannelID)
-				qm, err := m.buildQuotedMessage(ctx, quote, uid)
+				qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
 				if err != nil {
 					return nil, err
 				}
