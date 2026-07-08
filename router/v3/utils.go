@@ -131,14 +131,14 @@ func (q *MessagesQuery) Validate() error {
 
 func (q *MessagesQuery) convert() message.TimelineQuery {
 	return message.TimelineQuery{
-		Since:     q.Since,
-		Until:     q.Until,
-		Inclusive: q.Inclusive,
-		Limit:     q.Limit,
-		Offset:    q.Offset,
-		Asc:       strings.ToLower(q.Order) == "asc",
+		Since:              q.Since,
+		Until:              q.Until,
+		Inclusive:          q.Inclusive,
+		Limit:              q.Limit,
+		Offset:             q.Offset,
+		Asc:                strings.ToLower(q.Order) == "asc",
 		IncludeAttachments: q.IncludeAttachments,
-		IncludeQuotes: q.IncludeQuotes,
+		IncludeQuotes:      q.IncludeQuotes,
 	}
 }
 

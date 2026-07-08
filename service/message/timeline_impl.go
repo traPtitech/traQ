@@ -19,6 +19,34 @@ type timeline struct {
 	man         Manager
 }
 
+// FileInfoOldThumbnail deprecated
+type FileInfoOldThumbnail struct {
+	Mime   string `json:"mime"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
+}
+
+type FileInfoThumbnail struct {
+	Type   string `json:"type"`
+	Mime   string `json:"mime"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
+}
+
+type FileInfo struct {
+	ID              uuid.UUID              `json:"id"`
+	Name            string                 `json:"name"`
+	Mime            string                 `json:"mime"`
+	Size            int64                  `json:"size"`
+	MD5             string                 `json:"md5"`
+	IsAnimatedImage bool                   `json:"isAnimatedImage"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	Thumbnail       *FileInfoOldThumbnail  `json:"thumbnail"` // deprecated
+	ChannelID       optional.Of[uuid.UUID] `json:"channelId"`
+	UploaderID      optional.Of[uuid.UUID] `json:"uploaderId"`
+	Thumbnails      []FileInfoThumbnail    `json:"thumbnails"`
+}
+
 func (t *timeline) Query() TimelineQuery {
 	return t.query
 }
@@ -103,7 +131,7 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		Pinned      bool                   `json:"pinned"`
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
-		Attachments []*model.FileMeta      `json:"attachments"`
+		Attachments []*FileInfo            `json:"attachments"`
 		Quotes      []*quotedMessage       `json:"quotes"`
 	}
 	var v interface{}
@@ -111,6 +139,31 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		quotes := make([]*quotedMessage, len(m.Model.Quotes))
 		for i, q := range m.Model.Quotes {
 			quotes[i] = &quotedMessage{Model: q}
+		}
+		tmp := m.Model.Attachments
+		fairuinfo := make([]*FileInfo, len(tmp))
+		for i, tempu := range tmp {
+			samuneiru := make([]FileInfoThumbnail, len(tempu.Thumbnails))
+			for j, tn := range tempu.Thumbnails {
+				samuneiru[j] = FileInfoThumbnail{
+					Type:   tn.Type.String(),
+					Mime:   tn.Mime,
+					Width:  tn.Width,
+					Height: tn.Height,
+				}
+			}
+			fairuinfo[i] = &FileInfo{
+				ID:              tempu.ID,
+				Name:            tempu.Name,
+				Mime:            tempu.Mime,
+				Size:            tempu.Size,
+				MD5:             tempu.Hash,
+				IsAnimatedImage: tempu.IsAnimatedImage,
+				CreatedAt:       tempu.CreatedAt,
+				ChannelID:       tempu.ChannelID,
+				UploaderID:      tempu.CreatorID,
+				Thumbnails:      samuneiru,
+			}
 		}
 		v = &objectWithPreload{
 			object: object{
@@ -123,7 +176,7 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 			},
 			Pinned:      m.Model.Pin != nil,
 			Stamps:      m.Model.Stamps,
-			Attachments: m.Model.Attachments,
+			Attachments: fairuinfo,
 			Quotes:      quotes,
 		}
 	} else {
