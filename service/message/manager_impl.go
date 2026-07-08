@@ -102,7 +102,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				if err != nil {
 					return nil, err
 				} else {
-					if auth {	
+					if auth {
 						attachment, err := m.R.GetFileMeta(ctx, fid)
 						if err != nil {
 							return nil, err
