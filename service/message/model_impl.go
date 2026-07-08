@@ -1,7 +1,6 @@
 package message
 
 import (
-	"sort"
 	"sync"
 	"time"
 
@@ -22,14 +21,14 @@ type message struct {
 	sync.RWMutex
 }
 
-type detailedMessage struct {
+/*type detailedMessage struct {
 	Model *model.DetailedMessage
 
 	stampMap      map[uuid.UUID]map[uuid.UUID]model.MessageStamp
 	stampMapDirty bool
 
 	sync.RWMutex
-}
+}*/
 
 type quotedMessage struct {
 	Model *model.QuotedMessage
@@ -46,11 +45,11 @@ func (m *message) GetID() uuid.UUID {
 	return m.Model.ID
 }
 
-func (m *detailedMessage) GetID() uuid.UUID {
+/*func (m *detailedMessage) GetID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.ID
-}
+}*/
 
 func (m *quotedMessage) GetID() uuid.UUID {
 	m.RLock()
@@ -64,11 +63,11 @@ func (m *message) GetUserID() uuid.UUID {
 	return m.Model.UserID
 }
 
-func (m *detailedMessage) GetUserID() uuid.UUID {
+/*func (m *detailedMessage) GetUserID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.UserID
-}
+}*/
 
 func (m *quotedMessage) GetUserID() uuid.UUID {
 	m.RLock()
@@ -82,11 +81,11 @@ func (m *message) GetChannelID() uuid.UUID {
 	return m.Model.ChannelID
 }
 
-func (m *detailedMessage) GetChannelID() uuid.UUID {
+/*func (m *detailedMessage) GetChannelID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.ChannelID
-}
+}*/
 
 func (m *quotedMessage) GetChannelID() uuid.UUID {
 	m.RLock()
@@ -100,11 +99,11 @@ func (m *message) GetText() string {
 	return m.Model.Text
 }
 
-func (m *detailedMessage) GetText() string {
+/*func (m *detailedMessage) GetText() string {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.Text
-}
+}*/
 
 func (m *message) GetCreatedAt() time.Time {
 	m.RLock()
@@ -112,11 +111,11 @@ func (m *message) GetCreatedAt() time.Time {
 	return m.Model.CreatedAt
 }
 
-func (m *detailedMessage) GetCreatedAt() time.Time {
+/*func (m *detailedMessage) GetCreatedAt() time.Time {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.CreatedAt
-}
+}*/
 
 func (m *quotedMessage) GetCreatedAt() time.Time {
 	m.RLock()
@@ -130,11 +129,11 @@ func (m *message) GetUpdatedAt() time.Time {
 	return m.Model.UpdatedAt
 }
 
-func (m *detailedMessage) GetUpdatedAt() time.Time {
+/*func (m *detailedMessage) GetUpdatedAt() time.Time {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.UpdatedAt
-}
+}*/
 
 func (m *quotedMessage) GetUpdatedAt() time.Time {
 	m.RLock()
@@ -161,7 +160,7 @@ func (m *message) GetStamps() []model.MessageStamp {
 	return result
 }
 
-func (m *detailedMessage) GetStamps() []model.MessageStamp {
+/*func (m *detailedMessage) GetStamps() []model.MessageStamp {
 	m.Lock()
 	defer m.Unlock()
 	if !m.stampMapDirty {
@@ -178,7 +177,7 @@ func (m *detailedMessage) GetStamps() []model.MessageStamp {
 	m.Model.Stamps = result
 	m.stampMapDirty = false
 	return result
-}
+}*/
 
 func (m *quotedMessage) GetStamps() []model.MessageStamp {
 	m.Lock()
@@ -199,11 +198,11 @@ func (m *quotedMessage) GetStamps() []model.MessageStamp {
 	return result
 }
 
-func (m *detailedMessage) GetAttachments() []*model.FileMeta {
+/*func (m *detailedMessage) GetAttachments() []*model.FileMeta {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.Attachments
-}
+}*/
 
 func (m *quotedMessage) GetAttachments() []*model.FileMeta {
 	m.RLock()
@@ -211,7 +210,7 @@ func (m *quotedMessage) GetAttachments() []*model.FileMeta {
 	return m.Model.Attachments
 }
 
-func (m *detailedMessage) GetQuotes() []*model.QuotedMessage {
+/*func (m *detailedMessage) GetQuotes() []*model.QuotedMessage {
 	m.RLock()
 	defer m.RUnlock()
 	mq := m.Model.Quotes
@@ -219,7 +218,7 @@ func (m *detailedMessage) GetQuotes() []*model.QuotedMessage {
 		return (*mq[i]).CreatedAt.Before((*mq[j]).CreatedAt)
 	})
 	return m.Model.Quotes
-}
+}*/
 
 func (m *message) initStampMap() {
 	m.stampMap = map[uuid.UUID]map[uuid.UUID]model.MessageStamp{}
@@ -269,11 +268,11 @@ func (m *message) GetPin() *model.Pin {
 	return m.Model.Pin
 }
 
-func (m *detailedMessage) GetPin() *model.Pin {
+/*func (m *detailedMessage) GetPin() *model.Pin {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Model.Pin
-}
+}*/
 
 func (m *quotedMessage) GetPin() *model.Pin {
 	m.RLock()
@@ -309,7 +308,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 	return jsonIter.ConfigFastest.Marshal(v)
 }
 
-func (m *detailedMessage) MarshalJSON() ([]byte, error) {
+/*func (m *detailedMessage) MarshalJSON() ([]byte, error) {
 	type obj struct {
 		ID          uuid.UUID              `json:"id"`
 		UserID      uuid.UUID              `json:"userId"`
@@ -343,7 +342,7 @@ func (m *detailedMessage) MarshalJSON() ([]byte, error) {
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)
-}
+}*/
 
 func (m *quotedMessage) MarshalJSON() ([]byte, error) {
 	type obj struct {

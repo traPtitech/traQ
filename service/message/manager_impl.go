@@ -72,16 +72,15 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, uid
 		auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 		if err != nil {
 			return nil, err
-		} else {
-			if auth {
-				attachment, err := m.R.GetFileMeta(ctx, fid)
-				if err != nil {
-					return nil, err
-				}
-				attachmentsResult = append(attachmentsResult, attachment)
-			} else {
+		}
+		if auth {
+			attachment, err := m.R.GetFileMeta(ctx, fid)
+			if err != nil {
 				return nil, err
 			}
+			attachmentsResult = append(attachmentsResult, attachment)
+		} else {
+			return nil, err
 		}
 	}
 	return &model.QuotedMessage{
@@ -101,16 +100,15 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 				if err != nil {
 					return nil, err
-				} else {
-					if auth {
-						attachment, err := m.R.GetFileMeta(ctx, fid)
-						if err != nil {
-							return nil, err
-						}
-						attachmentsResult = append(attachmentsResult, attachment)
-					} else {
+				}
+				if auth {
+					attachment, err := m.R.GetFileMeta(ctx, fid)
+					if err != nil {
 						return nil, err
 					}
+					attachmentsResult = append(attachmentsResult, attachment)
+				} else {
+					return nil, err
 				}
 			}
 		}
@@ -126,9 +124,8 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				qm, err := m.buildQuotedMessage(ctx, quote, uid)
 				if err != nil {
 					return nil, err
-				} else {
-					citationResult = append(citationResult, qm)
 				}
+				citationResult = append(citationResult, qm)
 			}
 		}
 	}
