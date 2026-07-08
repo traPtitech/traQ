@@ -65,23 +65,32 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
-func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *model.QuotedMessage {
+func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, uid uuid.UUID) (*model.QuotedMessage, error) {
 	parseResult := messageParser.Parse(mm.Text)
 	attachmentsResult := []*model.FileMeta{}
 	for _, fid := range parseResult.Attachments {
-		attachment, err := m.R.GetFileMeta(ctx, fid)
+		auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 		if err != nil {
-			break
+			return nil, err
+		} else {
+			if auth {
+				attachment, err := m.R.GetFileMeta(ctx, fid)
+				if err != nil {
+					return nil, err
+				}
+				attachmentsResult = append(attachmentsResult, attachment)
+			} else {
+				return nil, err
+			}
 		}
-		attachmentsResult = append(attachmentsResult, attachment)
 	}
 	return &model.QuotedMessage{
 		Message:     *mm,
 		Attachments: attachmentsResult,
-	}
+	}, nil
 }
 
-func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool) (*model.DetailedMessage, error) {
+func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool, uid uuid.UUID) (*model.DetailedMessage, error) {
 	var attachmentsResult []*model.FileMeta
 	var citationResult []*model.QuotedMessage
 	if includeAttachments || includeQuotes {
@@ -89,11 +98,20 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 		if includeAttachments {
 			attachmentsResult = []*model.FileMeta{}
 			for _, fid := range parseResult.Attachments {
-				attachment, err := m.R.GetFileMeta(ctx, fid)
+				auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 				if err != nil {
 					return nil, err
+				} else {
+					if auth {	
+						attachment, err := m.R.GetFileMeta(ctx, fid)
+						if err != nil {
+							return nil, err
+						}
+						attachmentsResult = append(attachmentsResult, attachment)
+					} else {
+						return nil, err
+					}
 				}
-				attachmentsResult = append(attachmentsResult, attachment)
 			}
 		}
 		if includeQuotes {
@@ -104,7 +122,12 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				return nil, err
 			}
 			for _, quote := range quotes {
-				citationResult = append(citationResult, m.buildQuotedMessage(ctx, quote))
+				qm, err := m.buildQuotedMessage(ctx, quote, uid)
+				if err != nil {
+					return nil, err
+				} else {
+					citationResult = append(citationResult, qm)
+				}
 			}
 		}
 	}
@@ -120,19 +143,9 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 	if err != nil {
 		return nil, err
 	}
-	var eraa error
-	eraa = nil
 	ret := utils.Map(messages, func(mm *model.Message) Message {
-		mod, err := m.buildDetailedMessage(ctx, mm, false, true)
-		if err != nil {
-			eraa = err
-			return nil
-		}
-		return &detailedMessage{Model: mod}
+		return &message{Model: mm}
 	})
-	if eraa != nil {
-		return nil, eraa
-	}
 	return ret, nil
 }
 
@@ -158,7 +171,7 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 	}
 	records := make([]*model.DetailedMessage, len(messages))
 	for i, mm := range messages {
-		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes)
+		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes, query.User)
 		if err != nil {
 			return nil, err
 		}
