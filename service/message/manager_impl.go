@@ -127,15 +127,13 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 		if err != nil {
 			eraa = err
 			return nil
-		} else {
-			return &detailedMessage{Model: mod}
 		}
+		return &detailedMessage{Model: mod}
 	})
 	if eraa != nil {
 		return nil, eraa
-	} else {
-		return ret, nil
 	}
+	return ret, nil
 }
 
 func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error) {
@@ -163,9 +161,8 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes)
 		if err != nil {
 			return nil, err
-		} else {
-			records[i] = mod
 		}
+		records[i] = mod
 	}
 	return &timeline{
 		query:       query,
