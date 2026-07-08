@@ -4784,38 +4784,10 @@ components:
       title: DetailedMessage
       type: object
       description: メッセージ 詳細
+      allOf:
+        - $ref: "#/components/schemas/Message"
+        - type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          description: メッセージUUID
-        userId:
-          type: string
-          description: 投稿者UUID
-          format: uuid
-        channelId:
-          type: string
-          description: チャンネルUUID
-          format: uuid
-        content:
-          type: string
-          description: メッセージ本文
-        createdAt:
-          type: string
-          format: date-time
-          description: 投稿日時
-        updatedAt:
-          type: string
-          format: date-time
-          description: 編集日時
-        pinned:
-          description: ピン留めされているかどうか
-          type: boolean
-        stamps:
-          type: array
-          description: 押されているスタンプの配列
-          items:
-            $ref: "#/components/schemas/MessageStamp"
         attachments:
           type: array
           description: 添付ファイルの配列
@@ -4826,68 +4798,24 @@ components:
           description: 引用メッセージの配列
           items:
             $ref: "#/components/schemas/QuotedMessage"
-        threadId:
-          type: string
-          format: uuid
-          description: スレッドUUID
-          nullable: true
+      required:
+        - attachments
+        - quotes
     QuotedMessage:
       title: QuotedMessage
       type: object
       description: メッセージ 引用
+      allOf:
+        - $ref: "#/components/schemas/Message"
+        - type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          description: メッセージUUID
-        userId:
-          type: string
-          description: 投稿者UUID
-          format: uuid
-        channelId:
-          type: string
-          description: チャンネルUUID
-          format: uuid
-        content:
-          type: string
-          description: メッセージ本文
-        createdAt:
-          type: string
-          format: date-time
-          description: 投稿日時
-        updatedAt:
-          type: string
-          format: date-time
-          description: 編集日時
-        pinned:
-          description: ピン留めされているかどうか
-          type: boolean
-        stamps:
-          type: array
-          description: 押されているスタンプの配列
-          items:
-            $ref: "#/components/schemas/MessageStamp"
         attachments:
           type: array
           description: 添付ファイルの配列
           items:
             $ref: "#/components/schemas/FileInfo"
-        threadId:
-          type: string
-          format: uuid
-          description: スレッドUUID
-          nullable: true
       required:
-        - id
-        - userId
-        - channelId
-        - content
-        - createdAt
-        - updatedAt
-        - pinned
-        - stamps
         - attachments
-        - threadId
     MessageStamp:
       title: MessageStamp
       type: object
