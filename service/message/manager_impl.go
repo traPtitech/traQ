@@ -81,7 +81,7 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message) *mo
 	}
 }
 
-func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool) *model.DetailedMessage {
+func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool) (*model.DetailedMessage, error) {
 	var attachmentsResult []*model.FileMeta
 	var citationResult []*model.QuotedMessage
 	if includeAttachments || includeQuotes {
@@ -91,7 +91,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 			for _, fid := range parseResult.Attachments {
 				attachment, err := m.R.GetFileMeta(ctx, fid)
 				if err != nil {
-					break
+					return nil, err
 				}
 				attachmentsResult = append(attachmentsResult, attachment)
 			}
@@ -101,7 +101,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 			var err error
 			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
 			if err != nil {
-				quotes = nil
+				return nil, err
 			}
 			for _, quote := range quotes {
 				citationResult = append(citationResult, m.buildQuotedMessage(ctx, quote))
@@ -112,7 +112,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 		Message:     *mm,
 		Attachments: attachmentsResult,
 		Quotes:      citationResult,
-	}
+	}, nil
 }
 
 func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error) {
@@ -120,10 +120,22 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 	if err != nil {
 		return nil, err
 	}
+	var eraa error
+	eraa = nil
 	ret := utils.Map(messages, func(mm *model.Message) Message {
-		return &detailedMessage{Model: m.buildDetailedMessage(ctx, mm, false, true)}
+		mod, err := m.buildDetailedMessage(ctx, mm, false, true)
+		if err != nil {
+			eraa = err
+			return nil
+		} else {
+			return &detailedMessage{Model: mod}
+		}
 	})
-	return ret, nil
+	if eraa != nil {
+		return nil, eraa
+	} else {
+		return ret, nil
+	}
 }
 
 func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error) {
@@ -148,7 +160,12 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 	}
 	records := make([]*model.DetailedMessage, len(messages))
 	for i, mm := range messages {
-		records[i] = m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes)
+		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes)
+		if err != nil {
+			return nil, err
+		} else {
+			records[i] = mod
+		}
 	}
 	return &timeline{
 		query:       query,

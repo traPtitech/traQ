@@ -39,7 +39,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 			Text: fileEmbed(fileID),
 		}
 
-		result := m.buildDetailedMessage(context.TODO(), mm, false, false)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, false)
 		assert.Equal(t, mm.ID, result.ID)
 		assert.Nil(t, result.Attachments)
 		assert.Nil(t, result.Quotes)
@@ -56,7 +56,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
-		result := m.buildDetailedMessage(context.TODO(), mm, true, false)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false)
 		if assert.Len(t, result.Attachments, 1) {
 			assert.Equal(t, fileID, result.Attachments[0].ID)
 		}
@@ -78,7 +78,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID1).Return(nil, repository.ErrNotFound).Times(1)
 
-		result := m.buildDetailedMessage(context.TODO(), mm, true, false)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false)
 		assert.Empty(t, result.Attachments)
 	})
 
@@ -94,7 +94,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		quoted := &model.Message{ID: quoteID, Text: "Quoted Text"}
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
 
-		result := m.buildDetailedMessage(context.TODO(), mm, false, true)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true)
 		assert.Nil(t, result.Attachments)
 		if assert.Len(t, result.Quotes, 1) {
 			assert.Equal(t, quoteID, result.Quotes[0].ID)
@@ -116,7 +116,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), nestedFileID).Return(&model.FileMeta{ID: nestedFileID}, nil).Times(1)
 
-		result := m.buildDetailedMessage(context.TODO(), mm, false, true)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true)
 		if assert.Len(t, result.Quotes, 1) {
 			if assert.Len(t, result.Quotes[0].Attachments, 1) {
 				assert.Equal(t, nestedFileID, result.Quotes[0].Attachments[0].ID)
@@ -135,7 +135,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return(nil, false, errors.New("db error")).Times(1)
 
-		result := m.buildDetailedMessage(context.TODO(), mm, false, true)
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true)
 		assert.Empty(t, result.Quotes)
 	})
 }
