@@ -6,7 +6,7 @@ toolchain go1.26.5
 
 require (
 	cloud.google.com/go/profiler v0.6.0
-	firebase.google.com/go/v4 v4.20.0
+	firebase.google.com/go/v4 v4.21.0
 	github.com/MicahParks/jwkset v0.11.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.42.1
