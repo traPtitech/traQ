@@ -122,7 +122,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				return nil, err
 			}
 			for _, quote := range quotes {
-				auth, err := channel.Manager.IsChannelAccessibleToUser(quote.Channel.ChannelManager, ctx, uid, quote.ChannelID)
+				//auth, err := channel.Manager.IsChannelAccessibleToUser(quote.Channel.ChannelManager, ctx, uid, quote.ChannelID)
 				qm, err := m.buildQuotedMessage(ctx, quote, uid)
 				if err != nil {
 					return nil, err
