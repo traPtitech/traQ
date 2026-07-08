@@ -50,10 +50,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Renovate
-        uses: renovatebot/github-action@dd5302ec17783b2fc721b19ae7209b57b1587765 # v46.1.17
+        uses: renovatebot/github-action@b50d2ba2bd928235abdcc14d06dfafc217f1c565 # v46.1.18
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
           # renovate:image-tag-digest imageName=ghcr.io/renovatebot/renovate
-          renovate-version: "43.251.3@sha256:e5c59392e4fc8279e2034773f356c06e0a5ffc0c5ad97ab9c2edc1d9944fb9af"
+          renovate-version: "43.255.2@sha256:305873398333424693d0a59c08ec3629124d7bd2aab5268341b2993bb0ff4477"
           configurationFile: "${{ env.RENOVATE_CONFIG_FILE }}"
           token: "${{ steps.generate-token.outputs.token }}"
