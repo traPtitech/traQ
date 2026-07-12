@@ -163,6 +163,12 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 			"visibility": args.Visibility.V,
 		}
 	}
+	if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.V {
+		eventRecords[model.ChannelEventForcedNotificationChanged] = model.ChannelEventDetail{
+			"userId": args.UpdaterID,
+			"force":  args.ForcedNotification.V,
+		}
+	}
 	if args.Name.Valid || args.Parent.Valid {
 		// チャンネル名重複を確認
 		{

@@ -179,6 +179,8 @@ func (h *Handlers) EditThread(c echo.Context) error {
 			return herror.BadRequest("invalid channel name")
 		case channel.ErrChannelNameConflicts:
 			return herror.Conflict("channel name conflicts")
+		case channel.ErrInvalidChannelType:
+			return herror.Conflict("invalid channel type")
 		default:
 			return herror.InternalServerError(err)
 		}
