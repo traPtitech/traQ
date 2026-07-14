@@ -472,3 +472,14 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
+
+func (h *Handlers) GetChannelThreads(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	channelThreads, err := h.ChannelManager.GetChannelThreads(ctx)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, channelThreads)
+}

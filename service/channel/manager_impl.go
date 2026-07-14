@@ -461,6 +461,26 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	return ch, nil
 }
 
+func (m *managerImpl) GetChannelThreads(ctx context.Context, archived bool, limit int, offset int, sort string, channelID uuid.UUID) ([]*model.Channel, error) {
+	threads := []*model.Channel{
+		{
+			ID:         uuid.Must(uuid.NewV7()),
+			Name:       "test-thread",
+			ParentID:   uuid.Must(uuid.NewV7()),
+			Topic:      "test thread topic",
+			IsForced:   false,
+			Type:       model.ChannelTypeThread,
+			IsVisible:  true,
+			CreatorID:  uuid.Must(uuid.NewV7()),
+			UpdaterID:  uuid.Must(uuid.NewV7()),
+			CreatedAt:  time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
+			UpdatedAt:  time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
+			ChildrenID: []uuid.UUID{},
+		},
+	}
+	return threads, nil
+}
+
 func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {
 	if m.T.IsChannelPresent(channelID) {
 		return true, nil // 公開チャンネルは全員アクセス可能
