@@ -461,7 +461,7 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	return ch, nil
 }
 
-func (m *managerImpl) GetChannelThreads(ctx context.Context, archived bool, limit int, offset int, sort string, channelID uuid.UUID) ([]*model.Channel, error) {
+func (m *managerImpl) GetThreadChannel(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
 	threads := []*model.Channel{
 		{
 			ID:         uuid.Must(uuid.NewV7()),

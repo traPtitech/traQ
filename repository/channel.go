@@ -39,6 +39,15 @@ type ChannelEventsQuery struct {
 	Asc       bool
 }
 
+// GetThreadChannelQuery GetThreadChannel用クエリ
+type GetThreadChannelQuery struct {
+	Archived  bool
+	Limit     int
+	Offset    int
+	Sort      bool
+	ChannelID uuid.UUID
+}
+
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
 	UserID    optional.Of[uuid.UUID]

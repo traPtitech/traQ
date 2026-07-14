@@ -2,6 +2,7 @@ package v3
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -473,10 +474,55 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
 }
 
-func (h *Handlers) GetChannelThreads(c echo.Context) error {
-	ctx := c.Request().Context()
+type getThreadChannelQuery struct {
+	Archived  bool      `query:"archived"`
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Sort      string    `query:"sort"`
+	ChannelID uuid.UUID `query:"channelID"`
+}
 
-	channelThreads, err := h.ChannelManager.GetChannelThreads(ctx)
+func (q *getThreadChannelQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+func (q *getThreadChannelQuery) convert(cid uuid.UUID) (repository.GetThreadChannelQuery, error) {
+	var order bool
+	if strings.ToLower(q.Sort) == "createdat" {
+		order = true
+	} else if strings.ToLower(q.Sort) == "-createdat" {
+		order = false
+	} else {
+		return repository.GetThreadChannelQuery{}, fmt.Errorf("invalid sort parameter")
+	}
+	return repository.GetThreadChannelQuery{
+		Archived:  q.Archived,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Sort:      order,
+		ChannelID: cid,
+	}, nil
+}
+
+func (h *Handlers) GetThreadChannels(c echo.Context) error {
+	ctx := c.Request().Context()
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	var req getThreadChannelQuery
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+	reqConverted, err := req.convert(channelID)
+	if err != nil {
+		return herror.BadRequest(err.Error())
+	}
+
+	channelThreads, err := h.ChannelManager.GetThreadChannel(ctx, reqConverted)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

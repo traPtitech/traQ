@@ -96,19 +96,19 @@ func (mr *MockManagerMockRecorder) CreateThreadChannel(ctx, name, parent, creato
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateThreadChannel", reflect.TypeOf((*MockManager)(nil).CreateThreadChannel), ctx, name, parent, creatorID)
 }
 
-// GetChannelTreads mocks base method.
-func (m *MockManager) GetChannelThreads(ctx context.Context, archived bool, limit int, offset int, sort string, channelID uuid.UUID) ([]*model.Channel, error) {
+// GetThreadChannel mocks base method.
+func (m *MockManager) GetThreadChannel(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelThreads", ctx, archived, limit, offset, sort, channelID)
+	ret := m.ctrl.Call(m, "GetThreadChannel", ctx, query)
 	ret0, _ := ret[0].([]*model.Channel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetChannelTreads indicates an expected call of GetChannelTreads.
-func (mr *MockManagerMockRecorder) GetChannelThreads(ctx, archived, limit, offset, sort, channelID interface{}) *gomock.Call {
+// GetThreadChannel indicates an expected call of GetThreadChannel.
+func (mr *MockManagerMockRecorder) GetThreadChannel(ctx, archived, limit, offset, sort, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelThreads", reflect.TypeOf((*MockManager)(nil).GetChannelThreads), ctx, archived, limit, offset, sort, channelID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannel", reflect.TypeOf((*MockManager)(nil).GetThreadChannel), ctx, archived, limit, offset, sort, channelID)
 }
 
 // GetChannel mocks base method.
