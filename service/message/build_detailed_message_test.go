@@ -52,8 +52,10 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		m := mgr.(*manager)
 
 		fileID := uuid.NewV3(uuid.Nil, "f1")
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: fileEmbed(fileID)}
 
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false, uuid.NewV3(uuid.Nil, "u1"))
@@ -71,11 +73,13 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		fileID1 := uuid.NewV3(uuid.Nil, "f1")
 		fileID2 := uuid.NewV3(uuid.Nil, "f2")
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		mm := &model.Message{
 			ID:   uuid.NewV3(uuid.Nil, "m1"),
 			Text: fileEmbed(fileID1) + fileEmbed(fileID2),
 		}
 
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID1, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID1).Return(nil, repository.ErrNotFound).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false, uuid.NewV3(uuid.Nil, "u1"))
@@ -110,10 +114,12 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		quoteID := uuid.NewV3(uuid.Nil, "q1")
 		nestedFileID := uuid.NewV3(uuid.Nil, "f1")
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: citationEmbed(quoteID)}
 		quoted := &model.Message{ID: quoteID, Text: fileEmbed(nestedFileID)}
 
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), nestedFileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), nestedFileID).Return(&model.FileMeta{ID: nestedFileID}, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
@@ -150,6 +156,7 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		fileID := uuid.NewV3(uuid.Nil, "f1")
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		msg1 := &model.Message{
 			ID:        uuid.NewV3(uuid.Nil, "m1"),
 			ChannelID: cid,
@@ -163,6 +170,7 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 			return []*model.Message{msg1}, true, nil
 		}).Times(1)
 
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
 		tl, err := mgr.GetTimeline(context.TODO(), TimelineQuery{
