@@ -123,12 +123,15 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				return nil, err
 			}
 			for _, quote := range quotes {
-				//auth, err := channel.Manager.IsChannelAccessibleToUser(quote.Channel.ChannelManager, ctx, uid, quote.ChannelID)
-				qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
-				if err != nil {
-					return nil, err
+				if quote.Channel.IsPublic {
+					qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
+					if err != nil {
+						return nil, err
+					}
+					citationResult = append(citationResult, qm)
+				} else {
+					return nil, ErrNotFound
 				}
-				citationResult = append(citationResult, qm)
 			}
 		}
 	}
