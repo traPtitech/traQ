@@ -83,6 +83,7 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 			Expires:  time.Now().Add(cookieMaxAge * time.Second),
 			MaxAge:   cookieMaxAge,
 			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
 		})
 		return c.Redirect(http.StatusFound, oac.AuthCodeURL(state))
 	}
