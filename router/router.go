@@ -118,6 +118,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 		MaxAge:        3600,
 	}))
 	e.Use(echoprometheus.NewMiddleware("echo"))
+	e.Use(middlewares.ContentSecurityPolicy())
 
 	return e
 }
