@@ -5,8 +5,14 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 )
+
+type RegisterDeviceArgs struct {
+	Token optional.Of[string]
+	FID   optional.Of[string]
+}
 
 // DeviceRepository FCMデバイスリポジトリ
 type DeviceRepository interface {
@@ -17,7 +23,7 @@ type DeviceRepository interface {
 	// tokenが空文字列の場合、ArgumentErrorを返します。
 	// 登録しようとしたトークンが既に他のユーザーと関連づけられていた場合はArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	RegisterDevice(ctx context.Context, userID uuid.UUID, token string) error
+	RegisterDevice(ctx context.Context, userID uuid.UUID, args RegisterDeviceArgs) error
 	// GetDeviceTokens 指定したユーザーの全デバイストークンを取得します
 	//
 	// 成功した場合、デバイストークンの配列とnilを返します。
