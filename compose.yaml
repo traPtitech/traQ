@@ -82,7 +82,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:5.5.0@sha256:176d66b8ced01b283809a809c5e6cabfbaa112313c0bb8047c5f6c4196b53912
+    image: adminer:5.5.0@sha256:494d4a9461105644222c938679fe58d5e3fd13fb228c76a426e81c16d4ffbaef
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
