@@ -4,7 +4,7 @@ TEST_DB_PORT := 3100
 # renovate:image-full-digest
 TBLS_IMAGE := "ghcr.io/k1low/tbls:v1.95.0@sha256:5d194e7baa9d14e740ee41f29985b8cb7601926fca019a4bb0c34b8c937bd8cb"
 # renovate:image-full-digest
-SPECTRAL_IMAGE := "index.docker.io/stoplight/spectral:6.16.1@sha256:6a09f1093febf704046322cc543d57748ae475d6160c10237f04a794e0e18c37"
+SPECTRAL_IMAGE := "index.docker.io/stoplight/spectral:6.16.2@sha256:032d0da0de0dfae1b5136da4172c29d4654308b9199725fdaf0d9ead2305c0ce"
 
 .DEFAULT_GOAL := help
 
