@@ -477,8 +477,8 @@ github.com/labstack/echo-opentelemetry v0.0.3 h1:r4HAlV3PniSlUmsqpXQ+YwFxo9RNuEO
 github.com/labstack/echo-opentelemetry v0.0.3/go.mod h1:gGPMgJmQkDreqWyEzfPccPhaT8B3XLag2AByizhNoM4=
 github.com/labstack/echo-prometheus v0.0.1 h1:wofgid4PiNJ3kvxAJsuMAaCD/U6n/fvL8WH8BKq7IY8=
 github.com/labstack/echo-prometheus v0.0.1/go.mod h1:UAeQwHjvCT2MJGyP3mXyp8iVH14oC+Dyl2H6+pOIapQ=
-github.com/labstack/echo/v5 v5.3.0 h1:KT74Mprk053PQEHwSZdeCDIz1BigTZOZhavMD0c9Fjs=
-github.com/labstack/echo/v5 v5.3.0/go.mod h1:Q3j2+clBRgJr0O3DDONQeXNsM7RHgSwUhcuo47unqm8=
+github.com/labstack/echo/v5 v5.3.1 h1:75maCxkQVGualckLc/5s/ihgpH1a1Dc6AuGWNVNs6bw=
+github.com/labstack/echo/v5 v5.3.1/go.mod h1:4iEGNQiPPZnkfYpNR/L6fINd3NLiGWUD5+eBotFALas=
 github.com/leandro-lugaresi/hub v1.1.2 h1:rjXLZkgU1E0hynHHa18Hl/vEyAKHw/QuWu0bL0JTJvA=
 github.com/leandro-lugaresi/hub v1.1.2/go.mod h1:XEFWanhHv6Rt3XlteHMxuNDYi8dJcpJjodpqkU+BtIo=
 github.com/lestrrat-go/blackmagic v1.0.4 h1:IwQibdnf8l2KoO+qC3uT4OaTWsW7tuRQXy9TRN9QanA=
