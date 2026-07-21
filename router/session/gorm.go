@@ -269,6 +269,7 @@ func (ss *sessionStore) RenewSession(c *echo.Context, userID uuid.UUID) (Session
 	cookie.MaxAge = sessionMaxAge + sessionKeepAge
 	cookie.Path = "/"
 	cookie.HttpOnly = true
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 
 	return s, nil
