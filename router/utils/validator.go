@@ -70,8 +70,8 @@ var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value interf
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have ChannelTree"))
 	}
-	
-	ct:= cm.PublicChannelTree(ctx)
+
+	ct := cm.PublicChannelTree(ctx)
 
 	switch v := value.(type) {
 	case nil:
