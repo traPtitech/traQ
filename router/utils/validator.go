@@ -66,10 +66,12 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid channel id"
 
-	ct, ok := ctx.Value(cmctxKey).(channel.Tree)
+	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have ChannelTree"))
 	}
+	
+	ct:= cm.PublicChannelTree(ctx)
 
 	switch v := value.(type) {
 	case nil:
