@@ -62,6 +62,42 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	return nil
 })
 
+// IsNotThreadChannelID スレッドチャンネルのUUIDでない
+var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
+	const errMessage = "invalid channel id"
+
+	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
+	if !ok {
+		return vd.NewInternalError(errors.New("this context didn't have ChannelTree"))
+	}
+
+	ct := cm.PublicChannelTree(ctx)
+
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case uuid.UUID:
+		if ct.IsThreadChannel(v) {
+			return errors.New(errMessage)
+		}
+	case optional.Of[uuid.UUID]:
+		if v.Valid && ct.IsThreadChannel(v.V) {
+			return errors.New(errMessage)
+		}
+	case string:
+		if ct.IsThreadChannel(uuid.FromStringOrNil(v)) {
+			return errors.New(errMessage)
+		}
+	case []byte:
+		if ct.IsThreadChannel(uuid.FromBytesOrNil(v)) {
+			return errors.New(errMessage)
+		}
+	default:
+		return errors.New(errMessage)
+	}
+	return nil
+})
+
 // IsActiveHumanUserID アカウントが有効な一般ユーザーのUUIDである
 var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid user id"

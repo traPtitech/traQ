@@ -190,6 +190,20 @@ func (mr *MockTreeMockRecorder) IsForceChannel(id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsForceChannel", reflect.TypeOf((*MockTree)(nil).IsForceChannel), id)
 }
 
+// IsThreadChannel mocks base method.
+func (m *MockTree) IsThreadChannel(id uuid.UUID) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsThreadChannel", id)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsThreadChannel indicates an expected call of IsThreadChannel.
+func (mr *MockTreeMockRecorder) IsThreadChannel(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsThreadChannel", reflect.TypeOf((*MockTree)(nil).IsThreadChannel), id)
+}
+
 // MarshalJSON mocks base method.
 func (m *MockTree) MarshalJSON() ([]byte, error) {
 	m.ctrl.T.Helper()
