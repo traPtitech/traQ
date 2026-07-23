@@ -480,6 +480,7 @@ func (ct *treeImpl) IsArchivedChannel(id uuid.UUID) bool {
 	defer ct.RUnlock()
 	return ct.isArchivedChannel(id)
 }
+
 func (ct *treeImpl) IsThreadChannel(id uuid.UUID) bool {
 	ct.RLock()
 	defer ct.RUnlock()

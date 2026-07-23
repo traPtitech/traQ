@@ -32,7 +32,7 @@ func NewRequestValidateContext(c echo.Context) context.Context {
 var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid channel id"
 
-	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
+	cm, ok := ctx.(cmctxKey).(channel.Manager)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
@@ -41,7 +41,7 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !cm.IsPublicChannel(ctx, v) {
+		if !cm.IsChannel(ctx, v) {
 			return errors.New(errMessage)
 		}
 	case optional.Of[uuid.UUID]:
@@ -54,6 +54,40 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 		}
 	case []byte:
 		if !cm.IsPublicChannel(ctx, uuid.FromBytesOrNil(v)) {
+			return errors.New(errMessage)
+		}
+	default:
+		return errors.New(errMessage)
+	}
+	return nil
+})
+
+// IsNotThreadChannelID スレッドチャンネルのUUIDでない
+var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
+	const errMessage = "invalid channel id"
+
+	ct, ok := ctx.Value(cmctxKey).(channel.Tree)
+	if !ok {
+		return vd.NewInternalError(errors.New("this context didn't have ChannelTree"))
+	}
+
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case uuid.UUID:
+		if ct.IsThreadChannel(v) {
+			return errors.New(errMessage)
+		}
+	case optional.Of[uuid.UUID]:
+		if v.Valid && ct.IsThreadChannel(v.V) {
+			return errors.New(errMessage)
+		}
+	case string:
+		if ct.IsThreadChannel(uuid.FromStringOrNil(v)) {
+			return errors.New(errMessage)
+		}
+	case []byte:
+		if ct.IsThreadChannel(uuid.FromBytesOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	default:
