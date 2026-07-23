@@ -32,7 +32,7 @@ func NewRequestValidateContext(c echo.Context) context.Context {
 var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid channel id"
 
-	cm, ok := ctx.(cmctxKey).(channel.Manager)
+	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
 	if !ok {
 		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
@@ -41,7 +41,7 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !cm.IsChannel(ctx, v) {
+		if !cm.IsPublicChannel(ctx, v) {
 			return errors.New(errMessage)
 		}
 	case optional.Of[uuid.UUID]:
