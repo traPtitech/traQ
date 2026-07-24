@@ -31,6 +31,8 @@ type TimelineQuery struct {
 	Asc                      bool
 	ExcludeDMs               bool
 	DisablePreload           bool
+	IncludeAttachments       bool
+	IncludeQuotes            bool
 }
 
 type Manager interface {
