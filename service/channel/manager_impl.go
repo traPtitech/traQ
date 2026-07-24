@@ -138,6 +138,10 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 		return ErrChannelNotFound
 	}
 
+	if ch.Type != model.ChannelTypePublic && ch.Type != model.ChannelTypeDM {
+		return ErrInvalidChannelType
+	}
+
 	// トピックが同じだった場合、トピックの引数自体を無効化
 	if ch.Topic == args.Topic.V {
 		args.Topic = optional.New("", false)
@@ -263,12 +267,13 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 		return ErrInvalidChannelType
 	}
 
-	m.T.Lock()
-	defer m.T.Unlock()
 	_, err = m.GetChannel(ctx, ch.ParentID)
 	if err != nil {
 		return fmt.Errorf("failed to UpdateThread: %w", err)
 	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
 
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
 	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
@@ -286,10 +291,6 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 			}
 		}
 
-		// スレッド名検証
-		if !validator.ChannelRegex.MatchString(args.Name.V) {
-			return ErrInvalidChannelName
-		}
 		eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
 			"userId": args.UpdaterID,
 			"before": ch.Name,
