@@ -2,13 +2,13 @@ package validator
 
 import (
 	"errors"
+	"github.com/traPtitech/traQ/utils/iputil"
 	"net/url"
 	"regexp"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -41,7 +41,7 @@ var NotInternalURL = vd.By(func(value interface{}) error {
 		s = v.V
 	}
 	u, _ := url.Parse(s)
-	if utils.IsPrivateHost(u.Hostname()) {
+	if iputil.IsPrivateHost(u.Hostname()) {
 		return errors.New("must not be internal url")
 	}
 	return nil
