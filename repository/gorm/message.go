@@ -551,6 +551,42 @@ func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, s
 	return nil
 }
 
+// RemoveOtherStampFromMessage implements MessageRepository interface.
+func (repo *Repository) RemoveOtherStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
+	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
+		return repository.ErrNilID
+	}
+
+	var ms []model.MessageStamp
+	if err := repo.db.WithContext(ctx).Find(&ms, &model.MessageStamp{MessageID: messageID, StampID: stampID}).Error; err != nil {
+		return err
+	}
+
+	result := repo.db.WithContext(ctx).
+		Where("user_id <> ? AND message_id = ? AND stamp_id = ?", userID, messageID, stampID).
+		Delete(&model.MessageStamp{})
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected > 0 {
+		for _, stamp := range ms {
+			if stamp.UserID == userID {
+				continue
+			}
+			repo.hub.Publish(hub.Message{
+				Name: event.MessageUnstamped,
+				Fields: hub.Fields{
+					"message_id": stamp.MessageID,
+					"stamp_id":   stamp.StampID,
+					"user_id":    stamp.UserID,
+				},
+			})
+		}
+	}
+	return nil
+}
+
 func messagePreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Stamps").
