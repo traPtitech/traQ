@@ -95,7 +95,7 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: traQ
-      - uses: k1low/setup-tbls@f25e3d013a596865b2db90dac7ee19e9f15b5780 # v1.4.0
+      - uses: k1low/setup-tbls@5e8e69748c0bb15fdb5e51a0ecdb84f1ecd0e3a1 # v1.4.1
         with:
           version: v1.94.5
       - run: |
