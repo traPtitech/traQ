@@ -142,7 +142,7 @@ func genMissingThumbnails() *cobra.Command {
 	}
 	canGenerateWaveform := func(mimeType string) bool {
 		switch mimeType {
-		case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav":
+		case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/m4a":
 			return true
 		default:
 			return false
@@ -245,6 +245,11 @@ func genMissingThumbnails() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to generate thumbnail: %w", err)
 					}
+				case "audio/m4a":
+					r, err = ip.WaveformM4a(src, waveformWidth, waveformHeight)
+					if err != nil {
+						return fmt.Errorf("failed to generate thumbnail: %w", err)
+					}
 				default:
 					return nil
 				}
@@ -290,7 +295,7 @@ func genMissingThumbnails() *cobra.Command {
 					"AND f.mime IN ("+
 					// サムネイル生成が可能なmimeが変わったらここを変える
 					"'image/jpeg', 'image/png', 'image/gif', 'image/webp', "+
-					"'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav'"+
+					"'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/m4a'"+
 					") "+
 					"GROUP BY f.id, f.created_at "+
 					"HAVING COUNT(ft.file_id) = 0 "+
