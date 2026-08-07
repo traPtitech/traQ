@@ -12,17 +12,32 @@ import (
 )
 
 // RegisterDevice implements DeviceRepository interface.
-func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, token string) error {
+func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, args repository.RegisterDeviceArgs) error {
 	if userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if len(token) == 0 {
-		return repository.ArgError("Token", "token is empty")
+
+	token := args.FID.V
+	tokenType := model.DeviceTokenTypeFID
+	if !args.FID.Valid {
+		token = args.Token.V
+		tokenType = model.DeviceTokenTypeToken
+		if !args.Token.Valid {
+			return repository.ArgError("Token, FID", "token and fid are empty")
+		}
 	}
 
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var d model.Device
-		if err := tx.First(&d, &model.Device{Token: token}).Error; err == nil {
+		if len(args.Token.ValueOrZero()) != 0 && len(args.FID.ValueOrZero()) != 0 {
+			if err := tx.Delete(&model.Device{Token: args.FID.ValueOrZero(), TokenType: model.DeviceTokenTypeToken}).Error; err != nil {
+				if err != gorm.ErrRecordNotFound {
+					return err
+				}
+			}
+		}
+
+		if err := tx.First(&d, &model.Device{Token: token, TokenType: tokenType}).Error; err == nil {
 			if d.UserID != userID {
 				return repository.ArgError("Token", "the Token has already been associated with other user")
 			}
