@@ -1,5 +1,5 @@
 // revive:disable-next-line FIXME: https://github.com/traPtitech/traQ/issues/2717
-package utils
+package iputil
 
 import (
 	"net"
