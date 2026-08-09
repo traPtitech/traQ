@@ -461,6 +461,10 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	return ch, nil
 }
 
+func (m *managerImpl) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+	return m.R.GetThreadChannels(ctx, query)
+}
+
 func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {
 	if m.T.IsChannelPresent(channelID) {
 		return true, nil // 公開チャンネルは全員アクセス可能
