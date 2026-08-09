@@ -461,24 +461,8 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	return ch, nil
 }
 
-func (m *managerImpl) GetThreadChannel(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
-	threads := []*model.Channel{
-		{
-			ID:         uuid.Must(uuid.NewV7()),
-			Name:       "test-thread",
-			ParentID:   uuid.Must(uuid.NewV7()),
-			Topic:      "test thread topic",
-			IsForced:   false,
-			Type:       model.ChannelTypeThread,
-			IsVisible:  true,
-			CreatorID:  uuid.Must(uuid.NewV7()),
-			UpdaterID:  uuid.Must(uuid.NewV7()),
-			CreatedAt:  time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
-			UpdatedAt:  time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
-			ChildrenID: []uuid.UUID{},
-		},
-	}
-	return threads, nil
+func (m *managerImpl) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+	return m.R.GetThreadChannels(ctx, query)
 }
 
 func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {

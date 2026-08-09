@@ -486,6 +486,9 @@ func (q *getThreadChannelQuery) Validate() error {
 	if q.Limit == 0 {
 		q.Limit = 20
 	}
+	if q.Sort == "" {
+		q.Sort = "-createdAt"
+	}
 	return vd.ValidateStruct(q,
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
 		vd.Field(&q.Offset, vd.Min(0)),
@@ -522,7 +525,7 @@ func (h *Handlers) GetThreadChannels(c echo.Context) error {
 		return herror.BadRequest(err.Error())
 	}
 
-	channelThreads, err := h.ChannelManager.GetThreadChannel(ctx, reqConverted)
+	channelThreads, err := h.ChannelManager.GetThreadChannels(ctx, reqConverted)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
