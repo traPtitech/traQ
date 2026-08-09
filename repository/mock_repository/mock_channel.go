@@ -206,6 +206,21 @@ func (mr *MockChannelRepositoryMockRecorder) GetPublicChannels(ctx interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetPublicChannels), ctx)
 }
 
+// GetThreadChannels mocks base method.
+func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
+	ret0, _ := ret[0].([]*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadChannels indicates an expected call of GetThreadChannels.
+func (mr *MockChannelRepositoryMockRecorder) GetThreadChannels(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadChannels), ctx, query)
+}
+
 // RecordChannelEvent mocks base method.
 func (m *MockChannelRepository) RecordChannelEvent(ctx context.Context, channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
 	m.ctrl.T.Helper()

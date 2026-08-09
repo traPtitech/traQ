@@ -96,21 +96,6 @@ func (mr *MockManagerMockRecorder) CreateThreadChannel(ctx, name, parent, creato
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateThreadChannel", reflect.TypeOf((*MockManager)(nil).CreateThreadChannel), ctx, name, parent, creatorID)
 }
 
-// GetThreadChannel mocks base method.
-func (m *MockManager) GetThreadChannel(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetThreadChannel", ctx, query)
-	ret0, _ := ret[0].([]*model.Channel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetThreadChannel indicates an expected call of GetThreadChannel.
-func (mr *MockManagerMockRecorder) GetThreadChannel(ctx, archived, limit, offset, sort, channelID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannel", reflect.TypeOf((*MockManager)(nil).GetThreadChannel), ctx, archived, limit, offset, sort, channelID)
-}
-
 // GetChannel mocks base method.
 func (m *MockManager) GetChannel(ctx context.Context, id uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
@@ -198,6 +183,21 @@ func (m *MockManager) GetDMChannelMembers(ctx context.Context, id uuid.UUID) ([]
 func (mr *MockManagerMockRecorder) GetDMChannelMembers(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannelMembers", reflect.TypeOf((*MockManager)(nil).GetDMChannelMembers), ctx, id)
+}
+
+// GetThreadChannels mocks base method.
+func (m *MockManager) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
+	ret0, _ := ret[0].([]*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadChannels indicates an expected call of GetThreadChannels.
+func (mr *MockManagerMockRecorder) GetThreadChannels(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockManager)(nil).GetThreadChannels), ctx, query)
 }
 
 // IsChannelAccessibleToUser mocks base method.
