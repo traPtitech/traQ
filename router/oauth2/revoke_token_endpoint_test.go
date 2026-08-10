@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -39,7 +40,7 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 
 	t.Run("AccessToken", func(t *testing.T) {
 		t.Parallel()
-		token, err := env.Repository.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, false)
+		token, err := env.Repository.IssueToken(context.TODO(), nil, user.GetID(), "", model.AccessScopes{}, 10000, false)
 		require.NoError(t, err)
 
 		e := env.R(t)
@@ -48,17 +49,17 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 			Expect().
 			Status(http.StatusOK)
 
-		_, err = env.Repository.GetTokenByID(token.ID)
+		_, err = env.Repository.GetTokenByID(context.TODO(), token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 
-		d, err := env.Repository.GetTokenByIDWithDeleted(token.ID)
+		d, err := env.Repository.GetTokenByIDWithDeleted(context.TODO(), token.ID)
 		assert.NoError(t, err)
 		assert.True(t, d.DeletedAt.Valid)
 	})
 
 	t.Run("RefreshToken", func(t *testing.T) {
 		t.Parallel()
-		token, err := env.Repository.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, true)
+		token, err := env.Repository.IssueToken(context.TODO(), nil, user.GetID(), "", model.AccessScopes{}, 10000, true)
 		require.NoError(t, err)
 
 		e := env.R(t)
@@ -67,10 +68,10 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 			Expect().
 			Status(http.StatusOK)
 
-		_, err = env.Repository.GetTokenByID(token.ID)
+		_, err = env.Repository.GetTokenByID(context.TODO(), token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 
-		d, err := env.Repository.GetTokenByIDWithDeleted(token.ID)
+		d, err := env.Repository.GetTokenByIDWithDeleted(context.TODO(), token.ID)
 		assert.NoError(t, err)
 		assert.True(t, d.DeletedAt.Valid)
 	})

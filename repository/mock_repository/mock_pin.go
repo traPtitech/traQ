@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/gofrs/uuid"
@@ -36,46 +37,46 @@ func (m *MockPinRepository) EXPECT() *MockPinRepositoryMockRecorder {
 }
 
 // GetPinnedMessageByChannelID mocks base method.
-func (m *MockPinRepository) GetPinnedMessageByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
+func (m *MockPinRepository) GetPinnedMessageByChannelID(ctx context.Context, channelID uuid.UUID) ([]*model.Pin, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPinnedMessageByChannelID", channelID)
+	ret := m.ctrl.Call(m, "GetPinnedMessageByChannelID", ctx, channelID)
 	ret0, _ := ret[0].([]*model.Pin)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPinnedMessageByChannelID indicates an expected call of GetPinnedMessageByChannelID.
-func (mr *MockPinRepositoryMockRecorder) GetPinnedMessageByChannelID(channelID interface{}) *gomock.Call {
+func (mr *MockPinRepositoryMockRecorder) GetPinnedMessageByChannelID(ctx, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinnedMessageByChannelID", reflect.TypeOf((*MockPinRepository)(nil).GetPinnedMessageByChannelID), channelID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinnedMessageByChannelID", reflect.TypeOf((*MockPinRepository)(nil).GetPinnedMessageByChannelID), ctx, channelID)
 }
 
 // PinMessage mocks base method.
-func (m *MockPinRepository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, error) {
+func (m *MockPinRepository) PinMessage(ctx context.Context, messageID, userID uuid.UUID) (*model.Pin, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PinMessage", messageID, userID)
+	ret := m.ctrl.Call(m, "PinMessage", ctx, messageID, userID)
 	ret0, _ := ret[0].(*model.Pin)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PinMessage indicates an expected call of PinMessage.
-func (mr *MockPinRepositoryMockRecorder) PinMessage(messageID, userID interface{}) *gomock.Call {
+func (mr *MockPinRepositoryMockRecorder) PinMessage(ctx, messageID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PinMessage", reflect.TypeOf((*MockPinRepository)(nil).PinMessage), messageID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PinMessage", reflect.TypeOf((*MockPinRepository)(nil).PinMessage), ctx, messageID, userID)
 }
 
 // UnpinMessage mocks base method.
-func (m *MockPinRepository) UnpinMessage(messageID uuid.UUID) (*model.Pin, error) {
+func (m *MockPinRepository) UnpinMessage(ctx context.Context, messageID uuid.UUID) (*model.Pin, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnpinMessage", messageID)
+	ret := m.ctrl.Call(m, "UnpinMessage", ctx, messageID)
 	ret0, _ := ret[0].(*model.Pin)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UnpinMessage indicates an expected call of UnpinMessage.
-func (mr *MockPinRepositoryMockRecorder) UnpinMessage(messageID interface{}) *gomock.Call {
+func (mr *MockPinRepositoryMockRecorder) UnpinMessage(ctx, messageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpinMessage", reflect.TypeOf((*MockPinRepository)(nil).UnpinMessage), messageID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpinMessage", reflect.TypeOf((*MockPinRepository)(nil).UnpinMessage), ctx, messageID)
 }

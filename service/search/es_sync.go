@@ -41,7 +41,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 	var isBot, ok bool
 	if isBot, ok = userCache[m.UserID]; !ok {
 		// 新規ユーザー or キャッシュが存在しない
-		user, err := e.repo.GetUser(m.UserID, false)
+		user, err := e.repo.GetUser(context.Background(), m.UserID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
-		IsPublic:       e.cm.IsPublicChannel(m.ChannelID),
+		IsPublic:       e.cm.IsPublicChannel(context.Background(), m.ChannelID),
 		Bot:            isBot,
 		Text:           m.Text,
 		CreatedAt:      m.CreatedAt,
@@ -93,7 +93,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.HasAttachments = len(parseResult.Attachments) != 0
 
 	for _, attachmentID := range parseResult.Attachments {
-		meta, err := e.repo.GetFileMeta(attachmentID)
+		meta, err := e.repo.GetFileMeta(context.Background(), attachmentID)
 		if err != nil {
 			e.l.Warn(err.Error(), zap.Error(err))
 			continue
@@ -129,7 +129,7 @@ loop:
 }
 
 func (e *esEngine) newUserCache() (userCache, error) {
-	users, err := e.repo.GetUsers(repository.UsersQuery{})
+	users, err := e.repo.GetUsers(context.Background(), repository.UsersQuery{})
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (e *esEngine) sync() error {
 	var userCache userCache
 	lastInsert := lastSynced
 	for {
-		messages, more, err := e.repo.GetUpdatedMessagesAfter(lastInsert, syncMessageBulk)
+		messages, more, err := e.repo.GetUpdatedMessagesAfter(context.Background(), lastInsert, syncMessageBulk)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (e *esEngine) sync() error {
 
 	lastDelete := lastSynced
 	for {
-		messages, more, err := e.repo.GetDeletedMessagesAfter(lastDelete, syncMessageBulk)
+		messages, more, err := e.repo.GetDeletedMessagesAfter(context.Background(), lastDelete, syncMessageBulk)
 		if err != nil {
 			return err
 		}

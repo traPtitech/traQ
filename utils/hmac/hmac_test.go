@@ -1,4 +1,4 @@
-package hmac
+package hmacutil
 
 import (
 	"encoding/hex"

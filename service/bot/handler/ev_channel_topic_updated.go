@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,24 +26,24 @@ func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.F
 		return nil
 	}
 
-	ch, err := ctx.CM().GetChannel(chID)
+	ch, err := ctx.CM().GetChannel(context.Background(), chID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
-	chCreator, err := ctx.R().GetUser(ch.CreatorID, false)
+	chCreator, err := ctx.R().GetUser(context.Background(), ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
-	user, err := ctx.R().GetUser(updaterID, false)
+	user, err := ctx.R().GetUser(context.Background(), updaterID, false)
 	if err != nil {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
 	if err := ctx.Multicast(
 		event.ChannelTopicChanged,
-		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	); err != nil {
 		return fmt.Errorf("failed to multicast: %w", err)

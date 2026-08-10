@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -78,45 +79,45 @@ type ChannelStats struct {
 // ChannelRepository チャンネルリポジトリ
 type ChannelRepository interface {
 	// GetPublicChannels 全ての公開チャンネルを返します
-	GetPublicChannels() ([]*model.Channel, error)
+	GetPublicChannels(ctx context.Context) ([]*model.Channel, error)
 	// CreateChannel チャンネルを作成します
 	//
 	// dmがtrueの場合、privateMembersに1人または2人のユーザーが入っている必要があります。
-	CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error)
+	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) (*model.Channel, error)
+	UpdateChannel(ctx context.Context, channelID uuid.UUID, args UpdateChannelArgs) (*model.Channel, error)
 	// ArchiveChannels 指定したチャンネルをアーカイブします
-	ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error)
+	ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([]*model.Channel, error)
 	// GetChannel 指定したチャンネルを取得します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	GetChannel(channelID uuid.UUID) (*model.Channel, error)
+	GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error)
 	// GetDirectMessageChannel 指定したユーザー間のDMチャンネル取得します
 	//
 	// 存在しなかった場合、ErrNotFoundを返します。
-	GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error)
+	GetDirectMessageChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error)
 	// GetDirectMessageChannelMapping 指定したユーザーのDMチャンネルのマッピングを取得します
-	GetDirectMessageChannelMapping(userID uuid.UUID) ([]*model.DMChannelMapping, error)
+	GetDirectMessageChannelMapping(ctx context.Context, userID uuid.UUID) ([]*model.DMChannelMapping, error)
 	// GetPrivateChannelMemberIDs 指定したプライベートチャンネルのメンバーのUUIDを取得します
-	GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error)
+	GetPrivateChannelMemberIDs(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error)
 	// ChangeChannelSubscription ユーザーのチャンネルの購読を変更します
 	//
 	// channelIDにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないユーザーを指定した場合は無視されます。
-	ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error)
+	ChangeChannelSubscription(ctx context.Context, channelID uuid.UUID, args ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error)
 	// GetChannelSubscriptions 指定したクエリに基づいてチャンネル購読情報を取得します
-	GetChannelSubscriptions(query ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error)
+	GetChannelSubscriptions(ctx context.Context, query ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error)
 	// GetChannelEvents 指定したクエリでチャンネルイベントを取得します
 	//
 	// 負のoffset, limitは無視されます。
 	// 指定した範囲内にlimitを超えてイベントが存在していた場合、trueを返します。
-	GetChannelEvents(query ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error)
+	GetChannelEvents(ctx context.Context, query ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error)
 	// GetChannelStats 指定したチャンネルの統計情報を取得します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
+	GetChannelStats(ctx context.Context, channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
 	// RecordChannelEvent チャンネルイベントを記録します
-	RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
+	RecordChannelEvent(ctx context.Context, channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
 }

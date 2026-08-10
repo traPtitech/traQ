@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -12,12 +13,12 @@ func TestRepositoryImpl_AddStar(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2, false)
 
-	assert.Error(repo.AddStar(user.GetID(), uuid.Nil))
-	assert.Error(repo.AddStar(uuid.Nil, channel.ID))
-	if assert.NoError(repo.AddStar(user.GetID(), channel.ID)) {
+	assert.Error(repo.AddStar(context.TODO(), user.GetID(), uuid.Nil))
+	assert.Error(repo.AddStar(context.TODO(), uuid.Nil, channel.ID))
+	if assert.NoError(repo.AddStar(context.TODO(), user.GetID(), channel.ID)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Star{}).Where(model.Star{UserID: user.GetID()})))
 	}
-	if assert.NoError(repo.AddStar(user.GetID(), channel.ID)) {
+	if assert.NoError(repo.AddStar(context.TODO(), user.GetID(), channel.ID)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Star{}).Where(model.Star{UserID: user.GetID()})))
 	}
 }
@@ -26,15 +27,15 @@ func TestRepositoryImpl_RemoveStar(t *testing.T) {
 	t.Parallel()
 	repo, assert, require, user, channel := setupWithUserAndChannel(t, common2, false)
 
-	require.NoError(repo.AddStar(user.GetID(), channel.ID))
+	require.NoError(repo.AddStar(context.TODO(), user.GetID(), channel.ID))
 
-	assert.Error(repo.RemoveStar(uuid.Nil, channel.ID))
-	assert.Error(repo.RemoveStar(user.GetID(), uuid.Nil))
+	assert.Error(repo.RemoveStar(context.TODO(), uuid.Nil, channel.ID))
+	assert.Error(repo.RemoveStar(context.TODO(), user.GetID(), uuid.Nil))
 
-	if assert.NoError(repo.RemoveStar(user.GetID(), channel.ID)) {
+	if assert.NoError(repo.RemoveStar(context.TODO(), user.GetID(), channel.ID)) {
 		assert.Equal(0, count(t, getDB(repo).Model(model.Star{}).Where(model.Star{UserID: user.GetID(), ChannelID: channel.ID})))
 	}
-	if assert.NoError(repo.RemoveStar(user.GetID(), channel.ID)) {
+	if assert.NoError(repo.RemoveStar(context.TODO(), user.GetID(), channel.ID)) {
 		assert.Equal(0, count(t, getDB(repo).Model(model.Star{}).Where(model.Star{UserID: user.GetID(), ChannelID: channel.ID})))
 	}
 }
@@ -46,15 +47,15 @@ func TestRepositoryImpl_GetStaredChannels(t *testing.T) {
 	n := 5
 	for range n {
 		ch := mustMakeChannel(t, repo, rand)
-		require.NoError(repo.AddStar(user.GetID(), ch.ID))
+		require.NoError(repo.AddStar(context.TODO(), user.GetID(), ch.ID))
 	}
 
-	ch, err := repo.GetStaredChannels(user.GetID())
+	ch, err := repo.GetStaredChannels(context.TODO(), user.GetID())
 	if assert.NoError(err) {
 		assert.Len(ch, n)
 	}
 
-	ch, err = repo.GetStaredChannels(uuid.Nil)
+	ch, err = repo.GetStaredChannels(context.TODO(), uuid.Nil)
 	if assert.NoError(err) {
 		assert.Len(ch, 0)
 	}

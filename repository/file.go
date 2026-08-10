@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -30,35 +31,35 @@ type FileRepository interface {
 	// 成功した場合、ファイル情報の配列を返します。正でないoffset, limitは無視されます。
 	// 指定した範囲内にlimitを超えてファイルが存在していた場合、trueを返します。
 	// DBによるエラーを返すことがあります。
-	GetFileMetas(q FilesQuery) (result []*model.FileMeta, more bool, err error)
+	GetFileMetas(ctx context.Context, q FilesQuery) (result []*model.FileMeta, more bool, err error)
 	// GetFileMeta 指定したファイル情報を取得します
 	//
 	// 成功した場合、ファイル情報とnilを返します。
 	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error)
+	GetFileMeta(ctx context.Context, fileID uuid.UUID) (*model.FileMeta, error)
 	// SaveFileMeta ファイル情報と、metaに含まれるサムネイル情報を格納します
 	//
 	// 成功した場合、nilを返します。
 	// metaに指定されたIDがnilの場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLEntry) error
+	SaveFileMeta(ctx context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error
 	// DeleteFileMeta ファイル情報を削除します
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteFileMeta(fileID uuid.UUID) error
+	DeleteFileMeta(ctx context.Context, fileID uuid.UUID) error
 	// IsFileAccessible ユーザーがファイルへのアクセス権限を持っているかを確認します
 	//
 	// ユーザーがアクセス権限を持っている場合、trueを返します。
 	// ファイルもしくはユーザーが存在しない場合は、falseを返します。
 	// DBによるエラーを返すことがあります。
-	IsFileAccessible(fileID, userID uuid.UUID) (bool, error)
+	IsFileAccessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error)
 	// DeleteFileThumbnail サムネイル情報を削除します
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error
+	DeleteFileThumbnail(ctx context.Context, fileID uuid.UUID, thumbnailType model.ThumbnailType) error
 }

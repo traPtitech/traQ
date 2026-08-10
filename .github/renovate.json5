@@ -3,6 +3,7 @@
   "extends": [
     "config:base",
     "docker:enableMajor",
+    "docker:pinDigests",
     ":disableRateLimiting",
     ":dependencyDashboard",
     ":semanticCommits",

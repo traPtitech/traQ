@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -159,7 +160,7 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := repo.CreateChannel(model.Channel{
+	ch, err := repo.CreateChannel(context.TODO(), model.Channel{
 		Name:      name,
 		IsForced:  false,
 		IsVisible: true,
@@ -170,14 +171,14 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 
 func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) *model.Message {
 	t.Helper()
-	m, err := repo.CreateMessage(userID, channelID, "popopo")
+	m, err := repo.CreateMessage(context.TODO(), userID, channelID, "popopo")
 	require.NoError(t, err)
 	return m
 }
 
 func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.SetMessageUnreads(map[uuid.UUID]bool{userID: false}, messageID))
+	require.NoError(t, repo.SetMessageUnreads(context.TODO(), map[uuid.UUID]bool{userID: false}, messageID))
 }
 
 func mustMakeUser(t *testing.T, repo repository.Repository, userName string, useUUIDv4 bool) model.UserInfo {
@@ -188,7 +189,7 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string, use
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
 	iconUUID := mustGenerateUUID(useUUIDv4)
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
+	u, err := repo.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: iconUUID})
 	require.NoError(t, err)
 	return u
 }
@@ -198,19 +199,19 @@ func mustMakeTag(t *testing.T, repo repository.Repository, name string) *model.T
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	tag, err := repo.GetOrCreateTag(name)
+	tag, err := repo.GetOrCreateTag(context.TODO(), name)
 	require.NoError(t, err)
 	return tag
 }
 
 func mustAddTagToUser(t *testing.T, repo repository.Repository, userID, tagID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserTag(userID, tagID))
+	require.NoError(t, repo.AddUserTag(context.TODO(), userID, tagID))
 }
 
 func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uuid.UUID) {
 	t.Helper()
-	_, err := repo.PinMessage(messageID, userID)
+	_, err := repo.PinMessage(context.TODO(), messageID, userID)
 	require.NoError(t, err)
 }
 
@@ -220,14 +221,14 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 		name = random.AlphaNumeric(20)
 	}
 	icon := mustMakeDummyFile(t, repo, false)
-	g, err := repo.CreateUserGroup(name, "", "", adminID, icon.ID)
+	g, err := repo.CreateUserGroup(context.TODO(), name, "", "", adminID, icon.ID)
 	require.NoError(t, err)
 	return g
 }
 
 func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
+	require.NoError(t, repo.AddUserToGroup(context.TODO(), userID, groupID, ""))
 }
 
 func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool) *model.FileMeta {
@@ -251,7 +252,7 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool)
 			},
 		},
 	}
-	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+	err := repo.SaveFileMeta(context.TODO(), meta, []*model.FileACLEntry{
 		{UserID: uuid.Nil, Allow: true},
 	})
 	require.NoError(t, err)
@@ -264,14 +265,14 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 		name = random.AlphaNumeric(20)
 	}
 	fid := mustMakeDummyFile(t, repo, false).ID
-	s, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
+	s, err := repo.CreateStamp(context.TODO(), repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
 	require.NoError(t, err)
 	return s
 }
 
 func mustAddMessageStamp(t *testing.T, repo repository.Repository, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
-	_, err := repo.AddStampToMessage(messageID, stampID, userID, 1)
+	_, err := repo.AddStampToMessage(context.TODO(), messageID, stampID, userID, 1)
 	require.NoError(t, err)
 }
 
@@ -283,7 +284,7 @@ func mustMakeStampPalette(t *testing.T, repo repository.Repository, name, descri
 	if description == rand {
 		description = random.AlphaNumeric(100)
 	}
-	sp, err := repo.CreateStampPalette(name, description, stamps, userID)
+	sp, err := repo.CreateStampPalette(context.TODO(), name, description, stamps, userID)
 	require.NoError(t, err)
 	return sp
 }
@@ -293,14 +294,14 @@ func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, chan
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := repo.CreateWebhook(name, "", channelID, mustMakeDummyFile(t, repo, false).ID, creatorID, secret)
+	w, err := repo.CreateWebhook(context.TODO(), name, "", channelID, mustMakeDummyFile(t, repo, false).ID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }
 
 func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
 	t.Helper()
-	_, _, err := repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
+	_, _, err := repo.ChangeChannelSubscription(context.TODO(), channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
 	require.NoError(t, err)
 }
 
@@ -312,14 +313,14 @@ func mustMakeClipFolder(t *testing.T, repo repository.Repository, userID uuid.UU
 	if description == rand {
 		description = random.AlphaNumeric(100)
 	}
-	cf, err := repo.CreateClipFolder(userID, name, description)
+	cf, err := repo.CreateClipFolder(context.TODO(), userID, name, description)
 	require.NoError(t, err)
 	return cf
 }
 
 func mustMakeClipFolderMessage(t *testing.T, repo repository.Repository, folderID, messageID uuid.UUID) *model.ClipFolderMessage {
 	t.Helper()
-	cfm, err := repo.AddClipFolderMessage(folderID, messageID)
+	cfm, err := repo.AddClipFolderMessage(context.TODO(), folderID, messageID)
 	require.NoError(t, err)
 	return cfm
 }

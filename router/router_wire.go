@@ -24,6 +24,7 @@ func newRouter(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servic
 		newEcho,
 		utils.NewReplaceMapper,
 		message.NewReplacer,
+		message.NewNonceManager,
 		v1.NewEmojiCache,
 		provideOAuth2Config,
 		provideV3Config,

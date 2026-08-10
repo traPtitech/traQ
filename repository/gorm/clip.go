@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -14,7 +16,7 @@ import (
 )
 
 // CreateClipFolder implements ClipRepository interface.
-func (repo *Repository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
+func (repo *Repository) CreateClipFolder(ctx context.Context, userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -26,7 +28,7 @@ func (repo *Repository) CreateClipFolder(userID uuid.UUID, name string, descript
 		Name:        name,
 		OwnerID:     userID,
 	}
-	if err := repo.db.Create(clipFolder).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Create(clipFolder).Error; err != nil {
 		return nil, err
 	}
 	repo.hub.Publish(hub.Message{
@@ -42,7 +44,7 @@ func (repo *Repository) CreateClipFolder(userID uuid.UUID, name string, descript
 }
 
 // UpdateClipFolder implements ClipRepository interface.
-func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[string], description optional.Of[string]) error {
+func (repo *Repository) UpdateClipFolder(ctx context.Context, folderID uuid.UUID, name optional.Of[string], description optional.Of[string]) error {
 	if folderID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -63,7 +65,7 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 		ok        bool
 	)
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&oldFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -95,12 +97,12 @@ func (repo *Repository) UpdateClipFolder(folderID uuid.UUID, name optional.Of[st
 }
 
 // DeleteClipFolder implements ClipRepository interface.
-func (repo *Repository) DeleteClipFolder(folderID uuid.UUID) error {
+func (repo *Repository) DeleteClipFolder(ctx context.Context, folderID uuid.UUID) error {
 	if folderID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var cf model.ClipFolder
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -125,7 +127,7 @@ func (repo *Repository) DeleteClipFolder(folderID uuid.UUID) error {
 }
 
 // DeleteClipFolderMessage implements ClipRepository interface.
-func (repo *Repository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) error {
+func (repo *Repository) DeleteClipFolderMessage(ctx context.Context, folderID, messageID uuid.UUID) error {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -133,7 +135,7 @@ func (repo *Repository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) e
 		cf  model.ClipFolder
 		cfm model.ClipFolderMessage
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// フォルダ存在チェック
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
@@ -161,7 +163,7 @@ func (repo *Repository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) e
 }
 
 // AddClipFolderMessage implements ClipRepository interface.
-func (repo *Repository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
+func (repo *Repository) AddClipFolderMessage(ctx context.Context, folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -172,7 +174,7 @@ func (repo *Repository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*mo
 	}
 	var cf model.ClipFolder
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// フォルダ存在チェック
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
@@ -209,14 +211,14 @@ func (repo *Repository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*mo
 }
 
 // GetClipFoldersByUserID implements ClipRepository interface.
-func (repo *Repository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
+func (repo *Repository) GetClipFoldersByUserID(ctx context.Context, userID uuid.UUID) ([]*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 
 	clipFolders := make([]*model.ClipFolder, 0)
 
-	if err := repo.db.Find(&clipFolders, "owner_id=?", userID).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Find(&clipFolders, "owner_id=?", userID).Error; err != nil {
 		return nil, convertError(err)
 	}
 
@@ -224,13 +226,13 @@ func (repo *Repository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipF
 }
 
 // GetClipFolder implements ClipRepository interface.
-func (repo *Repository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error) {
+func (repo *Repository) GetClipFolder(ctx context.Context, folderID uuid.UUID) (*model.ClipFolder, error) {
 	if folderID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 	clipFolder := &model.ClipFolder{}
 
-	if err := repo.db.First(clipFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(clipFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
 		return nil, convertError(err)
 	}
 
@@ -238,20 +240,20 @@ func (repo *Repository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, er
 }
 
 // GetClipFolderMessages implements ClipRepository interface.
-func (repo *Repository) GetClipFolderMessages(folderID uuid.UUID, query repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
+func (repo *Repository) GetClipFolderMessages(ctx context.Context, folderID uuid.UUID, query repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
 	if folderID == uuid.Nil {
 		return nil, false, repository.ErrNilID
 	}
 	messages = make([]*model.ClipFolderMessage, 0)
 
 	// フォルダ存在チェック
-	if exists, err := gormutil.RecordExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
+	if exists, err := gormutil.RecordExists(repo.db.WithContext(ctx), &model.ClipFolder{ID: folderID}); err != nil {
 		return nil, false, err
 	} else if !exists {
 		return nil, false, repository.ErrNotFound
 	}
 
-	tx := repo.db
+	tx := repo.db.WithContext(ctx)
 	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 
 	if query.Asc {
@@ -276,13 +278,13 @@ func (repo *Repository) GetClipFolderMessages(folderID uuid.UUID, query reposito
 }
 
 // GetMessageClips implements ClipRepository interface.
-func (repo *Repository) GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error) {
+func (repo *Repository) GetMessageClips(ctx context.Context, userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error) {
 	clips := make([]*model.ClipFolderMessage, 0)
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return clips, nil
 	}
 
-	err := repo.db.
+	err := repo.db.WithContext(ctx).
 		Joins("INNER JOIN clip_folders ON clip_folders.id = clip_folder_messages.folder_id").
 		Where("clip_folders.owner_id = ? AND clip_folder_messages.message_id = ?", userID, messageID).
 		Find(&clips).

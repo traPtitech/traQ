@@ -40,7 +40,7 @@ func TestBotPingRequest(t *testing.T) {
 		buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(et))
 		require.NoError(t, err)
 
-		repo.MockBotRepository.EXPECT().ChangeBotState(b.ID, model.BotActive).Return(nil).Times(1)
+		repo.MockBotRepository.EXPECT().ChangeBotState(gomock.Any(), b.ID, model.BotActive).Return(nil).Times(1)
 		d.EXPECT().Send(b, event.Ping, buf).Return(true).Times(1)
 
 		assert.NoError(t, BotPingRequest(handlerCtx, et, intevent.BotPingRequest, hub.Fields{
@@ -60,7 +60,7 @@ func TestBotPingRequest(t *testing.T) {
 		buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(et))
 		require.NoError(t, err)
 
-		repo.MockBotRepository.EXPECT().ChangeBotState(b.ID, model.BotPaused).Return(nil).Times(1)
+		repo.MockBotRepository.EXPECT().ChangeBotState(gomock.Any(), b.ID, model.BotPaused).Return(nil).Times(1)
 		d.EXPECT().Send(b, event.Ping, buf).Return(false).Times(1)
 
 		assert.NoError(t, BotPingRequest(handlerCtx, et, intevent.BotPingRequest, hub.Fields{

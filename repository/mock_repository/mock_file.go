@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/gofrs/uuid"
@@ -37,52 +38,52 @@ func (m *MockFileRepository) EXPECT() *MockFileRepositoryMockRecorder {
 }
 
 // DeleteFileMeta mocks base method.
-func (m *MockFileRepository) DeleteFileMeta(fileID uuid.UUID) error {
+func (m *MockFileRepository) DeleteFileMeta(ctx context.Context, fileID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFileMeta", fileID)
+	ret := m.ctrl.Call(m, "DeleteFileMeta", ctx, fileID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteFileMeta indicates an expected call of DeleteFileMeta.
-func (mr *MockFileRepositoryMockRecorder) DeleteFileMeta(fileID interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) DeleteFileMeta(ctx, fileID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileMeta", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileMeta), fileID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileMeta", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileMeta), ctx, fileID)
 }
 
 // DeleteFileThumbnail mocks base method.
-func (m *MockFileRepository) DeleteFileThumbnail(fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
+func (m *MockFileRepository) DeleteFileThumbnail(ctx context.Context, fileID uuid.UUID, thumbnailType model.ThumbnailType) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFileThumbnail", fileID, thumbnailType)
+	ret := m.ctrl.Call(m, "DeleteFileThumbnail", ctx, fileID, thumbnailType)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteFileThumbnail indicates an expected call of DeleteFileThumbnail.
-func (mr *MockFileRepositoryMockRecorder) DeleteFileThumbnail(fileID, thumbnailType interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) DeleteFileThumbnail(ctx, fileID, thumbnailType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileThumbnail", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileThumbnail), fileID, thumbnailType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileThumbnail", reflect.TypeOf((*MockFileRepository)(nil).DeleteFileThumbnail), ctx, fileID, thumbnailType)
 }
 
 // GetFileMeta mocks base method.
-func (m *MockFileRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
+func (m *MockFileRepository) GetFileMeta(ctx context.Context, fileID uuid.UUID) (*model.FileMeta, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFileMeta", fileID)
+	ret := m.ctrl.Call(m, "GetFileMeta", ctx, fileID)
 	ret0, _ := ret[0].(*model.FileMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFileMeta indicates an expected call of GetFileMeta.
-func (mr *MockFileRepositoryMockRecorder) GetFileMeta(fileID interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) GetFileMeta(ctx, fileID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMeta", reflect.TypeOf((*MockFileRepository)(nil).GetFileMeta), fileID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMeta", reflect.TypeOf((*MockFileRepository)(nil).GetFileMeta), ctx, fileID)
 }
 
 // GetFileMetas mocks base method.
-func (m *MockFileRepository) GetFileMetas(q repository.FilesQuery) ([]*model.FileMeta, bool, error) {
+func (m *MockFileRepository) GetFileMetas(ctx context.Context, q repository.FilesQuery) ([]*model.FileMeta, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFileMetas", q)
+	ret := m.ctrl.Call(m, "GetFileMetas", ctx, q)
 	ret0, _ := ret[0].([]*model.FileMeta)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -90,36 +91,36 @@ func (m *MockFileRepository) GetFileMetas(q repository.FilesQuery) ([]*model.Fil
 }
 
 // GetFileMetas indicates an expected call of GetFileMetas.
-func (mr *MockFileRepositoryMockRecorder) GetFileMetas(q interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) GetFileMetas(ctx, q interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMetas", reflect.TypeOf((*MockFileRepository)(nil).GetFileMetas), q)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMetas", reflect.TypeOf((*MockFileRepository)(nil).GetFileMetas), ctx, q)
 }
 
 // IsFileAccessible mocks base method.
-func (m *MockFileRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+func (m *MockFileRepository) IsFileAccessible(ctx context.Context, fileID, userID uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsFileAccessible", fileID, userID)
+	ret := m.ctrl.Call(m, "IsFileAccessible", ctx, fileID, userID)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IsFileAccessible indicates an expected call of IsFileAccessible.
-func (mr *MockFileRepositoryMockRecorder) IsFileAccessible(fileID, userID interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) IsFileAccessible(ctx, fileID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFileAccessible", reflect.TypeOf((*MockFileRepository)(nil).IsFileAccessible), fileID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFileAccessible", reflect.TypeOf((*MockFileRepository)(nil).IsFileAccessible), ctx, fileID, userID)
 }
 
 // SaveFileMeta mocks base method.
-func (m *MockFileRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLEntry) error {
+func (m *MockFileRepository) SaveFileMeta(ctx context.Context, meta *model.FileMeta, acl []*model.FileACLEntry) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveFileMeta", meta, acl)
+	ret := m.ctrl.Call(m, "SaveFileMeta", ctx, meta, acl)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveFileMeta indicates an expected call of SaveFileMeta.
-func (mr *MockFileRepositoryMockRecorder) SaveFileMeta(meta, acl interface{}) *gomock.Call {
+func (mr *MockFileRepositoryMockRecorder) SaveFileMeta(ctx, meta, acl interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveFileMeta", reflect.TypeOf((*MockFileRepository)(nil).SaveFileMeta), meta, acl)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveFileMeta", reflect.TypeOf((*MockFileRepository)(nil).SaveFileMeta), ctx, meta, acl)
 }

@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -10,24 +12,24 @@ import (
 const defaultNotifyCitation = false
 
 // UpdateNotifyCitation implements UserSettingsRepository interface
-func (repo *Repository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool) error {
+func (repo *Repository) UpdateNotifyCitation(ctx context.Context, userID uuid.UUID, isEnable bool) error {
 	if userID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	settings := model.UserSettings{}
 
-	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
 		if err == repository.ErrNotFound {
-			return repo.db.Create(&model.UserSettings{
+			return repo.db.WithContext(ctx).Create(&model.UserSettings{
 				UserID:         userID,
 				NotifyCitation: isEnable,
 			}).Error
 		}
 		return err
 	}
-	if err := repo.db.Model(&settings).Updates(map[string]interface{}{
+	if err := repo.db.WithContext(ctx).Model(&settings).Updates(map[string]interface{}{
 		"user_id":         userID,
 		"notify_citation": isEnable,
 	}).Error; err != nil {
@@ -38,14 +40,14 @@ func (repo *Repository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool) er
 }
 
 // GetNotifyCitation implements UserSettingsRepository interface
-func (repo *Repository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
+func (repo *Repository) GetNotifyCitation(ctx context.Context, userID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil {
 		return defaultNotifyCitation, repository.ErrNilID
 	}
 
 	settings := model.UserSettings{}
 
-	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
 		if err == repository.ErrNotFound {
 			return defaultNotifyCitation, nil
@@ -57,13 +59,13 @@ func (repo *Repository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 }
 
 // GetUserSettings implements UserSettingsRepository interface
-func (repo *Repository) GetUserSettings(userID uuid.UUID) (*model.UserSettings, error) {
+func (repo *Repository) GetUserSettings(ctx context.Context, userID uuid.UUID) (*model.UserSettings, error) {
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 	settings := model.UserSettings{}
 
-	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
 		dus := &model.UserSettings{
 			UserID:         userID,

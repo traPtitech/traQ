@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -20,7 +21,7 @@ func TestGormRepository_CreateUserRoles(t *testing.T) {
 	r2.Inheritances = append(r2.Inheritances, r3)
 	r3.Inheritances = append(r3.Inheritances, r4)
 
-	err := repo.CreateUserRoles(r1, r2, r3, r4)
+	err := repo.CreateUserRoles(context.TODO(), r1, r2, r3, r4)
 	assert.NoError(err)
 }
 
@@ -37,10 +38,10 @@ func TestGormRepository_GetAllUserRoles(t *testing.T) {
 	r2.Inheritances = append(r2.Inheritances, r3)
 	r3.Inheritances = append(r3.Inheritances, r4)
 
-	err := repo.CreateUserRoles(r1, r2, r3, r4)
+	err := repo.CreateUserRoles(context.TODO(), r1, r2, r3, r4)
 	require.NoError(err)
 
-	roles, err := repo.GetAllUserRoles()
+	roles, err := repo.GetAllUserRoles(context.TODO())
 	if assert.NoError(err) {
 		assert.Len(roles, 4)
 		sort.Slice(roles, func(i, j int) bool {

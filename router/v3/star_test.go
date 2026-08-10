@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -86,7 +87,7 @@ func TestHandlers_PostStar(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		stars, err := env.Repository.GetStaredChannels(user.GetID())
+		stars, err := env.Repository.GetStaredChannels(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.ElementsMatch(t, stars, []uuid.UUID{ch.ID})
 	})
@@ -130,7 +131,7 @@ func TestHandlers_RemoveMyStar(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		stars, err := env.Repository.GetStaredChannels(user.GetID())
+		stars, err := env.Repository.GetStaredChannels(context.TODO(), user.GetID())
 		require.NoError(t, err)
 		assert.Len(t, stars, 0)
 	})

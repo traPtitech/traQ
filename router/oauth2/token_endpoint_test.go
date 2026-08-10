@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -67,7 +68,7 @@ func runTokenEndpointClientCredentialsTests(t *testing.T, uuidVersion int) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	t.Run("Success with Basic Auth", func(t *testing.T) {
 		t.Parallel()
@@ -212,7 +213,7 @@ func runTokenEndpointClientCredentialsTests(t *testing.T, uuidVersion int) {
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
 		}
-		require.NoError(t, env.Repository.SaveClient(client))
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
@@ -292,7 +293,7 @@ func runTokenEndpointPasswordTests(t *testing.T, useUUIDV4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	t.Run("Success with Basic Auth", func(t *testing.T) {
 		t.Parallel()
@@ -404,7 +405,7 @@ func runTokenEndpointPasswordTests(t *testing.T, useUUIDV4 bool) {
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
 		}
-		require.NoError(t, env.Repository.SaveClient(client))
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
@@ -574,7 +575,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	var creatorIDConf uuid.UUID
 	if useUUIDv4 {
@@ -592,7 +593,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(clientConf))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), clientConf))
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
@@ -613,7 +614,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(context.TODO(), token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -637,7 +638,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.Value("scope").String().IsEqual("read")
 
-		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(context.TODO(), token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -661,7 +662,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.Value("scope").String().IsEqual("read")
 
-		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(context.TODO(), token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -685,7 +686,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(context.TODO(), token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -710,7 +711,7 @@ func runTokenEndpointRefreshTokenTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(context.TODO(), token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -845,7 +846,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
 	var creatorIDConf uuid.UUID
 	if useUUIDv4 {
@@ -863,7 +864,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, env.Repository.SaveClient(clientConf))
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), clientConf))
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
@@ -887,7 +888,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -912,7 +913,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -938,7 +939,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -957,7 +958,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -977,7 +978,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -996,7 +997,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			CodeChallengeMethod: "S256",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1016,7 +1017,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1033,7 +1034,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			OriginalScopes: scopesRead,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1052,7 +1053,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1069,7 +1070,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			OriginalScopes: scopesReadManageBot,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1090,7 +1091,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		actual.FromString(obj.Value("scope").String().Raw())
 		assert.ElementsMatch(t, authorize.Scopes.StringArray(), actual.StringArray())
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1124,7 +1125,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1144,7 +1145,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1164,7 +1165,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1197,7 +1198,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1211,7 +1212,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1228,7 +1229,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1242,7 +1243,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidClient)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1262,7 +1263,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1278,7 +1279,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1292,7 +1293,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1311,7 +1312,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
@@ -1325,7 +1326,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidRequest)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1346,7 +1347,7 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		res.Header("Pragma").IsEqual("no-cache")
 		res.JSON().Object().Value("error").IsEqual(errInvalidRequest)
 
-		_, err := env.Repository.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }

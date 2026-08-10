@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -361,7 +362,7 @@ func TestHandlers_GetBot(t *testing.T) {
 	t.Run("success (detail=true, revoked=true)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		err := env.Repository.DeleteTokenByID(bot1.AccessTokenID)
+		err := env.Repository.DeleteTokenByID(t.Context(), bot1.AccessTokenID)
 		require.NoError(t, err)
 
 		obj := e.GET(path, bot1.ID.String()).
@@ -387,9 +388,9 @@ func TestHandlers_EditBot(t *testing.T) {
 	bot1 := env.CreateBot(t, rand, user1.GetID())
 	bot2 := env.CreateBot(t, rand, user1.GetID())
 	bot3 := env.CreateBot(t, rand, user2.GetID())
-	wsBotWithEndpoint, err := env.Repository.CreateBot(random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "https://example.com")
+	wsBotWithEndpoint, err := env.Repository.CreateBot(context.TODO(), random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "https://example.com")
 	require.NoError(t, err)
-	wsBotWithoutEndpoint, err := env.Repository.CreateBot(random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "")
+	wsBotWithoutEndpoint, err := env.Repository.CreateBot(context.TODO(), random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "")
 	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -715,7 +716,7 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 		Code:      400,
 		DateTime:  time.Now(),
 	}
-	require.NoError(t, env.Repository.WriteBotEventLog(log))
+	require.NoError(t, env.Repository.WriteBotEventLog(context.TODO(), log))
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -786,7 +787,7 @@ func TestHandlers_GetChannelBots(t *testing.T) {
 	channel := env.CreateChannel(t, rand)
 	commonSession := env.S(t, user.GetID())
 	bot := env.CreateBot(t, rand, user.GetID())
-	require.NoError(t, env.Repository.AddBotToChannel(bot.ID, channel.ID))
+	require.NoError(t, env.Repository.AddBotToChannel(context.TODO(), bot.ID, channel.ID))
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -1049,7 +1050,7 @@ func TestHandlers_LetBotLeaveChannel(t *testing.T) {
 	bot2 := env.CreateBot(t, rand, user2.GetID())
 	channel1 := env.CreateChannel(t, rand)
 	channel2 := env.CreateChannel(t, rand)
-	require.NoError(t, env.Repository.AddBotToChannel(bot1.ID, channel1.ID))
+	require.NoError(t, env.Repository.AddBotToChannel(context.TODO(), bot1.ID, channel1.ID))
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()

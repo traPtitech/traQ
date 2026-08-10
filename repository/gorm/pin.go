@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
@@ -12,7 +14,7 @@ import (
 )
 
 // PinMessage implements PinRepository interface.
-func (repo *Repository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, error) {
+func (repo *Repository) PinMessage(ctx context.Context, messageID, userID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -20,7 +22,7 @@ func (repo *Repository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, err
 		p model.Pin
 		m model.Message
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&m, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -49,12 +51,12 @@ func (repo *Repository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, err
 }
 
 // UnpinMessage implements PinRepository interface.
-func (repo *Repository) UnpinMessage(messageID uuid.UUID) (*model.Pin, error) {
+func (repo *Repository) UnpinMessage(ctx context.Context, messageID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 	var pin model.Pin
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Preload("Message").Where(&model.Pin{MessageID: messageID}).First(&pin).Error; err != nil {
 			return convertError(err)
 		}
@@ -74,12 +76,12 @@ func (repo *Repository) UnpinMessage(messageID uuid.UUID) (*model.Pin, error) {
 }
 
 // GetPinnedMessageByChannelID implements PinRepository interface.
-func (repo *Repository) GetPinnedMessageByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
+func (repo *Repository) GetPinnedMessageByChannelID(ctx context.Context, channelID uuid.UUID) (pins []*model.Pin, err error) {
 	pins = make([]*model.Pin, 0)
 	if channelID == uuid.Nil {
 		return pins, nil
 	}
-	err = repo.db.
+	err = repo.db.WithContext(ctx).
 		Scopes(pinPreloads).
 		Joins("INNER JOIN messages ON messages.id = pins.message_id AND messages.channel_id = ?", channelID).
 		Find(&pins).

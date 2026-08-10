@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 
@@ -10,7 +12,7 @@ import (
 )
 
 // RegisterDevice implements DeviceRepository interface.
-func (repo *Repository) RegisterDevice(userID uuid.UUID, token string) error {
+func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, token string) error {
 	if userID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -18,7 +20,7 @@ func (repo *Repository) RegisterDevice(userID uuid.UUID, token string) error {
 		return repository.ArgError("Token", "token is empty")
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var d model.Device
 		if err := tx.First(&d, &model.Device{Token: token}).Error; err == nil {
 			if d.UserID != userID {
@@ -38,9 +40,9 @@ func (repo *Repository) RegisterDevice(userID uuid.UUID, token string) error {
 }
 
 // GetDeviceTokens implements DeviceRepository interface.
-func (repo *Repository) GetDeviceTokens(userIDs set.UUID) (tokens map[uuid.UUID][]string, err error) {
+func (repo *Repository) GetDeviceTokens(ctx context.Context, userIDs set.UUID) (tokens map[uuid.UUID][]string, err error) {
 	var tmp []*model.Device
-	if err := repo.db.Where("user_id IN (?)", userIDs.StringArray()).Find(&tmp).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Where("user_id IN (?)", userIDs.StringArray()).Find(&tmp).Error; err != nil {
 		return nil, err
 	}
 
@@ -52,6 +54,6 @@ func (repo *Repository) GetDeviceTokens(userIDs set.UUID) (tokens map[uuid.UUID]
 }
 
 // DeleteDeviceTokens implements DeviceRepository interface.
-func (repo *Repository) DeleteDeviceTokens(tokens []string) error {
-	return repo.db.Where("token IN (?)", tokens).Delete(&model.Device{}).Error
+func (repo *Repository) DeleteDeviceTokens(ctx context.Context, tokens []string) error {
+	return repo.db.WithContext(ctx).Where("token IN (?)", tokens).Delete(&model.Device{}).Error
 }

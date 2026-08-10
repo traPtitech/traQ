@@ -2,6 +2,7 @@
 package channel
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gofrs/uuid"
@@ -23,24 +24,24 @@ var (
 )
 
 type Manager interface {
-	GetChannel(id uuid.UUID) (*model.Channel, error)
-	GetChannelPathFromID(id uuid.UUID) string
-	GetChannelFromPath(path string) (*model.Channel, error)
-	CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error)
-	UpdateChannel(id uuid.UUID, args repository.UpdateChannelArgs) error
-	PublicChannelTree() Tree
+	GetChannel(ctx context.Context, id uuid.UUID) (*model.Channel, error)
+	GetChannelPathFromID(ctx context.Context, id uuid.UUID) string
+	GetChannelFromPath(ctx context.Context, path string) (*model.Channel, error)
+	CreatePublicChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error)
+	UpdateChannel(ctx context.Context, id uuid.UUID, args repository.UpdateChannelArgs) error
+	PublicChannelTree(ctx context.Context) Tree
 
-	ChangeChannelSubscriptions(channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error
+	ChangeChannelSubscriptions(ctx context.Context, channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error
 
-	ArchiveChannel(id uuid.UUID, updaterID uuid.UUID) error
-	UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error
+	ArchiveChannel(ctx context.Context, id uuid.UUID, updaterID uuid.UUID) error
+	UnarchiveChannel(ctx context.Context, id uuid.UUID, updaterID uuid.UUID) error
 
-	GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, error)
-	GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error)
-	GetDMChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
+	GetDMChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error)
+	GetDMChannelMembers(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
+	GetDMChannelMapping(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
 
-	IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error)
-	IsPublicChannel(id uuid.UUID) bool
+	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
+	IsPublicChannel(ctx context.Context, id uuid.UUID) bool
 
 	// Wait マネージャーの処理の完了を待ちます
 	Wait()
