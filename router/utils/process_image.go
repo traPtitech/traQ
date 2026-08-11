@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"io"
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sapphi-red/midec"
@@ -91,6 +92,7 @@ func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name s
 		if err != nil {
 			return uuid.Nil, herror.BadRequest(badImage)
 		}
+		// TODO: アニメーションWebP対応
 		if isAnimated {
 			return uuid.Nil, herror.BadRequest("animated WebP is not supported")
 		}
@@ -106,12 +108,12 @@ func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name s
 			}
 		}
 		var b bytes.Buffer
-		if err := png.Encode(&b, img); err != nil {
+		if err := nativewebp.Encode(&b, img, nil); err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
 		args.Src = bytes.NewReader(b.Bytes())
 		args.FileSize = int64(b.Len())
-		args.MimeType = consts.MimeImagePNG
+		args.MimeType = consts.MimeImageWebP
 		args.Thumbnail = img
 	case consts.MimeImageGIF:
 		// リサイズ
