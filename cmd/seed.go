@@ -405,13 +405,14 @@ func seedCommand() *cobra.Command {
 			logger.Info("updating channel latest messages...")
 			if err := db.Exec(`
 				INSERT INTO channel_latest_messages (channel_id, message_id, date_time)
-				SELECT m.channel_id, m.id, m.created_at
+				SELECT m.channel_id, MAX(m.id) AS message_id, MAX(m.created_at) AS date_time
 				FROM messages m
 				INNER JOIN (
 					SELECT channel_id, MAX(created_at) AS max_created
 					FROM messages WHERE deleted_at IS NULL GROUP BY channel_id
 				) latest ON m.channel_id = latest.channel_id AND m.created_at = latest.max_created
 				WHERE m.deleted_at IS NULL
+				GROUP BY m.channel_id
 				ON DUPLICATE KEY UPDATE message_id = VALUES(message_id), date_time = VALUES(date_time)
 			`).Error; err != nil {
 				return fmt.Errorf("failed to update channel latest messages: %w", err)
