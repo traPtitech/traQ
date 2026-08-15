@@ -151,8 +151,8 @@ func seedCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "seed",
 		Short: "Seed users, channels, and messages all at once",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			ctx := context.Background()
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
 			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
 
@@ -382,7 +382,7 @@ func seedCommand() *cobra.Command {
 						Text:      generateSeedMessage(),
 					})
 					if len(batch) >= messageBatchSize {
-						if err := db.Omit(clause.Associations).Create(&batch).Error; err != nil {
+						if err := db.WithContext(ctx).Omit(clause.Associations).Create(&batch).Error; err != nil {
 							return fmt.Errorf("failed to batch insert messages: %w", err)
 						}
 						created += len(batch)
@@ -394,7 +394,7 @@ func seedCommand() *cobra.Command {
 				}
 			}
 			if len(batch) > 0 {
-				if err := db.Omit(clause.Associations).Create(&batch).Error; err != nil {
+				if err := db.WithContext(ctx).Omit(clause.Associations).Create(&batch).Error; err != nil {
 					return fmt.Errorf("failed to batch insert messages: %w", err)
 				}
 				created += len(batch)
@@ -403,7 +403,7 @@ func seedCommand() *cobra.Command {
 
 			// ChannelLatestMessage を一括更新
 			logger.Info("updating channel latest messages...")
-			if err := db.Exec(`
+			if err := db.WithContext(ctx).Exec(`
 				INSERT INTO channel_latest_messages (channel_id, message_id, date_time)
 				SELECT m.channel_id, MAX(m.id) AS message_id, MAX(m.created_at) AS date_time
 				FROM messages m
@@ -466,7 +466,7 @@ func seedCommand() *cobra.Command {
 						Count:     1,
 					})
 					if len(reactionBatch) >= reactionBatchSize {
-						if err := db.Omit(clause.Associations).Create(&reactionBatch).Error; err != nil {
+						if err := db.WithContext(ctx).Omit(clause.Associations).Create(&reactionBatch).Error; err != nil {
 							return fmt.Errorf("failed to batch insert reactions: %w", err)
 						}
 						reactionTotal += len(reactionBatch)
@@ -478,7 +478,7 @@ func seedCommand() *cobra.Command {
 				}
 			}
 			if len(reactionBatch) > 0 {
-				if err := db.Omit(clause.Associations).Create(&reactionBatch).Error; err != nil {
+				if err := db.WithContext(ctx).Omit(clause.Associations).Create(&reactionBatch).Error; err != nil {
 					return fmt.Errorf("failed to batch insert reactions: %w", err)
 				}
 				reactionTotal += len(reactionBatch)
