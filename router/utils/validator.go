@@ -63,7 +63,7 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 })
 
 // IsNotThreadChannelID スレッドチャンネルのUUIDでない
-var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
+var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value any) error {
 	const errMessage = "invalid channel id"
 
 	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
