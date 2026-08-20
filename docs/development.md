@@ -4,7 +4,7 @@ If you want to contribute to traQ, then follow this section.
 
 ### Requirements
 
-- Go 1.19
+- Go 1.27
 - git
 - bash
 - make
