@@ -327,12 +327,14 @@ func (h *Handlers) GetMyStampRecommendations(c *echo.Context) error {
 
 // PostMyFCMDeviceRequest POST /users/me/fcm-device リクエストボディ
 type PostMyFCMDeviceRequest struct {
-	Token string `json:"token"`
+	Token optional.Of[string] `json:"token"`
+	FID   optional.Of[string] `json:"fid"`
 }
 
 func (r PostMyFCMDeviceRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Token, vd.Required, vd.RuneLength(1, 190)),
+		vd.Field(&r.Token, vd.RuneLength(1, 190)),
+		vd.Field(&r.FID, vd.RuneLength(22, 22)),
 	)
 }
 
@@ -343,8 +345,13 @@ func (h *Handlers) PostMyFCMDevice(c *echo.Context) error {
 		return err
 	}
 
+	args := repository.RegisterDeviceArgs{
+		Token: req.Token,
+		FID:   req.FID,
+	}
+
 	userID := getRequestUserID(c)
-	if err := h.Repo.RegisterDevice(c.Request().Context(), userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(c.Request().Context(), userID, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
