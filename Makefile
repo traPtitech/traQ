@@ -74,6 +74,10 @@ up: ## Build and start the app containers
 down: ## Stop and remove app containers
 	@docker compose down
 
+.PHONY: seed
+seed: ## Seed users, channels, messages, and stamps into the database
+	docker compose run --rm --entrypoint ./traQ backend seed
+
 .PHONY: gogen
 gogen: ## Generate auto-generated go files
 	go generate ./...
