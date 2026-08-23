@@ -68,7 +68,7 @@ var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value any) e
 
 	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
 	if !ok {
-		return vd.NewInternalError(errors.New("this context didn't have ChannelTree"))
+		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
 
 	ct := cm.PublicChannelTree(ctx)
