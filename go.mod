@@ -62,7 +62,7 @@ require (
 	go.opentelemetry.io/contrib/exporters/autoexport v0.70.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.55.0
-	golang.org/x/exp v0.0.0-20260820142414-ca536658362e
+	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa
 	golang.org/x/image v0.45.0
 	golang.org/x/net v0.58.0
 	golang.org/x/oauth2 v0.36.0
