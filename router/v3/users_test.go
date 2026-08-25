@@ -702,7 +702,6 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithJSON(&PostMyFCMDeviceRequest{Token: optional.From("dummy:token")}).
@@ -711,7 +710,6 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 	})
 
 	t.Run("bad request (empty token)", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
@@ -721,7 +719,6 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
@@ -732,12 +729,11 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
-			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{{Token: "dummy:token", TokenType: model.DeviceTokenTypeToken}})
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
@@ -748,12 +744,14 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
-			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{
+				{Token: "dummy:token", TokenType: model.DeviceTokenTypeToken},
+				{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID},
+			})
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
@@ -764,7 +762,7 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
-			assert.ElementsMatch(t, tokens[user.GetID()], repository.TokenEntry{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID})
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID}})
 		}
 	})
 }
