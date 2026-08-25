@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.27.0@sha256:f42f8545265b7fe4124ecdd50a7778c15d5e3fc4d0af648e508e4f4c6a4c572b AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.0@sha256:0ecdc2a9f6156af6451080bfe3d8382a662fcc4e209608c6f919e643453514c1 AS build
 
 RUN mkdir /storage
 
