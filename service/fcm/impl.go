@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/variable"
@@ -100,6 +101,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			Body:  p.Body,
 		}
 	)
+	// TODO: refactor
 	if withUnreadCount {
 		for uid, tokens := range tokensMap {
 			unread := c.unreadCounter.Get(uid)
@@ -128,13 +130,23 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			}
 
 			for _, token := range tokens {
-				messages = append(messages, &messaging.Message{
-					Data:    data,
-					Android: defaultAndroidConfig,
-					Webpush: defaultWebpushConfig,
-					APNS:    apns,
-					Token:   token,
-				})
+				if token.TokenType == model.DeviceTokenTypeToken {
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Token:   token.Token,
+					})
+				} else if token.TokenType == model.DeviceTokenTypeFID {
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Fid:     token.Token,
+					})
+				}
 			}
 		}
 	} else {
@@ -162,13 +174,23 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 
 		for _, tokens := range tokensMap {
 			for _, token := range tokens {
-				messages = append(messages, &messaging.Message{
-					Data:    data,
-					Android: defaultAndroidConfig,
-					Webpush: defaultWebpushConfig,
-					APNS:    apns,
-					Token:   token,
-				})
+				if token.TokenType == model.DeviceTokenTypeToken {
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Token:   token.Token,
+					})
+				} else if token.TokenType == model.DeviceTokenTypeFID {
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Fid:     token.Token,
+					})
+				}
 			}
 		}
 	}

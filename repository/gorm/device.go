@@ -30,7 +30,7 @@ func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, ar
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var d model.Device
 		if len(args.Token.ValueOrZero()) != 0 && len(args.FID.ValueOrZero()) != 0 {
-			if err := tx.Delete(&model.Device{Token: args.FID.ValueOrZero(), TokenType: model.DeviceTokenTypeToken}).Error; err != nil {
+			if err := tx.Delete(&model.Device{Token: args.Token.ValueOrZero(), TokenType: model.DeviceTokenTypeToken}).Error; err != nil {
 				if err != gorm.ErrRecordNotFound {
 					return err
 				}
@@ -47,23 +47,24 @@ func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, ar
 		}
 
 		return tx.Create(&model.Device{
-			Token:  token,
-			UserID: userID,
+			Token:     token,
+			TokenType: tokenType,
+			UserID:    userID,
 		}).Error
 	})
 	return err
 }
 
 // GetDeviceTokens implements DeviceRepository interface.
-func (repo *Repository) GetDeviceTokens(ctx context.Context, userIDs set.UUID) (tokens map[uuid.UUID][]string, err error) {
+func (repo *Repository) GetDeviceTokens(ctx context.Context, userIDs set.UUID) (tokens map[uuid.UUID][]repository.TokenEntry, err error) {
 	var tmp []*model.Device
 	if err := repo.db.WithContext(ctx).Where("user_id IN (?)", userIDs.StringArray()).Find(&tmp).Error; err != nil {
 		return nil, err
 	}
 
-	tokens = make(map[uuid.UUID][]string, len(userIDs))
+	tokens = make(map[uuid.UUID][]repository.TokenEntry, len(userIDs))
 	for _, device := range tmp {
-		tokens[device.UserID] = append(tokens[device.UserID], device.Token)
+		tokens[device.UserID] = append(tokens[device.UserID], repository.TokenEntry{Token: device.Token, TokenType: device.TokenType})
 	}
 	return tokens, nil
 }

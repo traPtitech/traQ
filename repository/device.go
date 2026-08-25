@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 )
@@ -12,6 +13,10 @@ import (
 type RegisterDeviceArgs struct {
 	Token optional.Of[string]
 	FID   optional.Of[string]
+}
+type TokenEntry struct {
+	Token     string
+	TokenType model.DeviceTokenType
 }
 
 // DeviceRepository FCMデバイスリポジトリ
@@ -28,7 +33,7 @@ type DeviceRepository interface {
 	//
 	// 成功した場合、デバイストークンの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetDeviceTokens(ctx context.Context, userIDs set.UUID) (map[uuid.UUID][]string, error)
+	GetDeviceTokens(ctx context.Context, userIDs set.UUID) (map[uuid.UUID][]TokenEntry, error)
 	// DeleteDeviceTokens FCMデバイスの登録を解除します
 	//
 	// 成功した、或いは既に登録解除されていた場合にnilを返します。

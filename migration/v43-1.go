@@ -14,7 +14,7 @@ func v43_1() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "43-1",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.Exec("ALTER TABLE devices DROP PRIMARY KEY, ADD COLUMN token_type VARCHAR(16) NOT NULL AFTER token, ADD PRIMARY KEY (token, token_type)").Error; err != nil {
+			if err := db.Exec("ALTER TABLE devices DROP PRIMARY KEY, ADD COLUMN token_type VARCHAR(16) DEFAULT 'token' NOT NULL AFTER token, ADD PRIMARY KEY (token, token_type)").Error; err != nil {
 				return err
 			}
 			return db.AutoMigrate(&v43_1Device{})
