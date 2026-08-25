@@ -663,6 +663,7 @@ func TestPostMyFCMDeviceRequest_Validate(t *testing.T) {
 
 	type fields struct {
 		Token optional.Of[string]
+		FID   optional.Of[string]
 	}
 	tests := []struct {
 		name    string
@@ -763,7 +764,7 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
-			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
+			assert.ElementsMatch(t, tokens[user.GetID()], repository.TokenEntry{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID})
 		}
 	})
 }

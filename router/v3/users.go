@@ -333,8 +333,8 @@ type PostMyFCMDeviceRequest struct {
 
 func (r PostMyFCMDeviceRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Token, vd.RuneLength(1, 190)),
-		vd.Field(&r.FID, vd.RuneLength(22, 22)),
+		vd.Field(&r.Token, vd.RuneLength(1, 190), vd.When(!r.FID.Valid, vd.Required)),
+		vd.Field(&r.FID, vd.RuneLength(22, 22), vd.When(!r.Token.Valid, vd.Required)),
 	)
 }
 
