@@ -461,7 +461,7 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	return ch, nil
 }
 
-func (m *managerImpl) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+func (m *managerImpl) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	return m.R.GetThreadChannels(ctx, query)
 }
 

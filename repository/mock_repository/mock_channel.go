@@ -207,10 +207,10 @@ func (mr *MockChannelRepositoryMockRecorder) GetPublicChannels(ctx interface{}) 
 }
 
 // GetThreadChannels mocks base method.
-func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
-	ret0, _ := ret[0].([]*model.Channel)
+	ret0, _ := ret[0].([]*model.Thread)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

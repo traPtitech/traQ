@@ -475,11 +475,10 @@ func (h *Handlers) GetChannelPath(c echo.Context) error {
 }
 
 type getThreadChannelQuery struct {
-	Archived  bool      `query:"archived"`
-	Limit     int       `query:"limit"`
-	Offset    int       `query:"offset"`
-	Sort      string    `query:"sort"`
-	ChannelID uuid.UUID `query:"channelID"`
+	Archived bool   `query:"archived"`
+	Limit    int    `query:"limit"`
+	Offset   int    `query:"offset"`
+	Sort     string `query:"sort"`
 }
 
 func (q *getThreadChannelQuery) Validate() error {
@@ -490,7 +489,7 @@ func (q *getThreadChannelQuery) Validate() error {
 		q.Sort = "-createdAt"
 	}
 	return vd.ValidateStruct(q,
-		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
 		vd.Field(&q.Offset, vd.Min(0)),
 	)
 }
@@ -517,6 +516,9 @@ func (h *Handlers) GetThreadChannels(c echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	var req getThreadChannelQuery
+	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
+		return herror.BadRequest("channel must be public")
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -530,5 +532,5 @@ func (h *Handlers) GetThreadChannels(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, channelThreads)
+	return c.JSON(http.StatusOK, formatThreadChannels(channelThreads))
 }

@@ -204,19 +204,20 @@ func (repo *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*m
 }
 
 // GetThreadChannels implements ChannelRepository interface.
-func (repo *Repository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
-	channels := make([]*model.Channel, 0)
-	tx := repo.db.WithContext(ctx).Model(&model.Channel{}).Where(&model.Channel{Type: model.ChannelTypeThread, ParentID: query.ChannelID}).Limit(query.Limit).Offset(query.Offset)
+func (repo *Repository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
+	threads := make([]*model.Thread, 0)
+
+	tx := repo.db.WithContext(ctx).Model(&model.Thread{}).Joins("Channel").Where("Channel.parent_id = ?", query.ChannelID).Limit(query.Limit).Offset(query.Offset)
 	if !query.Archived {
-		tx = tx.Where(&model.Channel{IsVisible: true})
+		tx = tx.Where("Channel.is_visible = ?", true)
 	}
 	if query.Sort {
 		tx = tx.Order("created_at ASC")
 	} else {
 		tx = tx.Order("created_at DESC")
 	}
-	err := tx.Find(&channels).Error
-	return channels, err
+	err := tx.Find(&threads).Error
+	return threads, err
 }
 
 // GetPublicChannels implements ChannelRepository interface.

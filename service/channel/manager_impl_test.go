@@ -549,14 +549,18 @@ func TestManagerImpl_GetThreadChannels(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		thread1 := []*model.Channel{
+		thread1 := []*model.Thread{
 			{
-				ID:        cEKL,
-				Name:      "a",
-				ParentID:  cEK,
-				IsForced:  false,
-				Type:      model.ChannelTypeThread,
-				IsVisible: true,
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+				Channel: &model.Channel{
+					ID:        cEKL,
+					Name:      "a",
+					ParentID:  cEK,
+					IsForced:  false,
+					Type:      model.ChannelTypeThread,
+					IsVisible: true,
+				},
 			},
 		}
 
