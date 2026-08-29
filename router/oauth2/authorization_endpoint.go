@@ -262,7 +262,7 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		if se == nil {
 			// 未ログインの場合はログインしてから再度叩かせる
-			current := c.Request().URL
+			current := c.Request().URL.Clone()
 			v, _ := query.Values(req)
 			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
 
