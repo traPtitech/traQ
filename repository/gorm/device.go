@@ -70,6 +70,14 @@ func (repo *Repository) GetDeviceTokens(ctx context.Context, userIDs set.UUID) (
 }
 
 // DeleteDeviceTokens implements DeviceRepository interface.
-func (repo *Repository) DeleteDeviceTokens(ctx context.Context, tokens []string) error {
-	return repo.db.WithContext(ctx).Where("token IN (?)", tokens).Delete(&model.Device{}).Error
+func (repo *Repository) DeleteDeviceTokens(ctx context.Context, tokens []repository.RegisterDeviceArgs) error {
+	tokenValues := make([]string, len(tokens))
+	for i, t := range tokens {
+		if t.Token.Valid {
+			tokenValues[i] = t.Token.ValueOrZero()
+		} else {
+			tokenValues[i] = t.FID.ValueOrZero()
+		}
+	}
+	return repo.db.WithContext(ctx).Where("token IN (?)", tokenValues).Delete(&model.Device{}).Error
 }

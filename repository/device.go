@@ -38,5 +38,5 @@ type DeviceRepository interface {
 	//
 	// 成功した、或いは既に登録解除されていた場合にnilを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteDeviceTokens(ctx context.Context, tokens []string) error
+	DeleteDeviceTokens(ctx context.Context, args []RegisterDeviceArgs) error
 }

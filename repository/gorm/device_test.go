@@ -106,6 +106,11 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	id3 := mustMakeUser(t, repo, rand, false).GetID()
 	id4 := mustMakeUser(t, repo, rand, true).GetID()
 
+	id5 := mustMakeUser(t, repo, rand, false).GetID()
+	id6 := mustMakeUser(t, repo, rand, false).GetID()
+	id7 := mustMakeUser(t, repo, rand, false).GetID()
+	id8 := mustMakeUser(t, repo, rand, true).GetID()
+
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
@@ -113,6 +118,14 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	token5 := random2.AlphaNumeric(20)
 	token6 := random2.AlphaNumeric(20)
 	token7 := random2.AlphaNumeric(20)
+
+	fid1 := random2.AlphaNumeric(22)
+	fid2 := random2.AlphaNumeric(22)
+	fid3 := random2.AlphaNumeric(22)
+	fid4 := random2.AlphaNumeric(22)
+	fid5 := random2.AlphaNumeric(22)
+	fid6 := random2.AlphaNumeric(22)
+	fid7 := random2.AlphaNumeric(22)
 
 	err := repo.RegisterDevice(context.TODO(), id1, repository.RegisterDeviceArgs{Token: optional.New(token1, true)})
 	require.NoError(err)
@@ -129,16 +142,38 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	err = repo.RegisterDevice(context.TODO(), id4, repository.RegisterDeviceArgs{Token: optional.New(token7, true)})
 	require.NoError(err)
 
+	err = repo.RegisterDevice(context.TODO(), id5, repository.RegisterDeviceArgs{FID: optional.New(fid1, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id6, repository.RegisterDeviceArgs{FID: optional.New(fid2, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id5, repository.RegisterDeviceArgs{FID: optional.New(fid3, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id5, repository.RegisterDeviceArgs{FID: optional.New(fid4, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id7, repository.RegisterDeviceArgs{FID: optional.New(fid5, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id8, repository.RegisterDeviceArgs{FID: optional.New(fid6, true)})
+	require.NoError(err)
+	err = repo.RegisterDevice(context.TODO(), id8, repository.RegisterDeviceArgs{FID: optional.New(fid7, true)})
+	require.NoError(err)
+
 	cases := []struct {
-		tokens []string
+		tokens []repository.RegisterDeviceArgs
 		expect int
 	}{
-		{[]string{token2}, 6},         // v7単体
-		{[]string{token6}, 5},         // v4単体
-		{[]string{}, 5},               // 空配列
-		{[]string{token1, token5}, 3}, // v7 2つ
-		{[]string{token4, token7}, 1}, //v4 とv7 1つずつ
-		{[]string{token3, token2, token6}, 0},
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token2, true)}}, 6},                                      // v7単体
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token6, true)}}, 5},                                      // v4単体
+		{[]repository.RegisterDeviceArgs{}, 5},                                                                         // 空配列
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token1, true)}, {Token: optional.New(token5, true)}}, 3}, // v7 2つ
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token4, true)}, {Token: optional.New(token7, true)}}, 1}, //v4 とv7 1つずつ
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token3, true)}, {Token: optional.New(token2, true)}, {Token: optional.New(token6, true)}}, 0},
+
+		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid2, true)}}, 6},                                  // v7単体
+		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid6, true)}}, 5},                                  // v4単体
+		{[]repository.RegisterDeviceArgs{}, 5},                                                                 // 空配列
+		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid1, true)}, {FID: optional.New(fid5, true)}}, 3}, // v7 2つ
+		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid4, true)}, {FID: optional.New(fid7, true)}}, 1}, //v4 とv7 1つずつ
+		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid3, true)}, {FID: optional.New(fid2, true)}, {FID: optional.New(fid6, true)}}, 0},
 	}
 	for _, v := range cases {
 		assert.NoError(repo.DeleteDeviceTokens(context.TODO(), v.tokens))
