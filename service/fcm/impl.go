@@ -138,7 +138,8 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 						Android: defaultAndroidConfig,
 						Webpush: defaultWebpushConfig,
 						APNS:    apns,
-						Token:   token.Token,
+						//nolint:SA1019
+						Token: token.Token,
 					})
 				case model.DeviceTokenTypeFID:
 					messages = append(messages, &messaging.Message{
@@ -184,7 +185,8 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 						Android: defaultAndroidConfig,
 						Webpush: defaultWebpushConfig,
 						APNS:    apns,
-						Token:   token.Token,
+						//nolint:SA1019
+						Token: token.Token,
 					})
 				case model.DeviceTokenTypeFID:
 					messages = append(messages, &messaging.Message{
@@ -272,12 +274,14 @@ func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens 
 			}
 			switch {
 			case messaging.IsUnregistered(v.Error):
+				//lint:ignore SA1019
 				if messages[i].Token != "" {
 					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{Token: optional.From(messages[i].Token)})
 				} else {
 					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{FID: optional.From(messages[i].Fid)})
 				}
 			default:
+				//lint:ignore SA1019
 				c.logger.Warn("fcm: "+v.Error.Error(), zap.String("token", messages[i].Token))
 			}
 		}
