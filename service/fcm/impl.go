@@ -130,7 +130,8 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			}
 
 			for _, token := range tokens {
-				if token.TokenType == model.DeviceTokenTypeToken {
+				switch token.TokenType {
+				case model.DeviceTokenTypeToken:
 					messages = append(messages, &messaging.Message{
 						Data:    data,
 						Android: defaultAndroidConfig,
@@ -138,7 +139,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 						APNS:    apns,
 						Token:   token.Token,
 					})
-				} else if token.TokenType == model.DeviceTokenTypeFID {
+				case model.DeviceTokenTypeFID:
 					messages = append(messages, &messaging.Message{
 						Data:    data,
 						Android: defaultAndroidConfig,
@@ -147,6 +148,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 						Fid:     token.Token,
 					})
 				}
+
 			}
 		}
 	} else {
@@ -174,7 +176,8 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 
 		for _, tokens := range tokensMap {
 			for _, token := range tokens {
-				if token.TokenType == model.DeviceTokenTypeToken {
+				switch token.TokenType {
+				case model.DeviceTokenTypeToken:
 					messages = append(messages, &messaging.Message{
 						Data:    data,
 						Android: defaultAndroidConfig,
@@ -182,7 +185,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 						APNS:    apns,
 						Token:   token.Token,
 					})
-				} else if token.TokenType == model.DeviceTokenTypeFID {
+				case model.DeviceTokenTypeFID:
 					messages = append(messages, &messaging.Message{
 						Data:    data,
 						Android: defaultAndroidConfig,
