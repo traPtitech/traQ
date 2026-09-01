@@ -274,14 +274,14 @@ func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens 
 			}
 			switch {
 			case messaging.IsUnregistered(v.Error):
-				//lint:staticcheck
+				//nolint:staticcheck
 				if messages[i].Token != "" {
 					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{Token: optional.From(messages[i].Token)})
 				} else {
 					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{FID: optional.From(messages[i].Fid)})
 				}
 			default:
-				//lint:staticcheck
+				//nolint:staticcheck
 				c.logger.Warn("fcm: "+v.Error.Error(), zap.String("token", messages[i].Token))
 			}
 		}
