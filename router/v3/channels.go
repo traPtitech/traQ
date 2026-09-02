@@ -117,7 +117,7 @@ func (h *Handlers) CreateChannels(c *echo.Context) error {
 }
 
 // CreateThreads POST /threads
-func (h *Handlers) CreateThreads(c echo.Context) error {
+func (h *Handlers) CreateThreads(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
