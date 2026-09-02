@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -119,11 +119,11 @@ func NewGoogleProvider(repo repository.Repository, fm file.Manager, logger *zap.
 	}
 }
 
-func (p *GoogleProvider) LoginHandler(c echo.Context) error {
+func (p *GoogleProvider) LoginHandler(c *echo.Context) error {
 	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
-func (p *GoogleProvider) CallbackHandler(c echo.Context) error {
+func (p *GoogleProvider) CallbackHandler(c *echo.Context) error {
 	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 

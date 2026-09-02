@@ -11,7 +11,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -45,7 +45,7 @@ func (r UpdateClipFolderRequest) Validate() error {
 }
 
 // CreateClipFolder POST /clip-folders
-func (h *Handlers) CreateClipFolder(c echo.Context) error {
+func (h *Handlers) CreateClipFolder(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostClipFolderRequest
@@ -62,7 +62,7 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 }
 
 // GetClipFolders GET /clip-folders
-func (h *Handlers) GetClipFolders(c echo.Context) error {
+func (h *Handlers) GetClipFolders(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	cfs, err := h.Repo.GetClipFoldersByUserID(c.Request().Context(), userID)
@@ -74,12 +74,12 @@ func (h *Handlers) GetClipFolders(c echo.Context) error {
 }
 
 // GetClipFolder GET /clip-folders/:folderID
-func (h *Handlers) GetClipFolder(c echo.Context) error {
+func (h *Handlers) GetClipFolder(c *echo.Context) error {
 	return c.JSON(http.StatusOK, formatClipFolder(getParamClipFolder(c)))
 }
 
 // DeleteClipFolder DELETE /clip-folders/:folderID
-func (h *Handlers) DeleteClipFolder(c echo.Context) error {
+func (h *Handlers) DeleteClipFolder(c *echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
 	if err := h.Repo.DeleteClipFolder(c.Request().Context(), folderID); err != nil {
@@ -89,7 +89,7 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 }
 
 // EditClipFolder PATCH /clip-folders/:folderID
-func (h *Handlers) EditClipFolder(c echo.Context) error {
+func (h *Handlers) EditClipFolder(c *echo.Context) error {
 	cf := getParamClipFolder(c)
 
 	var req UpdateClipFolderRequest
@@ -108,7 +108,7 @@ type PostClipFolderMessageRequest struct {
 }
 
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
-func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
+func (h *Handlers) PostClipFolderMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	cf := getParamClipFolder(c)
 	userID := getRequestUserID(c)
@@ -174,7 +174,7 @@ func (q *clipFolderMessageQuery) Validate() error {
 }
 
 // GetClipFolderMessages GET /clip-folders/:folderID/messages
-func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
+func (h *Handlers) GetClipFolderMessages(c *echo.Context) error {
 	cf := getParamClipFolder(c)
 
 	var req clipFolderMessageQuery
@@ -193,7 +193,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 }
 
 // DeleteClipFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
-func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
+func (h *Handlers) DeleteClipFolderMessages(c *echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
 	cf := getParamClipFolder(c)
