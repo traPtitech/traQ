@@ -540,7 +540,7 @@ func TestManagerImpl_GetThreadChannels(t *testing.T) {
 		Archived:  false,
 		Limit:     20,
 		Offset:    0,
-		Sort:      false,
+		Sort:      repository.ThreadChannelSortCreatedAtDesc,
 		ChannelID: cEK,
 	}
 	t.Run("success", func(t *testing.T) {
