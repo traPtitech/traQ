@@ -40,11 +40,18 @@ type ChannelEventsQuery struct {
 }
 
 // GetThreadChannelQuery GetThreadChannel用クエリ
+type ThreadChannelSort string
+
+const (
+	ThreadChannelSortCreatedAtAsc  ThreadChannelSort = "createdAt"
+	ThreadChannelSortCreatedAtDesc ThreadChannelSort = "-createdAt"
+)
+
 type GetThreadChannelQuery struct {
 	Archived  bool
 	Limit     int
 	Offset    int
-	Sort      bool
+	Sort      ThreadChannelSort
 	ChannelID uuid.UUID
 }
 

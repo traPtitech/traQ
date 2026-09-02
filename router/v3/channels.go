@@ -486,7 +486,7 @@ func (q *getThreadChannelQuery) Validate() error {
 		q.Limit = 20
 	}
 	if q.Sort == "" {
-		q.Sort = "-createdAt"
+		q.Sort = string(repository.ThreadChannelSortCreatedAtDesc)
 	}
 	return vd.ValidateStruct(q,
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
@@ -495,19 +495,22 @@ func (q *getThreadChannelQuery) Validate() error {
 }
 
 func (q *getThreadChannelQuery) convert(cid uuid.UUID) (repository.GetThreadChannelQuery, error) {
-	var order bool
-	if strings.ToLower(q.Sort) == "createdat" {
-		order = true
-	} else if strings.ToLower(q.Sort) == "-createdat" {
-		order = false
-	} else {
+	var sort repository.ThreadChannelSort
+
+	switch q.Sort {
+	case string(repository.ThreadChannelSortCreatedAtAsc):
+		sort = repository.ThreadChannelSortCreatedAtAsc
+	case string(repository.ThreadChannelSortCreatedAtDesc):
+		sort = repository.ThreadChannelSortCreatedAtDesc
+	default:
 		return repository.GetThreadChannelQuery{}, fmt.Errorf("invalid sort parameter")
 	}
+
 	return repository.GetThreadChannelQuery{
 		Archived:  q.Archived,
 		Limit:     q.Limit,
 		Offset:    q.Offset,
-		Sort:      order,
+		Sort:      sort,
 		ChannelID: cid,
 	}, nil
 }

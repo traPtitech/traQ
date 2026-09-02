@@ -41,7 +41,7 @@ type Manager interface {
 	GetDMChannelMembers(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetDMChannelMapping(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
 
-	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error)
+	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Thread, error)
 	GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error)
 
 	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
