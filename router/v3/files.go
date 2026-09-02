@@ -9,7 +9,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -44,7 +44,7 @@ func (q *GetFilesRequest) Validate() error {
 }
 
 // GetFiles GET /files
-func (h *Handlers) GetFiles(c echo.Context) error {
+func (h *Handlers) GetFiles(c *echo.Context) error {
 	var req GetFilesRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -82,7 +82,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 }
 
 // PostFile POST /files
-func (h *Handlers) PostFile(c echo.Context) error {
+func (h *Handlers) PostFile(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
@@ -140,23 +140,23 @@ func (h *Handlers) PostFile(c echo.Context) error {
 }
 
 // GetFileMeta GET /files/:fileID/meta
-func (h *Handlers) GetFileMeta(c echo.Context) error {
+func (h *Handlers) GetFileMeta(c *echo.Context) error {
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=86400") // 1日キャッシュ
 	return c.JSON(http.StatusOK, formatFileInfo(getParamFile(c)))
 }
 
 // GetThumbnailImage GET /files/:fileID/thumbnail
-func (h *Handlers) GetThumbnailImage(c echo.Context) error {
+func (h *Handlers) GetThumbnailImage(c *echo.Context) error {
 	return utils.ServeFileThumbnail(c, getParamFile(c), h.Repo, h.Logger)
 }
 
 // GetFile GET /files/:fileID
-func (h *Handlers) GetFile(c echo.Context) error {
+func (h *Handlers) GetFile(c *echo.Context) error {
 	return utils.ServeFile(c, getParamFile(c))
 }
 
 // DeleteFile DELETE /files/:fileID
-func (h *Handlers) DeleteFile(c echo.Context) error {
+func (h *Handlers) DeleteFile(c *echo.Context) error {
 	f := getParamFile(c)
 
 	if !f.GetCreatorID().Valid || f.GetFileType() != model.FileTypeUserFile {

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/livekit/protocol/auth"
 	"github.com/livekit/protocol/livekit"
 	"github.com/livekit/protocol/webhook"
@@ -20,14 +20,14 @@ import (
 )
 
 // GetQallEndpoints GET /qall/endpoints
-func (h *Handlers) GetQallEndpoints(c echo.Context) error {
+func (h *Handlers) GetQallEndpoints(c *echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"endpoint": h.LiveKitHost,
 	})
 }
 
 // GetSoundboardItems GET /qall/soundboard
-func (h *Handlers) GetSoundboardItems(c echo.Context) error {
+func (h *Handlers) GetSoundboardItems(c *echo.Context) error {
 	items, err := h.Repo.GetAllSoundboardItems(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -36,7 +36,7 @@ func (h *Handlers) GetSoundboardItems(c echo.Context) error {
 }
 
 // CreateSoundboardItem POST /qall/soundboard
-func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
+func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
 	src, uploadedFile, err := c.Request().FormFile("file")
 	if err != nil {
 		return herror.BadRequest(err)
@@ -59,7 +59,7 @@ func (h *Handlers) CreateSoundboardItem(c echo.Context) error {
 }
 
 // PlaySoundboardItem POST /qall/soundboard/play
-func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
+func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	var req struct {
 		SoundID string `json:"soundId"`
 		RoomID  string `json:"roomId"`
@@ -146,7 +146,7 @@ func (h *Handlers) PlaySoundboardItem(c echo.Context) error {
 }
 
 // GetRoomState GET /qall/rooms
-func (h *Handlers) GetRoomState(c echo.Context) error {
+func (h *Handlers) GetRoomState(c *echo.Context) error {
 	// Get room state from QallRepository
 	roomState := h.QallRepo.GetState()
 
@@ -154,7 +154,7 @@ func (h *Handlers) GetRoomState(c echo.Context) error {
 }
 
 // GetRoomMetadata GET /qall/rooms/:roomID/metadata
-func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
+func (h *Handlers) GetRoomMetadata(c *echo.Context, roomID uuid.UUID) error {
 	roomState := h.QallRepo.GetRoomState(roomID.String())
 	if roomState == nil {
 		return herror.NotFound("room not found")
@@ -163,7 +163,7 @@ func (h *Handlers) GetRoomMetadata(c echo.Context, roomID uuid.UUID) error {
 }
 
 // PatchRoomMetadata PATCH /qall/rooms/:roomID/metadata
-func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
+func (h *Handlers) PatchRoomMetadata(c *echo.Context) error {
 	var req struct {
 		Metadata string `json:"metadata"`
 	}
@@ -218,7 +218,7 @@ func (h *Handlers) PatchRoomMetadata(c echo.Context) error {
 }
 
 // PatchRoomParticipants DELETE /qall/rooms/:roomID/participants
-func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
+func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 	type RoomParticipantUpdate struct {
 		UserID     string `json:"userId"`
 		CanPublish bool   `json:"canPublish"`
@@ -305,7 +305,7 @@ func (h *Handlers) PatchRoomParticipants(c echo.Context) error {
 }
 
 // GetLiveKitToken GET /qall/token
-func (h *Handlers) GetLiveKitToken(c echo.Context) error {
+func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 	ctx := c.Request().Context()
 	// 1) roomクエリパラメータ取得 (必須)
 	room := c.QueryParam("roomId")
@@ -405,7 +405,7 @@ func (h *Handlers) GetLiveKitToken(c echo.Context) error {
 }
 
 // LiveKitWebhook POST /qall/webhook
-func (h *Handlers) LiveKitWebhook(c echo.Context) error {
+func (h *Handlers) LiveKitWebhook(c *echo.Context) error {
 	// Authプロバイダーを初期化
 	authProvider := auth.NewSimpleKeyProvider(h.LiveKitAPIKey, h.LiveKitAPISecret)
 

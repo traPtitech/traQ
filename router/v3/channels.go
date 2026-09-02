@@ -9,7 +9,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -24,13 +24,13 @@ import (
 )
 
 // GetChannels GET /channels
-func (h *Handlers) GetChannels(c echo.Context) error {
+func (h *Handlers) GetChannels(c *echo.Context) error {
 	ctx := c.Request().Context()
 	if isTrue(c.QueryParam("include-dm")) && len(c.QueryParam("path")) > 0 {
 		return herror.BadRequest("include-dm and path cannot be specified at the same time")
 	}
 
-	var res echo.Map
+	var res map[string]any
 
 	if channelPath := c.QueryParam("path"); channelPath != "" {
 		targetChannel, err := h.ChannelManager.GetChannelFromPath(ctx, channelPath)
@@ -40,7 +40,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			}
 			return herror.InternalServerError(err)
 		}
-		res = echo.Map{
+		res = map[string]any{
 			"public": []*Channel{
 				formatChannel(targetChannel, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(targetChannel.ID)),
 			},
@@ -48,7 +48,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		return extension.ServeJSONWithETag(c, res)
 	}
 
-	res = echo.Map{
+	res = map[string]any{
 		"public": h.ChannelManager.PublicChannelTree(ctx),
 	}
 	if isTrue(c.QueryParam("include-dm")) {
@@ -86,7 +86,7 @@ func (r PostThreadRequest) Validate() error {
 }
 
 // CreateChannels POST /channels
-func (h *Handlers) CreateChannels(c echo.Context) error {
+func (h *Handlers) CreateChannels(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
@@ -117,7 +117,7 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 }
 
 // CreateThreads POST /threads
-func (h *Handlers) CreateThreads(c echo.Context) error {
+func (h *Handlers) CreateThreads(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
@@ -150,7 +150,7 @@ func (h *Handlers) CreateThreads(c echo.Context) error {
 }
 
 // GetChannel GET /channels/:channelID
-func (h *Handlers) GetChannel(c echo.Context) error {
+func (h *Handlers) GetChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID)))
@@ -171,7 +171,7 @@ func (r PatchChannelRequest) Validate() error {
 }
 
 // EditChannel PATCH /channels/:channelID
-func (h *Handlers) EditChannel(c echo.Context) error {
+func (h *Handlers) EditChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
@@ -226,14 +226,14 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 }
 
 // GetChannelViewers GET /channels/:channelID/viewers
-func (h *Handlers) GetChannelViewers(c echo.Context) error {
+func (h *Handlers) GetChannelViewers(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	cv := h.VM.GetChannelViewers(channelID)
 	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }
 
 // GetChannelStats GET /channels/:channelID/stats
-func (h *Handlers) GetChannelStats(c echo.Context) error {
+func (h *Handlers) GetChannelStats(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
 	stats, err := h.Repo.GetChannelStats(c.Request().Context(), channelID, excludeDeletedMessages)
@@ -244,8 +244,8 @@ func (h *Handlers) GetChannelStats(c echo.Context) error {
 }
 
 // GetChannelTopic GET /channels/:channelID/topic
-func (h *Handlers) GetChannelTopic(c echo.Context) error {
-	return c.JSON(http.StatusOK, echo.Map{"topic": getParamChannel(c).Topic})
+func (h *Handlers) GetChannelTopic(c *echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]any{"topic": getParamChannel(c).Topic})
 }
 
 // PutChannelTopicRequest PUT /channels/:channelID/topic リクエストボディ
@@ -260,7 +260,7 @@ func (r PutChannelTopicRequest) Validate() error {
 }
 
 // EditChannelTopic PUT /channels/:channelID/topic
-func (h *Handlers) EditChannelTopic(c echo.Context) error {
+func (h *Handlers) EditChannelTopic(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
@@ -285,7 +285,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 }
 
 // GetChannelPins GET /channels/:channelID/pins
-func (h *Handlers) GetChannelPins(c echo.Context) error {
+func (h *Handlers) GetChannelPins(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	pins, err := h.Repo.GetPinnedMessageByChannelID(c.Request().Context(), channelID)
@@ -328,7 +328,7 @@ func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuer
 }
 
 // GetChannelEvents GET /channels/:channelID/events
-func (h *Handlers) GetChannelEvents(c echo.Context) error {
+func (h *Handlers) GetChannelEvents(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req channelEventsQuery
@@ -345,7 +345,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 }
 
 // GetChannelSubscribers GET /channels/:channelID/subscribers
-func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
+func (h *Handlers) GetChannelSubscribers(c *echo.Context) error {
 	ch := getParamChannel(c)
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
@@ -371,7 +371,7 @@ type PutChannelSubscribersRequest struct {
 }
 
 // SetChannelSubscribers PUT /channels/:channelID/subscribers
-func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
+func (h *Handlers) SetChannelSubscribers(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
@@ -413,7 +413,7 @@ type PatchChannelSubscribersRequest struct {
 }
 
 // EditChannelSubscribers PATCH /channels/:channelID/subscribers
-func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
+func (h *Handlers) EditChannelSubscribers(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
@@ -449,7 +449,7 @@ func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 }
 
 // GetUserDMChannel GET /users/:userID/dm-channel
-func (h *Handlers) GetUserDMChannel(c echo.Context) error {
+func (h *Handlers) GetUserDMChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	myID := getRequestUserID(c)
@@ -464,11 +464,11 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 }
 
 // GetChannelPath GET /channels/:channelID/path
-func (h *Handlers) GetChannelPath(c echo.Context) error {
+func (h *Handlers) GetChannelPath(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, channelID)
 
-	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
+	return c.JSON(http.StatusOK, map[string]any{"path": channelPath})
 }

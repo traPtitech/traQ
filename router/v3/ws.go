@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/service/ws"
 )
 
-func (h *Handlers) GetMyViewStates(c echo.Context) error {
+func (h *Handlers) GetMyViewStates(c *echo.Context) error {
 	type viewState struct {
 		Key       string    `json:"key"`
 		ChannelID uuid.UUID `json:"channelId"`

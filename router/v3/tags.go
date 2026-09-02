@@ -6,7 +6,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -15,17 +15,17 @@ import (
 )
 
 // GetUserTags GET /users/:userID/tags
-func (h *Handlers) GetUserTags(c echo.Context) error {
+func (h *Handlers) GetUserTags(c *echo.Context) error {
 	return serveUserTags(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyUserTags GET /users/me/tags
-func (h *Handlers) GetMyUserTags(c echo.Context) error {
+func (h *Handlers) GetMyUserTags(c *echo.Context) error {
 	return serveUserTags(c, h.Repo, getRequestUserID(c))
 }
 
 // serveUserTags 指定したユーザーのタグ一覧をレスポンスとして返す
-func serveUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) error {
+func serveUserTags(c *echo.Context, repo repository.Repository, userID uuid.UUID) error {
 	tags, err := repo.GetUserTagsByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -45,7 +45,7 @@ func (r PostUserTagRequest) Validate() error {
 }
 
 // AddUserTag POST /users/:userID/tags
-func (h *Handlers) AddUserTag(c echo.Context) error {
+func (h *Handlers) AddUserTag(c *echo.Context) error {
 	if getParamUser(c).GetUserType() == model.UserTypeWebhook {
 		return herror.Forbidden("tags cannot be added to webhook user")
 	}
@@ -53,12 +53,12 @@ func (h *Handlers) AddUserTag(c echo.Context) error {
 }
 
 // AddMyUserTag POST /users/me/tags
-func (h *Handlers) AddMyUserTag(c echo.Context) error {
+func (h *Handlers) AddMyUserTag(c *echo.Context) error {
 	return addUserTags(c, h.Repo, getRequestUserID(c))
 }
 
 // addUserTags 指定したユーザーにタグを追加するハンドラ
-func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) error {
+func addUserTags(c *echo.Context, repo repository.Repository, userID uuid.UUID) error {
 	var req PostUserTagRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -94,7 +94,7 @@ type PatchUserTagRequest struct {
 }
 
 // EditUserTag PATCH /users/:userID/tags/:tagID
-func (h *Handlers) EditUserTag(c echo.Context) error {
+func (h *Handlers) EditUserTag(c *echo.Context) error {
 	me := getRequestUserID(c)
 	userID := getParamAsUUID(c, consts.ParamUserID)
 
@@ -124,7 +124,7 @@ func (h *Handlers) EditUserTag(c echo.Context) error {
 }
 
 // EditMyUserTag PATCH /users/me/tags/:tagID
-func (h *Handlers) EditMyUserTag(c echo.Context) error {
+func (h *Handlers) EditMyUserTag(c *echo.Context) error {
 	var req PatchUserTagRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -147,17 +147,17 @@ func (h *Handlers) EditMyUserTag(c echo.Context) error {
 }
 
 // RemoveUserTag DELETE /users/:userID/tags/:tagID
-func (h *Handlers) RemoveUserTag(c echo.Context) error {
+func (h *Handlers) RemoveUserTag(c *echo.Context) error {
 	return removeUserTag(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // RemoveMyUserTag DELETE /users/me/tags/:tagID
-func (h *Handlers) RemoveMyUserTag(c echo.Context) error {
+func (h *Handlers) RemoveMyUserTag(c *echo.Context) error {
 	return removeUserTag(c, h.Repo, getRequestUserID(c))
 }
 
 // removeUserTag 指定したユーザーからタグを削除するハンドラ
-func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID) error {
+func removeUserTag(c *echo.Context, repo repository.Repository, userID uuid.UUID) error {
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
 	// タグがつけられているかを見る
@@ -184,7 +184,7 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 }
 
 // GetTag GET /tags/:tagID
-func (h *Handlers) GetTag(c echo.Context) error {
+func (h *Handlers) GetTag(c *echo.Context) error {
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
 	t, err := h.Repo.GetTagByID(c.Request().Context(), tagID)
@@ -202,7 +202,7 @@ func (h *Handlers) GetTag(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return c.JSON(http.StatusOK, map[string]any{
 		"id":    t.ID,
 		"tag":   t.Name,
 		"users": users,

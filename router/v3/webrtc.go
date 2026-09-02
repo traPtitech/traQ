@@ -8,7 +8,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	hmacutil "github.com/traPtitech/traQ/utils/hmac"
@@ -26,9 +26,9 @@ func (r PostWebRTCAuthenticateRequest) Validate() error {
 }
 
 // PostWebRTCAuthenticate POST /webrtc/authenticate
-func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
+func (h *Handlers) PostWebRTCAuthenticate(c *echo.Context) error {
 	if len(h.SkyWaySecretKey) == 0 {
-		return echo.NewHTTPError(http.StatusServiceUnavailable)
+		return echo.NewHTTPError(http.StatusServiceUnavailable, http.StatusText(http.StatusServiceUnavailable))
 	}
 
 	var req PostWebRTCAuthenticateRequest
@@ -39,7 +39,7 @@ func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
 	ts := time.Now().Unix()
 	ttl := 40000
 	hash := hmacutil.SHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
-	return c.JSON(http.StatusOK, echo.Map{
+	return c.JSON(http.StatusOK, map[string]any{
 		"peerId":    req.PeerID,
 		"timestamp": ts,
 		"ttl":       ttl,
@@ -48,7 +48,7 @@ func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
 }
 
 // GetWebRTCState GET /webrtc/state
-func (h *Handlers) GetWebRTCState(c echo.Context) error {
+func (h *Handlers) GetWebRTCState(c *echo.Context) error {
 	type StateSession struct {
 		State     string `json:"state"`
 		SessionID string `json:"sessionId"`

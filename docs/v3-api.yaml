@@ -624,7 +624,8 @@ paths:
             type: integer
           in: query
           name: dl
-          description: 1を指定するとレスポンスにContent-Dispositionヘッダーが付与されます
+          deprecated: true
+          description: このクエリパラメータは廃止されており、意味を持ちません（現在、このパラメータが0の場合も1の場合もレスポンスにはContent-Dispositionヘッダーが付与されます）
       operationId: getFile
       description: |-
         指定したファイル本体を取得します。
@@ -2570,6 +2571,10 @@ paths:
         初期状態は`off`です。
 
         `timeline_streaming:(on|off|true|false)`
+
+        ### `ping`コマンド
+        サーバーとの接続を確認する。
+        `ping`を送信すると、`PING`イベント（`{"type":"PING","body":null}`）が返されます。
 
         ## 受信
         TextMessageとして各種イベントが`type`と`body`を持つJSONとして非同期に送られます。
@@ -6715,9 +6720,13 @@ components:
         accessToken:
           type: string
           description: BOTアクセストークン
+        accessTokenRevoked:
+          type: boolean
+          description: BOTアクセストークンが無効化されているかどうか
       required:
         - verificationToken
         - accessToken
+        - accessTokenRevoked
     BotDetail:
       title: BotDetail
       type: object

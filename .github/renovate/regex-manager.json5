@@ -30,6 +30,19 @@
       "depNameTemplate": "{{{registryUrl}}}/{{{depName}}}",
     },
     {
+      "description": "OCI image dependencies with digest (full)",
+      "fileMatch": [
+        ".+\\.ya?ml$", "(^|/)Makefile$"
+      ],
+      "matchStrings": [
+        // Example:
+        // # renovate:image-full-digest
+        // fooImage: "ghcr.io/motoki317/k8s-csi-s3:0.35.5-p1@sha256:..."
+        "# renovate:image-full-digest\n.*?\"(?<depName>[^\\s:@]+(?:/[^\\s:@]+)*):(?<currentValue>[^@\\s\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\"\n",
+      ],
+      "datasourceTemplate": "docker",
+    },
+    {
       "description": "OCI image dependencies (tag)",
       "fileMatch": [
         ".+\\.ya?ml$", "(^|/)Makefile$"
@@ -43,6 +56,19 @@
       "datasourceTemplate": "docker",
       "registryUrlTemplate": "https://{{{registryUrl}}}",
       "depNameTemplate": "{{{registryUrl}}}/{{{depName}}}"
+    },
+    {
+      "description": "OCI image dependencies with digest (tag)",
+      "fileMatch": [
+        ".+\\.ya?ml$", "(^|/)Makefile$"
+      ],
+      "matchStrings": [
+        // Example:
+        // # renovate:image-tag-digest imageName=ghcr.io/renovatebot/renovate
+        // fooTag: "41.159.7@sha256:..."
+        "# renovate:image-tag-digest imageName=(?<depName>\\S+)\n.*?\"(?<currentValue>[^@\\s\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\"\n",
+      ],
+      "datasourceTemplate": "docker",
     },
     {
       "description": "GitHub URL dependencies",

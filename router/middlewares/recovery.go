@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/router/extension"
@@ -16,7 +16,7 @@ import (
 // Recovery Recoveryミドルウェア
 func Recovery(logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) (err error) {
+		return func(c *echo.Context) (err error) {
 			defer func() {
 				if r := recover(); r != nil {
 					pe, ok := r.(error)
