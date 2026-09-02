@@ -3,13 +3,13 @@ package oauth2
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // RevokeTokenEndpointHandler トークン無効化エンドポイントのハンドラ
-func (h *Handler) RevokeTokenEndpointHandler(c echo.Context) error {
+func (h *Handler) RevokeTokenEndpointHandler(c *echo.Context) error {
 	var req struct {
 		Token string `form:"token"`
 	}

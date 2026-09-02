@@ -7,7 +7,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -24,7 +24,7 @@ const (
 	cmctxKey
 )
 
-func NewRequestValidateContext(c echo.Context) context.Context {
+func NewRequestValidateContext(c *echo.Context) context.Context {
 	return context.WithValue(context.WithValue(c.Request().Context(), repoctxKey, c.Get(consts.KeyRepo)), cmctxKey, c.Get(consts.KeyChannelManager))
 }
 

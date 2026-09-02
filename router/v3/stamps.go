@@ -8,7 +8,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -50,7 +50,7 @@ func (q GetStampsQuery) ValidateWithContext(ctx context.Context) error {
 }
 
 // GetStamps GET /stamps
-func (h *Handlers) GetStamps(c echo.Context) error {
+func (h *Handlers) GetStamps(c *echo.Context) error {
 	var q GetStampsQuery
 	if err := bindAndValidate(c, &q); err != nil {
 		return herror.BadRequest(err)
@@ -75,7 +75,7 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 }
 
 // CreateStamp POST /stamps
-func (h *Handlers) CreateStamp(c echo.Context) error {
+func (h *Handlers) CreateStamp(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// スタンプ画像保存
@@ -100,7 +100,7 @@ func (h *Handlers) CreateStamp(c echo.Context) error {
 }
 
 // GetStamp GET /stamps/:stampID
-func (h *Handlers) GetStamp(c echo.Context) error {
+func (h *Handlers) GetStamp(c *echo.Context) error {
 	return c.JSON(http.StatusOK, getParamStamp(c))
 }
 
@@ -118,7 +118,7 @@ func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditStamp PATCH /stamps/:stampID
-func (h *Handlers) EditStamp(c echo.Context) error {
+func (h *Handlers) EditStamp(c *echo.Context) error {
 	var req PatchStampRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -152,7 +152,7 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 }
 
 // DeleteStamp DELETE /stamps/:stampID
-func (h *Handlers) DeleteStamp(c echo.Context) error {
+func (h *Handlers) DeleteStamp(c *echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	if err := h.Repo.DeleteStamp(c.Request().Context(), stampID); err != nil {
@@ -163,7 +163,7 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 }
 
 // GetStampImage GET /stamps/:stampID/image
-func (h *Handlers) GetStampImage(c echo.Context) error {
+func (h *Handlers) GetStampImage(c *echo.Context) error {
 	stamp := getParamStamp(c)
 
 	// ファイルメタ取得
@@ -186,7 +186,7 @@ func (h *Handlers) GetStampImage(c echo.Context) error {
 }
 
 // ChangeStampImage PUT /stamps/:stampID/image
-func (h *Handlers) ChangeStampImage(c echo.Context) error {
+func (h *Handlers) ChangeStampImage(c *echo.Context) error {
 	user := getRequestUser(c)
 	stamp := getParamStamp(c)
 
@@ -215,7 +215,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 }
 
 // GetStampStats GET /stamps/:stampID/stats
-func (h *Handlers) GetStampStats(c echo.Context) error {
+func (h *Handlers) GetStampStats(c *echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 	stats, err := h.Repo.GetStampStats(c.Request().Context(), stampID)
 	if err != nil {
