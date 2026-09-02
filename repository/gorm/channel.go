@@ -211,9 +211,9 @@ func (repo *Repository) GetThreadChannels(ctx context.Context, query repository.
 	if !query.Archived {
 		tx = tx.Where("Channel.is_visible = ?", true)
 	}
-	if query.Sort {
+	if query.Sort == repository.ThreadChannelSortCreatedAtAsc {
 		tx = tx.Order("created_at ASC")
-	} else {
+	} else if query.Sort == repository.ThreadChannelSortCreatedAtDesc {
 		tx = tx.Order("created_at DESC")
 	}
 	err := tx.Find(&threads).Error

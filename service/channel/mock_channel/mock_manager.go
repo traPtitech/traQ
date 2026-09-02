@@ -186,10 +186,10 @@ func (mr *MockManagerMockRecorder) GetDMChannelMembers(ctx, id interface{}) *gom
 }
 
 // GetThreadChannels mocks base method.
-func (m *MockManager) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Channel, error) {
+func (m *MockManager) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
-	ret0, _ := ret[0].([]*model.Channel)
+	ret0, _ := ret[0].([]*model.Thread)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
