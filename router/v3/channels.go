@@ -515,7 +515,7 @@ func (q *getThreadChannelQuery) convert(cid uuid.UUID) (repository.GetThreadChan
 	}, nil
 }
 
-func (h *Handlers) GetThreadChannels(c echo.Context) error {
+func (h *Handlers) GetThreadChannels(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	var req getThreadChannelQuery
