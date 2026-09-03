@@ -208,12 +208,15 @@ func (repo *Repository) GetThreadChannels(ctx context.Context, query repository.
 	threads := make([]*model.Thread, 0)
 
 	tx := repo.db.WithContext(ctx).Model(&model.Thread{}).Joins("Channel").Where("Channel.parent_id = ?", query.ChannelID).Limit(query.Limit).Offset(query.Offset)
+
 	if !query.Archived {
 		tx = tx.Where("Channel.is_visible = ?", true)
 	}
-	if query.Sort == repository.ThreadChannelSortCreatedAtAsc {
+
+	switch query.Sort {
+	case repository.ThreadChannelSortCreatedAtAsc:
 		tx = tx.Order("created_at ASC")
-	} else if query.Sort == repository.ThreadChannelSortCreatedAtDesc {
+	case repository.ThreadChannelSortCreatedAtDesc:
 		tx = tx.Order("created_at DESC")
 	}
 	err := tx.Find(&threads).Error
