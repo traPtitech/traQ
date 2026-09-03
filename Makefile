@@ -2,7 +2,7 @@ SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go
 
 TEST_DB_PORT := 3100
 # renovate:image-full-digest
-TBLS_IMAGE := "ghcr.io/k1low/tbls:v1.95.0@sha256:5d194e7baa9d14e740ee41f29985b8cb7601926fca019a4bb0c34b8c937bd8cb"
+TBLS_IMAGE := "ghcr.io/k1low/tbls:v1.96.0@sha256:35e29e5c2e2d8a4555b36eacfdac9d78d8af5aee5c73cc68219cac9cf3723ee1"
 # renovate:image-full-digest
 SPECTRAL_IMAGE := "index.docker.io/stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050"
 
