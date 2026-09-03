@@ -185,6 +185,21 @@ func (mr *MockManagerMockRecorder) GetDMChannelMembers(ctx, id interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannelMembers", reflect.TypeOf((*MockManager)(nil).GetDMChannelMembers), ctx, id)
 }
 
+// GetThreadChannels mocks base method.
+func (m *MockManager) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
+	ret0, _ := ret[0].([]*model.Thread)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadChannels indicates an expected call of GetThreadChannels.
+func (mr *MockManagerMockRecorder) GetThreadChannels(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockManager)(nil).GetThreadChannels), ctx, query)
+}
+
 // IsChannelAccessibleToUser mocks base method.
 func (m *MockManager) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
