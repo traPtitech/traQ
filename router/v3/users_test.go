@@ -662,7 +662,8 @@ func TestPostMyFCMDeviceRequest_Validate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Token string
+		Token optional.Of[string]
+		FID   optional.Of[string]
 	}
 	tests := []struct {
 		name    string
@@ -676,7 +677,7 @@ func TestPostMyFCMDeviceRequest_Validate(t *testing.T) {
 		},
 		{
 			"success",
-			fields{Token: "dummy:token"},
+			fields{Token: optional.From("dummy:token")},
 			false,
 		},
 	}
@@ -701,37 +702,67 @@ func TestHandlers_PostMyFCMDevice(t *testing.T) {
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
-			WithJSON(&PostMyFCMDeviceRequest{Token: "dummy:token"}).
+			WithJSON(&PostMyFCMDeviceRequest{Token: optional.From("dummy:token")}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request (empty token)", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PostMyFCMDeviceRequest{Token: ""}).
+			WithJSON(&PostMyFCMDeviceRequest{Token: optional.From("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PostMyFCMDeviceRequest{Token: "dummy:token"}).
+			WithJSON(&PostMyFCMDeviceRequest{Token: optional.From("dummy:token")}).
 			Expect().
 			Status(http.StatusNoContent)
 
 		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
 		require.NoError(t, err)
 		if assert.Len(t, tokens, 1) {
-			assert.ElementsMatch(t, tokens[user.GetID()], []string{"dummy:token"})
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{{Token: "dummy:token", TokenType: model.DeviceTokenTypeToken}})
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		e := env.R(t)
+		e.POST(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PostMyFCMDeviceRequest{FID: optional.From("dummy:token23456789012")}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
+		require.NoError(t, err)
+		if assert.Len(t, tokens, 1) {
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{
+				{Token: "dummy:token", TokenType: model.DeviceTokenTypeToken},
+				{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID},
+			})
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		e := env.R(t)
+		e.POST(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PostMyFCMDeviceRequest{Token: optional.From("dummy:token"), FID: optional.From("dummy:token23456789012")}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		tokens, err := env.Repository.GetDeviceTokens(context.TODO(), set.UUID{user.GetID(): {}})
+		require.NoError(t, err)
+		if assert.Len(t, tokens, 1) {
+			assert.ElementsMatch(t, tokens[user.GetID()], []repository.TokenEntry{{Token: "dummy:token23456789012", TokenType: model.DeviceTokenTypeFID}})
 		}
 	})
 }

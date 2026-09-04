@@ -11,9 +11,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/variable"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 )
 
@@ -100,6 +102,7 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			Body:  p.Body,
 		}
 	)
+	// TODO: refactor
 	if withUnreadCount {
 		for uid, tokens := range tokensMap {
 			unread := c.unreadCounter.Get(uid)
@@ -128,13 +131,26 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 			}
 
 			for _, token := range tokens {
-				messages = append(messages, &messaging.Message{
-					Data:    data,
-					Android: defaultAndroidConfig,
-					Webpush: defaultWebpushConfig,
-					APNS:    apns,
-					Token:   token,
-				})
+				switch token.TokenType {
+				case model.DeviceTokenTypeToken:
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						//nolint:staticcheck
+						Token: token.Token,
+					})
+				case model.DeviceTokenTypeFID:
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Fid:     token.Token,
+					})
+				}
+
 			}
 		}
 	} else {
@@ -162,13 +178,25 @@ func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bo
 
 		for _, tokens := range tokensMap {
 			for _, token := range tokens {
-				messages = append(messages, &messaging.Message{
-					Data:    data,
-					Android: defaultAndroidConfig,
-					Webpush: defaultWebpushConfig,
-					APNS:    apns,
-					Token:   token,
-				})
+				switch token.TokenType {
+				case model.DeviceTokenTypeToken:
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						//nolint:staticcheck
+						Token: token.Token,
+					})
+				case model.DeviceTokenTypeFID:
+					messages = append(messages, &messaging.Message{
+						Data:    data,
+						Android: defaultAndroidConfig,
+						Webpush: defaultWebpushConfig,
+						APNS:    apns,
+						Fid:     token.Token,
+					})
+				}
 			}
 		}
 	}
@@ -210,7 +238,7 @@ func (c *clientImpl) worker() {
 }
 
 func (c *clientImpl) sendMessages(messages []*messaging.Message) {
-	var invalidTokens []string
+	var invalidTokens []repository.RegisterDeviceArgs
 	for _, v := range chunkMessages(messages, batchSize) { // 1度に送信できるのは500メッセージまで
 		ng, err := c.sendOneChunk(v)
 		if err != nil {
@@ -224,13 +252,13 @@ func (c *clientImpl) sendMessages(messages []*messaging.Message) {
 	if len(invalidTokens) > 0 {
 		err := c.repo.DeleteDeviceTokens(context.Background(), invalidTokens)
 		if err != nil {
-			c.logger.Error("failed to DeleteDeviceTokens", zap.Error(err), zap.Strings("invalid_tokens", invalidTokens))
+			c.logger.Error("failed to DeleteDeviceTokens", zap.Error(err), zap.Any("invalid_tokens", invalidTokens))
 			return
 		}
 	}
 }
 
-func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens []string, err error) {
+func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens []repository.RegisterDeviceArgs, err error) {
 	res, err := c.c.SendEach(context.Background(), messages)
 	if err != nil {
 		fcmBatchRequestCounter.WithLabelValues("error").Inc()
@@ -246,8 +274,14 @@ func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens 
 			}
 			switch {
 			case messaging.IsUnregistered(v.Error):
-				invalidTokens = append(invalidTokens, messages[i].Token)
+				//nolint:staticcheck
+				if messages[i].Token != "" {
+					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{Token: optional.From(messages[i].Token)})
+				} else {
+					invalidTokens = append(invalidTokens, repository.RegisterDeviceArgs{FID: optional.From(messages[i].Fid)})
+				}
 			default:
+				//nolint:staticcheck
 				c.logger.Warn("fcm: "+v.Error.Error(), zap.String("token", messages[i].Token))
 			}
 		}
