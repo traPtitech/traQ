@@ -10,7 +10,7 @@ import (
 	"github.com/HugoSmits86/nativewebp"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
-  "github.com/sapphi-red/midec"
+	"github.com/sapphi-red/midec"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
