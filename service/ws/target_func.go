@@ -48,6 +48,19 @@ func TargetChannelViewers(channelID uuid.UUID) TargetFunc {
 	}
 }
 
+// TargetChannelViewersの複数形
+func TargetChannelsViewers(channelIDs []uuid.UUID) TargetFunc {
+	return func(s Session) bool {
+		c, _ := s.ViewState()
+		for _, id := range channelIDs {
+			if c == id {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // TargetTimelineStreamingEnabled タイムラインストリーミングが有効なコネクションを対象に送信します
 func TargetTimelineStreamingEnabled() TargetFunc {
 	return func(s Session) bool {
