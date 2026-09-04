@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	otelgorm "gorm.io/plugin/opentelemetry/tracing"
+	"gorm.io/plugin/prometheus"
 
 	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/repository"
@@ -442,6 +443,9 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 		engine.Logger.LogMode(logger.Info)
 	}
 
+	if err := engine.Use(prometheus.New(prometheus.Config{RefreshInterval: 15})); err != nil {
+		return nil, fmt.Errorf("failed to setup GORM Prometheus plugin: %w", err)
+	}
 	if err := engine.Use(otelgorm.NewPlugin(otelgorm.WithoutQueryVariables())); err != nil {
 		return nil, fmt.Errorf("failed to setup GORM OpenTelemetry plugin: %w", err)
 	}

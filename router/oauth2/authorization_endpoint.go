@@ -11,7 +11,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/go-querystring/query"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
@@ -68,7 +68,7 @@ func (t responseType) valid() bool {
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
-func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
+func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	ctx := c.Request().Context()
 
 	c.Response().Header().Set("Cache-Control", "no-store")
@@ -203,10 +203,14 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
+		requiredScopes := req.Scopes
+		if len(requiredScopes) == 0 {
+			requiredScopes = req.ValidScopes
+		}
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for s := range req.Scopes {
+				for s := range requiredScopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
@@ -258,7 +262,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		if se == nil {
 			// 未ログインの場合はログインしてから再度叩かせる
-			current := c.Request().URL
+			current := c.Request().URL.Clone()
 			v, _ := query.Values(req)
 			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
 
@@ -298,7 +302,7 @@ func (r authorizationDecideHandlerRequest) Validate() error {
 }
 
 // AuthorizationDecideHandler 認可エンドポイントの確認フォームのハンドラ
-func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
+func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 	ctx := c.Request().Context()
 
 	c.Response().Header().Set("Cache-Control", "no-store")

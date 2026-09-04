@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	json "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
@@ -111,11 +111,11 @@ func NewTraQProvider(repo repository.Repository, fm file.Manager, logger *zap.Lo
 	}
 }
 
-func (p *TraQProvider) LoginHandler(c echo.Context) error {
+func (p *TraQProvider) LoginHandler(c *echo.Context) error {
 	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
-func (p *TraQProvider) CallbackHandler(c echo.Context) error {
+func (p *TraQProvider) CallbackHandler(c *echo.Context) error {
 	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 

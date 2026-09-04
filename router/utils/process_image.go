@@ -9,8 +9,8 @@ import (
 
 	"github.com/HugoSmits86/nativewebp"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/sapphi-red/midec"
+	"github.com/labstack/echo/v5"
+  "github.com/sapphi-red/midec"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -27,16 +27,16 @@ const (
 )
 
 // SaveUploadIconImage MultipartFormでアップロードされたアイコン画像ファイルを保存
-func SaveUploadIconImage(p imaging.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+func SaveUploadIconImage(p imaging.Processor, c *echo.Context, m file.Manager, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, m, name, model.FileTypeIcon, iconMaxFileSize, iconMaxImageSize)
 }
 
 // SaveUploadStampImage MultipartFormでアップロードされたスタンプ画像ファイルを保存
-func SaveUploadStampImage(p imaging.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+func SaveUploadStampImage(p imaging.Processor, c *echo.Context, m file.Manager, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, m, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
 }
 
-func saveUploadImage(p imaging.Processor, c echo.Context, m file.Manager, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
+func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
 	const (
 		tooLargeImage = "too large image"
 		badImage      = "bad image"

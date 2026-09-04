@@ -169,6 +169,18 @@ func (repo *Repository) GetTokenByID(ctx context.Context, id uuid.UUID) (*model.
 	return ot, nil
 }
 
+// GetTokenByIDWithDeleted implements OAuth2Repository interface.
+func (repo *Repository) GetTokenByIDWithDeleted(ctx context.Context, id uuid.UUID) (*model.OAuth2Token, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	ot := &model.OAuth2Token{}
+	if err := repo.db.WithContext(ctx).Unscoped().Take(ot, &model.OAuth2Token{ID: id}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return ot, nil
+}
+
 // DeleteTokenByID implements OAuth2Repository interface.
 func (repo *Repository) DeleteTokenByID(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {

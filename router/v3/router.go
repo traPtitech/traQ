@@ -3,7 +3,7 @@ package v3
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -432,6 +432,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 }
 
 // L ロガーを返します
-func (h *Handlers) L(c echo.Context) *zap.Logger {
+func (h *Handlers) L(c *echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

@@ -9,7 +9,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"github.com/skip2/go-qrcode"
 
@@ -29,7 +29,7 @@ import (
 )
 
 // GetUsers GET /users
-func (h *Handlers) GetUsers(c echo.Context) error {
+func (h *Handlers) GetUsers(c *echo.Context) error {
 	q := repository.UsersQuery{}
 
 	if isTrue(c.QueryParam("include-suspended")) && len(c.QueryParam("name")) > 0 {
@@ -63,7 +63,7 @@ func (r PostUserRequest) Validate() error {
 }
 
 // CreateUser POST /users
-func (h *Handlers) CreateUser(c echo.Context) error {
+func (h *Handlers) CreateUser(c *echo.Context) error {
 	var req PostUserRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -88,7 +88,7 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 }
 
 // GetMe GET /users/me
-func (h *Handlers) GetMe(c echo.Context) error {
+func (h *Handlers) GetMe(c *echo.Context) error {
 	me := getRequestUser(c)
 
 	tags, err := h.Repo.GetUserTagsByUserID(c.Request().Context(), me.GetID())
@@ -100,7 +100,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return extension.ServeJSONWithETag(c, echo.Map{
+	return extension.ServeJSONWithETag(c, map[string]any{
 		"id":          me.GetID(),
 		"bio":         me.GetBio(),
 		"groups":      groups,
@@ -125,7 +125,7 @@ func (u userAccessScopes) Contains(_ model.AccessScope) bool {
 }
 
 // GetMeOIDC GET /users/me/oidc
-func (h *Handlers) GetMeOIDC(c echo.Context) error {
+func (h *Handlers) GetMeOIDC(c *echo.Context) error {
 	tokenScopes, ok := c.Get(consts.KeyOAuth2AccessScopes).(model.AccessScopes)
 	scopes := lo.Ternary[oidc.ScopeChecker](ok, tokenScopes, userAccessScopes{})
 
@@ -153,7 +153,7 @@ func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditMe PATCH /users/me
-func (h *Handlers) EditMe(c echo.Context) error {
+func (h *Handlers) EditMe(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
@@ -198,7 +198,7 @@ func (r PutMyPasswordRequest) Validate() error {
 }
 
 // PutMyPassword PUT /users/me/password
-func (h *Handlers) PutMyPassword(c echo.Context) error {
+func (h *Handlers) PutMyPassword(c *echo.Context) error {
 	var req PutMyPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -215,7 +215,7 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 }
 
 // GetMyQRCode GET /users/me/qr-code
-func (h *Handlers) GetMyQRCode(c echo.Context) error {
+func (h *Handlers) GetMyQRCode(c *echo.Context) error {
 	user := getRequestUser(c)
 
 	// トークン生成
@@ -246,22 +246,22 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 }
 
 // GetUserIcon GET /users/:userID/icon
-func (h *Handlers) GetUserIcon(c echo.Context) error {
+func (h *Handlers) GetUserIcon(c *echo.Context) error {
 	return utils.ServeUserIcon(c, h.FileManager, getParamUser(c))
 }
 
 // ChangeUserIcon PUT /users/:userID/icon
-func (h *Handlers) ChangeUserIcon(c echo.Context) error {
+func (h *Handlers) ChangeUserIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
-func (h *Handlers) GetMyIcon(c echo.Context) error {
+func (h *Handlers) GetMyIcon(c *echo.Context) error {
 	return utils.ServeUserIcon(c, h.FileManager, getRequestUser(c))
 }
 
 // ChangeMyIcon PUT /users/me/icon
-func (h *Handlers) ChangeMyIcon(c echo.Context) error {
+func (h *Handlers) ChangeMyIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestUserID(c))
 }
 
@@ -280,7 +280,7 @@ func (r *GetMyStampHistoryRequest) Validate() error {
 }
 
 // GetMyStampHistory GET /users/me/stamp-history
-func (h *Handlers) GetMyStampHistory(c echo.Context) error {
+func (h *Handlers) GetMyStampHistory(c *echo.Context) error {
 	var req GetMyStampHistoryRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -310,7 +310,7 @@ func (r *GetMyStampRecommendationsRequest) Validate() error {
 }
 
 // GetMyStampRecommendations GET /users/me/stamp-recommendations
-func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
+func (h *Handlers) GetMyStampRecommendations(c *echo.Context) error {
 	var req GetMyStampRecommendationsRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -337,7 +337,7 @@ func (r PostMyFCMDeviceRequest) Validate() error {
 }
 
 // PostMyFCMDevice POST /users/me/fcm-device
-func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
+func (h *Handlers) PostMyFCMDevice(c *echo.Context) error {
 	var req PostMyFCMDeviceRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -368,7 +368,7 @@ func (r PutUserPasswordRequest) Validate() error {
 }
 
 // ChangeUserPassword PUT /users/:userID/password
-func (h *Handlers) ChangeUserPassword(c echo.Context) error {
+func (h *Handlers) ChangeUserPassword(c *echo.Context) error {
 	var req PutUserPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -377,7 +377,7 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 }
 
 // GetUser GET /users/:userID
-func (h *Handlers) GetUser(c echo.Context) error {
+func (h *Handlers) GetUser(c *echo.Context) error {
 	user := getParamUser(c)
 
 	tags, err := h.Repo.GetUserTagsByUserID(c.Request().Context(), user.GetID())
@@ -411,7 +411,7 @@ func (r PatchUserRequest) Validate() error {
 }
 
 // EditUser PATCH /users/:userID
-func (h *Handlers) EditUser(c echo.Context) error {
+func (h *Handlers) EditUser(c *echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 
 	var req PatchUserRequest
@@ -450,7 +450,7 @@ func (h *Handlers) EditUser(c echo.Context) error {
 }
 
 // GetMyChannelSubscriptions GET /users/me/subscriptions
-func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
+func (h *Handlers) GetMyChannelSubscriptions(c *echo.Context) error {
 	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -481,7 +481,7 @@ func (r PutChannelSubscribeLevelRequest) Validate() error {
 }
 
 // SetChannelSubscribeLevel PUT /users/me/subscriptions/:channelID
-func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
+func (h *Handlers) SetChannelSubscribeLevel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
@@ -512,7 +512,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 }
 
 // GetUserStats GET /users/me/:userID/stats
-func (h *Handlers) GetUserStats(c echo.Context) error {
+func (h *Handlers) GetUserStats(c *echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	stats, err := h.Repo.GetUserStats(c.Request().Context(), userID)
 	if err != nil {
