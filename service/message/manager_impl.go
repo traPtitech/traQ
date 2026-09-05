@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils"
+	messageParser "github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -64,13 +65,90 @@ func (m *manager) get(ctx context.Context, id uuid.UUID) (*message, error) {
 	return m.cache.Get(ctx, id)
 }
 
+func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, uid uuid.UUID) (*model.QuotedMessage, error) {
+	attachmentsResult := []*model.FileMeta{}
+	if includeAttachments {
+		parseResult := messageParser.Parse(mm.Text)
+		attachmentsResult = []*model.FileMeta{}
+		for _, fid := range parseResult.Attachments {
+			auth, err := m.R.IsFileAccessible(ctx, fid, uid)
+			if err != nil {
+				return nil, err
+			}
+			if auth {
+				attachment, err := m.R.GetFileMeta(ctx, fid)
+				if err != nil {
+					return nil, err
+				}
+				attachmentsResult = append(attachmentsResult, attachment)
+			} else {
+				return nil, err
+			}
+		}
+	}
+	return &model.QuotedMessage{
+		Message:     *mm,
+		Attachments: attachmentsResult,
+	}, nil
+}
+
+func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool, uid uuid.UUID) (*model.DetailedMessage, error) {
+	var attachmentsResult []*model.FileMeta
+	var citationResult []*model.QuotedMessage
+	if includeAttachments || includeQuotes {
+		parseResult := messageParser.Parse(mm.Text)
+		if includeAttachments {
+			attachmentsResult = []*model.FileMeta{}
+			for _, fid := range parseResult.Attachments {
+				auth, err := m.R.IsFileAccessible(ctx, fid, uid)
+				if err != nil {
+					return nil, err
+				}
+				if auth {
+					attachment, err := m.R.GetFileMeta(ctx, fid)
+					if err != nil {
+						return nil, err
+					}
+					attachmentsResult = append(attachmentsResult, attachment)
+				} else {
+					return nil, err
+				}
+			}
+		}
+		if includeQuotes {
+			citationResult = []*model.QuotedMessage{}
+			var err error
+			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
+			if err != nil {
+				return nil, err
+			}
+			for _, quote := range quotes {
+				if quote.Channel.IsPublic {
+					qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
+					if err != nil {
+						return nil, err
+					}
+					citationResult = append(citationResult, qm)
+				} else {
+					return nil, ErrNotFound
+				}
+			}
+		}
+	}
+	return &model.DetailedMessage{
+		Message:     *mm,
+		Attachments: attachmentsResult,
+		Quotes:      citationResult,
+	}, nil
+}
+
 func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error) {
 	messages, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From(ids)})
 	if err != nil {
 		return nil, err
 	}
-	ret := utils.Map(messages, func(m *model.Message) Message {
-		return &message{Model: m}
+	ret := utils.Map(messages, func(mm *model.Message) Message {
+		return &message{Model: mm}
 	})
 	return ret, nil
 }
@@ -88,15 +166,24 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 		Asc:                      query.Asc,
 		ExcludeDMs:               query.ExcludeDMs,
 		DisablePreload:           query.DisablePreload,
+		IncludeAttachments:       query.IncludeAttachments,
+		IncludeQuotes:            query.IncludeQuotes,
 	}
 	messages, more, err := m.R.GetMessages(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetMessages: %w", err)
 	}
-
+	records := make([]*model.DetailedMessage, len(messages))
+	for i, mm := range messages {
+		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes, query.User)
+		if err != nil {
+			return nil, err
+		}
+		records[i] = mod
+	}
 	return &timeline{
 		query:       query,
-		records:     messages,
+		records:     records,
 		more:        more,
 		preloaded:   !q.DisablePreload,
 		retrievedAt: time.Now(),
