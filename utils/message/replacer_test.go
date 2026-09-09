@@ -1,6 +1,7 @@
 package message
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -118,6 +119,9 @@ func TestReplacer_Replace(t *testing.T) {
 		},
 	}
 	for _, v := range tt {
-		assert.Equal(t, v[1], re.Replace(v[0]))
+		actual, err := re.Replace(context.Background(), v[0])
+		if assert.NoError(t, err) {
+			assert.Equal(t, v[1], actual)
+		}
 	}
 }

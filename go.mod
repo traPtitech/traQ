@@ -56,7 +56,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/traq-markdown-parser/traq/go v0.0.0-20260909030034-75ffa8bccb26
+	github.com/traq-markdown-parser/traq/go v0.0.0-20260909064713-51444fd6eb53
 	github.com/zitadel/oidc/v3 v3.45.3
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.47.0

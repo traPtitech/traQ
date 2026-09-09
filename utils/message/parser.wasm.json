@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/traq-markdown-parser/traq",
-  "commit": "75ffa8bccb26780644e16821e3dc9fc681b41813",
+  "commit": "51444fd6eb5385be44d4ce40934939ad3a3d1930",
   "artifact": "dist/parser.wasm",
-  "sha256": "70fdecaffebc64619c9e187c6e88dba8bd9c5d6f8c1b37251c0e0876f021a24d",
+  "sha256": "45b2ed2286f9a13fae95a9fc44d27b0e7917804ce9935fbf0e1028b6619e6c3a",
   "build": "Run npm run build in the source repository with its sibling dependencies, then copy dist/parser.wasm here. Keep the Go SDK module at the matching commit."
 }
