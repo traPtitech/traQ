@@ -58,7 +58,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
-	github.com/traq-markdown-parser/traq/go v0.0.0-20260909064713-51444fd6eb53
+	github.com/traq-markdown-parser/traq/go v0.0.0-20260909073950-cdc5c6450ba6
 	github.com/zitadel/oidc/v3 v3.49.6
 	go.opentelemetry.io/contrib/exporters/autoexport v0.71.0
 	go.opentelemetry.io/otel v1.46.0
