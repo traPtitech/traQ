@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func TestMessageCreated(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
+		parsed := parseMessage(t, m.Text)
 		mu := &model.User{
 			ID:   m.UserID,
 			Name: "testman",
@@ -105,7 +106,7 @@ func TestMessageCreated(t *testing.T) {
 		assert.NoError(t, MessageCreated(handlerCtx, time.Now(), intevent.MessageCreated, hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
-			"parse_result": message.Parse(m.Text),
+			"parse_result": parseMessage(t, m.Text),
 		}))
 	})
 
@@ -124,7 +125,7 @@ func TestMessageCreated(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
+		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
 		expectUnicast(handlerCtx, event.DirectMessageCreated, payload.MakeDirectMessageCreated(et, m, u, parsed), b)
@@ -151,7 +152,7 @@ func TestMessageCreated(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
+		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
 		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
@@ -160,4 +161,13 @@ func TestMessageCreated(t *testing.T) {
 			"parse_result": parsed,
 		}))
 	})
+}
+
+func parseMessage(t *testing.T, text string) *message.ParseResult {
+	t.Helper()
+	parsed, err := message.Parse(context.Background(), text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return parsed
 }
