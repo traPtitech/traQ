@@ -24,7 +24,7 @@ func NewReplacer(mapper ReplaceMapper) *Replacer {
 
 // Replace delegates syntax and replacement rules to the shared Markdown SDK.
 func (re *Replacer) Replace(ctx context.Context, source string) (string, error) {
-	result, err := processMarkdown(ctx, source)
+	result, err := extractMarkdown(ctx, source)
 	if err != nil {
 		return "", err
 	}
