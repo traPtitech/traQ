@@ -36,6 +36,12 @@ type Replacer struct {
 	mapper ReplaceMapper
 }
 
+type replaceState struct {
+	inCodeBlock     bool
+	inLatexBlock    bool
+	codeTokenLength int
+}
+
 // NewReplacer Replacerを生成します
 func NewReplacer(mapper ReplaceMapper) *Replacer {
 	return &Replacer{mapper: mapper}
@@ -43,80 +49,79 @@ func NewReplacer(mapper ReplaceMapper) *Replacer {
 
 // Replace 埋め込みを置換します
 func (re *Replacer) Replace(m string) string {
-	inCodeBlock := false
-	inLatexBlock := false
-	codeTokenLength := defaultCodeTokenLength
-
 	lines := strings.Split(m, "\n")
+	state := replaceState{codeTokenLength: defaultCodeTokenLength}
+
 	for i, line := range lines {
-		if !inLatexBlock && strings.HasPrefix(line, strings.Repeat("`", codeTokenLength)) {
-			// `の数が一致するものと組み合うようにする
-			if !inCodeBlock {
-				codeTokenLength = countPrefix(line, backQuoteRune)
-			} else {
-				codeTokenLength = defaultCodeTokenLength
-			}
-
-			inCodeBlock = !inCodeBlock
-		}
-		if !inCodeBlock && strings.HasPrefix(line, "$$") {
-			inLatexBlock = !inLatexBlock
-		}
-		if inCodeBlock || inLatexBlock {
-			continue
-		}
-		// 「```」のブロックでも「$$」ブロック内でもないときに置換
-
-		chs := []rune(line)
-		newChs := make([]rune, 0, len(chs))
-		// 「`」「$」で囲まれていないところの始めの文字のindex
-		noExpressionStartIndex := 0
-		for i := 0; i < len(chs); i++ {
-			ch := chs[i]
-			if ch != backQuoteRune && ch != dollarRune {
-				continue
-			}
-
-			// 囲まれていない場所が終了したのでその箇所は置換する
-			newChs = append(newChs, []rune(
-				re.replaceAll(
-					string(chs[noExpressionStartIndex:i]),
-				),
-			)...)
-
-			if ch == dollarRune {
-				// 「`」は「$」よりも優先されるので
-				// 「$ ` $」のように「`」がペアの「$」より前にあるときは
-				// 「$」のペアとして処理しない
-				backQuoteI := indexOf(chs[i+1:], backQuoteRune)
-				dollarI := indexOf(chs[i+1:], dollarRune)
-				if backQuoteI != -1 && dollarI != -1 && backQuoteI < dollarI {
-					newChs = append(newChs, ch)
-					noExpressionStartIndex = i + 1
-					continue
-				}
-			}
-			newI := indexOf(chs[i+1:], ch)
-			if newI == -1 {
-				// 「$」/「`」のペアがないとき
-				newChs = append(newChs, ch)
-				noExpressionStartIndex = i + 1
-				continue
-			}
-			newI += i + 1
-			newChs = append(newChs, chs[i:newI]...)
-			i = newI
-			noExpressionStartIndex = newI
-		}
-		// 最後のペア以降の置換
-		newChs = append(newChs, []rune(
-			re.replaceAll(
-				string(chs[noExpressionStartIndex:]),
-			),
-		)...)
-		lines[i] = string(newChs)
+		lines[i] = re.replaceLine(line, &state)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func (re *Replacer) replaceLine(line string, state *replaceState) string {
+	if !state.inLatexBlock && strings.HasPrefix(line, strings.Repeat("`", state.codeTokenLength)) {
+		// `の数が一致するものと組み合うようにする
+		if state.inCodeBlock {
+			state.codeTokenLength = defaultCodeTokenLength
+		} else {
+			state.codeTokenLength = countPrefix(line, backQuoteRune)
+		}
+		state.inCodeBlock = !state.inCodeBlock
+	}
+
+	if !state.inCodeBlock && strings.HasPrefix(line, "$$") {
+		state.inLatexBlock = !state.inLatexBlock
+	}
+	if state.inCodeBlock || state.inLatexBlock {
+		return line
+	}
+
+	return re.replaceOutsideExpressions(line)
+}
+
+func (re *Replacer) replaceOutsideExpressions(line string) string {
+	chars := []rune(line)
+	replaced := make([]rune, 0, len(chars))
+	outsideStart := 0
+
+	for i := 0; i < len(chars); i++ {
+		ch := chars[i]
+		if ch != backQuoteRune && ch != dollarRune {
+			continue
+		}
+
+		// 囲まれていない場所が終了したのでその箇所は置換する
+		replaced = append(replaced, []rune(re.replaceAll(string(chars[outsideStart:i])))...)
+
+		if ch == dollarRune {
+			// 「`」は「$」よりも優先されるので
+			// 「$ ` $」のように「`」がペアの「$」より前にあるときは
+			// 「$」のペアとして処理しない
+			backQuoteIndex := indexOf(chars[i+1:], backQuoteRune)
+			dollarIndex := indexOf(chars[i+1:], dollarRune)
+			if backQuoteIndex != -1 && dollarIndex != -1 && backQuoteIndex < dollarIndex {
+				replaced = append(replaced, ch)
+				outsideStart = i + 1
+				continue
+			}
+		}
+
+		pairIndex := indexOf(chars[i+1:], ch)
+		if pairIndex == -1 {
+			// 「$」/「`」のペアがないとき
+			replaced = append(replaced, ch)
+			outsideStart = i + 1
+			continue
+		}
+		pairIndex += i + 1
+		replaced = append(replaced, chars[i:pairIndex]...)
+		i = pairIndex
+		outsideStart = pairIndex
+	}
+
+	// 最後のペア以降の置換
+	replaced = append(replaced, []rune(re.replaceAll(string(chars[outsideStart:])))...)
+	return string(replaced)
 }
 
 func (re *Replacer) replaceAll(m string) string {

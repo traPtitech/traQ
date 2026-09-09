@@ -77,10 +77,13 @@ func TestParseResult(t *testing.T) {
 			if !assert.NoError(t, err) {
 				return
 			}
-			// Notification formatting is checked separately in markdown_test.go.
-			res.notificationText = ""
-			res.Embeddings = nil
-			assert.EqualValues(t, exp, *res)
+			// Notification formatting and embeddings are checked separately.
+			assert.Equal(t, exp.PlainText, res.PlainText)
+			assert.Equal(t, exp.Mentions, res.Mentions)
+			assert.Equal(t, exp.GroupMentions, res.GroupMentions)
+			assert.Equal(t, exp.ChannelLink, res.ChannelLink)
+			assert.Equal(t, exp.Attachments, res.Attachments)
+			assert.Equal(t, exp.Citation, res.Citation)
 		})
 	}
 }
