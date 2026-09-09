@@ -81,6 +81,15 @@ func CloseMarkdown() error {
 
 // Parse processes Markdown in Rust once. Errors must reach callers before storage.
 func Parse(ctx context.Context, text string) (*ParseResult, error) {
+	result, err := processMarkdown(ctx, text)
+	if err != nil {
+		return nil, err
+	}
+
+	return adaptProcessOutput(result), nil
+}
+
+func processMarkdown(ctx context.Context, text string) (*markdown.ProcessOutput, error) {
 	markdownState.mu.Lock()
 	defer markdownState.mu.Unlock()
 
@@ -105,8 +114,7 @@ func Parse(ctx context.Context, text string) (*ParseResult, error) {
 		return nil, fmt.Errorf("process Markdown: %w", err)
 	}
 
-	// Keep the Rust SDK details inside this package's compatibility boundary.
-	return adaptProcessOutput(result), nil
+	return result, nil
 }
 
 func adaptProcessOutput(result *markdown.ProcessOutput) *ParseResult {
