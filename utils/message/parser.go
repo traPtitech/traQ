@@ -15,29 +15,30 @@ var (
 	embURLRegex  = regexp.MustCompile("http://localhost:3000" + embURLRegexFragment)
 )
 
-// SetOrigin URL型埋め込みのURLのオリジンを設定します
-func SetOrigin(origin string) {
-	embURLRegex = regexp.MustCompile(strings.ReplaceAll(origin, ".", `\.`) + embURLRegexFragment)
+// setMetadataOrigin configures legacy attachment and citation URLs.
+func setMetadataOrigin(origin string) {
+	embURLRegex = regexp.MustCompile(regexp.QuoteMeta(origin) + embURLRegexFragment)
 }
 
 // ParseResult メッセージパースリザルト
 type ParseResult struct {
-	PlainText     string
-	Mentions      []uuid.UUID
-	GroupMentions []uuid.UUID
-	ChannelLink   []uuid.UUID
-	Attachments   []uuid.UUID
-	Citation      []uuid.UUID
+	notificationText string
+	PlainText        string
+	Mentions         []uuid.UUID
+	GroupMentions    []uuid.UUID
+	ChannelLink      []uuid.UUID
+	Attachments      []uuid.UUID
+	Citation         []uuid.UUID
 }
 
-// NotificationText PlainTextを通知用に処理したものを返します
+// NotificationText returns the Rust-rendered notification as one line.
 func (pr *ParseResult) NotificationText() string {
-	filled := FillSpoiler(pr.PlainText)
-	return strings.ReplaceAll(filled, "\n", " ")
+	return strings.ReplaceAll(pr.notificationText, "\n", " ")
 }
 
-// Parse メッセージをパースし、埋め込み情報を抽出します
-func Parse(m string) *ParseResult {
+// parseMetadata preserves the existing bot/search plain text and attachment/citation
+// contract. Markdown notifications and references are produced by Rust in Parse.
+func parseMetadata(m string) *ParseResult {
 	var r ParseResult
 
 	// json型埋め込み

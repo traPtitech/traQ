@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -22,6 +23,11 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 		return nil, repository.ErrNilID
 	}
 
+	parseResult, err := message.Parse(context.Background(), text)
+	if err != nil {
+		return nil, err
+	}
+
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV7()),
 		UserID:    userID,
@@ -29,7 +35,7 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 		Text:      text,
 		Stamps:    []model.MessageStamp{},
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
 		}
@@ -49,7 +55,6 @@ func (repo *Repository) CreateMessage(userID, channelID uuid.UUID, text string) 
 		return nil, err
 	}
 
-	parseResult := message.Parse(text)
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
 		Fields: hub.Fields{
@@ -77,11 +82,16 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 		return repository.ErrNilID
 	}
 
+	parseResult, err := message.Parse(context.Background(), text)
+	if err != nil {
+		return err
+	}
+
 	var (
 		oldMes model.Message
 		newMes model.Message
 	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&oldMes, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -110,9 +120,10 @@ func (repo *Repository) UpdateMessage(messageID uuid.UUID, text string) error {
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageUpdated,
 		Fields: hub.Fields{
-			"message_id":  messageID,
-			"old_message": &oldMes,
-			"message":     &newMes,
+			"message_id":   messageID,
+			"old_message":  &oldMes,
+			"parse_result": parseResult,
+			"message":      &newMes,
 		},
 	})
 	return nil
