@@ -58,7 +58,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
-	github.com/traq-markdown-parser/traq/go v0.0.0-20260909013917-22a7696075c0
+	github.com/traq-markdown-parser/traq/go v0.0.0-20260909030034-75ffa8bccb26
 	github.com/zitadel/oidc/v3 v3.49.6
 	go.opentelemetry.io/contrib/exporters/autoexport v0.71.0
 	go.opentelemetry.io/otel v1.46.0
@@ -254,6 +254,9 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.7.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
+	github.com/traq-markdown-parser/commonmark/go v0.0.0-20260909023357-6ddda2244a2b // indirect
+	github.com/traq-markdown-parser/core/go v0.0.0-20260909023020-0e76f9ecfebd // indirect
+	github.com/traq-markdown-parser/trap-extension/go v0.0.0-20260909025436-c7ed47d47397 // indirect
 	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.40.0 // indirect

@@ -14,9 +14,8 @@ type MessageCreated struct {
 }
 
 func MakeMessageCreated(et time.Time, m *model.Message, user model.UserInfo, parsed *message.ParseResult) *MessageCreated {
-	embedded, _ := message.ExtractEmbedding(m.Text)
 	return &MessageCreated{
 		Base:    MakeBase(et),
-		Message: MakeMessage(m, user, embedded, parsed.PlainText),
+		Message: MakeMessage(m, user, parsed.Embeddings, parsed.PlainText),
 	}
 }

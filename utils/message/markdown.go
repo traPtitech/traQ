@@ -26,7 +26,6 @@ func SetOrigin(origin string) {
 	markdownState.Lock()
 	defer markdownState.Unlock()
 	markdownState.origin = origin
-	setMetadataOrigin(origin)
 	if markdownState.processor != nil {
 		_ = markdownState.processor.Close(context.Background())
 		markdownState.processor = nil
@@ -90,12 +89,20 @@ func Parse(ctx context.Context, text string) (*ParseResult, error) {
 		markdownState.processor = nil
 		return nil, fmt.Errorf("process Markdown: %w", err)
 	}
-	parsed := parseMetadata(text)
-	parsed.notificationText = result.NotificationText
-	parsed.Mentions = referenceIDs(result.References.Mentions)
-	parsed.GroupMentions = referenceIDs(result.References.GroupMentions)
-	parsed.ChannelLink = referenceIDs(result.References.ChannelLinks)
-	return parsed, nil
+	embeddings := make([]*EmbeddedInfo, len(result.References.Embeddings))
+	for i := range result.References.Embeddings {
+		embeddings[i] = &result.References.Embeddings[i]
+	}
+	return &ParseResult{
+		Embeddings:       embeddings,
+		PlainText:        result.PlainText,
+		notificationText: result.NotificationText,
+		Mentions:         referenceIDs(result.References.Mentions),
+		GroupMentions:    referenceIDs(result.References.GroupMentions),
+		ChannelLink:      referenceIDs(result.References.ChannelLinks),
+		Attachments:      referenceIDs(result.Attachments),
+		Citation:         referenceIDs(result.Citations),
+	}, nil
 }
 
 func referenceIDs(values []string) []uuid.UUID {
