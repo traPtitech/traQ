@@ -110,3 +110,18 @@ func (mr *MockProcessorMockRecorder) WaveformWav(src, width, height interface{})
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformWav", reflect.TypeOf((*MockProcessor)(nil).WaveformWav), src, width, height)
 }
+
+// WaveformM4a mocks base method.
+func (m *MockProcessor) WaveformM4a(src io.ReadSeeker, width, height int) (io.Reader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaveformM4a", src, width, height)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WaveformM4a indicates an expected call of WaveformM4a.
+func (mr *MockProcessorMockRecorder) WaveformM4a(src, width, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformM4a", reflect.TypeOf((*MockProcessor)(nil).WaveformM4a), src, width, height)
+}

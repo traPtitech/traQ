@@ -115,7 +115,7 @@ func (m *soundboardManager) DeleteSoundboardItem(ctx context.Context, soundID uu
 }
 
 // checkAudioDuration は拡張子(ext)に基づいて対応ライブラリを使い、秒数をチェックする
-// mp3 / wav / ogg に対応し、それ以外は "we only support mp3, wav, ogg" エラー
+// mp3 / wav / ogg / m4a に対応し、それ以外は "we only support mp3, wav, ogg, m4a" エラー
 func checkAudioDuration(fileBytes []byte, contentType string, maxSeconds float64) error {
 	switch contentType {
 	case "audio/mpeg", "audio/mp3":
@@ -147,9 +147,18 @@ func checkAudioDuration(fileBytes []byte, contentType string, maxSeconds float64
 			return fmt.Errorf("audio is too long (%.1f sec). Must be <= %.0f", dur, maxSeconds)
 		}
 		return nil
+	case "audio/m4a":
+		dur, err := getM4aDuration(fileBytes)
+		if err != nil {
+			return fmt.Errorf("m4a decode error: %w", err)
+		}
+		if dur > maxSeconds {
+			return fmt.Errorf("audio is too long (%.1f sec). Must be <= %.0f", dur, maxSeconds)
+		}
+		return nil
 
 	default:
-		return errors.New("we only support .mp3, .wav, .ogg")
+		return errors.New("we only support .mp3, .wav, .ogg, .m4a")
 	}
 }
 
@@ -202,6 +211,26 @@ func getOggDuration(data []byte) (float64, error) {
 	sampleCount := float64(stream.Length()) // Total samples
 	if sampleRate <= 0 {
 		return 0, errors.New("invalid ogg sample rate")
+	}
+	seconds := sampleCount / sampleRate
+	return seconds, nil
+}
+
+// getM4aDuration returns duration in seconds for M4A
+func getM4aDuration(data []byte) (float64, error) {
+	r := bytes.NewReader(data)
+	m4aDecoder := m4a.NewDecoder(r)
+	buf, err := m4aDecoder.FullPCMBuffer()
+	if err != nil {
+		return 0, err
+	}
+	if buf == nil || buf.Format == nil {
+		return 0, errors.New("invalid m4a format or buffer")
+	}
+	sampleRate := float64(buf.Format.SampleRate)
+	sampleCount := float64(len(buf.Data)) // PCMBufferのサンプル数
+	if sampleRate <= 0 {
+		return 0, errors.New("invalid m4a sample rate")
 	}
 	seconds := sampleCount / sampleRate
 	return seconds, nil
