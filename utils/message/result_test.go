@@ -1,13 +1,14 @@
 package message
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMetadata(t *testing.T) {
+func TestParseResult(t *testing.T) {
 	t.Parallel()
 
 	u1 := uuid.Must(uuid.FromString("ee764d5f-71d9-4a40-bc7b-547d8d097c91"))
@@ -72,7 +73,13 @@ func TestMetadata(t *testing.T) {
 		exp := exp
 		t.Run(m, func(t *testing.T) {
 			t.Parallel()
-			res := parseMetadata(m)
+			res, err := Parse(context.Background(), m)
+			if !assert.NoError(t, err) {
+				return
+			}
+			// Notification formatting is checked separately in markdown_test.go.
+			res.notificationText = ""
+			res.Embeddings = nil
 			assert.EqualValues(t, exp, *res)
 		})
 	}
