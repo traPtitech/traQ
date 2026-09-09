@@ -56,7 +56,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/traq-markdown-parser/traq/go v0.0.0-20260909073950-cdc5c6450ba6
+	github.com/traq-markdown-parser/traq/go v0.0.0-20260909080659-b96119aee635
 	github.com/zitadel/oidc/v3 v3.45.3
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.47.0
@@ -130,7 +130,7 @@ require (
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/traq-markdown-parser/commonmark/go v0.0.0-20260909023357-6ddda2244a2b // indirect
-	github.com/traq-markdown-parser/core/go v0.0.0-20260909023020-0e76f9ecfebd // indirect
+	github.com/traq-markdown-parser/core/go v0.0.0-20260909075748-a297da3b092a // indirect
 	github.com/traq-markdown-parser/trap-extension/go v0.0.0-20260909025436-c7ed47d47397 // indirect
 	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
