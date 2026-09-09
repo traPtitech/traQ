@@ -42,7 +42,7 @@ func (state *markdownProcessor) initialize(ctx context.Context) error {
 	}
 
 	if state.processor == nil {
-		processor, err := state.runtime.NewProcessor(ctx, markdown.ProcessorPresetTraQV1, markdown.ProcessorOptions{Origin: state.origin})
+		processor, err := state.runtime.NewProcessor(ctx, markdown.PresetTraQV1, markdown.ProcessorOptions{Origin: state.origin})
 		if err != nil {
 			return err
 		}
