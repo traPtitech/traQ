@@ -1,12 +1,13 @@
 package message
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExtractEmbedding(t *testing.T) {
+func TestParseEmbeddings(t *testing.T) {
 	t.Parallel()
 
 	type Case struct {
@@ -90,12 +91,15 @@ func TestExtractEmbedding(t *testing.T) {
 		v := v
 		t.Run(v.Plain, func(t *testing.T) {
 			t.Parallel()
-			res, plain := ExtractEmbedding(v.Message)
+			parsed, err := Parse(context.Background(), v.Message)
+			if !assert.NoError(t, err) {
+				return
+			}
+			res := parsed.Embeddings
 			deref := make([]EmbeddedInfo, len(res))
 			for k, v := range res {
 				deref[k] = *v
 			}
-			assert.EqualValues(t, v.Plain, plain)
 			assert.ElementsMatch(t, v.Infos, deref)
 		})
 	}

@@ -16,7 +16,7 @@ import (
 
 func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	m := fields["message"].(*model.Message)
-	parsed := message.Parse(m.Text)
+	parsed := fields["parse_result"].(*message.ParseResult)
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {

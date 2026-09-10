@@ -209,7 +209,12 @@ func (h *Handlers) PostWebhook(c *echo.Context) error {
 
 	// 埋め込み変換
 	if isTrue(c.QueryParam("embed")) {
-		body = []byte(h.Replacer.Replace(string(body)))
+		content, err := h.Replacer.Replace(ctx, string(body))
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		body = []byte(content)
 	}
 
 	// メッセージ投稿
