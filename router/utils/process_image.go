@@ -3,11 +3,14 @@ package utils
 
 import (
 	"bytes"
+	"errors"
 	"image/png"
 	"io"
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
+	"github.com/sapphi-red/midec"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -60,10 +63,10 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 	case consts.MimeImagePNG, consts.MimeImageJPEG:
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
-			switch err {
-			case imaging.ErrInvalidImageSrc:
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				return uuid.Nil, herror.BadRequest(badImage)
-			case imaging.ErrPixelLimitExceeded:
+			case err == imaging.ErrPixelLimitExceeded:
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -71,7 +74,7 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		}
 
 		// PNGに変換
-		b := bytes.Buffer{}
+		var b bytes.Buffer
 		if err := png.Encode(&b, img); err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
@@ -81,6 +84,37 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		args.MimeType = consts.MimeImagePNG
 		args.Thumbnail = img // サムネイル画像より小さいという前提
 
+	case consts.MimeImageWebP:
+		isAnimated, err := midec.IsAnimated(src)
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		if err != nil {
+			return uuid.Nil, herror.BadRequest(badImage)
+		}
+		// TODO: アニメーションWebP対応
+		if isAnimated {
+			return uuid.Nil, herror.BadRequest("animated WebP is not supported")
+		}
+		img, err := p.Fit(src, maxImageSize, maxImageSize)
+		if err != nil {
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
+				return uuid.Nil, herror.BadRequest(badImage)
+			case err == imaging.ErrPixelLimitExceeded:
+				return uuid.Nil, herror.BadRequest(tooLargeImage)
+			default:
+				return uuid.Nil, herror.InternalServerError(err)
+			}
+		}
+		var b bytes.Buffer
+		if err := nativewebp.Encode(&b, img, nil); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		args.Src = bytes.NewReader(b.Bytes())
+		args.FileSize = int64(b.Len())
+		args.MimeType = consts.MimeImageWebP
+		args.Thumbnail = img
 	case consts.MimeImageGIF:
 		// リサイズ
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
