@@ -15,6 +15,11 @@ const (
 	bucketName  = "test-bucket"
 	s3AccessKey = "GK0123456789abcdef0123456789abcdef"
 	s3SecretKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+	// Keep the version and digest in sync with compose.yaml.
+	garageRepository = "dxflrs/garage"
+	garageVersion    = "v2.4.1"
+	garageDigest     = "sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020"
 )
 
 var s3Main *s3Tester
@@ -37,11 +42,23 @@ func runStorageTests(m *testing.M) (code int) {
 		return 1
 	}
 
+	// dockertest's automatic pull passes Tag verbatim to the Docker API, which
+	// accepts a tag or digest but not "version@digest". Pull by digest first.
+	imageTag := garageVersion + "@" + garageDigest
+	if _, err := pool.Client.InspectImage(garageRepository + ":" + imageTag); err != nil {
+		if err := pool.Client.PullImage(docker.PullImageOptions{
+			Repository: garageRepository,
+			Tag:        garageDigest,
+		}, docker.AuthConfiguration{}); err != nil {
+			fmt.Println("Could not pull Garage:", err)
+			return 1
+		}
+	}
+
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "dxflrs/garage",
-		// Keep the version and digest in sync with compose.yaml.
-		Tag: "v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020",
-		Cmd: []string{"/garage", "server", "--single-node", "--default-bucket"},
+		Repository: garageRepository,
+		Tag:        imageTag,
+		Cmd:        []string{"/garage", "server", "--single-node", "--default-bucket"},
 		Env: []string{
 			"GARAGE_DEFAULT_ACCESS_KEY=" + s3AccessKey,
 			"GARAGE_DEFAULT_SECRET_KEY=" + s3SecretKey,
