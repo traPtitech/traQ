@@ -543,6 +543,178 @@ func TestManagerImpl_GetThreadChannels(t *testing.T) {
 		Sort:      repository.ThreadChannelSortCreatedAtDesc,
 		ChannelID: cEK,
 	}
+
+	t.Run("query parameters", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name  string
+			query repository.GetThreadChannelQuery
+		}{
+			{
+				name: "limit",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     10,
+					Offset:    0,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+			{
+				name: "offset",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     20,
+					Offset:    10,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+			{
+				name: "sort",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     20,
+					Offset:    0,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
+
+				thread := []*model.Thread{
+					{
+						ChannelID: cEKL,
+						MessageID: uuid.Must(uuid.NewV7()),
+					},
+				}
+
+				repo.EXPECT().
+					GetThreadChannels(gomock.Any(), tt.query).
+					Return(thread, nil).
+					Times(1)
+
+				actual, err := cm.GetThreadChannels(context.TODO(), tt.query)
+
+				if assert.NoError(t, err) {
+					assert.Equal(t, thread, actual)
+				}
+			})
+		}
+	})
+
+	t.Run("archived=false", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		query := repository.GetThreadChannelQuery{
+			Archived:  false,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
+
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
+		}
+	})
+
+	t.Run("archived=true", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		query := repository.GetThreadChannelQuery{
+			Archived:  true,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
+
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
+		}
+	})
+
+	t.Run("ChannelID", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		query := repository.GetThreadChannelQuery{
+			Archived:  false,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
+
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -570,7 +742,6 @@ func TestManagerImpl_GetThreadChannels(t *testing.T) {
 			Times(1)
 
 		actual, err := cm.GetThreadChannels(context.TODO(), query)
-
 		if assert.NoError(t, err) {
 			assert.Equal(t, thread1, actual)
 		}
@@ -581,14 +752,12 @@ func TestManagerImpl_GetThreadChannels(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
-
 		repo.EXPECT().
 			GetThreadChannels(gomock.Any(), query).
 			Return(nil, errors.New("test error")).
 			Times(1)
 
 		_, err := cm.GetThreadChannels(context.TODO(), query)
-
 		assert.EqualError(t, err, "test error")
 	})
 }
