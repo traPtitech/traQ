@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	transfertypes "github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
@@ -136,6 +137,10 @@ func (fs *S3FileStorage) SaveByKey(src io.Reader, key, name, contentType string,
 		Body:               src,
 		ContentType:        aws.String(contentType),
 		ContentDisposition: aws.String(fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name))),
+		// Garage returns composite checksums without the part-count suffix expected
+		// by the SDK. CRC64NVME uses a full-object checksum, keeping download
+		// validation working for both single-part and multipart uploads.
+		ChecksumAlgorithm: transfertypes.ChecksumAlgorithm(types.ChecksumAlgorithmCrc64nvme),
 	}
 
 	tmClient := transfermanager.New(fs.client)

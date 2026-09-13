@@ -69,3 +69,28 @@ If your changelist alters the database schema, you should regenerate db docs.
 
 Powered by:
 + [tbls](https://github.com/k1LoW/tbls) for generating schema docs
+
+### S3 storage (Garage)
+
+`make up` starts Garage and automatically creates the `traq` bucket and development
+credentials. The S3 endpoint is `http://localhost:9000` (`http://s3:9000` inside
+Compose), with region `ap-northeast-1`. Configuration is in `dev/garage.toml`,
+credentials in `compose.yaml`, and persistent data in the `garage` volume.
+There is no web console; use `docker compose exec s3 /garage status` to check status.
+Run storage tests with `go test ./utils/storage`.
+
+Uploads use CRC64NVME checksums for Garage compatibility; other S3 providers must
+also support this algorithm.
+
+#### Existing MinIO data
+
+The old `s3` volume cannot be reused by Garage. To migrate:
+
+1. Stop the backend and back up the database and storage volumes.
+2. Run MinIO with its original volume on a separate port, and start Garage with
+   `docker compose up -d --wait s3`.
+3. Configure [rclone S3 remotes](https://rclone.org/s3/) named `old-minio` and `garage`,
+   then run `rclone copy old-minio:traq garage:traq --metadata` and
+   `rclone check old-minio:traq garage:traq --download`.
+4. After verification succeeds, run `make up` and check existing attachments.
+   Keep the old volume until migration is confirmed; do not use `down -v`.
