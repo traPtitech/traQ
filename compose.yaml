@@ -12,8 +12,8 @@ services:
       TRAQ_STORAGE_S3_BUCKET: traq
       TRAQ_STORAGE_S3_REGION: ap-northeast-1
       TRAQ_STORAGE_S3_ENDPOINT: http://s3:9000
-      TRAQ_STORAGE_S3_ACCESSKEY: ROOT
-      TRAQ_STORAGE_S3_SECRETKEY: PASSWORD
+      TRAQ_STORAGE_S3_ACCESSKEY: &s3-access-key GK0123456789abcdef0123456789abcdef
+      TRAQ_STORAGE_S3_SECRETKEY: &s3-secret-key 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       TRAQ_STORAGE_S3_CACHEDIR: ./storage
       TRAQ_STORAGE_COMPOSITE_REMOTE: s3
     entrypoint: ./traQ serve --dev --skip-init-emojis
@@ -26,6 +26,8 @@ services:
       mysql:
         condition: service_healthy
       es:
+        condition: service_healthy
+      s3:
         condition: service_healthy
     volumes:
       - app:/app/storage
@@ -100,25 +102,30 @@ services:
     command: go run /app/bot_debugger.go -p 80
 
   s3:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
-    # 9000-API, 9001-Web
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    restart: always
     ports:
-      - 9000:9000
-      - 9001:9001
+      - "9000:9000"
     networks:
       default:
         aliases:
           - traq.s3 # {bucket}.s3
     environment:
-      MINIO_ROOT_USER: ROOT
-      MINIO_ROOT_PASSWORD: PASSWORD
-      MINIO_DOMAIN: s3
+      GARAGE_DEFAULT_ACCESS_KEY: *s3-access-key
+      GARAGE_DEFAULT_SECRET_KEY: *s3-secret-key
+      GARAGE_DEFAULT_BUCKET: traq
     volumes:
-      - s3:/data
-    command: minio server /data --console-address :9001
+      - ./dev/garage.toml:/etc/garage.toml:ro
+      - garage:/var/lib/garage
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    healthcheck:
+      test: ["CMD", "/garage", "bucket", "info", "traq"]
+      interval: 1s
+      timeout: 10s
+      retries: 60
 
 volumes:
   app:
   mysql:
   es:
-  s3:
+  garage:
