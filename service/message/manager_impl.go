@@ -293,7 +293,7 @@ func (m *manager) AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, 
 	return ms, nil
 }
 
-func (m *manager) RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID, includeMe bool, includeOther bool) error {
+func (m *manager) RemoveStamps(ctx context.Context, id, stampID, requesterID uuid.UUID, userIDs []uuid.UUID) error {
 	// メッセージ取得
 	msg, err := m.get(ctx, id)
 	if err != nil {
@@ -305,27 +305,22 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUI
 		return ErrChannelArchived
 	}
 
-	// 自分以外のスタンプを削除できるのは、Botかつ自分のメッセージのみ
-	if includeOther {
-		user, err := m.R.GetUser(ctx, userID, false)
+	// ユーザーを指定してスタンプを削除できるのは、Botかつ自分のメッセージのみ
+	if len(userIDs) > 0 {
+		user, err := m.R.GetUser(ctx, requesterID, false)
 		if err != nil {
 			return fmt.Errorf("failed to GetUser: %w", err)
 		}
-		if !user.IsBot() || msg.GetUserID() != userID {
+		if !user.IsBot() || msg.GetUserID() != requesterID {
 			return ErrCannotRemoveStamp
 		}
+	} else {
+		userIDs = []uuid.UUID{requesterID}
 	}
 
 	// スタンプを消す
-	if includeMe {
-		if err := m.R.RemoveStampFromMessage(ctx, id, stampID, userID); err != nil {
-			return fmt.Errorf("failed to RemoveStampFromMessage: %w", err)
-		}
-	}
-	if includeOther {
-		if err := m.R.RemoveOtherStampFromMessage(ctx, id, stampID, userID); err != nil {
-			return fmt.Errorf("failed to RemoveOtherStampFromMessage: %w", err)
-		}
+	if err := m.R.RemoveStampsFromMessage(ctx, id, stampID, userIDs); err != nil {
+		return fmt.Errorf("failed to RemoveStampsFromMessage: %w", err)
 	}
 
 	// キャッシュ削除

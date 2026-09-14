@@ -843,18 +843,30 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	path := "/api/v3/messages/{messageId}/stamps/{stampId}"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
+	botCreator := env.CreateUser(t, rand)
+	bot := env.CreateBot(t, rand, botCreator.GetID())
 	ch := env.CreateChannel(t, rand)
 	archived := env.CreateChannel(t, rand)
 	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	humanExplicitM := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	botM := env.CreateMessage(t, bot.BotUserID, ch.ID, rand)
+	otherUsersM := env.CreateMessage(t, user.GetID(), ch.ID, rand)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
 	stamp := env.CreateStamp(t, user.GetID(), rand)
 	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, humanExplicitM.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user2.GetID())
+	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user3.GetID())
+	env.AddStampToMessage(t, otherUsersM.GetID(), stamp.ID, user2.GetID())
 	env.AddStampToMessage(t, archivedM.GetID(), stamp.ID, user.GetID())
 	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
+	botSession := env.S(t, bot.BotUserID)
 
 	t.Run("not logged in", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, m.GetID(), stamp.ID).
 			Expect().
@@ -862,7 +874,6 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	})
 
 	t.Run("message not found", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, uuid.Must(uuid.NewV4()), stamp.ID).
 			WithCookie(session.CookieName, s).
@@ -871,7 +882,6 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	})
 
 	t.Run("stamp not found", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, m.GetID(), uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
@@ -880,7 +890,6 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	})
 
 	t.Run("archived", func(t *testing.T) {
-		t.Parallel()
 		e := env.R(t)
 		e.DELETE(path, archivedM.GetID(), stamp.ID).
 			WithCookie(session.CookieName, s).
@@ -888,8 +897,7 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
+	t.Run("omitted userIds keeps the existing requester-only behavior", func(t *testing.T) {
 		e := env.R(t)
 		e.DELETE(path, m.GetID(), stamp.ID).
 			WithCookie(session.CookieName, s).
@@ -900,6 +908,57 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Len(t, m.GetStamps(), 0)
+	})
+
+	t.Run("explicit userIds are forbidden for a human", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, humanExplicitM.GetID(), stamp.ID).
+			WithQuery("userIds", user.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusForbidden)
+
+		m, err := env.MM.Get(context.TODO(), humanExplicitM.GetID())
+		require.NoError(t, err)
+		assert.Len(t, m.GetStamps(), 1)
+	})
+
+	t.Run("a bot cannot target users on another user's message", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, otherUsersM.GetID(), stamp.ID).
+			WithQuery("userIds", user2.GetID()).
+			WithCookie(session.CookieName, botSession).
+			Expect().
+			Status(http.StatusForbidden)
+
+		m, err := env.MM.Get(context.TODO(), otherUsersM.GetID())
+		require.NoError(t, err)
+		assert.Len(t, m.GetStamps(), 1)
+	})
+
+	t.Run("a bot removes only explicitly targeted users from its own message", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, botM.GetID(), stamp.ID).
+			WithQuery("userIds", user.GetID()).
+			WithQuery("userIds", user2.GetID()).
+			WithCookie(session.CookieName, botSession).
+			Expect().
+			Status(http.StatusNoContent)
+
+		m, err := env.MM.Get(context.TODO(), botM.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, m.GetStamps(), 1) {
+			assert.Equal(t, user3.GetID(), m.GetStamps()[0].UserID)
+		}
+	})
+
+	t.Run("invalid userIds is rejected", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, botM.GetID(), stamp.ID).
+			WithQuery("userIds", "invalid").
+			WithCookie(session.CookieName, botSession).
+			Expect().
+			Status(http.StatusBadRequest)
 	})
 }
 

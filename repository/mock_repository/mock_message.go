@@ -204,32 +204,18 @@ func (mr *MockMessageRepositoryMockRecorder) GetUserUnreadChannels(ctx, userID i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserUnreadChannels", reflect.TypeOf((*MockMessageRepository)(nil).GetUserUnreadChannels), ctx, userID)
 }
 
-// RemoveOtherStampFromMessage mocks base method.
-func (m *MockMessageRepository) RemoveOtherStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) error {
+// RemoveStampsFromMessage mocks base method.
+func (m *MockMessageRepository) RemoveStampsFromMessage(ctx context.Context, messageID, stampID uuid.UUID, userIDs []uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveOtherStampFromMessage", ctx, messageID, stampID, userID)
+	ret := m.ctrl.Call(m, "RemoveStampsFromMessage", ctx, messageID, stampID, userIDs)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RemoveOtherStampFromMessage indicates an expected call of RemoveOtherStampFromMessage.
-func (mr *MockMessageRepositoryMockRecorder) RemoveOtherStampFromMessage(ctx, messageID, stampID, userID interface{}) *gomock.Call {
+// RemoveStampsFromMessage indicates an expected call of RemoveStampsFromMessage.
+func (mr *MockMessageRepositoryMockRecorder) RemoveStampsFromMessage(ctx, messageID, stampID, userIDs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveOtherStampFromMessage", reflect.TypeOf((*MockMessageRepository)(nil).RemoveOtherStampFromMessage), ctx, messageID, stampID, userID)
-}
-
-// RemoveStampFromMessage mocks base method.
-func (m *MockMessageRepository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveStampFromMessage", ctx, messageID, stampID, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveStampFromMessage indicates an expected call of RemoveStampFromMessage.
-func (mr *MockMessageRepositoryMockRecorder) RemoveStampFromMessage(ctx, messageID, stampID, userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveStampFromMessage", reflect.TypeOf((*MockMessageRepository)(nil).RemoveStampFromMessage), ctx, messageID, stampID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveStampsFromMessage", reflect.TypeOf((*MockMessageRepository)(nil).RemoveStampsFromMessage), ctx, messageID, stampID, userIDs)
 }
 
 // SetMessageUnreads mocks base method.

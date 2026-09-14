@@ -103,16 +103,15 @@ type Manager interface {
 	// DBによるエラーを返すことがあります。
 	AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error)
 	// RemoveStamps 指定したメッセージから指定したスタンプを削除します
-	// includeMeをtrueに指定すると自分のスタンプを全て削除します。
-	// includeOtherをtrueに指定すると自分以外のスタンプを全て削除します。
-	// 自分以外のスタンプを削除できるのは、そのメッセージの投稿者であるBotのみです。
+	// userIDsが空の場合はリクエストしたユーザーのスタンプを削除します。
+	// userIDsを指定して削除できるのは、そのメッセージの投稿者であるBotのみです。
 	//
 	// 成功した場合、或いは既に削除されていた場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// スタンプを削除する権限がない場合は、ErrCannotRemoveStampを返します。
 	// DBによるエラーを返すことがあります。
-	RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID, includeMe bool, includeOther bool) error
+	RemoveStamps(ctx context.Context, id, stampID, requesterID uuid.UUID, userIDs []uuid.UUID) error
 
 	Wait(ctx context.Context) error
 }

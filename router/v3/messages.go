@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
@@ -16,8 +17,7 @@ import (
 )
 
 type DeleteStampsQuery struct {
-	IncludeMe    string `query:"include-me"`
-	IncludeOther string `query:"include-other"`
+	UserIDs []uuid.UUID `query:"userIds"`
 }
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -295,20 +295,13 @@ func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
 		return herror.BadRequest(err)
 	}
 
-	if len(q.IncludeMe) == 0 {
-		q.IncludeMe = "1"
-	}
-	if len(q.IncludeOther) == 0 {
-		q.IncludeOther = "0"
-	}
-
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID, isTrue(q.IncludeMe), isTrue(q.IncludeOther)); err != nil {
+	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID, q.UserIDs); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")

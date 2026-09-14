@@ -529,60 +529,46 @@ func (repo *Repository) AddStampToMessage(ctx context.Context, messageID, stampI
 	return ms, nil
 }
 
-// RemoveStampFromMessage implements MessageRepository interface.
-func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
-	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
+// RemoveStampsFromMessage implements MessageRepository interface.
+func (repo *Repository) RemoveStampsFromMessage(ctx context.Context, messageID, stampID uuid.UUID, userIDs []uuid.UUID) (err error) {
+	if messageID == uuid.Nil || stampID == uuid.Nil || len(userIDs) == 0 {
 		return repository.ErrNilID
 	}
-	result := repo.db.WithContext(ctx).Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUnstamped,
-			Fields: hub.Fields{
-				"message_id": messageID,
-				"stamp_id":   stampID,
-				"user_id":    userID,
-			},
-		})
-	}
-	return nil
-}
-
-// RemoveOtherStampFromMessage implements MessageRepository interface.
-func (repo *Repository) RemoveOtherStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
-	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
-		return repository.ErrNilID
+	for _, userID := range userIDs {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
 	}
 
-	var ms []model.MessageStamp
-	if err := repo.db.WithContext(ctx).Find(&ms, &model.MessageStamp{MessageID: messageID, StampID: stampID}).Error; err != nil {
+	var stamps []model.MessageStamp
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Find(&stamps).
+			Error; err != nil {
+			return err
+		}
+		if len(stamps) == 0 {
+			return nil
+		}
+		return tx.
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Delete(&model.MessageStamp{}).
+			Error
+	})
+	if err != nil {
 		return err
 	}
 
-	result := repo.db.WithContext(ctx).
-		Where("user_id <> ? AND message_id = ? AND stamp_id = ?", userID, messageID, stampID).
-		Delete(&model.MessageStamp{})
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected > 0 {
-		for _, stamp := range ms {
-			if stamp.UserID == userID {
-				continue
-			}
-			repo.hub.Publish(hub.Message{
-				Name: event.MessageUnstamped,
-				Fields: hub.Fields{
-					"message_id": stamp.MessageID,
-					"stamp_id":   stamp.StampID,
-					"user_id":    stamp.UserID,
-				},
-			})
-		}
+	for _, stamp := range stamps {
+		repo.hub.Publish(hub.Message{
+			Name: event.MessageUnstamped,
+			Fields: hub.Fields{
+				"message_id": stamp.MessageID,
+				"stamp_id":   stamp.StampID,
+				"user_id":    stamp.UserID,
+			},
+		})
 	}
 	return nil
 }
