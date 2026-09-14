@@ -235,8 +235,12 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	}()
 
 	for _, v := range messages {
+		parsed, err := message.Parse(context.Background(), v.Text)
+		if err != nil {
+			return err
+		}
 		if v.CreatedAt.After(lastSynced) {
-			doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
+			doc, err := e.convertMessageCreated(v, parsed, userCache)
 			if err != nil {
 				return err
 			}
@@ -255,7 +259,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 		} else {
-			doc := e.convertMessageUpdated(v, message.Parse(v.Text))
+			doc := e.convertMessageUpdated(v, parsed)
 
 			data, err := json.Marshal(map[string]any{"doc": *doc})
 			if err != nil {
