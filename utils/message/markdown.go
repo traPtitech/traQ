@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	markdown "github.com/traq-markdown-parser/traq/go"
+	markdown "github.com/uni-kakurenbo/traq-markdown-engine/packages/sdk/go"
 )
 
 //go:embed parser.wasm
