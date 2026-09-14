@@ -208,7 +208,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 
 	// 埋め込み変換
 	if isTrue(c.QueryParam("embed")) {
-		content, err := h.Replacer.Replace(ctx, string(body))
+		content, err := h.Replacer.Replace(c.Request().Context(), string(body))
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

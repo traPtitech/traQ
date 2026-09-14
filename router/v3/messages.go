@@ -118,7 +118,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		content, err := h.Replacer.Replace(ctx, req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -343,7 +343,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		content, err := h.Replacer.Replace(ctx, req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -399,7 +399,7 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		content, err := h.Replacer.Replace(ctx, req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

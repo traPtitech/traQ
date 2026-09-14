@@ -1,8 +1,6 @@
 module github.com/traPtitech/traQ
 
-go 1.24.4
-
-toolchain go1.25.6
+go 1.26.0
 
 require (
 	cloud.google.com/go/profiler v0.4.3
@@ -269,7 +267,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0
 	golang.org/x/tools v0.41.0 // indirect
