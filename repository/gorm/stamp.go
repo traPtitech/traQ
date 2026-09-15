@@ -156,7 +156,8 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if err := vd.Validate(stamp.Name, validator.StampNameRuleRequired...); err != nil {
-			return repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+			//エラーに応じたレスポンス
+			return repository.ArgError("name", err.Error())
 		}
 		// 名前重複チェック
 		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
@@ -207,7 +208,7 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 
 		if args.Name.Valid && s.Name != args.Name.V {
 			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
-				return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+				return repository.ArgError("args.Name", err.Error())
 			}
 
 			// 重複チェックで名前が一致するレコードを取得
