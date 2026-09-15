@@ -6068,8 +6068,10 @@ components:
           type: string
           description: FCMのデバイストークン
           example: "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1"
-      required:
-        - token
+        fid:
+          type: string
+          description: FCMのInstallation ID
+          example: "cA7kP2mV9xQn4Lw8RjT0sB"
     PostUserRequest:
       title: PostUserRequest
       type: object
