@@ -543,6 +543,7 @@ func (repo *Repository) RemoveStampsFromMessage(ctx context.Context, messageID, 
 	var stamps []model.MessageStamp
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
 			Find(&stamps).
 			Error; err != nil {
