@@ -155,6 +155,12 @@ type PatchThreadRequest struct {
 	Archived optional.Of[bool]   `json:"archived"`
 }
 
+func (r PatchThreadRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.ThreadNameRuleRequired...),
+	)
+}
+
 func (h *Handlers) EditThread(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)

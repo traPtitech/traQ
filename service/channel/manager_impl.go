@@ -284,12 +284,6 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 	}
 
 	if args.Name.Valid {
-		// スレッド名重複を確認
-		{
-			if m.T.isChildPresent(args.Name.V, ch.ParentID) {
-				return ErrChannelNameConflicts
-			}
-		}
 
 		eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
 			"userId": args.UpdaterID,
@@ -306,8 +300,6 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 	if err != nil {
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}
-
-	m.T.updateSingle(id, ch)
 
 	updated := time.Now()
 	for eventType, detail := range eventRecords {
@@ -327,6 +319,9 @@ func (m *managerImpl) ArchiveChannel(ctx context.Context, id uuid.UUID, updaterI
 	}
 	if ch.IsDMChannel() {
 		return ErrInvalidChannel // DMチャンネルはアーカイブ不可
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel // スレッドはアーカイブ不可
 	}
 
 	m.T.Lock()
@@ -372,6 +367,9 @@ func (m *managerImpl) UnarchiveChannel(ctx context.Context, id uuid.UUID, update
 	}
 	if !ch.IsArchived() {
 		return nil // アーカイブされていない
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel
 	}
 
 	m.T.Lock()
