@@ -292,7 +292,7 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 		}
 	}
 
-	ch, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
+	_, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
 		UpdaterID:  args.UpdaterID,
 		Name:       args.Name,
 		Visibility: args.Visibility,
