@@ -27,7 +27,6 @@ func (q DeleteStampsQuery) Validate() error {
 	)
 }
 
-
 // GetMyUnreadChannels GET /users/me/unread
 func (h *Handlers) GetMyUnreadChannels(c *echo.Context) error {
 	userID := getRequestUserID(c)
