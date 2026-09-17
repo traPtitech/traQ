@@ -14,11 +14,19 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 type DeleteStampsQuery struct {
 	UserIDs []uuid.UUID `query:"userIds"`
 }
+
+func (q DeleteStampsQuery) Validate() error {
+	return vd.ValidateStruct(&q,
+		vd.Field(&q.UserIDs, vd.Each(validator.NotNilUUID)),
+	)
+}
+
 
 // GetMyUnreadChannels GET /users/me/unread
 func (h *Handlers) GetMyUnreadChannels(c *echo.Context) error {

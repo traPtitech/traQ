@@ -960,6 +960,15 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 			Expect().
 			Status(http.StatusBadRequest)
 	})
+
+	t.Run("nil userIds is rejected", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, botM.GetID(), stamp.ID).
+			WithQuery("userIds", uuid.Nil).
+			WithCookie(session.CookieName, botSession).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
 }
 
 func TestHandlers_GetMessageClips(t *testing.T) {
