@@ -161,7 +161,7 @@ func (r PatchThreadRequest) Validate() error {
 	)
 }
 
-func (h *Handlers) EditThread(c echo.Context) error {
+func (h *Handlers) EditThread(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
