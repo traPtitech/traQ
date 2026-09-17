@@ -100,7 +100,7 @@ services:
     command: go run /app/bot_debugger.go -p 80
 
   s3:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
     # 9000-API, 9001-Web
     ports:
       - 9000:9000
