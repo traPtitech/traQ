@@ -35,10 +35,14 @@ func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 			opt.BaseEndpoint = aws.String(t.endpoint)
 		})
 
-		// Wait for the S3 API, default bucket, and key permissions to be ready.
+		// Wait for the S3 API and create the test bucket once RustFS is ready.
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		_, err = t.client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(bucketName)})
+		if err == nil {
+			return nil
+		}
+		_, err = t.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)})
 		return err
 	}
 }
