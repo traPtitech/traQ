@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
@@ -13,7 +14,18 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/utils/validator"
 )
+
+type DeleteStampsQuery struct {
+	UserIDs []uuid.UUID `query:"userIds"`
+}
+
+func (q DeleteStampsQuery) Validate() error {
+	return vd.ValidateStruct(&q,
+		vd.Field(&q.UserIDs, vd.Each(validator.NotNilUUID)),
+	)
+}
 
 // GetMyUnreadChannels GET /users/me/unread
 func (h *Handlers) GetMyUnreadChannels(c *echo.Context) error {
@@ -285,16 +297,23 @@ func (h *Handlers) AddMessageStamp(c *echo.Context) error {
 
 // RemoveMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
+	var q DeleteStampsQuery
+	if err := bindAndValidate(c, &q); err != nil {
+		return herror.BadRequest(err)
+	}
+
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID); err != nil {
+	if err := h.MessageManager.RemoveStamps(ctx, messageID, stampID, userID, q.UserIDs); err != nil {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
+		case message.ErrCannotRemoveStamp:
+			return herror.Forbidden("you are not allowed to remove this stamp")
 		default:
 			return herror.InternalServerError(err)
 		}
