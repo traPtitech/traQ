@@ -11,6 +11,23 @@ If you want to contribute to traQ, then follow this section.
 - Docker
 - docker-compose
 
+### Setup with mise
+
+You can use [mise](https://mise.jdx.dev/) to install Go, wire, mockgen, and
+golangci-lint at the versions specified in `mise.toml`:
+
+```sh
+mise trust
+mise install
+mise run init
+```
+
+Run any Makefile target with `mise run <target>`, for example `mise run traQ`,
+`mise run gogen`, or `mise run lint`. Run `mise run help` to list the tasks.
+The mise `init` task downloads Go module dependencies; tools are managed by
+`mise install`. Docker with Compose must be installed separately; spectral and
+tbls run through Docker.
+
 ### Setup Local Server with Docker
 
 #### First Up (or entirely rebuild)

@@ -1,0 +1,99 @@
+[tools]
+go = "1.27.1"
+"go:github.com/google/wire/cmd/wire" = "0.7.0"
+"go:github.com/golang/mock/mockgen" = "1.6.0"
+golangci-lint = "2.13.2"
+
+[vars]
+test_db_port = "3100"
+# renovate:image-full-digest
+tbls_image = "ghcr.io/k1low/tbls:v1.96.0@sha256:35e29e5c2e2d8a4555b36eacfdac9d78d8af5aee5c73cc68219cac9cf3723ee1"
+# renovate:image-full-digest
+spectral_image = "index.docker.io/stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050"
+
+[tasks.help]
+description = "Display this help screen"
+alias = "default"
+run = "mise tasks ls"
+
+[tasks.traQ]
+description = "Build traQ binary"
+sources = ["**/*.go", "**/go.mod", "**/go.sum"]
+outputs = ["traQ"]
+env = { CGO_ENABLED = "0" }
+run = 'go build -o traQ -ldflags "-s -w -X main.version=Dev -X main.revision=Local"'
+
+[tasks.init]
+description = "Download go mod dependencies"
+run = "go mod download"
+
+[tasks.genkey]
+description = "Generate dev keys"
+run = """
+mkdir -p ./dev/keys
+cd ./dev/keys && go run ../bin/gen_ec_pem.go
+"""
+
+[tasks.test]
+description = "Run test"
+env = { MARIADB_PORT = "{{vars.test_db_port}}" }
+run = "go test ./... -race -shuffle=on"
+
+[tasks.up-test-db]
+description = "Make sure the test db container is running"
+env = { TEST_DB_PORT = "{{vars.test_db_port}}" }
+run = "./dev/bin/up-test-db.sh"
+
+[tasks.rm-test-db]
+description = "Remove the test db container"
+run = "./dev/bin/down-test-db.sh"
+
+[tasks.lint]
+description = "Lint go and swagger files"
+# Match Makefile's behavior: run both linters and ignore their exit statuses.
+run = ["mise run golangci-lint", "mise run swagger-lint"]
+
+[tasks.golangci-lint]
+description = "Lint go files"
+run = "golangci-lint run"
+
+[tasks.swagger-lint]
+description = "Lint swagger file"
+run = 'docker run --rm -it -v "$PWD:/tmp" {{vars.spectral_image}} lint -r /tmp/.spectral.yml -q /tmp/docs/v3-api.yaml'
+
+[tasks.db-gen-docs]
+description = "Generate db docs in docs/dbSchema"
+run = [
+  "TRAQ_MARIADB_PORT={{vars.test_db_port}} go run main.go migrate --reset",
+  'docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:{{vars.test_db_port}}/traq" -v "$PWD:/work" -w /work {{vars.tbls_image}} doc -c .tbls.yml --rm-dist',
+]
+
+[tasks.db-diff-docs]
+description = "List diff of db docs"
+run = [
+  "TRAQ_MARIADB_PORT={{vars.test_db_port}} go run main.go migrate --reset",
+  'docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:{{vars.test_db_port}}/traq" -v "$PWD:/work" -w /work {{vars.tbls_image}} diff -c .tbls.yml',
+]
+
+[tasks.db-lint]
+description = "Lint db docs according to .tbls.yml"
+run = [
+  "TRAQ_MARIADB_PORT={{vars.test_db_port}} go run main.go migrate --reset",
+  'docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:{{vars.test_db_port}}/traq" -v "$PWD:/work" -w /work {{vars.tbls_image}} lint -c .tbls.yml',
+]
+
+[tasks.up]
+description = "Build and start the app containers"
+run = "docker compose up -d --build"
+
+[tasks.down]
+description = "Stop and remove app containers"
+run = "docker compose down"
+
+[tasks.seed]
+description = "Seed users, channels, messages, and stamps into the database"
+run = "docker compose run --rm --entrypoint ./traQ backend seed"
+
+[tasks.gogen]
+description = "Generate auto-generated go files"
+run = "go generate ./..."
