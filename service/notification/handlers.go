@@ -293,6 +293,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 
 	if err != nil {
 		ns.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channel_id", cid)) // 失敗
+		return
 	}
 
 	var targetFunc ws.TargetFunc
@@ -321,6 +322,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 
 	if err != nil {
 		ns.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channel_id", cid)) // 失敗
+		return
 	}
 
 	var targetFunc ws.TargetFunc
