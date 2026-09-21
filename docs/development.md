@@ -34,9 +34,8 @@ Now you can access to
 `make down`
 
 #### Remove dev data
-1. `make down`
-2. Remove respective directory in `./dev/data` (e.g. to remove all `rm -r ./dev/data/*`)
-3. `make up`
+1. `docker compose down -v`
+2. `make up`
 
 #### Build executable file
 `make traQ`
@@ -69,3 +68,33 @@ If your changelist alters the database schema, you should regenerate db docs.
 
 Powered by:
 + [tbls](https://github.com/k1LoW/tbls) for generating schema docs
+
+### S3 storage (RustFS)
+
+`make up` starts RustFS and creates the `traq` bucket with the development
+credentials in `compose.yaml`. The S3 endpoint is `http://localhost:9000`
+(`http://s3:9000` inside Compose), the web console is `http://localhost:9001`,
+and the region is `ap-northeast-1`. Persistent data is stored in the `rustfs`
+volume. Run storage tests with `go test ./utils/storage`.
+
+#### Existing MinIO data
+
+The old MinIO `s3` volume cannot be reused by RustFS. Complete the copy before
+replacing the old MinIO deployment with this revision:
+
+1. In the old revision, stop only the backend (`docker compose stop backend`) and
+   back up the database and MinIO `s3` volume. Keep MinIO running as the source.
+2. Provision RustFS at a separate endpoint and create its `traq` bucket.
+3. Configure [rclone S3 remotes](https://rclone.org/s3/) named `old-minio` and
+   `rustfs` with their explicit endpoints and region `ap-northeast-1`. Use S3
+   provider `Minio` for `old-minio` and `Other` for `rustfs`, and set
+   `force_path_style = true` for the RustFS remote.
+4. Run `rclone copy old-minio:traq rustfs:traq --metadata`, followed by
+   `rclone check old-minio:traq rustfs:traq --download` to verify object contents.
+5. Export metadata with `rclone lsjson old-minio:traq --recursive --metadata` and
+   `rclone lsjson rustfs:traq --recursive --metadata`, then compare each object's
+   `Path`, `MimeType`, and the `content-type` and `content-disposition` entries in
+   `Metadata`.
+6. After verification succeeds, deploy this revision, point traQ at RustFS, start
+   the backend, and check existing attachments. Keep the MinIO backup until the
+   migration is confirmed.

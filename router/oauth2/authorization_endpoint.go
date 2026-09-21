@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -95,10 +96,10 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	}
 
 	// リダイレクトURI確認
-	if len(req.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI {
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, req.RedirectURI)
+	if !ok {
 		return herror.BadRequest("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
 	q := &url.Values{}
 	if len(req.State) > 0 {
@@ -347,7 +348,10 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 	if client.RedirectURI == "" { // RedirectURIが事前登録されていない
 		return herror.Forbidden("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, reqAuth.RedirectURI)
+	if !ok {
+		return herror.Forbidden("invalid client")
+	}
 
 	q := url.Values{}
 	if len(reqAuth.State) > 0 {
@@ -397,4 +401,54 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 
 	redirectURI.RawQuery = q.Encode()
 	return c.Redirect(http.StatusFound, redirectURI.String())
+}
+
+// resolveRedirectURI validates the requested redirect URI against the
+// registered URI and returns the URI to use for the authorization response.
+func resolveRedirectURI(registered, requested string) (*url.URL, bool) {
+	redirectURI := registered
+	if requested != "" {
+		if !redirectURIMatches(registered, requested) {
+			return nil, false
+		}
+		redirectURI = requested
+	}
+
+	u, err := url.ParseRequestURI(redirectURI)
+	return u, err == nil
+}
+
+// redirectURIMatches compares redirect URIs using exact string matching,
+// except that RFC 8252 permits the port to differ for HTTP loopback IP URIs.
+func redirectURIMatches(registered, requested string) bool {
+	registeredURI, err := url.ParseRequestURI(registered)
+	if err != nil {
+		return false
+	}
+	requestedURI, err := url.ParseRequestURI(requested)
+	if err != nil {
+		return false
+	}
+	if registered == requested {
+		return true
+	}
+
+	if registeredURI.Scheme != "http" || requestedURI.Scheme != "http" {
+		return false
+	}
+	registeredIP := net.ParseIP(registeredURI.Hostname())
+	if registeredIP == nil || !registeredIP.IsLoopback() {
+		return false
+	}
+
+	return registeredURI.Opaque == requestedURI.Opaque &&
+		registeredURI.User.String() == requestedURI.User.String() &&
+		registeredURI.Hostname() == requestedURI.Hostname() &&
+		registeredURI.Path == requestedURI.Path &&
+		registeredURI.RawPath == requestedURI.RawPath &&
+		registeredURI.OmitHost == requestedURI.OmitHost &&
+		registeredURI.ForceQuery == requestedURI.ForceQuery &&
+		registeredURI.RawQuery == requestedURI.RawQuery &&
+		registeredURI.Fragment == requestedURI.Fragment &&
+		registeredURI.RawFragment == requestedURI.RawFragment
 }
