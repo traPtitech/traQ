@@ -50,7 +50,6 @@ run = "./dev/bin/down-test-db.sh"
 
 [tasks.lint]
 description = "Lint go and swagger files"
-# Match Makefile's behavior: run both linters and ignore their exit statuses.
 run = ["mise run golangci-lint", "mise run swagger-lint"]
 
 [tasks.golangci-lint]
