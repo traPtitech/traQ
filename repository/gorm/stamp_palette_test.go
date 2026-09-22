@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -19,7 +20,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.CreateStampPalette(random2.AlphaNumeric(20), random2.AlphaNumeric(100), make([]uuid.UUID, 0), uuid.Nil)
+		_, err := repo.CreateStampPalette(context.TODO(), random2.AlphaNumeric(20), random2.AlphaNumeric(100), make([]uuid.UUID, 0), uuid.Nil)
 		assert.Error(err)
 	})
 
@@ -35,7 +36,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 			s := mustMakeStamp(t, repo, rand, user.GetID())
 			stamps = append(stamps, s.ID)
 		}
-		sp, err := repo.CreateStampPalette(name, description, stamps, user.GetID())
+		sp, err := repo.CreateStampPalette(context.TODO(), name, description, stamps, user.GetID())
 		if assert.NoError(err) {
 			assert.NotEmpty(sp.ID)
 			assert.Equal(name, sp.Name)
@@ -58,28 +59,28 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateStampPalette(uuid.Nil, repository.UpdateStampPaletteArgs{}), repository.ErrNilID.Error())
+		assert.EqualError(repo.UpdateStampPalette(context.TODO(), uuid.Nil, repository.UpdateStampPaletteArgs{}), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV4()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateStampPalette(context.TODO(), uuid.Must(uuid.NewV4()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV7()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(repo.UpdateStampPalette(context.TODO(), uuid.Must(uuid.NewV7()), repository.UpdateStampPaletteArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.NoError(repo.UpdateStampPalette(stampPalette.ID, repository.UpdateStampPaletteArgs{}))
+		assert.NoError(repo.UpdateStampPalette(context.TODO(), stampPalette.ID, repository.UpdateStampPaletteArgs{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -90,12 +91,12 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		newName := random2.AlphaNumeric(20)
 		newDescription := random2.AlphaNumeric(100)
 
-		if assert.NoError(repo.UpdateStampPalette(stampPalette.ID, repository.UpdateStampPaletteArgs{
+		if assert.NoError(repo.UpdateStampPalette(context.TODO(), stampPalette.ID, repository.UpdateStampPaletteArgs{
 			Name:        optional.From(newName),
 			Description: optional.From(newDescription),
 			Stamps:      make([]uuid.UUID, 0),
 		})) {
-			newStampPalette, err := repo.GetStampPalette(stampPalette.ID)
+			newStampPalette, err := repo.GetStampPalette(context.TODO(), stampPalette.ID)
 			require.NoError(err)
 			assert.Equal(newDescription, newStampPalette.Description)
 			assert.Equal(newName, newStampPalette.Name)
@@ -111,7 +112,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetStampPalette(uuid.Nil)
+		_, err := repo.GetStampPalette(context.TODO(), uuid.Nil)
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -119,7 +120,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetStampPalette(context.TODO(), uuid.Must(uuid.NewV4()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -127,7 +128,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV7()))
+		_, err := repo.GetStampPalette(context.TODO(), uuid.Must(uuid.NewV7()))
 		assert.EqualError(err, repository.ErrNotFound.Error())
 	})
 
@@ -136,7 +137,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 		assert := assert.New(t)
 		createdStampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 
-		stampPalette, err := repo.GetStampPalette(createdStampPalette.ID)
+		stampPalette, err := repo.GetStampPalette(context.TODO(), createdStampPalette.ID)
 		if assert.NoError(err) {
 			assert.Equal(createdStampPalette.ID, stampPalette.ID)
 			assert.Equal(createdStampPalette.Name, stampPalette.Name)
@@ -154,21 +155,21 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteStampPalette(uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(repo.DeleteStampPalette(context.TODO(), uuid.Nil), repository.ErrNilID.Error())
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteStampPalette(context.TODO(), uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
+		assert.EqualError(repo.DeleteStampPalette(context.TODO(), uuid.Must(uuid.NewV7())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -176,8 +177,8 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		assert := assert.New(t)
 
 		stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
-		if assert.NoError(repo.DeleteStampPalette(stampPalette.ID)) {
-			_, err := repo.GetStampPalette(stampPalette.ID)
+		if assert.NoError(repo.DeleteStampPalette(context.TODO(), stampPalette.ID)) {
+			_, err := repo.GetStampPalette(context.TODO(), stampPalette.ID)
 			assert.EqualError(err, repository.ErrNotFound.Error())
 		}
 	})
@@ -194,7 +195,7 @@ func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	}
 	mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), otherUser.GetID())
 
-	arr, err := repo.GetStampPalettes(user.GetID())
+	arr, err := repo.GetStampPalettes(context.TODO(), user.GetID())
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 		for _, stampPalette := range arr {

@@ -3,15 +3,15 @@ package middlewares
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/extension"
 )
 
 // CheckModTimePrecondition 事前条件検査ミドルウェア
-func CheckModTimePrecondition(modTimeFunc func(c echo.Context) time.Time, preFunc ...echo.HandlerFunc) echo.MiddlewareFunc {
+func CheckModTimePrecondition(modTimeFunc func(c *echo.Context) time.Time, preFunc ...echo.HandlerFunc) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if len(preFunc) > 0 {
 				if err := preFunc[0](c); err != nil {
 					return err

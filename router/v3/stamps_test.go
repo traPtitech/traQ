@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -283,7 +284,7 @@ func TestHandlers_EditStamp(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		stamp, err := env.Repository.GetStamp(stamp.ID)
+		stamp, err := env.Repository.GetStamp(context.TODO(), stamp.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, user2.GetID().String(), stamp.CreatorID.String())
 		assert.EqualValues(t, "test123123", stamp.Name)
@@ -347,7 +348,7 @@ func TestHandlers_DeleteStamp(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetStamp(stamp.ID)
+		_, err := env.Repository.GetStamp(context.TODO(), stamp.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }

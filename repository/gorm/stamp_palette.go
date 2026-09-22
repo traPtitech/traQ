@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
@@ -13,7 +15,7 @@ import (
 )
 
 // CreateStampPalette implements StampPaletteRepository interface.
-func (repo *Repository) CreateStampPalette(name, description string, stamps model.UUIDs, userID uuid.UUID) (sp *model.StampPalette, err error) {
+func (repo *Repository) CreateStampPalette(ctx context.Context, name, description string, stamps model.UUIDs, userID uuid.UUID) (sp *model.StampPalette, err error) {
 	if userID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -25,7 +27,7 @@ func (repo *Repository) CreateStampPalette(name, description string, stamps mode
 		CreatorID:   userID,
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if err := vd.Validate(name, validator.StampPaletteNameRuleRequired...); err != nil {
 			return repository.ArgError("name", "Name must be 1-30")
@@ -41,7 +43,7 @@ func (repo *Repository) CreateStampPalette(name, description string, stamps mode
 			return repository.ArgError("stamps", "stamps must be 0-200")
 		}
 		// スタンプ存在チェック
-		if err = repo.ExistStamps(stamps); err != nil {
+		if err = repo.ExistStamps(ctx, stamps); err != nil {
 			return err
 		}
 
@@ -63,13 +65,13 @@ func (repo *Repository) CreateStampPalette(name, description string, stamps mode
 }
 
 // UpdateStampPalette implements StampPaletteRepository interface.
-func (repo *Repository) UpdateStampPalette(id uuid.UUID, args repository.UpdateStampPaletteArgs) error {
+func (repo *Repository) UpdateStampPalette(ctx context.Context, id uuid.UUID, args repository.UpdateStampPaletteArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 	var userID uuid.UUID
 	changes := map[string]interface{}{}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var sp model.StampPalette
 		if err := tx.First(&sp, &model.StampPalette{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -92,7 +94,7 @@ func (repo *Repository) UpdateStampPalette(id uuid.UUID, args repository.UpdateS
 			if err := vd.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 				return repository.ArgError("args.Stamps", "stamps must be 0-200")
 			}
-			if err := repo.ExistStamps(args.Stamps); err != nil {
+			if err := repo.ExistStamps(ctx, args.Stamps); err != nil {
 				return err
 			}
 			changes["stamps"] = args.Stamps
@@ -120,27 +122,27 @@ func (repo *Repository) UpdateStampPalette(id uuid.UUID, args repository.UpdateS
 }
 
 // GetStampPalette implements StampPaletteRepository interface.
-func (repo *Repository) GetStampPalette(id uuid.UUID) (sp *model.StampPalette, err error) {
+func (repo *Repository) GetStampPalette(ctx context.Context, id uuid.UUID) (sp *model.StampPalette, err error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	sp = &model.StampPalette{}
-	if err := repo.db.Take(sp, &model.StampPalette{ID: id}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Take(sp, &model.StampPalette{ID: id}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return sp, nil
 }
 
 // DeleteStampPalette implements StampPaletteRepository interface.
-func (repo *Repository) DeleteStampPalette(id uuid.UUID) (err error) {
+func (repo *Repository) DeleteStampPalette(ctx context.Context, id uuid.UUID) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	stampPalette, err := repo.GetStampPalette(id)
+	stampPalette, err := repo.GetStampPalette(ctx, id)
 	if err != nil {
 		return err
 	}
-	result := repo.db.Delete(&model.StampPalette{ID: id})
+	result := repo.db.WithContext(ctx).Delete(&model.StampPalette{ID: id})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -158,8 +160,8 @@ func (repo *Repository) DeleteStampPalette(id uuid.UUID) (err error) {
 }
 
 // GetStampPalettes implements StampPaletteRepository interface.
-func (repo *Repository) GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error) {
+func (repo *Repository) GetStampPalettes(ctx context.Context, userID uuid.UUID) (sps []*model.StampPalette, err error) {
 	sps = make([]*model.StampPalette, 0)
-	tx := repo.db
+	tx := repo.db.WithContext(ctx)
 	return sps, tx.Where("creator_id = ?", userID).Find(&sps).Error
 }

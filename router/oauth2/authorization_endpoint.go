@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/go-querystring/query"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
@@ -68,7 +69,9 @@ func (t responseType) valid() bool {
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
-func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
+func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -79,7 +82,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	req.AccessTime = time.Now()
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(req.ClientID)
+	client, err := h.Repo.GetClient(ctx, req.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -93,10 +96,10 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	// リダイレクトURI確認
-	if len(req.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI {
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, req.RedirectURI)
+	if !ok {
 		return herror.BadRequest("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
 	q := &url.Values{}
 	if len(req.State) > 0 {
@@ -168,7 +171,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	if se != nil {
-		u, err := h.Repo.GetUser(se.UserID(), false)
+		u, err := h.Repo.GetUser(ctx, se.UserID(), false)
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -193,7 +196,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		tokens, err := h.Repo.GetTokensByUser(se.UserID())
+		tokens, err := h.Repo.GetTokensByUser(ctx, se.UserID())
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
@@ -201,10 +204,14 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
+		requiredScopes := req.Scopes
+		if len(requiredScopes) == 0 {
+			requiredScopes = req.ValidScopes
+		}
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for s := range req.Scopes {
+				for s := range requiredScopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
@@ -235,7 +242,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			CodeChallengeMethod: req.CodeChallengeMethod,
 			Nonce:               req.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(ctx, data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -256,7 +263,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		if se == nil {
 			// 未ログインの場合はログインしてから再度叩かせる
-			current := c.Request().URL
+			current := c.Request().URL.Clone()
 			v, _ := query.Values(req)
 			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
 
@@ -268,7 +275,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, loginURL.String())
 		}
 
-		if err := se.Set(oauth2ContextSession, req); err != nil {
+		if err := se.Set(ctx, oauth2ContextSession, req); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -296,7 +303,9 @@ func (r authorizationDecideHandlerRequest) Validate() error {
 }
 
 // AuthorizationDecideHandler 認可エンドポイントの確認フォームのハンドラ
-func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
+func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -314,7 +323,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return herror.Forbidden("bad session")
 	}
 
-	_reqAuth, err := se.Get(oauth2ContextSession)
+	_reqAuth, err := se.Get(ctx, oauth2ContextSession)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -322,12 +331,12 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return herror.Forbidden("bad session")
 	}
 	reqAuth := _reqAuth.(authorizeRequest)
-	if err := se.Delete(oauth2ContextSession); err != nil {
+	if err := se.Delete(ctx, oauth2ContextSession); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	// クライアント確認
-	client, err := h.Repo.GetClient(reqAuth.ClientID)
+	client, err := h.Repo.GetClient(ctx, reqAuth.ClientID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -339,7 +348,10 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	if client.RedirectURI == "" { // RedirectURIが事前登録されていない
 		return herror.Forbidden("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, reqAuth.RedirectURI)
+	if !ok {
+		return herror.Forbidden("invalid client")
+	}
 
 	q := url.Values{}
 	if len(reqAuth.State) > 0 {
@@ -375,7 +387,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 			CodeChallengeMethod: reqAuth.CodeChallengeMethod,
 			Nonce:               reqAuth.Nonce,
 		}
-		if err := h.Repo.SaveAuthorize(data); err != nil {
+		if err := h.Repo.SaveAuthorize(c.Request().Context(), data); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -389,4 +401,54 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 
 	redirectURI.RawQuery = q.Encode()
 	return c.Redirect(http.StatusFound, redirectURI.String())
+}
+
+// resolveRedirectURI validates the requested redirect URI against the
+// registered URI and returns the URI to use for the authorization response.
+func resolveRedirectURI(registered, requested string) (*url.URL, bool) {
+	redirectURI := registered
+	if requested != "" {
+		if !redirectURIMatches(registered, requested) {
+			return nil, false
+		}
+		redirectURI = requested
+	}
+
+	u, err := url.ParseRequestURI(redirectURI)
+	return u, err == nil
+}
+
+// redirectURIMatches compares redirect URIs using exact string matching,
+// except that RFC 8252 permits the port to differ for HTTP loopback IP URIs.
+func redirectURIMatches(registered, requested string) bool {
+	registeredURI, err := url.ParseRequestURI(registered)
+	if err != nil {
+		return false
+	}
+	requestedURI, err := url.ParseRequestURI(requested)
+	if err != nil {
+		return false
+	}
+	if registered == requested {
+		return true
+	}
+
+	if registeredURI.Scheme != "http" || requestedURI.Scheme != "http" {
+		return false
+	}
+	registeredIP := net.ParseIP(registeredURI.Hostname())
+	if registeredIP == nil || !registeredIP.IsLoopback() {
+		return false
+	}
+
+	return registeredURI.Opaque == requestedURI.Opaque &&
+		registeredURI.User.String() == requestedURI.User.String() &&
+		registeredURI.Hostname() == requestedURI.Hostname() &&
+		registeredURI.Path == requestedURI.Path &&
+		registeredURI.RawPath == requestedURI.RawPath &&
+		registeredURI.OmitHost == requestedURI.OmitHost &&
+		registeredURI.ForceQuery == requestedURI.ForceQuery &&
+		registeredURI.RawQuery == requestedURI.RawQuery &&
+		registeredURI.Fragment == requestedURI.Fragment &&
+		registeredURI.RawFragment == requestedURI.RawFragment
 }

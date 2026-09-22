@@ -1,6 +1,7 @@
 package ogp
 
 import (
+	"context"
 	"net/url"
 	"time"
 
@@ -21,8 +22,8 @@ type Service interface {
 	// 情報が存在する場合としない場合両方において expiresAt までキャッシュが可能です。
 	//
 	// 内部エラーが発生した場合、nil, 0, err を返します。
-	GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error)
+	GetMeta(ctx context.Context, url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error)
 
 	// DeleteCache 指定したURLのキャッシュを削除します。
-	DeleteCache(url *url.URL) error
+	DeleteCache(ctx context.Context, url *url.URL) error
 }

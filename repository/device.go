@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/utils/set"
@@ -15,15 +17,15 @@ type DeviceRepository interface {
 	// tokenが空文字列の場合、ArgumentErrorを返します。
 	// 登録しようとしたトークンが既に他のユーザーと関連づけられていた場合はArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	RegisterDevice(userID uuid.UUID, token string) error
+	RegisterDevice(ctx context.Context, userID uuid.UUID, token string) error
 	// GetDeviceTokens 指定したユーザーの全デバイストークンを取得します
 	//
 	// 成功した場合、デバイストークンの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetDeviceTokens(userIDs set.UUID) (map[uuid.UUID][]string, error)
+	GetDeviceTokens(ctx context.Context, userIDs set.UUID) (map[uuid.UUID][]string, error)
 	// DeleteDeviceTokens FCMデバイスの登録を解除します
 	//
 	// 成功した、或いは既に登録解除されていた場合にnilを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteDeviceTokens(tokens []string) error
+	DeleteDeviceTokens(ctx context.Context, tokens []string) error
 }

@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -23,15 +23,19 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 )
 
+func attachmentContentDisposition(filename string) string {
+	return fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(filename))
+}
+
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
-func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
+func ChangeUserIcon(p imaging2.Processor, c *echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
 	iconID, err := SaveUploadIconImage(p, c, m, "file")
 	if err != nil {
 		return err
 	}
 
 	// アイコン変更
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
+	if err := repo.UpdateUser(c.Request().Context(), userID, repository.UpdateUserArgs{IconFileID: optional.From(iconID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -39,9 +43,9 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 }
 
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
-func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
+func ServeUserIcon(c *echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := fm.Get(user.GetIconFileID())
+	meta, err := fm.Get(c.Request().Context(), user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -63,18 +67,20 @@ func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 }
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
-func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
+func ChangeUserPassword(c *echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
+	if err := repo.UpdateUser(c.Request().Context(), userID, repository.UpdateUserArgs{Password: optional.From(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	// ユーザーの全セッションを破棄(強制ログアウト)
-	_ = seStore.RevokeSessionsByUserID(userID)
+	if err := seStore.RevokeSessionsByUserID(c.Request().Context(), userID); err != nil {
+		return herror.InternalServerError(err)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
+func ServeFileThumbnail(c *echo.Context, meta model.File, repo repository.Repository, logger *zap.Logger) error {
 	typeStr := c.QueryParam("type")
 	if len(typeStr) == 0 {
 		typeStr = "image"
@@ -95,7 +101,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 		if errors.Is(err, storage.ErrFileNotFound) {
 			// サムネイルが実際には存在しないのでDBの情報を更新する
 			fileID := meta.GetID()
-			err := repo.DeleteFileThumbnail(fileID, thumbnailType)
+			err := repo.DeleteFileThumbnail(c.Request().Context(), fileID, thumbnailType)
 			if err != nil {
 				logger.Warn("failed to delete thumbnail from database", zap.Error(err))
 				return herror.InternalServerError(err)
@@ -114,7 +120,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File, repo repository.Reposit
 }
 
 // ServeFile metaのファイル本体をレスポンスとして返す
-func ServeFile(c echo.Context, meta model.File) error {
+func ServeFile(c *echo.Context, meta model.File) error {
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	if url := meta.GetAlternativeURL(); len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)
@@ -129,9 +135,9 @@ func ServeFile(c echo.Context, meta model.File) error {
 	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
 	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	if v, _ := strconv.ParseBool(c.QueryParam("dl")); v {
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(meta.GetFileName())))
-	}
+
+	c.Response().Header().Set(echo.HeaderContentDisposition, attachmentContentDisposition(meta.GetFileName()))
+
 	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	switch meta.GetFileType() {
 	case model.FileTypeStamp, model.FileTypeIcon:

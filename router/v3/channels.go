@@ -9,7 +9,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -24,34 +24,35 @@ import (
 )
 
 // GetChannels GET /channels
-func (h *Handlers) GetChannels(c echo.Context) error {
+func (h *Handlers) GetChannels(c *echo.Context) error {
+	ctx := c.Request().Context()
 	if isTrue(c.QueryParam("include-dm")) && len(c.QueryParam("path")) > 0 {
 		return herror.BadRequest("include-dm and path cannot be specified at the same time")
 	}
 
-	var res echo.Map
+	var res map[string]any
 
 	if channelPath := c.QueryParam("path"); channelPath != "" {
-		targetChannel, err := h.ChannelManager.GetChannelFromPath(channelPath)
+		targetChannel, err := h.ChannelManager.GetChannelFromPath(ctx, channelPath)
 		if err != nil {
 			if errors.Is(err, channel.ErrInvalidChannelPath) {
 				return herror.HTTPError(http.StatusNotFound, err)
 			}
 			return herror.InternalServerError(err)
 		}
-		res = echo.Map{
+		res = map[string]any{
 			"public": []*Channel{
-				formatChannel(targetChannel, h.ChannelManager.PublicChannelTree().GetChildrenIDs(targetChannel.ID)),
+				formatChannel(targetChannel, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(targetChannel.ID)),
 			},
 		}
 		return extension.ServeJSONWithETag(c, res)
 	}
 
-	res = echo.Map{
-		"public": h.ChannelManager.PublicChannelTree(),
+	res = map[string]any{
+		"public": h.ChannelManager.PublicChannelTree(ctx),
 	}
 	if isTrue(c.QueryParam("include-dm")) {
-		mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
+		mapping, err := h.ChannelManager.GetDMChannelMapping(ctx, getRequestUserID(c))
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -73,7 +74,8 @@ func (r PostChannelRequest) Validate() error {
 }
 
 // CreateChannels POST /channels
-func (h *Handlers) CreateChannels(c echo.Context) error {
+func (h *Handlers) CreateChannels(c *echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
 	var req PostChannelRequest
@@ -81,7 +83,7 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, req.Parent.V, userID)
+	ch, err := h.ChannelManager.CreatePublicChannel(ctx, req.Name, req.Parent.V, userID)
 	if err != nil {
 		switch err {
 		case channel.ErrChannelArchived:
@@ -103,9 +105,10 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 }
 
 // GetChannel GET /channels/:channelID
-func (h *Handlers) GetChannel(c echo.Context) error {
+func (h *Handlers) GetChannel(c *echo.Context) error {
+	ctx := c.Request().Context()
 	ch := getParamChannel(c)
-	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree().GetChildrenIDs(ch.ID)))
+	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID)))
 }
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
@@ -123,7 +126,8 @@ func (r PatchChannelRequest) Validate() error {
 }
 
 // EditChannel PATCH /channels/:channelID
-func (h *Handlers) EditChannel(c echo.Context) error {
+func (h *Handlers) EditChannel(c *echo.Context) error {
+	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req PatchChannelRequest
@@ -133,7 +137,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 
 	if req.Archived.Valid {
 		if req.Archived.V {
-			if err := h.ChannelManager.ArchiveChannel(channelID, getRequestUserID(c)); err != nil {
+			if err := h.ChannelManager.ArchiveChannel(ctx, channelID, getRequestUserID(c)); err != nil {
 				switch err {
 				case channel.ErrInvalidChannel:
 					return herror.BadRequest("invalid channel id")
@@ -142,7 +146,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 				}
 			}
 		} else {
-			if err := h.ChannelManager.UnarchiveChannel(channelID, getRequestUserID(c)); err != nil {
+			if err := h.ChannelManager.UnarchiveChannel(ctx, channelID, getRequestUserID(c)); err != nil {
 				switch err {
 				case channel.ErrInvalidParentChannel:
 					return herror.BadRequest("the parent channel has been archived")
@@ -159,7 +163,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
-	if err := h.ChannelManager.UpdateChannel(channelID, args); err != nil {
+	if err := h.ChannelManager.UpdateChannel(ctx, channelID, args); err != nil {
 		switch err {
 		case channel.ErrInvalidChannelName:
 			return herror.BadRequest("invalid channel name")
@@ -177,17 +181,17 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 }
 
 // GetChannelViewers GET /channels/:channelID/viewers
-func (h *Handlers) GetChannelViewers(c echo.Context) error {
+func (h *Handlers) GetChannelViewers(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	cv := h.VM.GetChannelViewers(channelID)
 	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }
 
 // GetChannelStats GET /channels/:channelID/stats
-func (h *Handlers) GetChannelStats(c echo.Context) error {
+func (h *Handlers) GetChannelStats(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
-	stats, err := h.Repo.GetChannelStats(channelID, excludeDeletedMessages)
+	stats, err := h.Repo.GetChannelStats(c.Request().Context(), channelID, excludeDeletedMessages)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -195,8 +199,8 @@ func (h *Handlers) GetChannelStats(c echo.Context) error {
 }
 
 // GetChannelTopic GET /channels/:channelID/topic
-func (h *Handlers) GetChannelTopic(c echo.Context) error {
-	return c.JSON(http.StatusOK, echo.Map{"topic": getParamChannel(c).Topic})
+func (h *Handlers) GetChannelTopic(c *echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]any{"topic": getParamChannel(c).Topic})
 }
 
 // PutChannelTopicRequest PUT /channels/:channelID/topic リクエストボディ
@@ -211,7 +215,8 @@ func (r PutChannelTopicRequest) Validate() error {
 }
 
 // EditChannelTopic PUT /channels/:channelID/topic
-func (h *Handlers) EditChannelTopic(c echo.Context) error {
+func (h *Handlers) EditChannelTopic(c *echo.Context) error {
+	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
 	var req PutChannelTopicRequest
@@ -219,7 +224,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 		return err
 	}
 
-	if err := h.ChannelManager.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
+	if err := h.ChannelManager.UpdateChannel(ctx, ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
 		Topic:     optional.From(req.Topic),
 	}); err != nil {
@@ -235,10 +240,10 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 }
 
 // GetChannelPins GET /channels/:channelID/pins
-func (h *Handlers) GetChannelPins(c echo.Context) error {
+func (h *Handlers) GetChannelPins(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	pins, err := h.Repo.GetPinnedMessageByChannelID(channelID)
+	pins, err := h.Repo.GetPinnedMessageByChannelID(c.Request().Context(), channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -278,7 +283,7 @@ func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuer
 }
 
 // GetChannelEvents GET /channels/:channelID/events
-func (h *Handlers) GetChannelEvents(c echo.Context) error {
+func (h *Handlers) GetChannelEvents(c *echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req channelEventsQuery
@@ -286,7 +291,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 		return err
 	}
 
-	events, more, err := h.Repo.GetChannelEvents(req.convert(channelID))
+	events, more, err := h.Repo.GetChannelEvents(c.Request().Context(), req.convert(channelID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -295,7 +300,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 }
 
 // GetChannelSubscribers GET /channels/:channelID/subscribers
-func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
+func (h *Handlers) GetChannelSubscribers(c *echo.Context) error {
 	ch := getParamChannel(c)
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
@@ -303,7 +308,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 		return herror.Forbidden()
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -321,7 +326,8 @@ type PutChannelSubscribersRequest struct {
 }
 
 // SetChannelSubscribers PUT /channels/:channelID/subscribers
-func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
+func (h *Handlers) SetChannelSubscribers(c *echo.Context) error {
+	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
 	var req PutChannelSubscribersRequest
@@ -329,7 +335,7 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 		return err
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscriptions, err := h.Repo.GetChannelSubscriptions(ctx, repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -342,7 +348,7 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 		subs[id] = model.ChannelSubscribeLevelMarkAndNotify
 	}
 
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, subs, true, getRequestUserID(c)); err != nil {
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, subs, true, getRequestUserID(c)); err != nil {
 		switch err {
 		case channel.ErrInvalidChannel:
 			return herror.Forbidden("the channel's subscriptions is not configurable")
@@ -362,7 +368,8 @@ type PatchChannelSubscribersRequest struct {
 }
 
 // EditChannelSubscribers PATCH /channels/:channelID/subscribers
-func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
+func (h *Handlers) EditChannelSubscribers(c *echo.Context) error {
+	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
 	var req PatchChannelSubscribersRequest
@@ -383,7 +390,7 @@ func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 		}
 	}
 
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, subscriptions, true, getRequestUserID(c)); err != nil {
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, subscriptions, true, getRequestUserID(c)); err != nil {
 		switch err {
 		case channel.ErrInvalidChannel:
 			return herror.Forbidden("the channel's subscriptions is not configurable")
@@ -397,12 +404,13 @@ func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 }
 
 // GetUserDMChannel GET /users/:userID/dm-channel
-func (h *Handlers) GetUserDMChannel(c echo.Context) error {
+func (h *Handlers) GetUserDMChannel(c *echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	myID := getRequestUserID(c)
 
 	// DMチャンネルを取得
-	ch, err := h.ChannelManager.GetDMChannel(myID, userID)
+	ch, err := h.ChannelManager.GetDMChannel(ctx, myID, userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -411,10 +419,11 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 }
 
 // GetChannelPath GET /channels/:channelID/path
-func (h *Handlers) GetChannelPath(c echo.Context) error {
+func (h *Handlers) GetChannelPath(c *echo.Context) error {
+	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	channelPath := h.ChannelManager.GetChannelPathFromID(channelID)
+	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, channelID)
 
-	return c.JSON(http.StatusOK, echo.Map{"path": channelPath})
+	return c.JSON(http.StatusOK, map[string]any{"path": channelPath})
 }

@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -14,9 +15,9 @@ func TestRepositoryImpl_AddUserTag(t *testing.T) {
 	repo, assert, _, user := setupWithUser(t, common2, false)
 
 	tag := mustMakeTag(t, repo, rand)
-	assert.NoError(repo.AddUserTag(user.GetID(), tag.ID))
-	assert.Error(repo.AddUserTag(user.GetID(), tag.ID))
-	assert.Error(repo.AddUserTag(user.GetID(), uuid.Nil))
+	assert.NoError(repo.AddUserTag(context.TODO(), user.GetID(), tag.ID))
+	assert.Error(repo.AddUserTag(context.TODO(), user.GetID(), tag.ID))
+	assert.Error(repo.AddUserTag(context.TODO(), user.GetID(), uuid.Nil))
 }
 
 func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
@@ -26,19 +27,19 @@ func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
 	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 
-	if assert.NoError(repo.ChangeUserTagLock(user.GetID(), tag.ID, true)) {
-		tag, err := repo.GetUserTag(user.GetID(), tag.ID)
+	if assert.NoError(repo.ChangeUserTagLock(context.TODO(), user.GetID(), tag.ID, true)) {
+		tag, err := repo.GetUserTag(context.TODO(), user.GetID(), tag.ID)
 		require.NoError(err)
 		assert.True(tag.GetIsLocked())
 	}
 
-	if assert.NoError(repo.ChangeUserTagLock(user.GetID(), tag.ID, false)) {
-		tag, err := repo.GetUserTag(user.GetID(), tag.ID)
+	if assert.NoError(repo.ChangeUserTagLock(context.TODO(), user.GetID(), tag.ID, false)) {
+		tag, err := repo.GetUserTag(context.TODO(), user.GetID(), tag.ID)
 		require.NoError(err)
 		assert.False(tag.GetIsLocked())
 	}
 
-	assert.Error(repo.ChangeUserTagLock(uuid.Nil, tag.ID, true))
+	assert.Error(repo.ChangeUserTagLock(context.TODO(), uuid.Nil, tag.ID, true))
 }
 
 func TestRepositoryImpl_DeleteUserTag(t *testing.T) {
@@ -54,19 +55,19 @@ func TestRepositoryImpl_DeleteUserTag(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		if assert.NoError(repo.DeleteUserTag(user.GetID(), tag.ID)) {
-			_, err := repo.GetUserTag(user.GetID(), tag.ID)
+		if assert.NoError(repo.DeleteUserTag(context.TODO(), user.GetID(), tag.ID)) {
+			_, err := repo.GetUserTag(context.TODO(), user.GetID(), tag.ID)
 			assert.Error(err)
 		}
 
-		_, err := repo.GetUserTag(user.GetID(), tag2.ID)
+		_, err := repo.GetUserTag(context.TODO(), user.GetID(), tag2.ID)
 		assert.NoError(err)
 	})
 
 	t.Run("nil", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.DeleteUserTag(uuid.Nil, tag.ID))
+		assert.Error(t, repo.DeleteUserTag(context.TODO(), uuid.Nil, tag.ID))
 	})
 }
 
@@ -85,7 +86,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		tags, err := repo.GetUserTagsByUserID(user.GetID())
+		tags, err := repo.GetUserTagsByUserID(context.TODO(), user.GetID())
 		if assert.NoError(err) {
 			temp := make([]string, len(tags))
 			for i, v := range tags {
@@ -99,7 +100,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		tags, err := repo.GetUserTagsByUserID(uuid.Nil)
+		tags, err := repo.GetUserTagsByUserID(context.TODO(), uuid.Nil)
 		if assert.NoError(err) {
 			assert.Empty(tags)
 		}
@@ -117,7 +118,7 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		ut, err := repo.GetUserTag(user.GetID(), tag.ID)
+		ut, err := repo.GetUserTag(context.TODO(), user.GetID(), tag.ID)
 		if assert.NoError(err) {
 			assert.Equal(user.GetID(), ut.GetUserID())
 			assert.Equal(tag.ID, ut.GetTagID())
@@ -132,7 +133,7 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetUserTag(user.GetID(), uuid.Nil)
+		_, err := repo.GetUserTag(context.TODO(), user.GetID(), uuid.Nil)
 		assert.Error(err)
 	})
 }
@@ -150,7 +151,7 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		ids, err := repo.GetUserIDsByTagID(tag.ID)
+		ids, err := repo.GetUserIDsByTagID(context.TODO(), tag.ID)
 		if assert.NoError(err) {
 			assert.Len(ids, 10)
 		}
@@ -160,7 +161,7 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		ids, err := repo.GetUserIDsByTagID(uuid.Nil)
+		ids, err := repo.GetUserIDsByTagID(context.TODO(), uuid.Nil)
 		if assert.NoError(err) {
 			assert.Len(ids, 0)
 		}
@@ -173,18 +174,18 @@ func TestRepositoryImpl_GetTagByID(t *testing.T) {
 
 	tag := mustMakeTag(t, repo, rand)
 
-	r, err := repo.GetTagByID(tag.ID)
+	r, err := repo.GetTagByID(context.TODO(), tag.ID)
 	if assert.NoError(err) {
 		assert.Equal(tag.Name, r.Name)
 	}
 
-	_, err = repo.GetTagByID(uuid.Must(uuid.NewV4()))
+	_, err = repo.GetTagByID(context.TODO(), uuid.Must(uuid.NewV4()))
 	assert.Error(err)
 
-	_, err = repo.GetTagByID(uuid.Must(uuid.NewV7()))
+	_, err = repo.GetTagByID(context.TODO(), uuid.Must(uuid.NewV7()))
 	assert.Error(err)
 
-	_, err = repo.GetTagByID(uuid.Nil)
+	_, err = repo.GetTagByID(context.TODO(), uuid.Nil)
 	assert.Error(err)
 }
 
@@ -195,13 +196,13 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 	s := random2.AlphaNumeric(20)
 	tag := mustMakeTag(t, repo, s)
 
-	r, err := repo.GetOrCreateTag(s)
+	r, err := repo.GetOrCreateTag(context.TODO(), s)
 	if assert.NoError(err) {
 		assert.Equal(tag.ID, r.ID)
 	}
 
 	b := random2.AlphaNumeric(20)
-	r, err = repo.GetOrCreateTag(b)
+	r, err = repo.GetOrCreateTag(context.TODO(), b)
 	if assert.NoError(err) {
 		assert.NotZero(r.ID)
 		assert.Equal(b, r.Name)
@@ -209,9 +210,9 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 		assert.NotZero(r.UpdatedAt)
 	}
 
-	_, err = repo.GetOrCreateTag("")
+	_, err = repo.GetOrCreateTag(context.TODO(), "")
 	assert.Error(err)
 
-	_, err = repo.GetOrCreateTag(random2.AlphaNumeric(31))
+	_, err = repo.GetOrCreateTag(context.TODO(), random2.AlphaNumeric(31))
 	assert.Error(err)
 }

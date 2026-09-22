@@ -2,7 +2,6 @@ package message
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"sync"
 	"time"
@@ -10,9 +9,6 @@ import (
 	"github.com/gofrs/uuid"
 	markdown "github.com/uni-kakurenbo/traq-markdown-engine/packages/sdk/go"
 )
-
-//go:embed parser.wasm
-var parserWasm []byte
 
 type markdownRuntime struct {
 	mu        sync.Mutex
@@ -36,7 +32,7 @@ func SetOrigin(origin string) {
 
 func (state *markdownRuntime) initialize(ctx context.Context) error {
 	if state.runtime == nil {
-		runtime, err := markdown.NewRuntime(ctx, parserWasm)
+		runtime, err := markdown.NewBundledRuntime(ctx)
 		if err != nil {
 			return err
 		}

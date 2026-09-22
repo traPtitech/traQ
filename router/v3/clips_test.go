@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -304,7 +305,7 @@ func TestHandlers_DeleteClipFolder(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetClipFolder(cf1.ID)
+		_, err := env.Repository.GetClipFolder(context.TODO(), cf1.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
@@ -373,7 +374,7 @@ func TestHandlers_EditClipFolder(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		cf, err := env.Repository.GetClipFolder(cf1.ID)
+		cf, err := env.Repository.GetClipFolder(context.TODO(), cf1.ID)
 		require.NoError(t, err)
 		assert.EqualValues(t, "nya", cf.Name)
 		assert.EqualValues(t, "foo", cf.Description)
@@ -394,7 +395,7 @@ func TestHandlers_PostClipFolderMessage(t *testing.T) {
 	m := env.CreateMessage(t, user2.GetID(), c.ID, rand)
 	user1Session := env.S(t, user1.GetID())
 
-	_, err := env.Repository.AddClipFolderMessage(cf3.ID, m.GetID())
+	_, err := env.Repository.AddClipFolderMessage(context.TODO(), cf3.ID, m.GetID())
 	require.NoError(t, err)
 
 	req := &PostClipFolderMessageRequest{
@@ -542,7 +543,7 @@ func TestHandlers_GetClipFolderMessages(t *testing.T) {
 	m := env.CreateMessage(t, user2.GetID(), c.ID, rand)
 	user1Session := env.S(t, user1.GetID())
 
-	_, err := env.Repository.AddClipFolderMessage(cf1.ID, m.GetID())
+	_, err := env.Repository.AddClipFolderMessage(context.TODO(), cf1.ID, m.GetID())
 	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -613,7 +614,7 @@ func TestHandlers_DeleteClipFolderMessages(t *testing.T) {
 	m2 := env.CreateMessage(t, user1.GetID(), c.ID, rand)
 	user1Session := env.S(t, user1.GetID())
 
-	_, err := env.Repository.AddClipFolderMessage(cf1.ID, m.GetID())
+	_, err := env.Repository.AddClipFolderMessage(context.TODO(), cf1.ID, m.GetID())
 	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -659,7 +660,7 @@ func TestHandlers_DeleteClipFolderMessages(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		messages, more, err := env.Repository.GetClipFolderMessages(cf1.ID, repository.ClipFolderMessageQuery{
+		messages, more, err := env.Repository.GetClipFolderMessages(context.TODO(), cf1.ID, repository.ClipFolderMessageQuery{
 			Limit:  50,
 			Offset: 0,
 			Asc:    false,
@@ -674,7 +675,7 @@ func TestHandlers_DeleteClipFolderMessages(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		messages, more, err = env.Repository.GetClipFolderMessages(cf1.ID, repository.ClipFolderMessageQuery{
+		messages, more, err = env.Repository.GetClipFolderMessages(context.TODO(), cf1.ID, repository.ClipFolderMessageQuery{
 			Limit:  50,
 			Offset: 0,
 			Asc:    false,

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -22,7 +24,7 @@ type ClipRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	CreateClipFolder(userID uuid.UUID, name, description string) (*model.ClipFolder, error)
+	CreateClipFolder(ctx context.Context, userID uuid.UUID, name, description string) (*model.ClipFolder, error)
 	// UpdateClipFolder 指定したクリップフォルダーの情報を変更します
 	//
 	// 成功した場合、nilを返します。
@@ -30,21 +32,21 @@ type ClipRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateClipFolder(folderID uuid.UUID, name, description optional.Of[string]) error
+	UpdateClipFolder(ctx context.Context, folderID uuid.UUID, name, description optional.Of[string]) error
 	// DeleteClipFolder 指定したクリップフォルダーを削除します。
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteClipFolder(folderID uuid.UUID) error
+	DeleteClipFolder(ctx context.Context, folderID uuid.UUID) error
 	// DeleteClipFolderMessage 指定したクリップフォルダーのメッセージを削除します。
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteClipFolderMessage(folderID, messageID uuid.UUID) error
+	DeleteClipFolderMessage(ctx context.Context, folderID, messageID uuid.UUID) error
 	// AddClipFolderMessage 指定したクリップフォルダーに指定したメッセージを追加します。
 	//
 	// 成功した場合、nilを返します。
@@ -52,20 +54,20 @@ type ClipRepository interface {
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// 既に存在するフォルダーとメッセージの組み合わせを指定した場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error)
+	AddClipFolderMessage(ctx context.Context, folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error)
 	// GetClipFoldersByUserID ユーザーのクリップフォルダーを取得します。
 	//
 	// 成功した場合クリップフォルダーのスライスとnilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error)
+	GetClipFoldersByUserID(ctx context.Context, userID uuid.UUID) ([]*model.ClipFolder, error)
 	// GetClipFolder クリップフォルダーの情報を取得します。
 	//
 	// 成功した場合クリップフォルダーの情報とnilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error)
+	GetClipFolder(ctx context.Context, folderID uuid.UUID) (*model.ClipFolder, error)
 	// GetClipFolderMessages 指定したクエリでクリップフォルダー内のメッセージのリストを取得します。
 	//
 	// 成功した場合クリップフォルダー内のメッセージの情報を返します。負のoffset, limitは無視されます。
@@ -73,11 +75,11 @@ type ClipRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error)
+	GetClipFolderMessages(ctx context.Context, folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error)
 	// GetMessageClips 指定したユーザーの指定したメッセージのクリップのリストを取得します。
 	//
 	// 成功した場合、クリップの配列とnilを返します。
 	// 存在しないユーザー・メッセージを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error)
+	GetMessageClips(ctx context.Context, userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error)
 }

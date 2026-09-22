@@ -1,6 +1,7 @@
 package message
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 func setupM(ctrl *gomock.Controller) (Manager, *mock_channel.MockManager, *Repo, *mock_channel.MockTree) {
 	cm := mock_channel.NewMockManager(ctrl)
 	tree := mock_channel.NewMockTree(ctrl)
-	cm.EXPECT().PublicChannelTree().Return(tree).AnyTimes()
+	cm.EXPECT().PublicChannelTree(gomock.Any()).Return(tree).AnyTimes()
 	repo := NewMockRepo(ctrl)
 	m, _ := NewMessageManager(repo, cm, zap.NewNop())
 	return m, cm, repo, tree
@@ -31,7 +32,7 @@ func TestManager_Get(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		m, _, _, _ := setupM(ctrl)
 
-		_, err := m.Get(uuid.Nil)
+		_, err := m.Get(context.TODO(), uuid.Nil)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -52,11 +53,11 @@ func TestManager_Get(t *testing.T) {
 		}
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(msg.ID).
+			GetMessageByID(gomock.Any(), msg.ID).
 			Return(msg, nil).
 			Times(1)
 
-		result, err := m.Get(msg.ID)
+		result, err := m.Get(context.TODO(), msg.ID)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.ID, result.GetID())
 			assert.EqualValues(t, msg.ChannelID, result.GetChannelID())
@@ -69,7 +70,7 @@ func TestManager_Get(t *testing.T) {
 		}
 
 		// キャッシュからもう一度
-		result, err = m.Get(msg.ID)
+		result, err = m.Get(context.TODO(), msg.ID)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.ID, result.GetID())
 			assert.EqualValues(t, msg.ChannelID, result.GetChannelID())
@@ -90,11 +91,11 @@ func TestManager_Get(t *testing.T) {
 		id := uuid.NewV3(uuid.Nil, "m1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		_, err := m.Get(id)
+		_, err := m.Get(context.TODO(), id)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 }
@@ -109,10 +110,10 @@ func TestManager_Create(t *testing.T) {
 		m, cm, _, tree := setupM(ctrl)
 
 		cid := uuid.NewV3(uuid.Nil, "c1")
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		_, err := m.Create(cid, uuid.NewV3(uuid.Nil, "u1"), content)
+		_, err := m.Create(context.TODO(), cid, uuid.NewV3(uuid.Nil, "u1"), content)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -123,15 +124,15 @@ func TestManager_Create(t *testing.T) {
 
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			CreateMessage(uid, cid, content).
+			CreateMessage(gomock.Any(), uid, cid, content).
 			Return(&model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), UserID: uid, ChannelID: cid, Text: content}, nil).
 			Times(1)
 
-		msg, err := m.Create(cid, uid, content)
+		msg, err := m.Create(context.TODO(), cid, uid, content)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, cid, msg.GetChannelID())
 			assert.EqualValues(t, uid, msg.GetUserID())
@@ -141,10 +142,10 @@ func TestManager_Create(t *testing.T) {
 		// キャッシュに取得
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(msg.GetID()).
+			GetMessageByID(gomock.Any(), msg.GetID()).
 			Return(msg.(*message).Model, nil).
 			Times(1)
-		result, err := m.Get(msg.GetID())
+		result, err := m.Get(context.TODO(), msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
@@ -153,7 +154,7 @@ func TestManager_Create(t *testing.T) {
 		}
 
 		// キャッシュからもう一度
-		result, err = m.Get(msg.GetID())
+		result, err = m.Get(context.TODO(), msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
@@ -175,14 +176,14 @@ func TestManager_CreateDM(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		from := uuid.NewV3(uuid.Nil, "u1")
 		to := uuid.NewV3(uuid.Nil, "u2")
-		cm.EXPECT().GetDMChannel(from, to).Return(&model.Channel{ID: cid}, nil).Times(1)
+		cm.EXPECT().GetDMChannel(gomock.Any(), from, to).Return(&model.Channel{ID: cid}, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			CreateMessage(from, cid, content).
+			CreateMessage(gomock.Any(), from, cid, content).
 			Return(&model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), UserID: from, ChannelID: cid, Text: content}, nil).
 			Times(1)
 
-		msg, err := m.CreateDM(from, to, content)
+		msg, err := m.CreateDM(context.TODO(), from, to, content)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, cid, msg.GetChannelID())
 			assert.EqualValues(t, from, msg.GetUserID())
@@ -192,10 +193,10 @@ func TestManager_CreateDM(t *testing.T) {
 		// キャッシュに取得
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(msg.GetID()).
+			GetMessageByID(gomock.Any(), msg.GetID()).
 			Return(msg.(*message).Model, nil).
 			Times(1)
-		result, err := m.Get(msg.GetID())
+		result, err := m.Get(context.TODO(), msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
@@ -204,7 +205,7 @@ func TestManager_CreateDM(t *testing.T) {
 		}
 
 		// キャッシュからもう一度
-		result, err = m.Get(msg.GetID())
+		result, err = m.Get(context.TODO(), msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
@@ -226,11 +227,11 @@ func TestManager_Edit(t *testing.T) {
 		id := uuid.NewV3(uuid.Nil, "m1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		err := m.Edit(id, newContent)
+		err := m.Edit(context.TODO(), id, newContent)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -243,13 +244,13 @@ func TestManager_Edit(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		err := m.Edit(id, newContent)
+		err := m.Edit(context.TODO(), id, newContent)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -262,18 +263,18 @@ func TestManager_Edit(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			UpdateMessage(id, newContent).
+			UpdateMessage(gomock.Any(), id, newContent).
 			Return(nil).
 			Times(1)
 
-		err := m.Edit(id, newContent)
+		err := m.Edit(context.TODO(), id, newContent)
 		assert.NoError(t, err)
 	})
 }
@@ -289,11 +290,11 @@ func TestManager_Delete(t *testing.T) {
 		id := uuid.NewV3(uuid.Nil, "m1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		err := m.Delete(id)
+		err := m.Delete(context.TODO(), id)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -306,13 +307,13 @@ func TestManager_Delete(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		err := m.Delete(id)
+		err := m.Delete(context.TODO(), id)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -325,18 +326,18 @@ func TestManager_Delete(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			DeleteMessage(id).
+			DeleteMessage(gomock.Any(), id).
 			Return(nil).
 			Times(1)
 
-		err := m.Delete(id)
+		err := m.Delete(context.TODO(), id)
 		assert.NoError(t, err)
 	})
 }
@@ -352,11 +353,11 @@ func TestManager_AddStamps(t *testing.T) {
 		id := uuid.NewV3(uuid.Nil, "m1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		_, err := m.AddStamps(id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), 1)
+		_, err := m.AddStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), 1)
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -369,13 +370,13 @@ func TestManager_AddStamps(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		_, err := m.AddStamps(id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), 1)
+		_, err := m.AddStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), 1)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -391,7 +392,7 @@ func TestManager_AddStamps(t *testing.T) {
 		uid := uuid.NewV3(uuid.Nil, "u1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid, Stamps: []model.MessageStamp{{
 				MessageID: id,
 				StampID:   sid2,
@@ -401,7 +402,7 @@ func TestManager_AddStamps(t *testing.T) {
 			Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid, Stamps: []model.MessageStamp{
 				{
 					MessageID: id,
@@ -417,11 +418,11 @@ func TestManager_AddStamps(t *testing.T) {
 				},
 			}}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			AddStampToMessage(id, sid, uid, 1).
+			AddStampToMessage(gomock.Any(), id, sid, uid, 1).
 			Return(&model.MessageStamp{
 				MessageID: id,
 				StampID:   sid,
@@ -430,9 +431,9 @@ func TestManager_AddStamps(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		_, err := m.AddStamps(id, sid, uid, 1)
+		_, err := m.AddStamps(context.TODO(), id, sid, uid, 1)
 		if assert.NoError(t, err) {
-			msg, err := m.Get(id)
+			msg, err := m.Get(context.TODO(), id)
 			if assert.NoError(t, err) {
 				assert.ElementsMatch(t, []model.MessageStamp{
 					{
@@ -464,11 +465,11 @@ func TestManager_RemoveStamps(t *testing.T) {
 		id := uuid.NewV3(uuid.Nil, "m1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(nil, repository.ErrNotFound).
 			Times(1)
 
-		err := m.RemoveStamps(id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
+		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -481,13 +482,13 @@ func TestManager_RemoveStamps(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
 
-		err := m.RemoveStamps(id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
+		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
 		assert.EqualError(t, err, ErrChannelArchived.Error())
 	})
 
@@ -503,7 +504,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 		uid := uuid.NewV3(uuid.Nil, "u1")
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid, Stamps: []model.MessageStamp{
 				{
 					MessageID: id,
@@ -521,7 +522,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			GetMessageByID(id).
+			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid, Stamps: []model.MessageStamp{
 				{
 					MessageID: id,
@@ -531,17 +532,17 @@ func TestManager_RemoveStamps(t *testing.T) {
 				},
 			}}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
 		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
-			RemoveStampFromMessage(id, sid, uid).
+			RemoveStampFromMessage(gomock.Any(), id, sid, uid).
 			Return(nil).
 			Times(1)
 
-		err := m.RemoveStamps(id, sid, uid)
+		err := m.RemoveStamps(context.TODO(), id, sid, uid)
 		if assert.NoError(t, err) {
-			msg, err := m.Get(id)
+			msg, err := m.Get(context.TODO(), id)
 			if assert.NoError(t, err) {
 				assert.ElementsMatch(t, []model.MessageStamp{
 					{

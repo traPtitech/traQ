@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -134,11 +134,11 @@ func NewOIDCProvider(repo repository.Repository, fm file.Manager, logger *zap.Lo
 	}, nil
 }
 
-func (p *OIDCProvider) LoginHandler(c echo.Context) error {
+func (p *OIDCProvider) LoginHandler(c *echo.Context) error {
 	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
-func (p *OIDCProvider) CallbackHandler(c echo.Context) error {
+func (p *OIDCProvider) CallbackHandler(c *echo.Context) error {
 	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 

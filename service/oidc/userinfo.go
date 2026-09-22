@@ -1,6 +1,8 @@
 package oidc
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -31,16 +33,16 @@ type ScopeChecker interface {
 	Contains(scope model.AccessScope) bool
 }
 
-func (s *Service) GetUserInfo(userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
-	user, err := s.repo.GetUser(userID, true)
+func (s *Service) GetUserInfo(ctx context.Context, userID uuid.UUID, scopes ScopeChecker) (map[string]any, error) {
+	user, err := s.repo.GetUser(ctx, userID, true)
 	if err != nil {
 		return nil, err
 	}
-	tags, err := s.repo.GetUserTagsByUserID(user.GetID())
+	tags, err := s.repo.GetUserTagsByUserID(ctx, user.GetID())
 	if err != nil {
 		return nil, err
 	}
-	groups, err := s.repo.GetUserBelongingGroupIDs(user.GetID())
+	groups, err := s.repo.GetUserBelongingGroupIDs(ctx, user.GetID())
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -11,7 +11,7 @@ import (
 // NoLogin セッションが既に存在するリクエストを拒否するミドルウェア
 func NoLogin(sessStore session.Store, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 				return herror.BadRequest("Authorization Header must not be set. Please logout once.")
 			}
@@ -21,7 +21,7 @@ func NoLogin(sessStore session.Store, repo repository.Repository) echo.Middlewar
 				return herror.InternalServerError(err)
 			}
 			if sess != nil && sess.LoggedIn() {
-				user, err := repo.GetUser(sess.UserID(), false)
+				user, err := repo.GetUser(c.Request().Context(), sess.UserID(), false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}

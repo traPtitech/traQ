@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -118,9 +119,9 @@ func TestHandlers_GetWebhookIcon(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
 
-	file, err := file2.GenerateIconFile(env.FM, "wh")
+	file, err := file2.GenerateIconFile(context.TODO(), env.FM, "wh")
 	require.NoError(t, err)
-	wh, err := env.Repository.CreateWebhook(random2.AlphaNumeric(20), "", ch.ID, file, user.GetID(), "")
+	wh, err := env.Repository.CreateWebhook(context.TODO(), random2.AlphaNumeric(20), "", ch.ID, file, user.GetID(), "")
 	require.NoError(t, err)
 
 	s := env.S(t, user.GetID())
@@ -299,7 +300,7 @@ func TestHandlers_EditWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		wh, err := env.Repository.GetWebhook(wh.GetID())
+		wh, err := env.Repository.GetWebhook(context.TODO(), wh.GetID())
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", wh.GetName())
 	})
@@ -316,7 +317,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	ch2 := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	archived := env.CreateChannel(t, rand)
-	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
 	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 
 	calcHMACSHA1 := func(t *testing.T, message, secret string) string {
@@ -418,7 +419,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(message.TimelineQuery{Channel: ch2.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch2.ID})
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]
@@ -437,7 +438,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(message.TimelineQuery{Channel: ch.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch.ID})
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]
@@ -484,7 +485,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetWebhook(wh.GetID())
+		_, err := env.Repository.GetWebhook(context.TODO(), wh.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
@@ -596,7 +597,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(message.GetID())
+		_, err := env.Repository.GetMessageByID(context.TODO(), message.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }

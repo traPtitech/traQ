@@ -1,8 +1,0 @@
-{
-  "package": "@traq-markdown-engine/sdk",
-  "version": "0.1.0",
-  "artifact": "dist/parser.wasm",
-  "sha256": "3823d4eab050ae3c410c95ce268b6170c75e64918ecd546e04b32c6bca4699b7",
-  "goModule": "github.com/uni-kakurenbo/traq-markdown-engine/packages/sdk/go",
-  "build": "Copied from the published npm package. Keep the Go SDK module at the matching release."
-}

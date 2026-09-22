@@ -9,7 +9,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"github.com/skip2/go-qrcode"
 
@@ -29,7 +29,7 @@ import (
 )
 
 // GetUsers GET /users
-func (h *Handlers) GetUsers(c echo.Context) error {
+func (h *Handlers) GetUsers(c *echo.Context) error {
 	q := repository.UsersQuery{}
 
 	if isTrue(c.QueryParam("include-suspended")) && len(c.QueryParam("name")) > 0 {
@@ -42,7 +42,7 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 		q = q.Active()
 	}
 
-	users, err := h.Repo.GetUsers(q)
+	users, err := h.Repo.GetUsers(c.Request().Context(), q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -63,18 +63,18 @@ func (r PostUserRequest) Validate() error {
 }
 
 // CreateUser POST /users
-func (h *Handlers) CreateUser(c echo.Context) error {
+func (h *Handlers) CreateUser(c *echo.Context) error {
 	var req PostUserRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	iconFileID, err := file.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User, IconFileID: iconFileID})
+	user, err := h.Repo.CreateUser(c.Request().Context(), repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User, IconFileID: iconFileID})
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
@@ -88,19 +88,19 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 }
 
 // GetMe GET /users/me
-func (h *Handlers) GetMe(c echo.Context) error {
+func (h *Handlers) GetMe(c *echo.Context) error {
 	me := getRequestUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(me.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(c.Request().Context(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(me.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(c.Request().Context(), me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return extension.ServeJSONWithETag(c, echo.Map{
+	return extension.ServeJSONWithETag(c, map[string]any{
 		"id":          me.GetID(),
 		"bio":         me.GetBio(),
 		"groups":      groups,
@@ -125,11 +125,11 @@ func (u userAccessScopes) Contains(_ model.AccessScope) bool {
 }
 
 // GetMeOIDC GET /users/me/oidc
-func (h *Handlers) GetMeOIDC(c echo.Context) error {
+func (h *Handlers) GetMeOIDC(c *echo.Context) error {
 	tokenScopes, ok := c.Get(consts.KeyOAuth2AccessScopes).(model.AccessScopes)
 	scopes := lo.Ternary[oidc.ScopeChecker](ok, tokenScopes, userAccessScopes{})
 
-	userInfo, err := h.OIDC.GetUserInfo(getRequestUserID(c), scopes)
+	userInfo, err := h.OIDC.GetUserInfo(c.Request().Context(), getRequestUserID(c), scopes)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -153,7 +153,8 @@ func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditMe PATCH /users/me
-func (h *Handlers) EditMe(c echo.Context) error {
+func (h *Handlers) EditMe(c *echo.Context) error {
+	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
 	var req PatchMeRequest
@@ -164,7 +165,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 	if req.HomeChannel.Valid {
 		if req.HomeChannel.V != uuid.Nil {
 			// チャンネル存在確認
-			if !h.ChannelManager.PublicChannelTree().IsChannelPresent(req.HomeChannel.V) {
+			if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(req.HomeChannel.V) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}
@@ -176,7 +177,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 		Bio:         req.Bio,
 		HomeChannel: req.HomeChannel,
 	}
-	if err := h.Repo.UpdateUser(userID, args); err != nil {
+	if err := h.Repo.UpdateUser(c.Request().Context(), userID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -197,7 +198,7 @@ func (r PutMyPasswordRequest) Validate() error {
 }
 
 // PutMyPassword PUT /users/me/password
-func (h *Handlers) PutMyPassword(c echo.Context) error {
+func (h *Handlers) PutMyPassword(c *echo.Context) error {
 	var req PutMyPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -214,7 +215,7 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 }
 
 // GetMyQRCode GET /users/me/qr-code
-func (h *Handlers) GetMyQRCode(c echo.Context) error {
+func (h *Handlers) GetMyQRCode(c *echo.Context) error {
 	user := getRequestUser(c)
 
 	// トークン生成
@@ -245,22 +246,22 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 }
 
 // GetUserIcon GET /users/:userID/icon
-func (h *Handlers) GetUserIcon(c echo.Context) error {
+func (h *Handlers) GetUserIcon(c *echo.Context) error {
 	return utils.ServeUserIcon(c, h.FileManager, getParamUser(c))
 }
 
 // ChangeUserIcon PUT /users/:userID/icon
-func (h *Handlers) ChangeUserIcon(c echo.Context) error {
+func (h *Handlers) ChangeUserIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
-func (h *Handlers) GetMyIcon(c echo.Context) error {
+func (h *Handlers) GetMyIcon(c *echo.Context) error {
 	return utils.ServeUserIcon(c, h.FileManager, getRequestUser(c))
 }
 
 // ChangeMyIcon PUT /users/me/icon
-func (h *Handlers) ChangeMyIcon(c echo.Context) error {
+func (h *Handlers) ChangeMyIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestUserID(c))
 }
 
@@ -279,14 +280,14 @@ func (r *GetMyStampHistoryRequest) Validate() error {
 }
 
 // GetMyStampHistory GET /users/me/stamp-history
-func (h *Handlers) GetMyStampHistory(c echo.Context) error {
+func (h *Handlers) GetMyStampHistory(c *echo.Context) error {
 	var req GetMyStampHistoryRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
 	userID := getRequestUserID(c)
-	history, err := h.Repo.GetUserStampHistory(userID, req.Limit)
+	history, err := h.Repo.GetUserStampHistory(c.Request().Context(), userID, req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -309,14 +310,14 @@ func (r *GetMyStampRecommendationsRequest) Validate() error {
 }
 
 // GetMyStampRecommendations GET /users/me/stamp-recommendations
-func (h *Handlers) GetMyStampRecommendations(c echo.Context) error {
+func (h *Handlers) GetMyStampRecommendations(c *echo.Context) error {
 	var req GetMyStampRecommendationsRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
 	userID := getRequestUserID(c)
-	recommendations, err := h.Repo.GetUserStampRecommendations(userID, *req.Limit)
+	recommendations, err := h.Repo.GetUserStampRecommendations(c.Request().Context(), userID, *req.Limit)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -336,14 +337,14 @@ func (r PostMyFCMDeviceRequest) Validate() error {
 }
 
 // PostMyFCMDevice POST /users/me/fcm-device
-func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
+func (h *Handlers) PostMyFCMDevice(c *echo.Context) error {
 	var req PostMyFCMDeviceRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
 	userID := getRequestUserID(c)
-	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(c.Request().Context(), userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -367,7 +368,7 @@ func (r PutUserPasswordRequest) Validate() error {
 }
 
 // ChangeUserPassword PUT /users/:userID/password
-func (h *Handlers) ChangeUserPassword(c echo.Context) error {
+func (h *Handlers) ChangeUserPassword(c *echo.Context) error {
 	var req PutUserPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -376,15 +377,15 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 }
 
 // GetUser GET /users/:userID
-func (h *Handlers) GetUser(c echo.Context) error {
+func (h *Handlers) GetUser(c *echo.Context) error {
 	user := getParamUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(user.GetID())
+	tags, err := h.Repo.GetUserTagsByUserID(c.Request().Context(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(user.GetID())
+	groups, err := h.Repo.GetUserBelongingGroupIDs(c.Request().Context(), user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -410,7 +411,7 @@ func (r PatchUserRequest) Validate() error {
 }
 
 // EditUser PATCH /users/:userID
-func (h *Handlers) EditUser(c echo.Context) error {
+func (h *Handlers) EditUser(c *echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 
 	var req PatchUserRequest
@@ -429,13 +430,13 @@ func (h *Handlers) EditUser(c echo.Context) error {
 		deactivate = req.State.V == model.UserAccountStatusDeactivated.Int()
 	}
 
-	if err := h.Repo.UpdateUser(userID, args); err != nil {
+	if err := h.Repo.UpdateUser(c.Request().Context(), userID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 	// 凍結の際
 	if deactivate {
 		// 1. 有効なセッションを削除
-		if err := h.SessStore.RevokeSessionsByUserID(userID); err != nil {
+		if err := h.SessStore.RevokeSessionsByUserID(c.Request().Context(), userID); err != nil {
 			return herror.InternalServerError(err)
 		}
 		// 2. 未読を削除（重いので一時的にコメントアウトしている; Hubのイベント経由などで非同期処理にすべき）
@@ -449,8 +450,8 @@ func (h *Handlers) EditUser(c echo.Context) error {
 }
 
 // GetMyChannelSubscriptions GET /users/me/subscriptions
-func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
-	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
+func (h *Handlers) GetMyChannelSubscriptions(c *echo.Context) error {
+	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -480,7 +481,8 @@ func (r PutChannelSubscribeLevelRequest) Validate() error {
 }
 
 // SetChannelSubscribeLevel PUT /users/me/subscriptions/:channelID
-func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
+func (h *Handlers) SetChannelSubscribeLevel(c *echo.Context) error {
+	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
 	var req PutChannelSubscribeLevelRequest
@@ -488,7 +490,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(ctx, channelID)
 	if err != nil {
 		if err == channel.ErrChannelNotFound {
 			return herror.NotFound()
@@ -496,7 +498,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.V)}, false, getRequestUserID(c)); err != nil {
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.V)}, false, getRequestUserID(c)); err != nil {
 		switch err {
 		case channel.ErrInvalidChannel:
 			return herror.Forbidden("the channel's subscriptions is not configurable")
@@ -510,9 +512,9 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 }
 
 // GetUserStats GET /users/me/:userID/stats
-func (h *Handlers) GetUserStats(c echo.Context) error {
+func (h *Handlers) GetUserStats(c *echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
-	stats, err := h.Repo.GetUserStats(userID)
+	stats, err := h.Repo.GetUserStats(c.Request().Context(), userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

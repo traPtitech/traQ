@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -15,13 +16,13 @@ import (
 func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	m := fields["message"].(*model.Message)
 
-	ch, err := ctx.CM().GetChannel(m.ChannelID)
+	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
 	if ch.IsDMChannel() {
-		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
+		ids, err := ctx.CM().GetDMChannelMembers(context.Background(), ch.ID)
 		if err != nil {
 			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
 		}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,27 +10,30 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
-	ch, err := ctx.CM().GetChannel(m.ChannelID)
+	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
-	user, err := ctx.R().GetUser(m.UserID, false)
+	user, err := ctx.R().GetUser(context.Background(), m.UserID, false)
 	if err != nil {
 		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
 	if ch.IsDMChannel() {
-		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
+		ids, err := ctx.CM().GetDMChannelMembers(context.Background(), ch.ID)
 		if err != nil {
 			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
 		}
@@ -65,21 +69,26 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		// メンションBOT
-		done := make(map[uuid.UUID]bool)
-		for _, uid := range parsed.Mentions {
-			if !done[uid] {
-				done[uid] = true
-				b, err := ctx.GetBotByBotUserID(uid)
-				if err != nil {
-					ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
-					continue
-				}
-				if b == nil {
-					continue
-				}
-				if b.SubscribeEvents.Contains(event.MentionMessageCreated) {
-					bots = append(bots, b)
-				}
+		mentions := set.UUIDSetFromArray(parsed.Mentions)
+		for gid := range set.UUIDSetFromArray(parsed.GroupMentions) {
+			members, err := ctx.R().GetUserIDs(context.Background(), repository.UsersQuery{IsBot: optional.From(true)}.GMemberOf(gid))
+			if err != nil {
+				ctx.L().Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("groupId", gid))
+				continue
+			}
+			mentions.Add(members...)
+		}
+		for uid := range mentions {
+			b, err := ctx.GetBotByBotUserID(uid)
+			if err != nil {
+				ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
+				continue
+			}
+			if b == nil {
+				continue
+			}
+			if b.SubscribeEvents.Contains(event.MentionMessageCreated) {
+				bots = append(bots, b)
 			}
 		}
 

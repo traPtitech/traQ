@@ -2,6 +2,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -22,28 +24,28 @@ type SoundboardRepository interface {
 	// 成功した場合、nilを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	CreateSoundboardItem(args CreateSoundboardItemArgs) error
+	CreateSoundboardItem(ctx context.Context, args CreateSoundboardItemArgs) error
 	// GetAllSoundboardItems すべてのサウンドボードアイテムを取得します
 	//
 	// 成功した場合、サウンドボードアイテムの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllSoundboardItems() ([]*model.SoundboardItem, error)
+	GetAllSoundboardItems(ctx context.Context) ([]*model.SoundboardItem, error)
 	// GetSoundboardItem 指定したIDのユーザーが作成したサウンドボードアイテムを取得します
 	//
 	// 成功した場合、サウンドボードアイテムとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetSoundboardByCreatorID(creatorID uuid.UUID) ([]*model.SoundboardItem, error)
+	GetSoundboardByCreatorID(ctx context.Context, creatorID uuid.UUID) ([]*model.SoundboardItem, error)
 	// UpdateSoundboardCreatorID サウンドボードアイテムの作成者を更新します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateSoundboardCreatorID(soundID uuid.UUID, creatorID uuid.UUID) error
+	UpdateSoundboardCreatorID(ctx context.Context, soundID uuid.UUID, creatorID uuid.UUID) error
 	// DeleteSoundboardItem サウンドボードアイテムを削除します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteSoundboardItem(soundID uuid.UUID) error
+	DeleteSoundboardItem(ctx context.Context, soundID uuid.UUID) error
 }

@@ -1,6 +1,7 @@
 package exevent
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -47,7 +48,7 @@ func (st *StampThrottler) run() {
 }
 
 func (st *StampThrottler) publishMessageStampsUpdated(messageID uuid.UUID) {
-	msg, err := st.mm.Get(messageID)
+	msg, err := st.mm.Get(context.Background(), messageID)
 	if err != nil {
 		return // ignore error
 	}

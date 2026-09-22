@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -13,14 +15,14 @@ type UserSettingsRepository interface {
 	// isEnableがtrueの場合、メッセージ引用通知を有効にします
 	// isEnableがfalseの場合、メッセージ引用通知を無効にします
 	// DBによるエラーを返すことがあります
-	UpdateNotifyCitation(userID uuid.UUID, isEnable bool) error
+	UpdateNotifyCitation(ctx context.Context, userID uuid.UUID, isEnable bool) error
 	// GetNotifyCitation メッセージ引用通知の情報を取得します
 	//
 	// 返り値がtrueの場合、メッセージ引用通知が有効です
 	// 返り値がfalseの場合、メッセージ引用通知が無効です
 	// DBによるエラーを返すことがあります
-	GetNotifyCitation(userID uuid.UUID) (bool, error)
+	GetNotifyCitation(ctx context.Context, userID uuid.UUID) (bool, error)
 	// GetUserSettings ユーザー設定を返します
 	// DBによるエラーを返すことがあります
-	GetUserSettings(userID uuid.UUID) (*model.UserSettings, error)
+	GetUserSettings(ctx context.Context, userID uuid.UUID) (*model.UserSettings, error)
 }

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -14,14 +14,14 @@ import (
 type CacheHitState int
 
 // GetOgp GET /ogp?url={url}
-func (h *Handlers) GetOgp(c echo.Context) error {
+func (h *Handlers) GetOgp(c *echo.Context) error {
 	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
 	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return herror.BadRequest("invalid url")
 	}
 
 	// キャッシュの削除に対応するために Cache-Control でのキャッシュはしない
-	res, _, err := h.OGP.GetMeta(u)
+	res, _, err := h.OGP.GetMeta(c.Request().Context(), u)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -35,13 +35,13 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 }
 
 // DeleteOgpCache DELETE /ogp/cache?url={url}
-func (h *Handlers) DeleteOgpCache(c echo.Context) error {
+func (h *Handlers) DeleteOgpCache(c *echo.Context) error {
 	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
 	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return herror.BadRequest("invalid url")
 	}
 
-	err := h.OGP.DeleteCache(u)
+	err := h.OGP.DeleteCache(c.Request().Context(), u)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

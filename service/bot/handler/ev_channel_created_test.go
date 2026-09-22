@@ -41,7 +41,7 @@ func TestChannelCreated(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		handlerCtx, cm, repo := setup(t, ctrl)
 		tree := mock_channel.NewMockTree(ctrl)
-		cm.EXPECT().PublicChannelTree().Return(tree).AnyTimes()
+		cm.EXPECT().PublicChannelTree(gomock.Any()).Return(tree).AnyTimes()
 		tree.EXPECT().GetChannelPath(ch.ID).Return(ch.Name).AnyTimes()
 
 		registerBot(t, handlerCtx, b)

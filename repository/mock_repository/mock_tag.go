@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/gofrs/uuid"
@@ -36,118 +37,118 @@ func (m *MockTagRepository) EXPECT() *MockTagRepositoryMockRecorder {
 }
 
 // AddUserTag mocks base method.
-func (m *MockTagRepository) AddUserTag(userID, tagID uuid.UUID) error {
+func (m *MockTagRepository) AddUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserTag", userID, tagID)
+	ret := m.ctrl.Call(m, "AddUserTag", ctx, userID, tagID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddUserTag indicates an expected call of AddUserTag.
-func (mr *MockTagRepositoryMockRecorder) AddUserTag(userID, tagID interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) AddUserTag(ctx, userID, tagID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserTag", reflect.TypeOf((*MockTagRepository)(nil).AddUserTag), userID, tagID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserTag", reflect.TypeOf((*MockTagRepository)(nil).AddUserTag), ctx, userID, tagID)
 }
 
 // ChangeUserTagLock mocks base method.
-func (m *MockTagRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
+func (m *MockTagRepository) ChangeUserTagLock(ctx context.Context, userID, tagID uuid.UUID, locked bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeUserTagLock", userID, tagID, locked)
+	ret := m.ctrl.Call(m, "ChangeUserTagLock", ctx, userID, tagID, locked)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ChangeUserTagLock indicates an expected call of ChangeUserTagLock.
-func (mr *MockTagRepositoryMockRecorder) ChangeUserTagLock(userID, tagID, locked interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) ChangeUserTagLock(ctx, userID, tagID, locked interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeUserTagLock", reflect.TypeOf((*MockTagRepository)(nil).ChangeUserTagLock), userID, tagID, locked)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeUserTagLock", reflect.TypeOf((*MockTagRepository)(nil).ChangeUserTagLock), ctx, userID, tagID, locked)
 }
 
 // DeleteUserTag mocks base method.
-func (m *MockTagRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
+func (m *MockTagRepository) DeleteUserTag(ctx context.Context, userID, tagID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserTag", userID, tagID)
+	ret := m.ctrl.Call(m, "DeleteUserTag", ctx, userID, tagID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteUserTag indicates an expected call of DeleteUserTag.
-func (mr *MockTagRepositoryMockRecorder) DeleteUserTag(userID, tagID interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) DeleteUserTag(ctx, userID, tagID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserTag", reflect.TypeOf((*MockTagRepository)(nil).DeleteUserTag), userID, tagID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserTag", reflect.TypeOf((*MockTagRepository)(nil).DeleteUserTag), ctx, userID, tagID)
 }
 
 // GetOrCreateTag mocks base method.
-func (m *MockTagRepository) GetOrCreateTag(name string) (*model.Tag, error) {
+func (m *MockTagRepository) GetOrCreateTag(ctx context.Context, name string) (*model.Tag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreateTag", name)
+	ret := m.ctrl.Call(m, "GetOrCreateTag", ctx, name)
 	ret0, _ := ret[0].(*model.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreateTag indicates an expected call of GetOrCreateTag.
-func (mr *MockTagRepositoryMockRecorder) GetOrCreateTag(name interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) GetOrCreateTag(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateTag", reflect.TypeOf((*MockTagRepository)(nil).GetOrCreateTag), name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateTag", reflect.TypeOf((*MockTagRepository)(nil).GetOrCreateTag), ctx, name)
 }
 
 // GetTagByID mocks base method.
-func (m *MockTagRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
+func (m *MockTagRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTagByID", id)
+	ret := m.ctrl.Call(m, "GetTagByID", ctx, id)
 	ret0, _ := ret[0].(*model.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTagByID indicates an expected call of GetTagByID.
-func (mr *MockTagRepositoryMockRecorder) GetTagByID(id interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) GetTagByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTagByID", reflect.TypeOf((*MockTagRepository)(nil).GetTagByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTagByID", reflect.TypeOf((*MockTagRepository)(nil).GetTagByID), ctx, id)
 }
 
 // GetUserIDsByTagID mocks base method.
-func (m *MockTagRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
+func (m *MockTagRepository) GetUserIDsByTagID(ctx context.Context, tagID uuid.UUID) ([]uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserIDsByTagID", tagID)
+	ret := m.ctrl.Call(m, "GetUserIDsByTagID", ctx, tagID)
 	ret0, _ := ret[0].([]uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserIDsByTagID indicates an expected call of GetUserIDsByTagID.
-func (mr *MockTagRepositoryMockRecorder) GetUserIDsByTagID(tagID interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) GetUserIDsByTagID(ctx, tagID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserIDsByTagID", reflect.TypeOf((*MockTagRepository)(nil).GetUserIDsByTagID), tagID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserIDsByTagID", reflect.TypeOf((*MockTagRepository)(nil).GetUserIDsByTagID), ctx, tagID)
 }
 
 // GetUserTag mocks base method.
-func (m *MockTagRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, error) {
+func (m *MockTagRepository) GetUserTag(ctx context.Context, userID, tagID uuid.UUID) (model.UserTag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserTag", userID, tagID)
+	ret := m.ctrl.Call(m, "GetUserTag", ctx, userID, tagID)
 	ret0, _ := ret[0].(model.UserTag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserTag indicates an expected call of GetUserTag.
-func (mr *MockTagRepositoryMockRecorder) GetUserTag(userID, tagID interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) GetUserTag(ctx, userID, tagID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTag", reflect.TypeOf((*MockTagRepository)(nil).GetUserTag), userID, tagID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTag", reflect.TypeOf((*MockTagRepository)(nil).GetUserTag), ctx, userID, tagID)
 }
 
 // GetUserTagsByUserID mocks base method.
-func (m *MockTagRepository) GetUserTagsByUserID(userID uuid.UUID) ([]model.UserTag, error) {
+func (m *MockTagRepository) GetUserTagsByUserID(ctx context.Context, userID uuid.UUID) ([]model.UserTag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserTagsByUserID", userID)
+	ret := m.ctrl.Call(m, "GetUserTagsByUserID", ctx, userID)
 	ret0, _ := ret[0].([]model.UserTag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserTagsByUserID indicates an expected call of GetUserTagsByUserID.
-func (mr *MockTagRepositoryMockRecorder) GetUserTagsByUserID(userID interface{}) *gomock.Call {
+func (mr *MockTagRepositoryMockRecorder) GetUserTagsByUserID(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTagsByUserID", reflect.TypeOf((*MockTagRepository)(nil).GetUserTagsByUserID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTagsByUserID", reflect.TypeOf((*MockTagRepository)(nil).GetUserTagsByUserID), ctx, userID)
 }

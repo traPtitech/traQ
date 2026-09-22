@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -102,8 +103,7 @@ func TestMain(m *testing.M) {
 
 		// テスト用サーバー作成
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo, nil))
 
@@ -157,7 +157,7 @@ func Setup(t *testing.T, server string) *Env {
 // S 指定ユーザーのAPIセッショントークンを発行
 func (env *Env) S(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	s, err := env.SessStore.IssueSession(userID, nil)
+	s, err := env.SessStore.IssueSession(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	return s.Token()
 }
@@ -196,14 +196,14 @@ func (env *Env) CreateUser(t *testing.T, userName string, useUUIDV4 bool) model.
 		iconFileID = uuid.Must(uuid.NewV7())
 	}
 
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: iconFileID})
+	u, err := env.Repository.CreateUser(context.TODO(), repository.CreateUserArgs{Name: userName, Password: "!test_test@test-", Role: role.User, IconFileID: iconFileID})
 	require.NoError(t, err)
 	return u
 }
 
 func (env *Env) IssueToken(t *testing.T, client *model.OAuth2Client, userID uuid.UUID, refresh bool) *model.OAuth2Token {
 	t.Helper()
-	token, err := env.Repository.IssueToken(client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
+	token, err := env.Repository.IssueToken(context.TODO(), client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
 	require.NoError(t, err)
 	return token
 }
@@ -223,7 +223,7 @@ func (env *Env) MakeAuthorizeData(t *testing.T, clientID string, userID uuid.UUI
 		OriginalScopes: scopes,
 		Nonce:          "nonce",
 	}
-	require.NoError(t, env.Repository.SaveAuthorize(authorize))
+	require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
 	return authorize
 }
 

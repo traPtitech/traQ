@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -54,9 +55,9 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
 			t.Parallel()
 			ch := mustMakeChannel(t, repo, rand)
-			changed, err := repo.UpdateChannel(ch.ID, v)
+			changed, err := repo.UpdateChannel(context.TODO(), ch.ID, v)
 			if assert.NoError(t, err) {
-				ch, err := repo.GetChannel(ch.ID)
+				ch, err := repo.GetChannel(context.TODO(), ch.ID)
 				require.NoError(t, err)
 				assert.EqualValues(t, ch, changed)
 			}
@@ -72,7 +73,7 @@ func TestRepositoryImpl_GetChannel(t *testing.T) {
 	t.Run("Exists", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		ch, err := repo.GetChannel(channel.ID)
+		ch, err := repo.GetChannel(context.TODO(), channel.ID)
 		if assert.NoError(err) {
 			assert.Equal(channel.ID, ch.ID)
 			assert.Equal(channel.Name, ch.Name)
@@ -80,7 +81,7 @@ func TestRepositoryImpl_GetChannel(t *testing.T) {
 	})
 
 	t.Run("NotExists", func(t *testing.T) {
-		_, err := repo.GetChannel(uuid.Nil)
+		_, err := repo.GetChannel(context.TODO(), uuid.Nil)
 		assert.Error(t, err)
 	})
 }
@@ -93,7 +94,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, _, err := repo.ChangeChannelSubscription(uuid.Nil, repository.ChangeChannelSubscriptionArgs{})
+		_, _, err := repo.ChangeChannelSubscription(context.TODO(), uuid.Nil, repository.ChangeChannelSubscriptionArgs{})
 		assert.EqualError(err, repository.ErrNilID.Error())
 	})
 
@@ -112,7 +113,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelMarkAndNotify,
 			},
 		}
-		_, _, err := repo.ChangeChannelSubscription(ch.ID, args)
+		_, _, err := repo.ChangeChannelSubscription(context.TODO(), ch.ID, args)
 		if assert.NoError(err) {
 			assert.Equal(2, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
@@ -125,7 +126,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelNone,
 			},
 		}
-		_, _, err = repo.ChangeChannelSubscription(ch.ID, args)
+		_, _, err = repo.ChangeChannelSubscription(context.TODO(), ch.ID, args)
 		if assert.NoError(err) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
@@ -146,7 +147,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelMarkAndNotify,
 			},
 		}
-		_, _, err := repo.ChangeChannelSubscription(ch.ID, args)
+		_, _, err := repo.ChangeChannelSubscription(context.TODO(), ch.ID, args)
 		if assert.NoError(err) {
 			assert.Equal(2, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
@@ -159,7 +160,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 				uuid.Must(uuid.NewV7()): model.ChannelSubscribeLevelNone,
 			},
 		}
-		_, _, err = repo.ChangeChannelSubscription(ch.ID, args)
+		_, _, err = repo.ChangeChannelSubscription(context.TODO(), ch.ID, args)
 		if assert.NoError(err) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
@@ -173,21 +174,21 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Nil, false)
+		_, err := repo.GetChannelStats(context.TODO(), uuid.Nil, false)
 		assert.Error(t, err)
 	})
 
 	t.Run("not found(UUIDv4)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV4()), false)
+		_, err := repo.GetChannelStats(context.TODO(), uuid.Must(uuid.NewV4()), false)
 		assert.Error(t, err)
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV7()), false)
+		_, err := repo.GetChannelStats(context.TODO(), uuid.Must(uuid.NewV7()), false)
 		assert.Error(t, err)
 	})
 
@@ -210,8 +211,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		for i := range 14 {
 			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		for i := range 7 {
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
@@ -223,7 +224,7 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		stats, err := repo.GetChannelStats(channel.ID, false)
+		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, false)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 
@@ -266,8 +267,8 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		for i := range 14 {
 			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
 		for i := range 7 {
 			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
@@ -279,7 +280,7 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		stats, err := repo.GetChannelStats(channel.ID, false)
+		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, false)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 
@@ -333,10 +334,10 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
-		stats, err := repo.GetChannelStats(channel.ID, true)
+		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, true)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 
@@ -390,10 +391,10 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
-		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(context.TODO(), u2Messages[13].ID))
 
-		stats, err := repo.GetChannelStats(channel.ID, true)
+		stats, err := repo.GetChannelStats(context.TODO(), channel.ID, true)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
 

@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"bytes"
+	"context"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -18,7 +19,7 @@ import (
 var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
 
 // CreateChannel implements ChannelRepository interface.
-func (repo *Repository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
+func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
 	arr := []interface{}{&ch}
 
 	ch.ID = uuid.Must(uuid.NewV7())
@@ -67,7 +68,7 @@ func (repo *Repository) CreateChannel(ch model.Channel, privateMembers set.UUID,
 		arr = append(arr, m)
 	}
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, v := range arr {
 			if err := tx.Create(v).Error; err != nil {
 				return err
@@ -90,13 +91,13 @@ func (repo *Repository) CreateChannel(ch model.Channel, privateMembers set.UUID,
 }
 
 // UpdateChannel implements ChannelRepository interface.
-func (repo *Repository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
+func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 
 	var ch model.Channel
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -148,9 +149,9 @@ func (repo *Repository) UpdateChannel(channelID uuid.UUID, args repository.Updat
 }
 
 // ArchiveChannels implements ChannelRepository interface.
-func (repo *Repository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error) {
+func (repo *Repository) ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([]*model.Channel, error) {
 	var changed []*model.Channel
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, id := range ids {
 			if id != uuid.Nil {
 				var ch model.Channel
@@ -187,28 +188,29 @@ func (repo *Repository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, erro
 }
 
 // GetChannel implements ChannelRepository interface.
-func (repo *Repository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
+func (repo *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
 	var ch model.Channel
-	if err := repo.db.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
+	if err := repo.db.WithContext(ctx).First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &ch, nil
 }
 
 // GetPublicChannels implements ChannelRepository interface.
-func (repo *Repository) GetPublicChannels() (channels []*model.Channel, err error) {
+func (repo *Repository) GetPublicChannels(ctx context.Context) (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)
 	return channels, repo.db.
+		WithContext(ctx).
 		Where(&model.Channel{IsPublic: true}).
 		Find(&channels).
 		Error
 }
 
 // GetDirectMessageChannel implements ChannelRepository interface.
-func (repo *Repository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
+func (repo *Repository) GetDirectMessageChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error) {
 	// user1 <= user2 になるように入れかえ
 	if bytes.Compare(user1.Bytes(), user2.Bytes()) == 1 {
 		t := user1
@@ -219,6 +221,7 @@ func (repo *Repository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.
 	// チャンネル存在確認
 	var ch model.Channel
 	err := repo.db.
+		WithContext(ctx).
 		Where("id = (SELECT channel_id FROM dm_channel_mappings WHERE user1 = ? AND user2 = ?)", user1, user2).
 		First(&ch).
 		Error
@@ -229,24 +232,26 @@ func (repo *Repository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.
 }
 
 // GetDirectMessageChannelMapping implements ChannelRepository interface.
-func (repo *Repository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappings []*model.DMChannelMapping, err error) {
+func (repo *Repository) GetDirectMessageChannelMapping(ctx context.Context, userID uuid.UUID) (mappings []*model.DMChannelMapping, err error) {
 	mappings = make([]*model.DMChannelMapping, 0)
 	if userID == uuid.Nil {
 		return
 	}
 	return mappings, repo.db.
+		WithContext(ctx).
 		Where("user1 = ? OR user2 = ?", userID, userID).
 		Find(&mappings).
 		Error
 }
 
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
-func (repo *Repository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
+func (repo *Repository) GetPrivateChannelMemberIDs(ctx context.Context, channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
 		return users, nil
 	}
 	return users, repo.db.
+		WithContext(ctx).
 		Model(&model.UsersPrivateChannel{}).
 		Where(&model.UsersPrivateChannel{ChannelID: channelID}).
 		Pluck("user_id", &users).
@@ -254,7 +259,7 @@ func (repo *Repository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users [
 }
 
 // ChangeChannelSubscription implements ChannelRepository interface.
-func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
+func (repo *Repository) ChangeChannelSubscription(ctx context.Context, channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
 	if channelID == uuid.Nil {
 		return nil, nil, repository.ErrNilID
 	}
@@ -267,7 +272,7 @@ func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repo
 		uids = append(uids, uid)
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 指定された各ユーザーの現在のチャンネルの購読設定を取得
 		var _current []*model.UserSubscribeChannel
 		if err := tx.
@@ -364,8 +369,8 @@ func (repo *Repository) ChangeChannelSubscription(channelID uuid.UUID, args repo
 }
 
 // GetChannelSubscriptions implements ChannelRepository interface.
-func (repo *Repository) GetChannelSubscriptions(query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
-	tx := repo.db
+func (repo *Repository) GetChannelSubscriptions(ctx context.Context, query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
+	tx := repo.db.WithContext(ctx)
 
 	if query.UserID.Valid {
 		tx = tx.Where("user_id = ?", query.UserID.V)
@@ -388,10 +393,10 @@ func (repo *Repository) GetChannelSubscriptions(query repository.ChannelSubscrip
 }
 
 // GetChannelEvents implements ChannelRepository interface.
-func (repo *Repository) GetChannelEvents(query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
+func (repo *Repository) GetChannelEvents(ctx context.Context, query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
 	events = make([]*model.ChannelEvent, 0)
 
-	tx := repo.db
+	tx := repo.db.WithContext(ctx)
 	if query.Asc {
 		tx = tx.Order("date_time")
 	} else {
@@ -434,8 +439,8 @@ func (repo *Repository) GetChannelEvents(query repository.ChannelEventsQuery) (e
 }
 
 // RecordChannelEvent implements ChannelRepository interface.
-func (repo *Repository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
-	return repo.db.Create(&model.ChannelEvent{
+func (repo *Repository) RecordChannelEvent(ctx context.Context, channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+	return repo.db.WithContext(ctx).Create(&model.ChannelEvent{
 		EventID:   uuid.Must(uuid.NewV7()),
 		ChannelID: channelID,
 		EventType: eventType,
@@ -445,19 +450,19 @@ func (repo *Repository) RecordChannelEvent(channelID uuid.UUID, eventType model.
 }
 
 // GetChannelStats implements ChannelRepository interface.
-func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessages bool) (*repository.ChannelStats, error) {
+func (repo *Repository) GetChannelStats(ctx context.Context, channelID uuid.UUID, excludeDeletedMessages bool) (*repository.ChannelStats, error) {
 	if channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
 
-	if ok, err := gormutil.RecordExists(repo.db, &model.Channel{ID: channelID}); err != nil {
+	if ok, err := gormutil.RecordExists(repo.db.WithContext(ctx), &model.Channel{ID: channelID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, repository.ErrNotFound
 	}
 
 	var stats repository.ChannelStats
-	query := repo.db.Unscoped().
+	query := repo.db.WithContext(ctx).Unscoped().
 		Model(&model.Message{}).
 		Select("COUNT(channel_id) AS total_message_count").
 		Where(&model.Message{ChannelID: channelID})
@@ -470,7 +475,7 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessa
 		return nil, err
 	}
 
-	query = repo.db.Unscoped().
+	query = repo.db.WithContext(ctx).Unscoped().
 		Model(&model.Message{}).
 		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) As total").
 		Joins("JOIN messages_stamps ON id = messages_stamps.message_id").
@@ -488,7 +493,7 @@ func (repo *Repository) GetChannelStats(channelID uuid.UUID, excludeDeletedMessa
 		return nil, err
 	}
 
-	query = repo.db.Unscoped().
+	query = repo.db.WithContext(ctx).Unscoped().
 		Model(&model.Message{}).
 		Select("user_id AS id", "COUNT(user_id) AS message_count").
 		Where(&model.Message{ChannelID: channelID})

@@ -1,0 +1,8 @@
+reviews:
+  path_instructions:
+    - path: "**/*.go"
+      instructions: |
+        Ensure that `context.Context` is properly propagated throughout the call stack.
+        - Functions performing I/O or network requests must accept `context.Context` as their first parameter.
+        - The received `context` must be passed down to all subsequent calls.
+        - **Exception for Tests**: In test files (`**/*_test.go`), the use of `context.TODO()` or `context.Background()` is allowed and should not be flagged as an issue.

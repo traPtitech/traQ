@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	json "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -193,11 +193,11 @@ func NewGithubProvider(repo repository.Repository, fm file.Manager, logger *zap.
 	}
 }
 
-func (p *GithubProvider) LoginHandler(c echo.Context) error {
+func (p *GithubProvider) LoginHandler(c *echo.Context) error {
 	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
-func (p *GithubProvider) CallbackHandler(c echo.Context) error {
+func (p *GithubProvider) CallbackHandler(c *echo.Context) error {
 	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
