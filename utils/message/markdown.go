@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	markdown "github.com/uni-kakurenbo/traq-markdown-engine/packages/sdk/go"
+	markdown "github.com/traPtitech/traq-flavored-markdown/packages/sdk/go"
 )
 
 type markdownRuntime struct {
@@ -42,7 +42,7 @@ func (state *markdownRuntime) initialize(ctx context.Context) error {
 
 	var err error
 	if state.parser == nil {
-		state.parser, err = state.runtime.NewParser(ctx, markdown.PresetTraQV1)
+		state.parser, err = state.runtime.NewParser(ctx, markdown.PresetTraqV1)
 		if err != nil {
 			return err
 		}

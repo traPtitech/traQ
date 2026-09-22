@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
-	markdown "github.com/uni-kakurenbo/traq-markdown-engine/packages/sdk/go"
+	markdown "github.com/traPtitech/traq-flavored-markdown/packages/sdk/go"
 )
 
 // ReplaceMapper resolves application identities for the Rust embedding plan.
