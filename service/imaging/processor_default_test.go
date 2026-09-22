@@ -10,6 +10,7 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/testutils"
 )
 
@@ -33,20 +34,30 @@ func setup() (Processor, *os.File) {
 }
 
 func assertImg(t *testing.T, actualImg image.Image, expectedFilePath string) {
-	actualImgBytesBuffer := &bytes.Buffer{}
-	err := png.Encode(actualImgBytesBuffer, actualImg)
-	if err != nil {
-		panic(err)
-	}
-	actualImgBytes := actualImgBytesBuffer.Bytes()
+	t.Helper()
 
+	// PNG's compressed representation can change between Go releases, so
+	// compare the decoded image rather than encoder-specific bytes.
 	fpExpected := mustOpen(expectedFilePath)
-	expectedImgBytes, err := io.ReadAll(fpExpected)
-	if err != nil {
-		panic(err)
-	}
+	defer fpExpected.Close()
+	expectedImg, err := png.Decode(fpExpected)
+	require.NoError(t, err)
+	require.Equal(t, expectedImg.Bounds(), actualImg.Bounds())
 
-	assert.Equal(t, expectedImgBytes, actualImgBytes)
+	bounds := expectedImg.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			er, eg, eb, ea := expectedImg.At(x, y).RGBA()
+			ar, ag, ab, aa := actualImg.At(x, y).RGBA()
+			if !assert.Equal(t,
+				[4]uint32{er, eg, eb, ea},
+				[4]uint32{ar, ag, ab, aa},
+				"pixel at (%d, %d)", x, y,
+			) {
+				return
+			}
+		}
+	}
 }
 
 func TestProcessorDefault_Thumbnail(t *testing.T) {
