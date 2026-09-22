@@ -161,12 +161,12 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 		tokens []repository.RegisterDeviceArgs
 		expect int
 	}{
-		{[]repository.RegisterDeviceArgs{{Token: optional.New(token2, true)}}, 6},                                      // v7単体
-		{[]repository.RegisterDeviceArgs{{Token: optional.New(token6, true)}}, 5},                                      // v4単体
-		{[]repository.RegisterDeviceArgs{}, 5},                                                                         // 空配列
-		{[]repository.RegisterDeviceArgs{{Token: optional.New(token1, true)}, {Token: optional.New(token5, true)}}, 3}, // v7 2つ
-		{[]repository.RegisterDeviceArgs{{Token: optional.New(token4, true)}, {Token: optional.New(token7, true)}}, 1}, //v4 とv7 1つずつ
-		{[]repository.RegisterDeviceArgs{{Token: optional.New(token3, true)}, {Token: optional.New(token2, true)}, {Token: optional.New(token6, true)}}, 0},
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token2, true)}}, 13},                                      // v7単体
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token6, true)}}, 12},                                      // v4単体
+		{[]repository.RegisterDeviceArgs{}, 12},                                                                         // 空配列
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token1, true)}, {Token: optional.New(token5, true)}}, 10}, // v7 2つ
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token4, true)}, {Token: optional.New(token7, true)}}, 8},  //v4 とv7 1つずつ
+		{[]repository.RegisterDeviceArgs{{Token: optional.New(token3, true)}, {Token: optional.New(token2, true)}, {Token: optional.New(token6, true)}}, 7},
 
 		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid2, true)}}, 6},                                  // v7単体
 		{[]repository.RegisterDeviceArgs{{FID: optional.New(fid6, true)}}, 5},                                  // v4単体
@@ -177,7 +177,7 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	}
 	for _, v := range cases {
 		assert.NoError(repo.DeleteDeviceTokens(context.TODO(), v.tokens))
-		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?, ?, ?)", id1, id2, id3, id4)))
+		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?, ?, ?, ?, ?, ?, ?)", id1, id2, id3, id4, id5, id6, id7, id8)))
 	}
 }
 
