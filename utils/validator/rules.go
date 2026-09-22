@@ -77,7 +77,7 @@ var ChannelNameRuleRequired = append([]vd.Rule{
 var StampNameRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),
 	vd.RuneLength(1, 32).Error("must be 1-32 characters long"),
-	vd.NewStringRule(func (s string)  bool{return !strings.HasPrefix(s,"0x")}, "must not start with 0x"),	
+	vd.NewStringRule(func(s string) bool { return !strings.HasPrefix(s, "0x") }, "must not start with 0x"),
 }
 
 // StampNameRuleRequired スタンプ名バリデーションルール with Required
