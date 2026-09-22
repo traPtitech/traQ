@@ -280,7 +280,7 @@ func TestMessageCreatedMentions(t *testing.T) {
 			if senderID == uuid.Nil {
 				senderID = defaultSenderID
 			}
-			ch := &model.Channel{ID: uuid.NewV3(uuid.Nil, "c"), IsPublic: true}
+			ch := &model.Channel{ID: uuid.NewV3(uuid.Nil, "c"), Type: model.ChannelTypePublic}
 			mu := &model.User{ID: senderID, Name: "sender"}
 			m := &model.Message{
 				ID:        uuid.NewV3(uuid.Nil, "m"),
