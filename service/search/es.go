@@ -47,7 +47,7 @@ type esEngine struct {
 	cm     channel.Manager
 	repo   repository.Repository
 	l      *zap.Logger
-	done   chan<- struct{}
+	cancel context.CancelFunc
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
@@ -242,17 +242,17 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		defer createIndexRes.Body.Close()
 	}
 
-	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 	engine := &esEngine{
 		client: client,
 		mm:     mm,
 		cm:     cm,
 		repo:   repo,
 		l:      logger.Named("search"),
-		done:   done,
+		cancel: cancel,
 	}
 
-	go engine.syncLoop(done)
+	go engine.syncLoop(ctx)
 
 	return engine, nil
 }
@@ -439,6 +439,6 @@ func (e *esEngine) Available() bool {
 }
 
 func (e *esEngine) Close() error {
-	e.done <- struct{}{}
+	e.cancel()
 	return nil
 }

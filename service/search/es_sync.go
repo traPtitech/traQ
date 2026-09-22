@@ -37,23 +37,23 @@ type attributes struct {
 type userCache map[uuid.UUID]bool
 
 // convertMessageCreated 新規メッセージをesへ入れる型に変換する
-func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, error) {
+func (e *esEngine) convertMessageCreated(ctx context.Context, m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, error) {
 	var isBot, ok bool
 	if isBot, ok = userCache[m.UserID]; !ok {
 		// 新規ユーザー or キャッシュが存在しない
-		user, err := e.repo.GetUser(context.Background(), m.UserID, false)
+		user, err := e.repo.GetUser(ctx, m.UserID, false)
 		if err != nil {
 			return nil, err
 		}
 		isBot = user.IsBot()
 	}
 
-	attr := e.getAttributes(m, parseResult)
+	attr := e.getAttributes(ctx, m, parseResult)
 
 	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
-		IsPublic:       e.cm.IsPublicChannel(context.Background(), m.ChannelID),
+		IsPublic:       e.cm.IsPublicChannel(ctx, m.ChannelID),
 		Bot:            isBot,
 		Text:           m.Text,
 		CreatedAt:      m.CreatedAt,
@@ -69,8 +69,8 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 }
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
-func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
-	attr := e.getAttributes(m, parseResult)
+func (e *esEngine) convertMessageUpdated(ctx context.Context, m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
+	attr := e.getAttributes(ctx, m, parseResult)
 	// Updateする項目のみ
 	return &esMessageDocUpdate{
 		Text:           m.Text,
@@ -84,7 +84,7 @@ func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.
 	}
 }
 
-func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
+func (e *esEngine) getAttributes(ctx context.Context, m *model.Message, parseResult *message.ParseResult) *attributes {
 	attr := &attributes{}
 
 	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
@@ -93,7 +93,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.HasAttachments = len(parseResult.Attachments) != 0
 
 	for _, attachmentID := range parseResult.Attachments {
-		meta, err := e.repo.GetFileMeta(context.Background(), attachmentID)
+		meta, err := e.repo.GetFileMeta(ctx, attachmentID)
 		if err != nil {
 			e.l.Warn(err.Error(), zap.Error(err))
 			continue
@@ -110,26 +110,28 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	return attr
 }
 
-func (e *esEngine) syncLoop(done <-chan struct{}) {
+func (e *esEngine) syncLoop(ctx context.Context) {
 	t := time.NewTicker(syncInterval)
 	defer t.Stop()
-loop:
 	for {
-		err := e.sync()
+		err := e.sync(ctx)
 		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
 			e.l.Error(err.Error(), zap.Error(err))
 		}
 
 		select {
 		case <-t.C:
-		case <-done:
-			break loop
+		case <-ctx.Done():
+			return
 		}
 	}
 }
 
-func (e *esEngine) newUserCache() (userCache, error) {
-	users, err := e.repo.GetUsers(context.Background(), repository.UsersQuery{})
+func (e *esEngine) newUserCache(ctx context.Context) (userCache, error) {
+	users, err := e.repo.GetUsers(ctx, repository.UsersQuery{})
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +145,10 @@ func (e *esEngine) newUserCache() (userCache, error) {
 }
 
 // sync メッセージを repository.MessageRepository から読み取り、esへindexします
-func (e *esEngine) sync() error {
+func (e *esEngine) sync(ctx context.Context) error {
 	e.l.Debug("syncing messages with es")
 
-	lastSynced, err := e.lastInsertedUpdated()
+	lastSynced, err := e.lastInsertedUpdated(ctx)
 	if err != nil {
 		return err
 	}
@@ -154,7 +156,7 @@ func (e *esEngine) sync() error {
 	var userCache userCache
 	lastInsert := lastSynced
 	for {
-		messages, more, err := e.repo.GetUpdatedMessagesAfter(context.Background(), lastInsert, syncMessageBulk)
+		messages, more, err := e.repo.GetUpdatedMessagesAfter(ctx, lastInsert, syncMessageBulk)
 		if err != nil {
 			return err
 		}
@@ -167,13 +169,13 @@ func (e *esEngine) sync() error {
 		// ユーザーキャッシュサービスができたら書き換えても良い
 		if userCache == nil && more {
 			// 新規メッセージが2ページ以上の時のみデータが入ったキャッシュを作成
-			userCache, err = e.newUserCache()
+			userCache, err = e.newUserCache(ctx)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = syncNewMessages(e, messages, lastInsert, lastSynced, userCache)
+		err = syncNewMessages(ctx, e, messages, lastInsert, lastSynced, userCache)
 		if err != nil {
 			return err
 		}
@@ -185,7 +187,7 @@ func (e *esEngine) sync() error {
 
 	lastDelete := lastSynced
 	for {
-		messages, more, err := e.repo.GetDeletedMessagesAfter(context.Background(), lastDelete, syncMessageBulk)
+		messages, more, err := e.repo.GetDeletedMessagesAfter(ctx, lastDelete, syncMessageBulk)
 		if err != nil {
 			return err
 		}
@@ -197,7 +199,7 @@ func (e *esEngine) sync() error {
 		}
 		lastDelete = messages[len(messages)-1].DeletedAt.Time
 
-		err = syncDeletedMessages(e, messages, lastDelete, lastSynced)
+		err = syncDeletedMessages(ctx, e, messages, lastDelete, lastSynced)
 		if err != nil {
 			return err
 		}
@@ -210,7 +212,7 @@ func (e *esEngine) sync() error {
 	return nil
 }
 
-func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
+func syncNewMessages(ctx context.Context, e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
 	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client: e.client,
 		Index:  getIndexName(esMessageIndex),
@@ -220,7 +222,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	}
 
 	defer func() {
-		closeErr := bulkIndexer.Close(context.Background())
+		closeErr := bulkIndexer.Close(ctx)
 		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ。
 			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
 			return
@@ -235,12 +237,12 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	}()
 
 	for _, v := range messages {
-		parsed, err := message.Parse(context.Background(), v.Text)
+		parsed, err := message.Parse(ctx, v.Text)
 		if err != nil {
 			return err
 		}
 		if v.CreatedAt.After(lastSynced) {
-			doc, err := e.convertMessageCreated(v, parsed, userCache)
+			doc, err := e.convertMessageCreated(ctx, v, parsed, userCache)
 			if err != nil {
 				return err
 			}
@@ -250,7 +252,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 
-			err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+			err = bulkIndexer.Add(ctx, esutil.BulkIndexerItem{
 				Action:     "index",
 				DocumentID: v.ID.String(),
 				Body:       bytes.NewReader(data),
@@ -259,14 +261,14 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 		} else {
-			doc := e.convertMessageUpdated(v, parsed)
+			doc := e.convertMessageUpdated(ctx, v, parsed)
 
 			data, err := json.Marshal(map[string]any{"doc": *doc})
 			if err != nil {
 				return err
 			}
 
-			err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+			err = bulkIndexer.Add(ctx, esutil.BulkIndexerItem{
 				Action:     "update",
 				DocumentID: v.ID.String(),
 				Body:       bytes.NewReader(data),
@@ -280,7 +282,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	return nil
 }
 
-func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time.Time, lastSynced time.Time) (err error) {
+func syncDeletedMessages(ctx context.Context, e *esEngine, messages []*model.Message, lastDelete time.Time, lastSynced time.Time) (err error) {
 	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client: e.client,
 		Index:  getIndexName(esMessageIndex),
@@ -290,7 +292,7 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 	}
 
 	defer func() {
-		closeErr := bulkIndexer.Close(context.Background())
+		closeErr := bulkIndexer.Close(ctx)
 		if err != nil && closeErr != nil { // エラーが発生してからdeferに来た時、エラーの上書きを防ぐ
 			err = fmt.Errorf("error in bulk index: %w.\nerror in closing bulk indexer: %w", err, closeErr)
 			return
@@ -308,7 +310,7 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 		if v.CreatedAt.After(lastSynced) {
 			continue
 		}
-		err = bulkIndexer.Add(context.Background(), esutil.BulkIndexerItem{
+		err = bulkIndexer.Add(ctx, esutil.BulkIndexerItem{
 			Action:     "delete",
 			DocumentID: v.ID.String(),
 		})
@@ -321,11 +323,12 @@ func syncDeletedMessages(e *esEngine, messages []*model.Message, lastDelete time
 }
 
 // lastInsertedUpdated esに存在している、updatedAtが一番新しいメッセージの値を取得します
-func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
+func (e *esEngine) lastInsertedUpdated(ctx context.Context) (time.Time, error) {
 	sr, err := e.client.Search(
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithSort("updatedAt:desc"),
-		e.client.Search.WithSize(1))
+		e.client.Search.WithSize(1),
+		e.client.Search.WithContext(ctx))
 	if err != nil {
 		return time.Time{}, err
 	}

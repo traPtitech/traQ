@@ -23,7 +23,7 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 		return nil, repository.ErrNilID
 	}
 
-	parseResult, err := message.Parse(context.Background(), text)
+	parseResult, err := message.Parse(ctx, text)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (repo *Repository) UpdateMessage(ctx context.Context, messageID uuid.UUID, 
 		return repository.ErrNilID
 	}
 
-	parseResult, err := message.Parse(context.Background(), text)
+	parseResult, err := message.Parse(ctx, text)
 	if err != nil {
 		return err
 	}

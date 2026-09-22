@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -37,4 +38,35 @@ func TestRustMarkdownRecoversAfterFailure(t *testing.T) {
 	result, err = Parse(context.Background(), "still available")
 	require.NoError(t, err)
 	require.Equal(t, "still available", result.NotificationText())
+}
+
+func TestRustMarkdownSupportsConcurrentCalls(t *testing.T) {
+	const workers = 8
+	const requestsPerWorker = 10
+
+	errs := make(chan error, workers)
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range requestsPerWorker {
+				result, err := Parse(context.Background(), "**concurrent** @test")
+				if err != nil {
+					errs <- err
+					return
+				}
+				if result.NotificationText() != "concurrent @test" {
+					errs <- errors.New("unexpected concurrent Markdown result")
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
 }

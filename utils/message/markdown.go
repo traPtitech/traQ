@@ -11,7 +11,7 @@ import (
 )
 
 type markdownRuntime struct {
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	origin    string
 	runtime   *markdown.Runtime
 	parser    *markdown.Parser
@@ -27,10 +27,14 @@ func SetOrigin(origin string) {
 	defer markdownState.mu.Unlock()
 
 	markdownState.origin = origin
-	markdownState.closeInstances()
+	markdownState.closeInstancesLocked()
 }
 
-func (state *markdownRuntime) initialize(ctx context.Context) error {
+func (state *markdownRuntime) initializedLocked() bool {
+	return state.runtime != nil && state.parser != nil && state.extractor != nil && state.renderer != nil
+}
+
+func (state *markdownRuntime) initializeLocked(ctx context.Context) error {
 	if state.runtime == nil {
 		runtime, err := markdown.NewBundledRuntime(ctx)
 		if err != nil {
@@ -65,7 +69,7 @@ func (state *markdownRuntime) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (state *markdownRuntime) closeInstances() {
+func (state *markdownRuntime) closeInstancesLocked() {
 	if state.parser != nil {
 		_ = state.parser.Close(context.Background())
 		state.parser = nil
@@ -87,7 +91,7 @@ func InitializeMarkdown(ctx context.Context) error {
 	markdownState.mu.Lock()
 	defer markdownState.mu.Unlock()
 
-	return markdownState.initialize(ctx)
+	return markdownState.initializeLocked(ctx)
 }
 
 // CloseMarkdown releases the compiled module and its instances.
@@ -110,13 +114,13 @@ func CloseMarkdown() error {
 // Parse lends one parsed Document to the extractor and PlainText renderer.
 func Parse(ctx context.Context, text string) (*ParseResult, error) {
 	var result *ParseResult
-	err := withDocument(ctx, text, func(ctx context.Context, document *markdown.Document) error {
-		extraction, err := markdownState.extractor.Extract(ctx, document)
+	err := markdownState.withDocument(ctx, text, func(ctx context.Context, document *markdown.Document, extractor *markdown.Extractor, renderer *markdown.PlainTextRenderer) error {
+		extraction, err := extractor.Extract(ctx, document)
 		if err != nil {
 			return err
 		}
 
-		notification, err := markdownState.renderer.Render(ctx, document)
+		notification, err := renderer.Render(ctx, document)
 		if err != nil {
 			return err
 		}
@@ -130,41 +134,55 @@ func Parse(ctx context.Context, text string) (*ParseResult, error) {
 
 func extractMarkdown(ctx context.Context, text string) (*markdown.Extraction, error) {
 	var result *markdown.Extraction
-	err := withDocument(ctx, text, func(ctx context.Context, document *markdown.Document) error {
+	err := markdownState.withDocument(ctx, text, func(ctx context.Context, document *markdown.Document, extractor *markdown.Extractor, _ *markdown.PlainTextRenderer) error {
 		var err error
-		result, err = markdownState.extractor.Extract(ctx, document)
+		result, err = extractor.Extract(ctx, document)
 		return err
 	})
 
 	return result, err
 }
 
-func withDocument(ctx context.Context, text string, consume func(context.Context, *markdown.Document) error) error {
-	markdownState.mu.Lock()
-	defer markdownState.mu.Unlock()
-
+func (state *markdownRuntime) withDocument(ctx context.Context, text string, consume func(context.Context, *markdown.Document, *markdown.Extractor, *markdown.PlainTextRenderer) error) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	if err := markdownState.initialize(ctx); err != nil {
-		return fmt.Errorf("initialize Markdown: %w", err)
-	}
+	for {
+		state.mu.RLock()
+		if !state.initializedLocked() {
+			state.mu.RUnlock()
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
+			state.mu.Lock()
+			var err error
+			if !state.initializedLocked() {
+				err = state.initializeLocked(ctx)
+			}
+			state.mu.Unlock()
+			if err != nil {
+				return fmt.Errorf("initialize Markdown: %w", err)
+			}
+			continue
+		}
 
-	document, err := markdownState.parser.Parse(ctx, text)
-	if err == nil {
-		err = consume(ctx, document)
-	}
-	if err != nil {
+		operationCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		document, err := state.parser.Parse(operationCtx, text)
+		if err == nil {
+			err = consume(operationCtx, document, state.extractor, state.renderer)
+		}
+		cancel()
+		state.mu.RUnlock()
+
+		if err == nil {
+			return nil
+		}
+
 		// Cancellation may close an instance. Recreate instances on the next request.
-		markdownState.closeInstances()
+		state.mu.Lock()
+		state.closeInstancesLocked()
+		state.mu.Unlock()
 		return fmt.Errorf("process Markdown: %w", err)
 	}
-
-	return nil
 }
 
 func adaptExtraction(result *markdown.Extraction, notification string) *ParseResult {
