@@ -27,6 +27,10 @@ func (repo *Repository) RegisterDevice(ctx context.Context, userID uuid.UUID, ar
 		}
 	}
 
+	if len(token) == 0 {
+		return repository.ArgError("Token, FID", "token and fid are empty")
+	}
+
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var d model.Device
 		if len(args.Token.ValueOrZero()) != 0 && len(args.FID.ValueOrZero()) != 0 {
