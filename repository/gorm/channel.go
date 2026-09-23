@@ -92,7 +92,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 				"private":    ch.IsDMChannel(),
 			},
 		})
-	}else{
+	} else {
 		repo.hub.Publish(hub.Message{
 			Name: event.ThreadCreated,
 			Fields: hub.Fields{

@@ -15,6 +15,6 @@ type ThreadCreated struct {
 func MakeThreadCreated(eventTime time.Time, th *model.Channel, parentChPath string, user model.UserInfo) *ThreadCreated {
 	return &ThreadCreated{
 		Base:    MakeBase(eventTime),
-		Thread: MakeChannel(th, parentChPath + "/" + th.Name, user),
+		Thread:  MakeChannel(th, parentChPath + "/" + th.Name, user),
 	}
 }
