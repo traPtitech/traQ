@@ -97,7 +97,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 			Name: event.ThreadCreated,
 			Fields: hub.Fields{
 				"channel_id": ch.ID,
-				"thread":    &ch,
+				"thread":     &ch,
 			},
 		})
 	}
