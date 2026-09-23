@@ -216,6 +216,43 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		}
 	})
 
+	t.Run("Success with arbitrary loopback redirect port", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand, useUUIDV4)
+		loopbackClient := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "loopback client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "http://127.0.0.1/callback",
+			Scopes:       scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), loopbackClient))
+		env.IssueToken(t, loopbackClient, user.GetID(), false)
+
+		const requestedRedirectURI = "http://127.0.0.1:49152/callback"
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize").
+			WithFormField("client_id", loopbackClient.ID).
+			WithFormField("response_type", "code").
+			WithFormField("redirect_uri", requestedRedirectURI).
+			WithFormField("prompt", "none").
+			WithCookie(session.CookieName, env.S(t, user.GetID())).
+			Expect()
+
+		res.Status(http.StatusFound)
+		loc, err := res.Raw().Location()
+		require.NoError(t, err)
+		assert.Equal(t, "127.0.0.1:49152", loc.Host)
+		assert.Equal(t, "/callback", loc.Path)
+		assert.NotEmpty(t, loc.Query().Get("code"))
+
+		authorize, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
+		require.NoError(t, err)
+		assert.Equal(t, requestedRedirectURI, authorize.RedirectURI)
+	})
+
 	t.Run("Bad Request", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -675,6 +712,52 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 		}
 	})
 
+	t.Run("Success with arbitrary loopback redirect port", func(t *testing.T) {
+		t.Parallel()
+		loopbackClient := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "loopback client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "http://[::1]/callback",
+			Scopes:       scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), loopbackClient))
+
+		const requestedRedirectURI = "http://[::1]:49152/callback"
+		decideSession, err := env.SessStore.IssueSession(context.TODO(), user.GetID(), map[string]interface{}{
+			oauth2ContextSession: authorizeRequest{
+				ResponseType: "code",
+				ClientID:     loopbackClient.ID,
+				RedirectURI:  requestedRedirectURI,
+				Scopes:       scopesRead,
+				ValidScopes:  scopesRead,
+				State:        "state",
+				Types:        responseType{Code: true},
+				AccessTime:   time.Now(),
+			},
+		})
+		require.NoError(t, err)
+
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize/decide").
+			WithFormField("submit", "approve").
+			WithCookie(session.CookieName, decideSession.Token()).
+			Expect()
+
+		res.Status(http.StatusFound)
+		loc, err := res.Raw().Location()
+		require.NoError(t, err)
+		assert.Equal(t, "[::1]:49152", loc.Host)
+		assert.Equal(t, "/callback", loc.Path)
+		assert.NotEmpty(t, loc.Query().Get("code"))
+
+		authorize, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
+		require.NoError(t, err)
+		assert.Equal(t, requestedRedirectURI, authorize.RedirectURI)
+	})
+
 	t.Run("Bad Request (No form)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -823,4 +906,85 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 			assert.Equal(errAccessDenied, loc.Query().Get("error"))
 		}
 	})
+}
+
+func TestRedirectURIMatches(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		registered string
+		requested  string
+		want       bool
+	}{
+		{
+			name:       "exact match",
+			registered: "https://example.com/callback",
+			requested:  "https://example.com/callback",
+			want:       true,
+		},
+		{
+			name:       "IPv4 loopback with arbitrary port",
+			registered: "http://127.0.0.1/callback",
+			requested:  "http://127.0.0.1:49152/callback",
+			want:       true,
+		},
+		{
+			name:       "IPv6 loopback with arbitrary port",
+			registered: "http://[::1]:8080/callback",
+			requested:  "http://[::1]:49152/callback",
+			want:       true,
+		},
+		{
+			name:       "different loopback IP",
+			registered: "http://127.0.0.1/callback",
+			requested:  "http://127.0.0.2:49152/callback",
+			want:       false,
+		},
+		{
+			name:       "localhost is not an IP literal",
+			registered: "http://localhost/callback",
+			requested:  "http://localhost:49152/callback",
+			want:       false,
+		},
+		{
+			name:       "non-loopback host",
+			registered: "http://example.com:8080/callback",
+			requested:  "http://example.com:49152/callback",
+			want:       false,
+		},
+		{
+			name:       "HTTPS loopback URI",
+			registered: "https://127.0.0.1/callback",
+			requested:  "https://127.0.0.1:49152/callback",
+			want:       false,
+		},
+		{
+			name:       "different path",
+			registered: "http://127.0.0.1/callback",
+			requested:  "http://127.0.0.1:49152/other",
+			want:       false,
+		},
+		{
+			name:       "different query",
+			registered: "http://127.0.0.1/callback?source=app",
+			requested:  "http://127.0.0.1:49152/callback?source=other",
+			want:       false,
+		},
+		{
+			name:       "invalid requested port",
+			registered: "http://127.0.0.1/callback",
+			requested:  "http://127.0.0.1:not-a-port/callback",
+			want:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := redirectURIMatches(tt.registered, tt.requested); got != tt.want {
+				t.Errorf("redirectURIMatches(%q, %q) = %v, want %v", tt.registered, tt.requested, got, tt.want)
+			}
+		})
+	}
 }

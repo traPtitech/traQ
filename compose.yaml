@@ -12,8 +12,9 @@ services:
       TRAQ_STORAGE_S3_BUCKET: traq
       TRAQ_STORAGE_S3_REGION: ap-northeast-1
       TRAQ_STORAGE_S3_ENDPOINT: http://s3:9000
-      TRAQ_STORAGE_S3_ACCESSKEY: ROOT
-      TRAQ_STORAGE_S3_SECRETKEY: PASSWORD
+      TRAQ_STORAGE_S3_ACCESSKEY: &s3-access-key GK0123456789abcdef0123456789abcdef
+      TRAQ_STORAGE_S3_SECRETKEY: &s3-secret-key 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      TRAQ_STORAGE_S3_FORCEPATHSTYLE: "true"
       TRAQ_STORAGE_S3_CACHEDIR: ./storage
       TRAQ_STORAGE_COMPOSITE_REMOTE: s3
     entrypoint: ./traQ serve --dev --skip-init-emojis
@@ -27,6 +28,10 @@ services:
         condition: service_healthy
       es:
         condition: service_healthy
+      s3:
+        condition: service_healthy
+      s3-init:
+        condition: service_completed_successfully
     volumes:
       - app:/app/storage
 
@@ -43,7 +48,7 @@ services:
       - backend
 
   mysql:
-    image: mariadb:10.11.19@sha256:ce66c7be32a03aabe7241d0a10993a2db827ef652a35d25727d92a832ac8ef73
+    image: mariadb:10.11.19@sha256:7f22313fc130a377a44999965bcb0a08dd5b21e8502824c1b864f792f9bc66ab
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -82,7 +87,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:6.0.1@sha256:f742dcf1b6ca95733b54c4e020488ce78f3e774d73543a6ded9b4eaea8974f3d
+    image: adminer:6.0.1@sha256:51262b555d9e8ac3e1fa197eec41a3f47d05aea5520ac2ccc78a03ffc7d39b3a
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
@@ -93,32 +98,47 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.27.1-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125
+    image: golang:1.27.1-alpine@sha256:8a5910f31396cd4d89662f56c68b3ae31d374308270a1c3bd96672ee5ed43414
     restart: always
     volumes:
       - ./dev/bin:/app
     command: go run /app/bot_debugger.go -p 80
 
   s3:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
-    # 9000-API, 9001-Web
+    image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
+    restart: always
     ports:
-      - 9000:9000
-      - 9001:9001
-    networks:
-      default:
-        aliases:
-          - traq.s3 # {bucket}.s3
+      - "9000:9000"
+      - "9001:9001"
     environment:
-      MINIO_ROOT_USER: ROOT
-      MINIO_ROOT_PASSWORD: PASSWORD
-      MINIO_DOMAIN: s3
+      RUSTFS_ACCESS_KEY: *s3-access-key
+      RUSTFS_SECRET_KEY: *s3-secret-key
+      RUSTFS_REGION: ap-northeast-1
+      RUSTFS_VOLUMES: /data
     volumes:
-      - s3:/data
-    command: minio server /data --console-address :9001
+      - rustfs:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/health/ready"]
+      interval: 1s
+      timeout: 10s
+      retries: 60
+
+  s3-init:
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
+    depends_on:
+      s3:
+        condition: service_healthy
+    environment:
+      RUSTFS_ACCESS_KEY: *s3-access-key
+      RUSTFS_SECRET_KEY: *s3-secret-key
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        rc alias set local http://s3:9000 "$${RUSTFS_ACCESS_KEY}" "$${RUSTFS_SECRET_KEY}" --region ap-northeast-1 --bucket-lookup path --quiet &&
+        rc bucket create local/traq --ignore-existing --quiet
 
 volumes:
   app:
   mysql:
   es:
-  s3:
+  rustfs:
