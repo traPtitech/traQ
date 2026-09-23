@@ -83,7 +83,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	if err != nil {
 		return nil, err
 	}
-	if channelType != model.ChannelTypeThread{
+	if channelType != model.ChannelTypeThread {
 		repo.hub.Publish(hub.Message{
 			Name: event.ChannelCreated,
 			Fields: hub.Fields{
