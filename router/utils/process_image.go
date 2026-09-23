@@ -66,7 +66,7 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 			switch {
 			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				return uuid.Nil, herror.BadRequest(badImage)
-			case err == imaging.ErrPixelLimitExceeded:
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -86,9 +86,6 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 
 	case consts.MimeImageWebP:
 		isAnimated, err := midec.IsAnimated(src)
-		if _, err := src.Seek(0, io.SeekStart); err != nil {
-			return uuid.Nil, herror.InternalServerError(err)
-		}
 		if err != nil {
 			return uuid.Nil, herror.BadRequest(badImage)
 		}
@@ -96,12 +93,16 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		if isAnimated {
 			return uuid.Nil, herror.BadRequest("animated WebP is not supported")
 		}
+		// IsAnimatedで読み進めた分を巻き戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
 			switch {
 			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				return uuid.Nil, herror.BadRequest(badImage)
-			case err == imaging.ErrPixelLimitExceeded:
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -119,14 +120,12 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		// リサイズ
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
 		if err != nil {
-			switch err {
-			case imaging.ErrInvalidImageSrc:
+			if errors.Is(err, imaging.ErrInvalidImageSrc) {
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
-			default:
-				// 予期しないエラー
-				return uuid.Nil, herror.InternalServerError(err)
 			}
+			// 予期しないエラー
+			return uuid.Nil, herror.InternalServerError(err)
 		}
 
 		args.Src = b
