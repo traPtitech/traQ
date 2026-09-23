@@ -9,7 +9,7 @@ import (
 )
 
 // スタンプ名の接頭が"0x"であるときにスタンプ名を置換するマイグレーション
-func v44() *gormigrate.Migration {
+func v43_2() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "44",
 		Migrate: func(db *gorm.DB) error {
