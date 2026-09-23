@@ -29,6 +29,8 @@ const (
 	ChannelCreated model.BotEventType = "CHANNEL_CREATED"
 	// ChannelTopicChanged チャンネルトピック変更イベント
 	ChannelTopicChanged model.BotEventType = "CHANNEL_TOPIC_CHANGED"
+	// ThreadCreated スレッド作成イベント
+	ThreadCreated model.BotEventType = "THREAD_CREATED"
 	// UserCreated ユーザー作成イベント
 	UserCreated model.BotEventType = "USER_CREATED"
 	// UserActivated ユーザー凍結解除イベント
@@ -76,6 +78,7 @@ func init() {
 		DirectMessageDeleted,
 		ChannelCreated,
 		ChannelTopicChanged,
+		ThreadCreated,
 		UserCreated,
 		UserActivated,
 		StampCreated,

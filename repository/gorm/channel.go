@@ -83,14 +83,24 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"channel":    &ch,
-			"private":    ch.IsDMChannel(),
-		},
-	})
+	if channelType != model.ChannelTypeThread{
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelCreated,
+			Fields: hub.Fields{
+				"channel_id": ch.ID,
+				"channel":    &ch,
+				"private":    ch.IsDMChannel(),
+			},
+		})
+	}else{
+		repo.hub.Publish(hub.Message{
+			Name: event.ThreadCreated,
+			Fields: hub.Fields{
+				"channel_id": ch.ID,
+				"thread":    &ch,
+			},
+		})
+	}
 	return &ch, nil
 }
 

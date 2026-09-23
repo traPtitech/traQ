@@ -22,6 +22,7 @@ var eventHandlerSet = map[string]eventHandler{
 	intevent.UserActivated:          handler.UserActivated,
 	intevent.ChannelCreated:         handler.ChannelCreated,
 	intevent.ChannelTopicUpdated:    handler.ChannelTopicUpdated,
+	intevent.ThreadCreated:          handler.ThreadCreated,
 	intevent.StampCreated:           handler.StampCreated,
 	intevent.UserTagAdded:           handler.UserTagAdded,
 	intevent.UserTagRemoved:         handler.UserTagRemoved,
