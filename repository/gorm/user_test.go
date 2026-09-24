@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -250,6 +252,37 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestRepositoryImpl_UpdateLastOnlineInvalidatesProfileCache(t *testing.T) {
+	t.Parallel()
+	repo, _, require, user := setupWithUser(t, common2, false)
+	ctx := context.Background()
+	userID := user.GetID()
+	cached, err := repo.GetUser(ctx, userID, true)
+	require.NoError(err)
+	require.False(cached.GetLastOnline().Valid)
+
+	h := repo.(*Repository).hub
+	sub := h.Subscribe(100, event.UserUpdated)
+	defer h.Unsubscribe(sub)
+	first := time.Date(2026, 9, 24, 10, 15, 0, 123456000, time.UTC)
+	for _, lastOnline := range []time.Time{first, first.Add(time.Hour)} {
+		require.NoError(repo.UpdateUser(ctx, userID, repository.UpdateUserArgs{LastOnline: optional.From(lastOnline)}))
+		fresh, err := repo.GetUser(ctx, userID, true)
+		require.NoError(err)
+		require.True(fresh.GetLastOnline().Valid)
+		require.True(lastOnline.Equal(fresh.GetLastOnline().V))
+	}
+
+	for {
+		select {
+		case msg := <-sub.Receiver:
+			require.NotEqual(userID, msg.Fields["user_id"], "lastOnline changes do not emit USER_UPDATED")
+		default:
+			return
+		}
+	}
 }
 
 func TestGormRepository_GetUserStats(t *testing.T) {
