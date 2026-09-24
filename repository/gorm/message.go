@@ -529,22 +529,45 @@ func (repo *Repository) AddStampToMessage(ctx context.Context, messageID, stampI
 	return ms, nil
 }
 
-// RemoveStampFromMessage implements MessageRepository interface.
-func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
-	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
+// RemoveStampsFromMessage implements MessageRepository interface.
+func (repo *Repository) RemoveStampsFromMessage(ctx context.Context, messageID, stampID uuid.UUID, userIDs []uuid.UUID) (err error) {
+	if messageID == uuid.Nil || stampID == uuid.Nil || len(userIDs) == 0 {
 		return repository.ErrNilID
 	}
-	result := repo.db.WithContext(ctx).Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
-	if result.Error != nil {
-		return result.Error
+	for _, userID := range userIDs {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
 	}
-	if result.RowsAffected > 0 {
+
+	var stamps []model.MessageStamp
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Find(&stamps).
+			Error; err != nil {
+			return err
+		}
+		if len(stamps) == 0 {
+			return nil
+		}
+		return tx.
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Delete(&model.MessageStamp{}).
+			Error
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, stamp := range stamps {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnstamped,
 			Fields: hub.Fields{
-				"message_id": messageID,
-				"stamp_id":   stampID,
-				"user_id":    userID,
+				"message_id": stamp.MessageID,
+				"stamp_id":   stamp.StampID,
+				"user_id":    stamp.UserID,
 			},
 		})
 	}
