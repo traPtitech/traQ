@@ -14,6 +14,8 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
+const lastOnlinePersistTimeout = 5 * time.Second
+
 func (ns *Service) startPresenceNotifications() {
 	sub := ns.hub.Subscribe(200, event.UserOnline, event.UserOffline)
 	go func() {
@@ -42,7 +44,9 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 	userID := ev.Fields["user_id"].(uuid.UUID)
 	lastOnline := ev.Fields["datetime"].(time.Time).UTC().Truncate(time.Microsecond)
 
-	if err := ns.repo.UpdateUser(context.Background(), userID, repository.UpdateUserArgs{
+	ctx, cancel := context.WithTimeout(context.Background(), lastOnlinePersistTimeout)
+	defer cancel()
+	if err := ns.repo.UpdateUser(ctx, userID, repository.UpdateUserArgs{
 		LastOnline: optional.From(lastOnline),
 	}); err != nil {
 		ns.logger.Error("failed to persist last online time", zap.Error(err), zap.Stringer("userId", userID))
