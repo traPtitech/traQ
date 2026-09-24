@@ -2,7 +2,7 @@
 go = "1.27.1"
 "go:github.com/google/wire/cmd/wire" = "0.7.0"
 "go:github.com/golang/mock/mockgen" = "1.6.0"
-golangci-lint = "2.13.2"
+golangci-lint = "2.14.0"
 
 [vars]
 test_db_port = "3100"
