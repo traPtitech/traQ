@@ -5563,7 +5563,7 @@ components:
           pattern: "^[a-zA-Z0-9_]{0,15}$"
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         updatedAt:
@@ -5845,7 +5845,7 @@ components:
           description: 更新日時
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         twitterId:

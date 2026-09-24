@@ -44,8 +44,6 @@ var handlerMap = map[string]eventHandler{
 	event.UserCreated:               userCreatedHandler,
 	event.UserUpdated:               userUpdatedHandler,
 	event.UserIconUpdated:           userIconUpdatedHandler,
-	event.UserOnline:                userOnlineHandler,
-	event.UserOffline:               userOfflineHandler,
 	event.UserViewStateChanged:      userViewStateChangedHandler,
 	event.UserTagAdded:              userTagUpdatedHandler,
 	event.UserTagRemoved:            userTagUpdatedHandler,
@@ -73,6 +71,23 @@ var handlerMap = map[string]eventHandler{
 	event.QallRoomStateChanged:      qallRoomStateChangedHandler,
 	event.QallSoundboardItemCreated: qallSoundboardItemCreatedHandler,
 	event.QallSoundboardItemDeleted: qallSoundboardItemDeletedHandler,
+}
+
+func (ns *Service) startConcurrentNotifications() {
+	topics := make([]string, 0, len(handlerMap))
+	for k := range handlerMap {
+		topics = append(topics, k)
+	}
+
+	sub := ns.hub.Subscribe(notificationBufferSize, topics...)
+	go func() {
+		for msg := range sub.Receiver {
+			h, ok := handlerMap[msg.Topic()]
+			if ok {
+				go h(ns, msg)
+			}
+		}
+	}()
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -273,8 +288,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		)
 		targetFuncCited = ws.TargetUserSets(citedUsers)
 	}
-	go ns.ws.WriteMessage(wsEventType, wsPayloadNotCited, targetFuncNotCited)
-	go ns.ws.WriteMessage(wsEventType, wsPayloadCited, targetFuncCited)
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayloadNotCited, targetFuncNotCited)
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayloadCited, targetFuncCited)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
@@ -308,7 +323,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 		targetFunc = ws.TargetChannelViewers(cid)
 	}
 
-	go ns.ws.WriteMessage(wsEventType, wsPayload, targetFunc)
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayload, targetFunc)
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
@@ -337,7 +352,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 		targetFunc = ws.TargetChannelViewers(cid)
 	}
 
-	go ns.ws.WriteMessage(wsEventType, wsPayload, targetFunc)
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayload, targetFunc)
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
@@ -437,7 +452,7 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
-	ns.ws.WriteMessage(
+	ns.messageWriter.WriteMessage(
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
 			"id": cid,
@@ -467,24 +482,6 @@ func userUpdatedHandler(ns *Service, ev hub.Message) {
 func userIconUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_ICON_UPDATED",
-		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	)
-}
-
-func userOnlineHandler(ns *Service, ev hub.Message) {
-	broadcast(ns,
-		"USER_ONLINE",
-		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	)
-}
-
-func userOfflineHandler(ns *Service, ev hub.Message) {
-	broadcast(ns,
-		"USER_OFFLINE",
 		map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
 		},
@@ -714,16 +711,16 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 
 		switch len(members) {
 		case 1:
-			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+			go ns.messageWriter.WriteMessage(eventType, map[string]interface{}{
 				"id":         cid,
 				"dm_user_id": members[0],
 			}, ws.TargetUsers(members[0]))
 		case 2:
-			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+			go ns.messageWriter.WriteMessage(eventType, map[string]interface{}{
 				"id":         cid,
 				"dm_user_id": members[0],
 			}, ws.TargetUsers(members[1]))
-			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+			go ns.messageWriter.WriteMessage(eventType, map[string]interface{}{
 				"id":         cid,
 				"dm_user_id": members[1],
 			}, ws.TargetUsers(members[0]))
@@ -731,14 +728,14 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 			ns.logger.Error("private channel event not defined", zap.Stringer("cid", cid))
 		}
 	} else {
-		go ns.ws.WriteMessage(eventType, map[string]interface{}{
+		go ns.messageWriter.WriteMessage(eventType, map[string]interface{}{
 			"id": cid,
 		}, ws.TargetAll())
 	}
 }
 
 func channelViewerMulticast(ns *Service, cid uuid.UUID, wsEventType string, wsPayload interface{}) {
-	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetChannelViewers(cid))
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayload, ws.TargetChannelViewers(cid))
 }
 
 func messageViewerMulticast(ns *Service, mid uuid.UUID, wsEventType string, wsPayload interface{}) {
@@ -751,9 +748,9 @@ func messageViewerMulticast(ns *Service, mid uuid.UUID, wsEventType string, wsPa
 }
 
 func broadcast(ns *Service, wsEventType string, wsPayload interface{}) {
-	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetAll())
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayload, ws.TargetAll())
 }
 
 func userMulticast(ns *Service, userID uuid.UUID, wsEventType string, wsPayload interface{}) {
-	go ns.ws.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
+	go ns.messageWriter.WriteMessage(wsEventType, wsPayload, ws.TargetUsers(userID))
 }
