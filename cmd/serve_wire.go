@@ -3,6 +3,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
@@ -28,7 +30,7 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 )
 
-func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c *Config) (*Server, error) {
+func newServer(ctx context.Context, hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c *Config) (*Server, error) {
 	wire.Build(
 		bot.NewService,
 		channel.InitChannelManager,
@@ -60,7 +62,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		provideQallRoomStateManager,
 		provideQallSoundboard,
 		wire.Struct(new(service.Services), "*"),
-		wire.Struct(new(Server), "*"),
+		wire.Struct(new(Server), "L", "SS", "Router", "Hub", "Repo"),
 		wire.Bind(new(repository.ChannelRepository), new(repository.Repository)),
 		wire.Bind(new(repository.FileRepository), new(repository.Repository)),
 	)

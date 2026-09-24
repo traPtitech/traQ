@@ -47,7 +47,7 @@ type esEngine struct {
 	cm     channel.Manager
 	repo   repository.Repository
 	l      *zap.Logger
-	done   chan<- struct{}
+	cancel context.CancelFunc
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
@@ -173,7 +173,7 @@ var esSetting = m{
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(ctx context.Context, mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// esクライアント作成
 	client, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses: []string{config.URL},
@@ -185,7 +185,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	}
 
 	// esバージョン確認
-	infoRes, err := client.Info()
+	infoRes, err := client.Info(client.Info.WithContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Elasticsearch info: %w", err)
 	}
@@ -210,7 +210,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	logger.Info(fmt.Sprintf("Using elasticsearch version %s", r.Version.Number))
 
 	// index確認
-	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)})
+	existsRes, err := client.Indices.Exists([]string{getIndexName(esMessageIndex)}, client.Indices.Exists.WithContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to check index exists: %w", err)
 	}
@@ -232,7 +232,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		createIndexRes, err := client.Indices.Create(
 			getIndexName(esMessageIndex),
 			client.Indices.Create.WithBody(bytes.NewBuffer(reqBody)),
-			client.Indices.Create.WithContext(context.Background()))
+			client.Indices.Create.WithContext(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Elasticsearch index: %w", err)
 		}
@@ -242,17 +242,17 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		defer createIndexRes.Body.Close()
 	}
 
-	done := make(chan struct{})
+	syncCtx, cancel := context.WithCancel(ctx)
 	engine := &esEngine{
 		client: client,
 		mm:     mm,
 		cm:     cm,
 		repo:   repo,
 		l:      logger.Named("search"),
-		done:   done,
+		cancel: cancel,
 	}
 
-	go engine.syncLoop(done)
+	go engine.syncLoop(syncCtx)
 
 	return engine, nil
 }
@@ -439,6 +439,6 @@ func (e *esEngine) Available() bool {
 }
 
 func (e *esEngine) Close() error {
-	e.done <- struct{}{}
+	e.cancel()
 	return nil
 }

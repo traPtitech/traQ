@@ -7,6 +7,7 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -36,7 +37,7 @@ import (
 
 // Injectors from serve_wire.go:
 
-func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c2 *Config) (*Server, error) {
+func newServer(ctx context.Context, hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c2 *Config) (*Server, error) {
 	manager, err := channel.InitChannelManager(repo, logger)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	}
 	oidcService := provideOIDCService(c2, repo, rbacRBAC)
 	esEngineConfig := provideESEngineConfig(c2)
-	engine, err := initSearchServiceIfAvailable(messageManager, manager, repo, logger, esEngineConfig)
+	engine, err := initSearchServiceIfAvailable(ctx, messageManager, manager, repo, logger, esEngineConfig)
 	if err != nil {
 		return nil, err
 	}

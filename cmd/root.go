@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -36,11 +37,15 @@ var (
 var rootCommand = &cobra.Command{
 	Use: "traQ",
 	// 全コマンド共通の前処理
-	PersistentPreRun: func(_ *cobra.Command, _ []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := message.InitializeMarkdown(cmd.Context()); err != nil {
+			return err
+		}
 		// enable pprof http handler
 		if c.Pprof {
 			go func() { _ = http.ListenAndServe("0.0.0.0:6060", nil) }()
 		}
+		return nil
 	},
 }
 
@@ -88,7 +93,8 @@ func init() {
 }
 
 func Execute() error {
-	return rootCommand.Execute()
+	defer func() { _ = message.CloseMarkdown() }()
+	return rootCommand.ExecuteContext(context.Background())
 }
 
 func getLogger() (*zap.Logger, *gormzap.L) {

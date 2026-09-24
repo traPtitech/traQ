@@ -1,13 +1,14 @@
 package message
 
 import (
+	"context"
 	"testing"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
+func TestParseResult(t *testing.T) {
 	t.Parallel()
 
 	u1 := uuid.Must(uuid.FromString("ee764d5f-71d9-4a40-bc7b-547d8d097c91"))
@@ -72,8 +73,17 @@ func TestParse(t *testing.T) {
 		exp := exp
 		t.Run(m, func(t *testing.T) {
 			t.Parallel()
-			res := Parse(m)
-			assert.EqualValues(t, exp, *res)
+			res, err := Parse(context.Background(), m)
+			if !assert.NoError(t, err) {
+				return
+			}
+			// Notification formatting and embeddings are checked separately.
+			assert.Equal(t, exp.PlainText, res.PlainText)
+			assert.Equal(t, exp.Mentions, res.Mentions)
+			assert.Equal(t, exp.GroupMentions, res.GroupMentions)
+			assert.Equal(t, exp.ChannelLink, res.ChannelLink)
+			assert.Equal(t, exp.Attachments, res.Attachments)
+			assert.Equal(t, exp.Citation, res.Citation)
 		})
 	}
 }
