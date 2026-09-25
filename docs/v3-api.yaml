@@ -2622,7 +2622,7 @@ paths:
         対象: 全員
 
         + `id`: オフラインになったユーザーのId
-        + `lastOnline`: 最後の接続の切断をサーバーが検出した日時
+        + `last_online`: 最後の接続の切断をサーバーが検出した日時
 
         ### `USER_GROUP_CREATED`
         ユーザーグループが作成された
@@ -7093,14 +7093,14 @@ components:
           type: string
           format: uuid
           description: オフラインになったユーザーのId
-        lastOnline:
+        last_online:
           type: string
           format: date-time
           description: 最後の接続の切断をサーバーが検出した日時
           example: "2026-09-24T10:15:00.123456Z"
       required:
         - id
-        - lastOnline
+        - last_online
     QallRoomStateChangedEvent:
       title: QallRoomStateChangedEvent
       type: object

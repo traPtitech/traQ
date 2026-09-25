@@ -55,8 +55,8 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 	ns.ws.WriteMessage(
 		"USER_OFFLINE",
 		map[string]interface{}{
-			"id":         userID,
-			"lastOnline": lastOnline,
+			"id":          userID,
+			"last_online": lastOnline,
 		},
 		ws.TargetAll(),
 	)
