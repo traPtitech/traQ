@@ -87,7 +87,7 @@ func TestPresenceNotificationsPersistBeforeDelivery(t *testing.T) {
 		assert.Equal(t, "USER_ONLINE", messages[1].typeName)
 		payload, err := json.Marshal(messages[0].body)
 		require.NoError(t, err)
-		assert.JSONEq(t, `{"id":"`+userID.String()+`","lastOnline":"2026-09-24T10:15:00.123456Z"}`, string(payload))
+		assert.JSONEq(t, `{"id":"`+userID.String()+`","last_online":"2026-09-24T10:15:00.123456Z"}`, string(payload))
 	})
 }
 
