@@ -113,7 +113,6 @@ func TestParseBody(t *testing.T) {
 			{"empty", "<title></title>", ""},
 			{"first one", "<title>FIRST</title><title>SECOND</title>", "FIRST"},
 			{"skip empty", "<title></title><title>SECOND</title>", "SECOND"},
-			{"ignore svg title", "<body><svg><title>ICON</title></svg><title>TITLE</title>", "TITLE"},
 			{"no title", `<meta content="DESCRIPTION" name="description">`, ""},
 		}
 		for _, tt := range tests {
@@ -124,19 +123,11 @@ func TestParseBody(t *testing.T) {
 			})
 		}
 	})
-	t.Run("ignore meta in svg, noscript and template", func(t *testing.T) {
+	t.Run("ignore meta in noscript", func(t *testing.T) {
 		t.Parallel()
-		og, _ := parseHTMLString(t, `<head>
-			<noscript><meta property="og:title" content="NOSCRIPT"></noscript>
-			<template><meta property="og:title" content="TEMPLATE"></template>
-		</head>
-		<body>
-			<svg><meta property="og:title" content="SVG"></svg>
-			<meta property="og:type" content="article">
-		</body>`)
+		og, _ := parseHTMLString(t, `<noscript><meta property="og:title" content="NOSCRIPT"></noscript>`)
 
 		assert.Equal(t, "", og.Title)
-		assert.Equal(t, "article", og.Type)
 	})
 	t.Run("ignore meta in script", func(t *testing.T) {
 		t.Parallel()

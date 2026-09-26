@@ -84,12 +84,9 @@ func parseBody(body io.Reader, contentType string) (*opengraph.OpenGraph, *Defau
 	og := opengraph.NewOpenGraph()
 	meta := DefaultPageMeta{}
 	z := html.NewTokenizer(decodedReader)
-	// svg, math, noscript, template の中にあるタグはページのメタデータではないので無視する
-	ignoreDepth := 0
 	inTitle := false
 	for {
-		tt := z.Next()
-		switch tt {
+		switch z.Next() {
 		case html.ErrorToken:
 			if errors.Is(z.Err(), io.EOF) {
 				return og, &meta, nil
@@ -99,14 +96,7 @@ func parseBody(body io.Reader, contentType string) (*opengraph.OpenGraph, *Defau
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, hasAttr := z.TagName()
 			switch atom.Lookup(name) {
-			case atom.Svg, atom.Math, atom.Noscript, atom.Template:
-				if tt == html.StartTagToken {
-					ignoreDepth++
-				}
 			case atom.Meta:
-				if ignoreDepth > 0 {
-					continue
-				}
 				m := make(map[string]string)
 				for hasAttr {
 					var key, val []byte
@@ -116,20 +106,12 @@ func parseBody(body io.Reader, contentType string) (*opengraph.OpenGraph, *Defau
 				og.ProcessMeta(m)
 				meta.processMeta(m)
 			case atom.Title:
-				// ブラウザと同様に最初の title を採用する
-				inTitle = tt == html.StartTagToken && ignoreDepth == 0 && len(meta.Title) == 0
+				// 最初の title を採用する
+				inTitle = len(meta.Title) == 0
 			}
 
 		case html.EndTagToken:
-			name, _ := z.TagName()
-			switch atom.Lookup(name) {
-			case atom.Svg, atom.Math, atom.Noscript, atom.Template:
-				if ignoreDepth > 0 {
-					ignoreDepth--
-				}
-			case atom.Title:
-				inTitle = false
-			}
+			inTitle = false
 
 		case html.TextToken:
 			if inTitle {
