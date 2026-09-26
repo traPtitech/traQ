@@ -2,6 +2,7 @@ package ogpparser
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 	"testing"
@@ -95,6 +96,35 @@ func TestParseDoc(t *testing.T) {
 
 		assert.Equal(t, "website", og.Type)
 		assert.Equal(t, "4種類のコースにて\"現場で働くクリエイター\"による講義を開催します。", og.Description)
+	})
+}
+
+// infiniteReader 同じバイト列を無限に返し、読まれたバイト数を記録するReader
+type infiniteReader struct {
+	pattern []byte
+	read    int
+}
+
+func (r *infiniteReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = r.pattern[(r.read+i)%len(r.pattern)]
+	}
+	r.read += len(p)
+	return len(p), nil
+}
+
+func TestParseBody(t *testing.T) {
+	t.Parallel()
+	t.Run("huge body", func(t *testing.T) {
+		t.Parallel()
+		const head = `<html><head><meta property="og:title" content="TITLE" /><title>META TITLE</title></head><body>`
+		body := &infiniteReader{pattern: []byte("<p>")}
+		og, meta, err := parseBody(io.MultiReader(strings.NewReader(head), body), "text/html; charset=utf-8")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "TITLE", og.Title)
+		assert.Equal(t, "META TITLE", meta.Title)
+		assert.LessOrEqual(t, len(head)+body.read, maxBodySize)
 	})
 }
 

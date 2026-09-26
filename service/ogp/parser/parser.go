@@ -3,6 +3,7 @@ package ogpparser
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +18,12 @@ import (
 )
 
 const concurrentRequestLimit = 10
+
+// maxBodySize パース対象とするレスポンスボディの最大バイト数
+//
+// html.Parse は入力の数十倍のメモリを消費するため、巨大なページを全て読み込むと OOM で落ちる。
+// OGP のメタタグは通常ページの先頭付近にあるので、先頭のみを読み込んでパースする。
+const maxBodySize = 2 << 20 // 2MiB
 
 var requestLimiter = semaphore.NewWeighted(concurrentRequestLimit)
 
@@ -108,8 +115,20 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrContentTypeNotSupported
 	}
 
+	og, meta, err = parseBody(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(meta.URL) == 0 {
+		meta.URL = url.String()
+	}
+	return og, meta, nil
+}
+
+// parseBody レスポンスボディの先頭 maxBodySize バイトをHTMLとしてパース
+func parseBody(body io.Reader, contentType string) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	// Decode charset to UTF-8
-	decodedReader, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	decodedReader, err := charset.NewReader(io.LimitReader(body, maxBodySize), contentType)
 	if err != nil {
 		return nil, nil, ErrParse
 	}
@@ -118,10 +137,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrParse
 	}
 
-	og, meta = parseDoc(doc)
-	if len(meta.URL) == 0 {
-		meta.URL = url.String()
-	}
+	og, meta := parseDoc(doc)
 	return og, meta, nil
 }
 
