@@ -14,6 +14,10 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 )
 
+type messageWriter interface {
+	WriteMessage(string, interface{}, ws.TargetFunc)
+}
+
 // Service 通知サービス
 type Service struct {
 	repo   repository.Repository
@@ -23,7 +27,7 @@ type Service struct {
 	hub    *hub.Hub
 	logger *zap.Logger
 	fcm    fcm.Client
-	ws     *ws.Streamer
+	ws     messageWriter
 	vm     *viewer.Manager
 	origin string
 }
@@ -42,17 +46,8 @@ func NewService(repo repository.Repository, cm channel.Manager, mm message.Manag
 		vm:     vm,
 		origin: string(origin),
 	}
-	go func() {
-		topics := make([]string, 0, len(handlerMap))
-		for k := range handlerMap {
-			topics = append(topics, k)
-		}
-		for msg := range hub.Subscribe(200, topics...).Receiver {
-			h, ok := handlerMap[msg.Topic()]
-			if ok {
-				go h(service, msg)
-			}
-		}
-	}()
+
+	service.startPresenceNotifications()
+	service.startConcurrentNotifications()
 	return service
 }
