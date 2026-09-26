@@ -2,6 +2,7 @@ package ogpparser
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/sync/semaphore"
 )
@@ -17,8 +19,8 @@ const concurrentRequestLimit = 10
 
 // maxBodySize パース対象とするレスポンスボディの最大バイト数
 //
-// html.Parse は入力の数十倍のメモリを消費するため、巨大なページを全て読み込むと OOM で落ちる。
-// OGP のメタタグは通常ページの先頭付近にあるので、先頭のみを読み込んでパースする。
+// 巨大なページを全て読み込むとメモリや時間を無駄に消費するため、先頭のみを読み込んでパースする。
+// OGP のメタタグは通常ページの先頭付近にある。
 const maxBodySize = 2 << 20 // 2MiB
 
 var requestLimiter = semaphore.NewWeighted(concurrentRequestLimit)
@@ -78,34 +80,63 @@ func parseBody(body io.Reader, contentType string) (*opengraph.OpenGraph, *Defau
 	if err != nil {
 		return nil, nil, ErrParse
 	}
-	doc, err := html.Parse(decodedReader)
-	if err != nil {
-		return nil, nil, ErrParse
-	}
 
-	og, meta := parseDoc(doc)
-	return og, meta, nil
-}
-
-// parseDoc html全体をパース
-func parseDoc(doc *html.Node) (*opengraph.OpenGraph, *DefaultPageMeta) {
 	og := opengraph.NewOpenGraph()
 	meta := DefaultPageMeta{}
-	parseNode(og, &meta, doc)
-	return og, &meta
-}
+	z := html.NewTokenizer(decodedReader)
+	// svg, math, noscript, template の中にあるタグはページのメタデータではないので無視する
+	ignoreDepth := 0
+	inTitle := false
+	for {
+		tt := z.Next()
+		switch tt {
+		case html.ErrorToken:
+			if errors.Is(z.Err(), io.EOF) {
+				return og, &meta, nil
+			}
+			return nil, nil, ErrParse
 
-// parseNode ノードを深さ優先でパース
-func parseNode(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
-	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.Data == "head" {
-			parseMetaTags(og, meta, c)
-			continue
-		} else if c.Type == html.ElementNode && c.Data == "body" {
-			parseMetaTags(og, meta, c) // YouTubeなどへの対応
-			break
+		case html.StartTagToken, html.SelfClosingTagToken:
+			name, hasAttr := z.TagName()
+			switch atom.Lookup(name) {
+			case atom.Svg, atom.Math, atom.Noscript, atom.Template:
+				if tt == html.StartTagToken {
+					ignoreDepth++
+				}
+			case atom.Meta:
+				if ignoreDepth > 0 {
+					continue
+				}
+				m := make(map[string]string)
+				for hasAttr {
+					var key, val []byte
+					key, val, hasAttr = z.TagAttr()
+					m[string(key)] = html.UnescapeString(string(val))
+				}
+				og.ProcessMeta(m)
+				meta.processMeta(m)
+			case atom.Title:
+				// ブラウザと同様に最初の title を採用する
+				inTitle = tt == html.StartTagToken && ignoreDepth == 0 && len(meta.Title) == 0
+			}
+
+		case html.EndTagToken:
+			name, _ := z.TagName()
+			switch atom.Lookup(name) {
+			case atom.Svg, atom.Math, atom.Noscript, atom.Template:
+				if ignoreDepth > 0 {
+					ignoreDepth--
+				}
+			case atom.Title:
+				inTitle = false
+			}
+
+		case html.TextToken:
+			if inTitle {
+				meta.Title = string(z.Text())
+				inTitle = false
+			}
 		}
-		parseNode(og, meta, c)
 	}
 }
 
@@ -121,30 +152,4 @@ func (m *DefaultPageMeta) processMeta(metaAttrs map[string]string) {
 	case "image":
 		m.Image = metaAttrs["content"]
 	}
-}
-
-// parseMetaTags metaタグを直下の子に持つタグをパース
-func parseMetaTags(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
-	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.Data == "meta" {
-			m := make(map[string]string)
-			for _, a := range c.Attr {
-				m[a.Key] = html.UnescapeString(a.Val)
-			}
-			og.ProcessMeta(m)
-			meta.processMeta(m)
-		} else if title := extractTitleFromNode(c); len(title) > 0 {
-			meta.Title = title
-		}
-	}
-}
-
-func extractTitleFromNode(node *html.Node) string {
-	if node.Type == html.ElementNode &&
-		node.Data == "title" &&
-		node.FirstChild != nil &&
-		node.FirstChild.Type == html.TextNode {
-		return node.FirstChild.Data
-	}
-	return ""
 }
