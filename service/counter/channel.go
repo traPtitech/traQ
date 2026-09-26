@@ -58,3 +58,47 @@ func (c *channelCounterImpl) inc() {
 	c.Unlock()
 	channelsCounter.Inc()
 }
+
+var threadsCounter = promauto.NewCounter(prometheus.CounterOpts{
+	Namespace: "traq",
+	Name:      "threads_count_total",
+})
+
+// ThreadCounter スレッド数カウンタ
+type ThreadCounter interface {
+	// Get スレッド数を返します
+	Get() int64
+}
+
+type threadCounterImpl struct {
+	count int64
+	sync.RWMutex
+}
+
+// NewThreadCounter スレッド数カウンタを生成します
+func NewThreadCounter(db *gorm.DB, hub *hub.Hub) (ThreadCounter, error) {
+	counter := &threadCounterImpl{}
+	if err := db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{Type: model.ChannelTypeThread}).Count(&counter.count).Error; err != nil {
+		return nil, fmt.Errorf("failed to load thread count: %w", err)
+	}
+	threadsCounter.Add(float64(counter.count))
+	go func() {
+		for range hub.Subscribe(1, event.ThreadCreated).Receiver {
+			counter.inc()
+		}
+	}()
+	return counter, nil
+}
+
+func (c *threadCounterImpl) Get() int64 {
+	c.RLock()
+	defer c.RUnlock()
+	return c.count
+}
+
+func (c *threadCounterImpl) inc() {
+	c.Lock()
+	c.count++
+	c.Unlock()
+	threadsCounter.Inc()
+}
