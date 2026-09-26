@@ -82,8 +82,9 @@ func NewThreadCounter(db *gorm.DB, hub *hub.Hub) (ThreadCounter, error) {
 		return nil, fmt.Errorf("failed to load thread count: %w", err)
 	}
 	threadsCounter.Add(float64(counter.count))
+	sub := hub.Subscribe(1, event.ThreadCreated)
 	go func() {
-		for range hub.Subscribe(1, event.ThreadCreated).Receiver {
+		for range sub.Receiver {
 			counter.inc()
 		}
 	}()
