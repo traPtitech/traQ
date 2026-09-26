@@ -160,6 +160,11 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			err:    ErrPixelLimitExceeded,
 		},
 		{
+			name:   "too large (画素数は小さいがフレーム数が上限を超える)",
+			reader: bytes.NewReader(mustEncodeGIF(t, 1, 1, maxGIFFrames+1, 0)),
+			err:    ErrPixelLimitExceeded,
+		},
+		{
 			name:   "invalid (論理画面の高さが0)",
 			reader: bytes.NewReader(mustEncodeGIF(t, 500, 0, 1, 0)),
 			err:    ErrInvalidImageSrc,

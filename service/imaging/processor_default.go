@@ -83,6 +83,11 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 // デコード・リサイズ時のメモリ使用量と処理時間を抑えるために、フレーム数も含めて制限する。
 const maxGIFTotalPixelsMultiplier = 16
 
+// maxGIFFrames アニメーションGIFのフレーム数の上限
+//
+// 画素数が小さくても、フレームごとにパレット等の固定コストがかかるので制限する。
+const maxGIFFrames = 1000
+
 func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
 	_ = p.sp.Acquire(context.Background(), 1)
 	defer p.sp.Release(1)
@@ -103,6 +108,10 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	}
 	// 画素数チェック
 	if srcWidth*srcHeight > p.c.MaxPixels {
+		return nil, ErrPixelLimitExceeded
+	}
+	// フレーム数チェック
+	if info.frameCount > maxGIFFrames {
 		return nil, ErrPixelLimitExceeded
 	}
 	// フレーム数を含めた総画素数チェック
