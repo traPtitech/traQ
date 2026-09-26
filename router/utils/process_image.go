@@ -89,6 +89,8 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 			case imaging.ErrInvalidImageSrc:
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
+			case imaging.ErrPixelLimitExceeded:
+				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				// 予期しないエラー
 				return uuid.Nil, herror.InternalServerError(err)
