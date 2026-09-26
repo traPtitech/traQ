@@ -289,9 +289,16 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 		"id": ev.Fields["message_id"].(uuid.UUID),
 	}
 
+	ch, err := ns.cm.GetChannel(context.Background(), cid)
+
+	if err != nil {
+		ns.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channel_id", cid)) // 失敗
+		return
+	}
+
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(context.Background(), cid) {
-		// 公開チャンネル
+	if ch.IsPublic() || ch.IsThread() {
+		// 公開チャンネル または Thread
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
 			ws.TargetTimelineStreamingEnabled(),
@@ -311,9 +318,16 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 		"id": ev.Fields["message_id"].(uuid.UUID),
 	}
 
+	ch, err := ns.cm.GetChannel(context.Background(), cid)
+
+	if err != nil {
+		ns.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channel_id", cid)) // 失敗
+		return
+	}
+
 	var targetFunc ws.TargetFunc
-	if ns.cm.IsPublicChannel(context.Background(), cid) {
-		// 公開チャンネル
+	if ch.IsPublic() || ch.IsThread() {
+		// 公開チャンネル または Thread
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
 			ws.TargetTimelineStreamingEnabled(),
