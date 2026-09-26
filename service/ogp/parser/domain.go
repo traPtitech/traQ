@@ -1,16 +1,10 @@
 package ogpparser
 
 import (
-	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 )
-
-var client = http.Client{
-	Timeout: 5 * time.Second,
-}
 
 // X(Twitter)のOGPを取得するのにuserAgentの中にbotという文字列が入っている必要がある
 // Spotifyの新しいOGPを取得するのにuserAgentの中にcurl-botという文字列が入っている必要がある
