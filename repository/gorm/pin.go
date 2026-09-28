@@ -92,5 +92,6 @@ func (repo *Repository) GetPinnedMessageByChannelID(ctx context.Context, channel
 func pinPreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Message").
-		Preload("Message.Stamps")
+		Preload("Message.Stamps").
+		Preload("Thread")
 }
