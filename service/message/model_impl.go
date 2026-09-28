@@ -147,7 +147,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
 	}
 	stamps := m.GetStamps()
-	threadId := m.GetThreadID()
+	threadID := m.GetThreadID()
 	m.RLock()
 	v := &obj{
 		ID:        m.Model.ID,
@@ -158,7 +158,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		UpdatedAt: m.Model.UpdatedAt,
 		Pinned:    m.Model.Pin != nil,
 		Stamps:    stamps,
-		ThreadID:  threadId,
+		ThreadID:  threadID,
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)
