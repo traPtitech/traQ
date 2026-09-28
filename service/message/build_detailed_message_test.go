@@ -161,7 +161,11 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 			ID:        uuid.NewV3(uuid.Nil, "m1"),
 			ChannelID: cid,
 			Text:      fileEmbed(fileID),
+			User: &model.User{
+				ID: userID,
+			},
 		}
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).Times(1)
 
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, q repository.MessagesQuery) ([]*model.Message, bool, error) {
 			assert.Equal(t, cid, q.Channel)
@@ -170,7 +174,6 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 			return []*model.Message{msg1}, true, nil
 		}).Times(1)
 
-		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
 		tl, err := mgr.GetTimeline(context.TODO(), TimelineQuery{
