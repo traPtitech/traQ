@@ -148,6 +148,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 	}
 	stamps := m.GetStamps()
 	threadId := m.GetThreadID()
+	m.RLock()
 	v := &obj{
 		ID:        m.Model.ID,
 		UserID:    m.Model.UserID,
