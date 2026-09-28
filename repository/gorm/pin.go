@@ -93,5 +93,5 @@ func pinPreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Message").
 		Preload("Message.Stamps").
-		Preload("Thread")
+		Preload("Message.Thread")
 }
