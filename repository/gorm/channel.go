@@ -525,7 +525,7 @@ func (repo *Repository) IsChildPresent(ctx context.Context, name string, parent 
 	var count int64
 	err := repo.db.WithContext(ctx).
 		Model(&model.Channel{}).
-		Where(&model.Channel{Name: name,ParentID: parent}).
+		Where(&model.Channel{Name: name, ParentID: parent}).
 		Count(&count).
 		Error
 	return count > 0, err

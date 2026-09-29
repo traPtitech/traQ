@@ -422,7 +422,7 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	}
 
 	// 既にある名前のスレッドは作れない
-	if ok, _ := m.R.IsChildPresent(ctx,name,parent); ok {
+	if ok, _ := m.R.IsChildPresent(ctx, name, parent); ok {
 		return nil, ErrChannelNameConflicts
 	}
 
