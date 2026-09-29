@@ -7,7 +7,7 @@ golangci-lint = "2.14.0"
 [vars]
 test_db_port = "3100"
 # renovate:image-full-digest
-tbls_image = "ghcr.io/k1low/tbls:v1.96.0@sha256:35e29e5c2e2d8a4555b36eacfdac9d78d8af5aee5c73cc68219cac9cf3723ee1"
+tbls_image = "ghcr.io/k1low/tbls:v1.96.1@sha256:0d90f07aed0c423a6012d542358c10b13fcdf15a1074ceee3d73676c87cc2f79"
 # renovate:image-full-digest
 spectral_image = "index.docker.io/stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050"
 
