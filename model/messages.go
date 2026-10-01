@@ -21,6 +21,7 @@ type Message struct {
 	Channel *Channel       `gorm:"constraint:messages_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Stamps  []MessageStamp `gorm:"constraint:messages_stamps_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignkey:MessageID"`
 	Pin     *Pin           `gorm:"constraint:pins_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Thread  *Thread        `gorm:"constraint:threads_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName DBの名前を指定するメソッド

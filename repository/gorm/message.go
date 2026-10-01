@@ -554,5 +554,6 @@ func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, s
 func messagePreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Stamps").
-		Preload("Pin")
+		Preload("Pin").
+		Preload("Thread")
 }
