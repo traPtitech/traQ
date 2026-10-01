@@ -119,12 +119,12 @@ type MessageRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	AddStampToMessage(ctx context.Context, messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error)
-	// RemoveStampFromMessage 指定したメッセージから指定したユーザーの指定したスタンプを全て削除します
+	// RemoveStampsFromMessage 指定したメッセージから指定したユーザー達の指定したスタンプを全て削除します
 	//
 	// 成功した、或いは既に削除されていた場合、nilを返します。
-	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// 引数にuuid.Nil、または空のuserIDsを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error)
+	RemoveStampsFromMessage(ctx context.Context, messageID, stampID uuid.UUID, userIDs []uuid.UUID) (err error)
 }
 
 // UserUnreadChannel ユーザーの未読チャンネル構造体
