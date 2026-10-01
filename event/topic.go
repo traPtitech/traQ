@@ -193,6 +193,12 @@ const (
 	//    subscriber_ids: []uuid.UUID
 	ChannelSubscribersChanged = "channel.subscribers_changed"
 
+	// ThreadCreated チャンネルが作成された
+	// 	Fields:
+	// 		channel_id: uuid.UUID
+	// 		thread: *model.Channel
+	ThreadCreated = "thread.created"
+
 	// StampCreated スタンプが作成された
 	// 	Fields:
 	// 		stamp_id: uuid.UUID
