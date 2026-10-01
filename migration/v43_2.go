@@ -11,19 +11,18 @@ import (
 // スタンプ名の接頭が"0x"であるときにスタンプ名を置換するマイグレーション
 func v43_2() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "44",
+		ID: "43",
 		Migrate: func(db *gorm.DB) error {
 			var stamps []struct {
 				ID   uuid.UUID
 				Name string
 			}
 
-			// SELECT FROM stamp WHERE name LIKE BINARY 0x% ORDER BY id
 			if err := db.Table("stamps").Where("name LIKE BINARY ?", "0x%").Order("id").Find(&stamps).Error; err != nil {
 				return err
 			}
 
-			//スタンプ名の置換
+			// スタンプ名の置換
 			for _, stamp := range stamps {
 				runes := []rune(stamp.Name)
 
@@ -47,9 +46,9 @@ func v43_2() *gormigrate.Migration {
 					suffix := fmt.Sprintf("_%d", suffixIndex)
 
 					//語数がオーバーした場合は元の名前の後ろを切り詰める
-					maxNameLen := 32
+					const maxNameLen = 32
 
-					trimLen := maxNameLen - len([]rune(suffix))
+					trimLen := maxNameLen - len(suffix)
 					if len(runes) > trimLen {
 						newName = string(runes[:trimLen]) + suffix
 					} else {
