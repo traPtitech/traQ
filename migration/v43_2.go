@@ -11,7 +11,7 @@ import (
 // スタンプ名の接頭が"0x"であるときにスタンプ名を置換するマイグレーション
 func v43_2() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "43",
+		ID: "43_2",
 		Migrate: func(db *gorm.DB) error {
 			var stamps []struct {
 				ID   uuid.UUID
