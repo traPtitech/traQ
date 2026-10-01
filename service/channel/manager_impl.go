@@ -413,8 +413,8 @@ func (m *managerImpl) GetDMChannelMapping(ctx context.Context, userID uuid.UUID)
 }
 
 func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
-	m.T.Lock()
-	defer m.T.Unlock()
+	m.T.RLock()
+	defer m.T.RUnlock()
 
 	// ルートチャンネルの下にスレッドは作れない
 	if parent == pubChannelRootUUID {
@@ -422,19 +422,19 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	}
 
 	// 既にある名前のスレッドは作れない
-	if m.T.isChildPresent(name, parent) {
+	if ok, _ := m.R.IsChildPresent(ctx, name, parent); ok {
 		return nil, ErrChannelNameConflicts
 	}
 
-	// 親チャンネルの存在を確認
+	// 親チャンネルが存在しなければスレッド作成できない
 	if !m.T.isChannelPresent(parent) {
 		return nil, ErrInvalidParentChannel
 	}
-	// 親チャンネルがスレッドかどうか確認
+	// 親チャンネルがスレッドならスレッド作成できない
 	if m.T.isThreadChannel(parent) {
 		return nil, ErrChannelThreadParent
 	}
-	// 親チャンネルがアーカイブされているかどうか確認
+	// 親チャンネルがアーカイブされているならスレッド作成できない
 	if m.T.isArchivedChannel(parent) {
 		return nil, ErrChannelArchived
 	}
@@ -451,7 +451,6 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
-	m.T.add(ch)
 	// ロギング
 	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
 		"userId":    ch.CreatorID,
