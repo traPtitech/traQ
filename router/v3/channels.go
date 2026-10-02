@@ -2,6 +2,7 @@ package v3
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -471,4 +472,68 @@ func (h *Handlers) GetChannelPath(c *echo.Context) error {
 	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, channelID)
 
 	return c.JSON(http.StatusOK, map[string]any{"path": channelPath})
+}
+
+type getThreadChannelQuery struct {
+	Archived bool   `query:"archived"`
+	Limit    int    `query:"limit"`
+	Offset   int    `query:"offset"`
+	Sort     string `query:"sort"`
+}
+
+func (q *getThreadChannelQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	if q.Sort == "" {
+		q.Sort = string(repository.ThreadChannelSortCreatedAtDesc)
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+func (q *getThreadChannelQuery) convert(cid uuid.UUID) (repository.GetThreadChannelQuery, error) {
+	var sort repository.ThreadChannelSort
+
+	switch q.Sort {
+	case string(repository.ThreadChannelSortCreatedAtAsc):
+		sort = repository.ThreadChannelSortCreatedAtAsc
+	case string(repository.ThreadChannelSortCreatedAtDesc):
+		sort = repository.ThreadChannelSortCreatedAtDesc
+	default:
+		return repository.GetThreadChannelQuery{}, fmt.Errorf("invalid sort parameter")
+	}
+
+	return repository.GetThreadChannelQuery{
+		Archived:  q.Archived,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Sort:      sort,
+		ChannelID: cid,
+	}, nil
+}
+
+func (h *Handlers) GetThreadChannels(c *echo.Context) error {
+	ctx := c.Request().Context()
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	var req getThreadChannelQuery
+	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
+		return herror.BadRequest("channel must be public")
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+	reqConverted, err := req.convert(channelID)
+	if err != nil {
+		return herror.BadRequest(err.Error())
+	}
+
+	channelThreads, err := h.ChannelManager.GetThreadChannels(ctx, reqConverted)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatThreadChannels(channelThreads))
 }
