@@ -9,7 +9,7 @@ test_db_port = "3100"
 # renovate:image-full-digest
 tbls_image = "ghcr.io/k1low/tbls:v1.96.1@sha256:0d90f07aed0c423a6012d542358c10b13fcdf15a1074ceee3d73676c87cc2f79"
 # renovate:image-full-digest
-spectral_image = "index.docker.io/stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050"
+spectral_image = "index.docker.io/stoplight/spectral:6.17.0@sha256:c8ffae6ee561b70e80402f1ea669e8b37c74fee48a3dbe2147b71359ed987239"
 
 [tasks.help]
 description = "Display this help screen"
