@@ -2358,6 +2358,21 @@ paths:
                   $ref: "#/components/schemas/UnreadChannel"
       operationId: getMyUnreadChannels
       description: 自分が現在未読のチャンネルの未読情報を取得します。
+  /meta:
+    get:
+      summary: メタ情報を取得
+      tags:
+        - public
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+      operationId: getMeta
+      description: 初期化に必要な公開情報を取得します。
   /version:
     get:
       summary: バージョンを取得
@@ -7673,6 +7688,18 @@ components:
         - CreateClipFolder
         - EditClipFolder
         - DeleteClipFolder
+    Meta:
+      title: Meta
+      type: object
+      description: 初期化に必要な公開情報
+      properties:
+        canonicalOrigin:
+          type: string
+          format: uri
+          description: 共有リンクなどの生成に用いる正規の公開オリジン
+          example: "https://q.trap.jp"
+      required:
+        - canonicalOrigin
     Version:
       title: Version
       type: object
