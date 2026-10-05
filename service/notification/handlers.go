@@ -41,6 +41,7 @@ var handlerMap = map[string]eventHandler{
 	event.ChannelRead:               channelReadHandler,
 	event.ChannelViewersChanged:     channelViewersChangedHandler,
 	event.ChannelSubscribersChanged: channelSubscribersChangedHandler,
+	event.ThreadCreated:             threadCreatedHandler,
 	event.UserCreated:               userCreatedHandler,
 	event.UserUpdated:               userUpdatedHandler,
 	event.UserIconUpdated:           userIconUpdatedHandler,
@@ -446,6 +447,10 @@ func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 	)
 }
 
+func threadCreatedHandler(ns *Service, ev hub.Message) {
+	threadHandler(ns, ev, "THREAD_CREATED")
+}
+
 func userCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_JOINED",
@@ -735,6 +740,13 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 			"id": cid,
 		}, ws.TargetAll())
 	}
+}
+
+func threadHandler(ns *Service, ev hub.Message, eventType string) {
+	cid := ev.Fields["channel_id"].(uuid.UUID)
+	go ns.ws.WriteMessage(eventType, map[string]interface{}{
+		"id": cid,
+	}, ws.TargetAll())
 }
 
 func channelViewerMulticast(ns *Service, cid uuid.UUID, wsEventType string, wsPayload interface{}) {
