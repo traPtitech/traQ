@@ -124,6 +124,16 @@ func (m *message) GetPin() *model.Pin {
 	return m.Model.Pin
 }
 
+func (m *message) GetThreadID() optional.Of[uuid.UUID] {
+	m.RLock()
+	defer m.RUnlock()
+	thread := m.Model.Thread
+	if thread == nil {
+		return optional.Of[uuid.UUID]{}
+	}
+	return optional.From(thread.ChannelID)
+}
+
 func (m *message) MarshalJSON() ([]byte, error) {
 	type obj struct {
 		ID        uuid.UUID              `json:"id"`
@@ -137,6 +147,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
 	}
 	stamps := m.GetStamps()
+	threadID := m.GetThreadID()
 	m.RLock()
 	v := &obj{
 		ID:        m.Model.ID,
@@ -147,6 +158,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		UpdatedAt: m.Model.UpdatedAt,
 		Pinned:    m.Model.Pin != nil,
 		Stamps:    stamps,
+		ThreadID:  threadID,
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)
