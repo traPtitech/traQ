@@ -10,6 +10,7 @@ const Bot = "bot"
 var botPerms = []permission.Permission{
 	permission.GetChannel,
 	permission.EditChannelTopic,
+	permission.EditThread,
 	permission.GetMessage,
 	permission.PostMessage,
 	permission.EditMessage,

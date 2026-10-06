@@ -157,7 +157,7 @@ type PatchThreadRequest struct {
 
 func (r PatchThreadRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.ThreadNameRuleRequired...),
+		vd.Field(&r.Name, validator.RequiredIfValid),
 	)
 }
 
