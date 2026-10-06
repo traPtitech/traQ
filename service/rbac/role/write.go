@@ -9,6 +9,7 @@ const Write = "write"
 
 var writePerms = []permission.Permission{
 	permission.CreateChannel,
+	permission.EditThread,
 	permission.EditChannelTopic,
 	permission.PostMessage,
 	permission.EditMessage,

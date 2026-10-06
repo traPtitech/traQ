@@ -138,6 +138,10 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 		return ErrChannelNotFound
 	}
 
+	if ch.Type != model.ChannelTypePublic && ch.Type != model.ChannelTypeDM {
+		return ErrInvalidChannelType
+	}
+
 	// トピックが同じだった場合、トピックの引数自体を無効化
 	if ch.Topic == args.Topic.V {
 		args.Topic = optional.New("", false)
@@ -253,6 +257,57 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 	return nil
 }
 
+func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return ErrChannelNotFound
+	}
+
+	if ch.Type != model.ChannelTypeThread {
+		return ErrInvalidChannelType
+	}
+
+	_, err = m.GetChannel(ctx, ch.ParentID)
+	if err != nil {
+		return fmt.Errorf("failed to UpdateThread: %w", err)
+	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
+	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
+		eventRecords[model.ChannelEventVisibilityChanged] = model.ChannelEventDetail{
+			"userId":     args.UpdaterID,
+			"visibility": args.Visibility.V,
+		}
+	}
+
+	if args.Name.Valid {
+
+		eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
+			"userId": args.UpdaterID,
+			"before": ch.Name,
+			"after":  args.Name.V,
+		}
+	}
+
+	_, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
+		UpdaterID:  args.UpdaterID,
+		Name:       args.Name,
+		Visibility: args.Visibility,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to UpdateChannel: %w", err)
+	}
+
+	updated := time.Now()
+	for eventType, detail := range eventRecords {
+		m.recordChannelEvent(id, eventType, detail, updated)
+	}
+	return nil
+}
+
 func (m *managerImpl) ArchiveChannel(ctx context.Context, id uuid.UUID, updaterID uuid.UUID) error {
 	ch, err := m.GetChannel(ctx, id)
 	if err != nil {
@@ -264,6 +319,9 @@ func (m *managerImpl) ArchiveChannel(ctx context.Context, id uuid.UUID, updaterI
 	}
 	if ch.IsDMChannel() {
 		return ErrInvalidChannel // DMチャンネルはアーカイブ不可
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel // スレッドはアーカイブ不可
 	}
 
 	m.T.Lock()
@@ -309,6 +367,9 @@ func (m *managerImpl) UnarchiveChannel(ctx context.Context, id uuid.UUID, update
 	}
 	if !ch.IsArchived() {
 		return nil // アーカイブされていない
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel
 	}
 
 	m.T.Lock()
