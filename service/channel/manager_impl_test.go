@@ -415,7 +415,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			{Name: "l", Parent: cEK},
 		}
 		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true).Times(1)
+			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
 			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 		}
@@ -468,6 +468,21 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 		}
 	})
 
+	t.Run("thread name confricts repository error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		mockErr := errors.New("mock error")
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(nil, mockErr).AnyTimes()
+
+		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
+		if assert.Error(t, err) {
+			assert.Equal(t, mockErr, errors.Unwrap(err))
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
@@ -512,7 +527,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							Return(expected, nil).
 							AnyTimes()
 
-						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(false).AnyTimes()
+						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(false, nil).AnyTimes()
 
 						if c.Parent != uuid.Nil {
 							repo.EXPECT().
