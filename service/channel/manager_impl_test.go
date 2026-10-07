@@ -529,9 +529,11 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							Return(expected, nil).
 							AnyTimes()
 
-						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
-
 						if c.Parent != uuid.Nil {
+							repo.EXPECT().
+								IsChildPresent(context.TODO(), c.Name, c.Parent).
+								Return(false, nil).
+								AnyTimes()
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,
