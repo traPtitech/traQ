@@ -421,11 +421,6 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 		return nil, ErrInvalidParentChannel
 	}
 
-	// 既にある名前のスレッドは作れない
-	if ok, _ := m.R.IsChildPresent(ctx, name, parent); ok {
-		return nil, ErrChannelNameConflicts
-	}
-
 	// 親チャンネルが存在しなければスレッド作成できない
 	if !m.T.isChannelPresent(parent) {
 		return nil, ErrInvalidParentChannel
@@ -437,6 +432,11 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	// 親チャンネルがアーカイブされているならスレッド作成できない
 	if m.T.isArchivedChannel(parent) {
 		return nil, ErrChannelArchived
+	}
+
+	// 既にある名前のスレッドは作れない
+	if ok, _ := m.R.IsChildPresent(ctx, name, parent); ok {
+		return nil, ErrChannelNameConflicts
 	}
 
 	// チャンネル作成
