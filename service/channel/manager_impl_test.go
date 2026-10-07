@@ -462,6 +462,8 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			Return(nil, mockErr).
 			AnyTimes()
 
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
+
 		_, err := cm.CreateThreadChannel(context.TODO(), "test", cEK, uuid.Nil)
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
@@ -475,7 +477,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		mockErr := errors.New("mock error")
-		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(nil, mockErr).AnyTimes()
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockErr).AnyTimes()
 
 		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
 		if assert.Error(t, err) {
@@ -527,7 +529,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							Return(expected, nil).
 							AnyTimes()
 
-						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(false, nil).AnyTimes()
+						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
 
 						if c.Parent != uuid.Nil {
 							repo.EXPECT().
