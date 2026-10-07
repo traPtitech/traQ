@@ -415,6 +415,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			{Name: "l", Parent: cEK},
 		}
 		for _, c := range cases {
+			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true).Times(1)
 			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 		}
@@ -510,6 +511,9 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypeThread).
 							Return(expected, nil).
 							AnyTimes()
+
+						repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any).Return(false).AnyTimes()
+
 						if c.Parent != uuid.Nil {
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
