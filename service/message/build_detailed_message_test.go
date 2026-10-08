@@ -83,7 +83,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID1).Return(nil, repository.ErrNotFound).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false, uuid.NewV3(uuid.Nil, "u1"))
-		assert.Empty(t, result.Attachments)
+		assert.Nil(t, result)
 	})
 
 	t.Run("quotes only", func(t *testing.T) {

@@ -95,10 +95,6 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, inc
 func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, includeAttachments bool, includeQuotes bool, uid uuid.UUID) (*model.DetailedMessage, error) {
 	var attachmentsResult []*model.FileMeta
 	var citationResult []*model.QuotedMessage
-	empty := model.DetailedMessage{
-		Attachments: []*model.FileMeta{},
-		Quotes:      []*model.QuotedMessage{},
-	}
 	if includeAttachments || includeQuotes {
 		parseResult := messageParser.Parse(mm.Text)
 		if includeAttachments {
@@ -106,16 +102,16 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 			for _, fid := range parseResult.Attachments {
 				auth, err := m.R.IsFileAccessible(ctx, fid, uid)
 				if err != nil {
-					return &empty, err
+					return nil, err
 				}
 				if auth {
 					attachment, err := m.R.GetFileMeta(ctx, fid)
 					if err != nil {
-						return &empty, err
+						return nil, err
 					}
 					attachmentsResult = append(attachmentsResult, attachment)
 				} else {
-					return &empty, err
+					return nil, err
 				}
 			}
 		}
@@ -124,17 +120,17 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 			var err error
 			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
 			if err != nil {
-				return &empty, err
+				return nil, err
 			}
 			for _, quote := range quotes {
 				if quote.Channel.IsPublic {
 					qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
 					if err != nil {
-						return &empty, err
+						return nil, err
 					}
 					citationResult = append(citationResult, qm)
 				} else {
-					return &empty, ErrNotFound
+					return nil, ErrNotFound
 				}
 			}
 		}
