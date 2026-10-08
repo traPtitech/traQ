@@ -50,7 +50,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/ory/dockertest/v3 v3.12.0
-	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_golang v1.25.0
 	github.com/samber/lo v1.53.0
 	github.com/sapphi-red/midec v0.5.2
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -183,7 +183,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
