@@ -58,7 +58,7 @@ func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
 
 func (m *managerImpl) canGenerateWaveform(mimeType string) bool {
 	switch mimeType {
-	case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav":
+	case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/m4a":
 		return true
 	default:
 		return false
@@ -146,7 +146,13 @@ func (m *managerImpl) Save(ctx context.Context, args SaveArgs) (model.File, erro
 			if err != nil {
 				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
+		case "audio/m4a":
+			r, err = m.ip.WaveformM4a(src, waveformWidth, waveformHeight)
+			if err != nil {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			}
 		}
+		
 
 		if r != nil {
 			thumbnail := model.FileThumbnail{
