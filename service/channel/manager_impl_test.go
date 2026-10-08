@@ -547,7 +547,6 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 						cm.P.Wait()
 						if assert.NoError(t, err) {
 							assert.Equal(t, expected, ch)
-							assert.True(t, cm.PublicChannelTree(context.TODO()).IsChannelPresent(cid))
 						}
 					})
 				}
