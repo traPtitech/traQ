@@ -96,7 +96,7 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/ClickHouse/ch-go v0.65.0 // indirect
-	github.com/ClickHouse/clickhouse-go/v2 v2.30.0 // indirect
+	github.com/ClickHouse/clickhouse-go/v2 v2.32.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.34.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.56.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.56.0 // indirect

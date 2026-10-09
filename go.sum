@@ -76,8 +76,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/ClickHouse/ch-go v0.65.0 h1:vZAXfTQliuNNefqkPDewX3kgRxN6Q4vUENnnY+ynTRY=
 github.com/ClickHouse/ch-go v0.65.0/go.mod h1:tCM0XEH5oWngoi9Iu/8+tjPBo04I/FxNIffpdjtwx3k=
-github.com/ClickHouse/clickhouse-go/v2 v2.30.0 h1:AG4D/hW39qa58+JHQIFOSnxyL46H6h2lrmGGk17dhFo=
-github.com/ClickHouse/clickhouse-go/v2 v2.30.0/go.mod h1:i9ZQAojcayW3RsdCb3YR+n+wC2h65eJsZCscZ1Z1wyo=
+github.com/ClickHouse/clickhouse-go/v2 v2.32.0 h1:zVWJUmUGdtCApM/vRfQhruGXIm1M643bk68B3IYbR1I=
+github.com/ClickHouse/clickhouse-go/v2 v2.32.0/go.mod h1:rGFIgeNbJVggBp2C+0FXOdfjsMlpsKx7FUYnHHyy2KE=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.34.0 h1:yzIYdwuro811Z27D3T80Wkd3rqZzb0K43nner7Eh1yE=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.34.0/go.mod h1:pJTkW8hEUIIi3Pf65lPZOnn4Y81yCllX6IWk2jNXdkM=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.56.0 h1:O2sXMyJh8b7devAGdE+163xtRurt0RVpB6DIzX5vGfg=
