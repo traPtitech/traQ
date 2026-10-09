@@ -54,6 +54,6 @@ jobs:
         with:
           renovate-image: "ghcr.io/renovatebot/renovate"
           # renovate:image-tag-digest imageName=ghcr.io/renovatebot/renovate
-          renovate-version: "44.146.3@sha256:4be11f05b8627c7aa0f49a8cf31b1f5355e930ba8d8d2be9efd4544bcc9fc08c"
+          renovate-version: "44.148.3@sha256:69e3c20b19f901ca7b02f609216d5ccf0fa700387001f099817852da3dfb617c"
           configurationFile: "${{ env.RENOVATE_CONFIG_FILE }}"
           token: "${{ steps.generate-token.outputs.token }}"
