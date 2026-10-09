@@ -1,5 +1,5 @@
 [tools]
-go = "1.27.1"
+go = "1.27.2"
 "go:github.com/google/wire/cmd/wire" = "0.7.0"
 "go:github.com/golang/mock/mockgen" = "1.6.0"
 golangci-lint = "2.14.0"
