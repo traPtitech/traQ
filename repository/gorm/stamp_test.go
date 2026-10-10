@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 
@@ -155,6 +157,80 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 			assert.Equal(newName, a.Name)
 		}
 	})
+}
+
+func TestStampRepository_UpdateStampEvent(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common2)
+	newFileID := mustMakeDummyFile(t, repo, false).ID
+	creatorID := mustMakeUser(t, repo, rand, false).GetID()
+	newCreatorID := mustMakeUser(t, repo, rand, false).GetID()
+
+	for _, tt := range []struct {
+		name      string
+		args      repository.UpdateStampArgs
+		wantEvent bool
+		wantError bool
+	}{
+		{name: "name", args: repository.UpdateStampArgs{Name: optional.From("stamp_" + random2.AlphaNumeric(20))}, wantEvent: true},
+		{name: "file", args: repository.UpdateStampArgs{FileID: optional.From(newFileID)}, wantEvent: true},
+		{name: "creator", args: repository.UpdateStampArgs{CreatorID: optional.From(newCreatorID)}, wantEvent: true},
+		{name: "system stamp", args: repository.UpdateStampArgs{CreatorID: optional.From(uuid.Nil)}, wantEvent: true},
+		{name: "no change"},
+		{name: "invalid name", args: repository.UpdateStampArgs{Name: optional.From("あ")}, wantError: true},
+		{name: "invalid file", args: repository.UpdateStampArgs{
+			Name:   optional.From("stamp_" + random2.AlphaNumeric(20)),
+			FileID: optional.From(uuid.Nil),
+		}, wantError: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert, require := assertAndRequire(t)
+			s := mustMakeStamp(t, repo, rand, creatorID)
+			h := hub.New()
+			t.Cleanup(h.Close)
+			r := makeStampRepository(getDB(repo), h)
+			sub := h.Subscribe(1, event.StampUpdated)
+
+			err := r.UpdateStamp(context.TODO(), s.ID, tt.args)
+			if tt.wantError {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
+			if !tt.wantEvent {
+				select {
+				case ev := <-sub.Receiver:
+					t.Fatalf("unexpected event: %v", ev)
+				default:
+				}
+				return
+			}
+
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(s.ID, ev.Fields["stamp_id"])
+				updatedStamp, ok := ev.Fields["stamp"].(*model.Stamp)
+				require.True(ok, "event must contain the updated stamp")
+				assert.Equal(s.ID, updatedStamp.ID)
+				wantName, wantFileID, wantCreatorID := s.Name, s.FileID, s.CreatorID
+				if tt.args.Name.Valid {
+					wantName = tt.args.Name.V
+				}
+				if tt.args.FileID.Valid {
+					wantFileID = tt.args.FileID.V
+				}
+				if tt.args.CreatorID.Valid {
+					wantCreatorID = tt.args.CreatorID.V
+				}
+				assert.Equal(wantName, updatedStamp.Name)
+				assert.Equal(wantFileID, updatedStamp.FileID)
+				assert.Equal(wantCreatorID, updatedStamp.CreatorID)
+			default:
+				t.Fatal("stamp update event was not published")
+			}
+		})
+	}
 }
 
 func TestRepositoryImpl_GetStamp(t *testing.T) {
