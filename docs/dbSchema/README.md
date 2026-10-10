@@ -29,6 +29,8 @@
 | [ogp_cache](ogp_cache.md) | 6 | OGPキャッシュテーブル | BASE TABLE |
 | [pins](pins.md) | 4 | ピンテーブル | BASE TABLE |
 | [r_sessions](r_sessions.md) | 5 | traQ API HTTPセッションテーブル | BASE TABLE |
+| [scheduled_messages](scheduled_messages.md) | 9 | 本人限定の単発予約投稿 | BASE TABLE |
+| [scheduled_message_files](scheduled_message_files.md) | 3 | 予約投稿の添付ファイル（各添付は一つの予約のみ使用） | BASE TABLE |
 | [soundboard_items](soundboard_items.md) | 4 | サウンドボードアイテムテーブル | BASE TABLE |
 | [stamps](stamps.md) | 8 | スタンプテーブル | BASE TABLE |
 | [stamp_palettes](stamp_palettes.md) | 7 | スタンプパレットテーブル | BASE TABLE |
@@ -76,6 +78,9 @@ erDiagram
 "messages_stamps" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "pins" |o--|| "messages" : "FOREIGN KEY (message_id) REFERENCES messages (id)"
 "pins" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"scheduled_messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"scheduled_messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"scheduled_message_files" }o--|| "scheduled_messages" : "FOREIGN KEY (scheduled_message_id) REFERENCES scheduled_messages (id)"
 "stamps" }o--|| "files" : "FOREIGN KEY (file_id) REFERENCES files (id)"
 "stamp_palettes" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
 "stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
@@ -313,6 +318,22 @@ erDiagram
   varchar_36_ user_id
   longblob data
   datetime_6_ created
+}
+"scheduled_messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text content
+  text draft_content
+  datetime_6_ scheduled_at
+  varchar_16_ status
+  varchar_64_ failure
+  datetime_6_ created_at
+}
+"scheduled_message_files" {
+  char_36_ scheduled_message_id PK
+  char_36_ file_id PK
+  bigint_20_ position
 }
 "soundboard_items" {
   char_36_ id PK

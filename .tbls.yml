@@ -41,6 +41,22 @@ relations:
       - id
 
 comments:
+  - table: scheduled_messages
+    tableComment: 本人限定の単発予約投稿
+    columnComments:
+      user_id: 投稿者UUID
+      channel_id: 投稿先チャンネルUUID（通常チャンネルまたはDM）
+      content: 投稿本文（送信・取消後は消去）
+      draft_content: 下書き復元用テキスト（送信・取消後は消去）
+      scheduled_at: 投稿予定日時
+      status: pending・failed・sent・canceled
+      failure: 送信失敗理由
+  - table: scheduled_message_files
+    tableComment: 予約投稿の添付ファイル（各添付は一つの予約のみ使用）
+    columnComments:
+      scheduled_message_id: 予約UUID
+      file_id: 添付ファイルUUID
+      position: 添付の表示順
   - table: users
     tableComment: ユーザーテーブル
     columnComments:

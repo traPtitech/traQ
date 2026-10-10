@@ -131,6 +131,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiUsersMe := apiUsers.Group("/me")
 			{
 				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
+				apiScheduled := apiUsersMe.Group("/scheduled-messages", blockBot)
+				apiScheduled.GET("", h.GetMyScheduledMessages, requires(permission.GetMe))
+				apiScheduled.POST("", h.PostScheduledMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiScheduled.DELETE("/:scheduledMessageID", h.CancelScheduledMessage, requires(permission.GetMe))
+				apiScheduled.POST("/files", h.PostScheduledMessageFile, bodyLimit(30<<10), requires(permission.UploadFile), requires(permission.PostMessage))
 				apiUsersMe.PATCH("", h.EditMe, requires(permission.EditMe))
 				apiUsersMe.GET("/oidc", h.GetMeOIDC, requires(permission.GetOIDCUserInfo))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
