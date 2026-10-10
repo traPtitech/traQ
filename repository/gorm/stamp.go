@@ -254,6 +254,7 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 			Name: event.StampUpdated,
 			Fields: hub.Fields{
 				"stamp_id": id,
+				"stamp":    &s,
 			},
 		})
 	}
