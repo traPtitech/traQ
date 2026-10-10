@@ -210,6 +210,11 @@ func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time
 		}
 	}()
 	s.SS.StampThrottler.Start()
+	if s.routerStopped == nil {
+		s.routerStopped = make(chan struct{})
+	}
+	defer close(s.routerStopped)
+
 	workerCtx, stopWorker := context.WithCancel(ctx)
 	workerStopped := make(chan struct{})
 	go func() {
@@ -222,10 +227,6 @@ func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time
 		<-workerStopped
 	}()
 
-	if s.routerStopped == nil {
-		s.routerStopped = make(chan struct{})
-	}
-	defer close(s.routerStopped)
 	sc := echo.StartConfig{
 		Address:         address,
 		HideBanner:      true,
