@@ -307,6 +307,35 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 	})
 }
 
+func TestStampRepository_DeleteStampEvent(t *testing.T) {
+	t.Parallel()
+	repo, assert, require := setup(t, common2)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
+	h := hub.New()
+	t.Cleanup(h.Close)
+	r := makeStampRepository(getDB(repo), h)
+	sub := h.Subscribe(1, event.StampDeleted)
+
+	require.NoError(r.DeleteStamp(context.TODO(), s.ID))
+	select {
+	case ev := <-sub.Receiver:
+		assert.Equal(s.ID, ev.Fields["stamp_id"])
+	default:
+		t.Fatal("stamp deletion event was not published")
+	}
+
+	_, err := r.GetStamp(context.TODO(), s.ID)
+	assert.ErrorIs(err, repository.ErrNotFound)
+
+	// 削除済みのスタンプを再度削除してもイベントは発行されない。
+	assert.ErrorIs(r.DeleteStamp(context.TODO(), s.ID), repository.ErrNotFound)
+	select {
+	case ev := <-sub.Receiver:
+		t.Fatalf("unexpected event: %v", ev)
+	default:
+	}
+}
+
 func TestRepositoryImpl_GetAllStampsWithThumbnail(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, ex1)

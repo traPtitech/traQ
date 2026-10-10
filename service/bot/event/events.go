@@ -37,6 +37,8 @@ const (
 	StampCreated model.BotEventType = "STAMP_CREATED"
 	// StampUpdated スタンプ更新イベント
 	StampUpdated model.BotEventType = "STAMP_UPDATED"
+	// StampDeleted スタンプ削除イベント
+	StampDeleted model.BotEventType = "STAMP_DELETED"
 	// TagAdded タグ追加イベント
 	TagAdded model.BotEventType = "TAG_ADDED"
 	// TagRemoved タグ削除イベント
@@ -82,6 +84,7 @@ func init() {
 		UserActivated,
 		StampCreated,
 		StampUpdated,
+		StampDeleted,
 		TagAdded,
 		TagRemoved,
 		UserGroupCreated,
