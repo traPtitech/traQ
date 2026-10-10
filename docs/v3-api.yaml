@@ -26,6 +26,110 @@ x-traq-codegen-schemas:
     QallSoundboardItemDeletedEvent:
       $ref: "#/components/schemas/QallSoundboardItemDeletedEvent"
 paths:
+  "/users/me/scheduled-messages":
+    get:
+      summary: 自分の予約投稿を取得
+      description: 未送信および送信失敗の予約を投稿日時順で返します。予約は本人のみ閲覧できます。
+      operationId: getMyScheduledMessages
+      tags: [message, me]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduledMessage"
+        "401":
+          description: Unauthorized
+    post:
+      summary: 単発の投稿を予約
+      description: |-
+        通常チャンネルまたは自分が参加するDMのchannelIdを指定します。
+        予約は本人名義で送信され、送信時にもアカウント状態と投稿権限を確認します。
+        未送信・失敗の予約は合計100件までです。時刻はタイムゾーン付きの未来日時を指定してください。
+        添付は専用エンドポイントでアップロードし、本文にそのファイルURLを含めます。
+      operationId: postScheduledMessage
+      tags: [message, me]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostScheduledMessageRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledMessage"
+        "400":
+          description: 不正な日時・添付、または予約件数の上限
+        "403":
+          description: 投稿または添付の権限がない、またはチャンネルが利用できない
+  "/users/me/scheduled-messages/{scheduledMessageId}":
+    parameters:
+      - name: scheduledMessageId
+        in: path
+        required: true
+        description: 予約UUID
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: 自分の予約投稿を取り消す
+      description: |-
+        予約と添付を削除します。下書きに戻す場合は、取消前に本文と添付を保存してください。
+        取消成功後にその予約が送信されることはありません。取消済みの予約への再リクエストは成功します。
+      operationId: cancelScheduledMessage
+      tags: [message, me]
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: 不正なUUID
+        "404":
+          description: 予約が存在しない、または本人の予約ではない
+        "409":
+          description: すでに送信済みで取り消せない
+  "/users/me/scheduled-messages/files":
+    post:
+      summary: 予約投稿用の非公開添付をアップロード
+      description: |-
+        通常のアップロードと同じファイル制限を適用します。
+        投稿されるまでは本人だけがアクセスでき、チャンネルのファイル一覧にも掲載されません。
+        送信後は通常チャンネルまたはDMの公開範囲を適用します。各添付は一つの予約にのみ使用できます。
+      operationId: postScheduledMessageFile
+      tags: [message, me, file]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, channelId]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 添付ファイル
+                channelId:
+                  type: string
+                  format: uuid
+                  description: 投稿先の通常チャンネルまたはDMチャンネルUUID
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInfo"
+        "400":
+          description: 不正なファイルまたは投稿先
+        "403":
+          description: 投稿またはアップロード権限がない
   "/channels/{channelId}/messages":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -4727,6 +4831,79 @@ components:
       type: http
       scheme: bearer
   schemas:
+    PostScheduledMessageRequest:
+      title: PostScheduledMessageRequest
+      type: object
+      description: 単発予約投稿の作成リクエスト
+      required: [channelId, content, scheduledAt]
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: 投稿先の通常チャンネルまたはDMチャンネルUUID
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: 投稿する本文（内部リンクを埋め込み済みのテキストと添付URL）
+        draftContent:
+          type: string
+          maxLength: 10000
+          default: ""
+          description: 下書き復元用の入力テキスト
+        scheduledAt:
+          type: string
+          format: date-time
+          description: タイムゾーン付きの未来の投稿日時
+        fileIds:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          description: 専用エンドポイントでアップロードした添付UUID（表示順）
+          items:
+            type: string
+            format: uuid
+    ScheduledMessage:
+      title: ScheduledMessage
+      type: object
+      description: 本人限定の未送信または失敗した予約投稿
+      required: [id, channelId, content, draftContent, scheduledAt, createdAt, fileIds, status, failure]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 予約UUID
+        channelId:
+          type: string
+          format: uuid
+          description: 投稿先チャンネルUUID
+        content:
+          type: string
+          description: 投稿する本文
+        draftContent:
+          type: string
+          description: 下書き復元用の入力テキスト
+        scheduledAt:
+          type: string
+          format: date-time
+          description: 投稿予定日時
+        createdAt:
+          type: string
+          format: date-time
+          description: 予約作成日時
+        fileIds:
+          type: array
+          description: 添付UUID（表示順）
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [pending, failed]
+          description: 未送信または送信失敗
+        failure:
+          type: string
+          description: 失敗理由。未送信時は空文字列。
     Message:
       title: Message
       type: object

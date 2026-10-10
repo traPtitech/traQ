@@ -83,6 +83,16 @@ func (h *Handlers) GetFiles(c *echo.Context) error {
 
 // PostFile POST /files
 func (h *Handlers) PostFile(c *echo.Context) error {
+	return h.postFile(c, false)
+}
+
+// PostScheduledMessageFile stores uploads with an author-only ACL and no channel
+// association, keeping both the content and channel file listings private.
+func (h *Handlers) PostScheduledMessageFile(c *echo.Context) error {
+	return h.postFile(c, true)
+}
+
+func (h *Handlers) postFile(c *echo.Context, private bool) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
 
@@ -119,7 +129,9 @@ func (h *Handlers) PostFile(c *echo.Context) error {
 	if ch.IsArchived() {
 		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree(ctx).GetChannelPath(ch.ID)))
 	}
-	if !ch.IsPublic {
+	if private {
+		args.ACLAllow(userID)
+	} else if !ch.IsPublic {
 		// アクセスコントロール設定
 		members, err := h.ChannelManager.GetDMChannelMembers(ctx, ch.ID)
 		if err != nil {
@@ -129,7 +141,9 @@ func (h *Handlers) PostFile(c *echo.Context) error {
 			args.ACLAllow(v)
 		}
 	}
-	args.ChannelID = optional.From(channelID)
+	if !private {
+		args.ChannelID = optional.From(channelID)
+	}
 
 	// 保存
 	file, err := h.FileManager.Save(c.Request().Context(), args)

@@ -19,6 +19,7 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/service/scheduled"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
@@ -209,6 +210,17 @@ func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time
 		}
 	}()
 	s.SS.StampThrottler.Start()
+	workerCtx, stopWorker := context.WithCancel(ctx)
+	workerStopped := make(chan struct{})
+	go func() {
+		defer close(workerStopped)
+		w := scheduled.Worker{Repo: s.Repo, Channels: s.SS.ChannelManager, RBAC: s.SS.RBAC, Logger: s.L.Named("scheduled_messages")}
+		w.Run(workerCtx)
+	}()
+	defer func() {
+		stopWorker()
+		<-workerStopped
+	}()
 
 	if s.routerStopped == nil {
 		s.routerStopped = make(chan struct{})

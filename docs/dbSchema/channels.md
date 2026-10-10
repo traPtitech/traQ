@@ -33,7 +33,7 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
+| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [scheduled_messages](scheduled_messages.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
 | name | varchar(20) |  | false |  |  | チャンネル名 |
 | parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
 | topic | text |  | false |  |  | チャンネルトピック |
@@ -70,6 +70,7 @@ erDiagram
 "dm_channel_mappings" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "files" }o--o| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"scheduled_messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_private_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
@@ -126,6 +127,17 @@ erDiagram
   datetime_6_ created_at
   datetime_6_ updated_at
   datetime_6_ deleted_at
+}
+"scheduled_messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text content
+  text draft_content
+  datetime_6_ scheduled_at
+  varchar_16_ status
+  varchar_64_ failure
+  datetime_6_ created_at
 }
 "stars" {
   char_36_ user_id PK

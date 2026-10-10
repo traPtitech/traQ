@@ -31,7 +31,7 @@ CREATE TABLE `users` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [bots](bots.md) [clip_folders](clip_folders.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [external_provider_users](external_provider_users.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stamp_palettes](stamp_palettes.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [user_profiles](user_profiles.md) [user_settings](user_settings.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
+| id | char(36) |  | false | [bots](bots.md) [clip_folders](clip_folders.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [external_provider_users](external_provider_users.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [scheduled_messages](scheduled_messages.md) [stamp_palettes](stamp_palettes.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [user_profiles](user_profiles.md) [user_settings](user_settings.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
 | name | varchar(32) |  | false |  |  | traP ID |
 | display_name | varchar(32) | '' | false |  |  | 表示名 |
 | password | char(128) | '' | false |  |  | ハッシュ化されたパスワード |
@@ -73,6 +73,7 @@ erDiagram
 "messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "messages_stamps" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "pins" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
+"scheduled_messages" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "stamp_palettes" }o--|| "users" : "FOREIGN KEY (creator_id) REFERENCES users (id)"
 "stars" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
 "unreads" }o--|| "users" : "FOREIGN KEY (user_id) REFERENCES users (id)"
@@ -176,6 +177,17 @@ erDiagram
   char_36_ id PK
   char_36_ message_id FK
   char_36_ user_id FK
+  datetime_6_ created_at
+}
+"scheduled_messages" {
+  char_36_ id PK
+  char_36_ user_id FK
+  char_36_ channel_id FK
+  text content
+  text draft_content
+  datetime_6_ scheduled_at
+  varchar_16_ status
+  varchar_64_ failure
   datetime_6_ created_at
 }
 "stamp_palettes" {

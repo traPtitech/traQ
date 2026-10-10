@@ -31,26 +31,28 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 		Stamps:    []model.MessageStamp{},
 	}
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(m).Error; err != nil {
-			return err
-		}
-
-		clm := &model.ChannelLatestMessage{
-			ChannelID: m.ChannelID,
-			MessageID: m.ID,
-			DateTime:  m.CreatedAt,
-		}
-
-		return tx.
-			Clauses(clause.OnConflict{UpdateAll: true}).
-			Create(clm).
-			Error
+		return createMessage(tx, m)
 	})
 	if err != nil {
 		return nil, err
 	}
+	repo.publishMessageCreated(m)
+	return m, nil
+}
 
-	parseResult := message.Parse(text)
+func createMessage(tx *gorm.DB, m *model.Message) error {
+	if err := tx.Create(m).Error; err != nil {
+		return err
+	}
+	return tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&model.ChannelLatestMessage{
+		ChannelID: m.ChannelID,
+		MessageID: m.ID,
+		DateTime:  m.CreatedAt,
+	}).Error
+}
+
+func (repo *Repository) publishMessageCreated(m *model.Message) {
+	parseResult := message.Parse(m.Text)
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
 		Fields: hub.Fields{
@@ -69,7 +71,6 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 			},
 		})
 	}
-	return m, nil
 }
 
 // UpdateMessage implements MessageRepository interface.

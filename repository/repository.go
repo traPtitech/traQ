@@ -9,6 +9,7 @@ type Repository interface {
 	TagRepository
 	ChannelRepository
 	MessageRepository
+	ScheduledMessageRepository
 	MessageReportRepository
 	StampRepository
 	StampPaletteRepository

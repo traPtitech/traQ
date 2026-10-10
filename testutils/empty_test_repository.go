@@ -12,6 +12,7 @@ type EmptyTestRepository struct {
 	repository.TagRepository
 	repository.ChannelRepository
 	repository.MessageRepository
+	repository.ScheduledMessageRepository
 	repository.MessageReportRepository
 	repository.StampRepository
 	repository.StampPaletteRepository
