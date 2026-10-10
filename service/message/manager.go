@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	ErrNotFound         = errors.New("not found")
-	ErrAlreadyExists    = errors.New("already exists")
-	ErrChannelArchived  = errors.New("channel archived")
-	ErrPinLimitExceeded = errors.New("the pin limit exceeded")
+	ErrNotFound          = errors.New("not found")
+	ErrAlreadyExists     = errors.New("already exists")
+	ErrChannelArchived   = errors.New("channel archived")
+	ErrPinLimitExceeded  = errors.New("the pin limit exceeded")
+	ErrCannotRemoveStamp = errors.New("cannot remove stamps")
 )
 
 type TimelineQuery struct {
@@ -101,13 +102,16 @@ type Manager interface {
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error)
-	// RemoveStamps 指定したメッセージから指定したユーザーの指定したスタンプを全て削除します
+	// RemoveStamps 指定したメッセージから指定したスタンプを削除します
+	// userIDsが空の場合はリクエストしたユーザーのスタンプを削除します。
+	// userIDsを指定して削除できるのは、そのメッセージの投稿者であるBotのみです。
 	//
 	// 成功した場合、或いは既に削除されていた場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
+	// スタンプを削除する権限がない場合は、ErrCannotRemoveStampを返します。
 	// DBによるエラーを返すことがあります。
-	RemoveStamps(ctx context.Context, id, stampID, userID uuid.UUID) error
+	RemoveStamps(ctx context.Context, id, stampID, requesterID uuid.UUID, userIDs []uuid.UUID) error
 
 	Wait(ctx context.Context) error
 }
