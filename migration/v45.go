@@ -5,17 +5,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// v44 OAuth2でQallを利用できるようにするため、qallロールを追加
-func v44() *gormigrate.Migration {
+// v45 OAuth2でQallを利用できるようにするため、qallロールを追加
+func v45() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "44",
+		ID: "45",
 		Migrate: func(db *gorm.DB) error {
-			roles := []v44UserRole{
+			roles := []v45UserRole{
 				{
 					Name:        "qall",
 					Oauth2Scope: true,
 					System:      true,
-					Permissions: []v44RolePermission{
+					Permissions: []v45RolePermission{
 						{
 							Role:       "qall",
 							Permission: "web_rtc",
@@ -34,23 +34,23 @@ func v44() *gormigrate.Migration {
 	}
 }
 
-type v44UserRole struct {
+type v45UserRole struct {
 	Name        string `gorm:"type:varchar(30);not null;primaryKey"`
 	Oauth2Scope bool   `gorm:"type:boolean;not null;default:false"`
 	System      bool   `gorm:"type:boolean;not null;default:false"`
 
-	Permissions []v44RolePermission `gorm:"constraint:user_role_permissions_role_user_roles_name_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:Role;references:Name"`
+	Permissions []v45RolePermission `gorm:"constraint:user_role_permissions_role_user_roles_name_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:Role;references:Name"`
 }
 
-func (*v44UserRole) TableName() string {
+func (*v45UserRole) TableName() string {
 	return "user_roles"
 }
 
-type v44RolePermission struct {
+type v45RolePermission struct {
 	Role       string `gorm:"type:varchar(30);not null;primaryKey"`
 	Permission string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
-func (*v44RolePermission) TableName() string {
+func (*v45RolePermission) TableName() string {
 	return "user_role_permissions"
 }
