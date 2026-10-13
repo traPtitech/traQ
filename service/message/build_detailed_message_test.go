@@ -109,7 +109,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		}
 	})
 
-	t.Run("quotes from private channel are invisible", func(t *testing.T) {
+	t.Run("quotes from private channels are invisible", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		mgr, _, repo, _ := setupM(ctrl)
