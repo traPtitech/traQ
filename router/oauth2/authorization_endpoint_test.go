@@ -328,6 +328,35 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		}
 	})
 
+	t.Run("Found (legacy non reverse domain scheme redirect without PKCE)", func(t *testing.T) {
+		t.Parallel()
+		// 以前のバリデーションで登録できていた、リバースドメイン形式でないスキームのクライアント
+		legacyClient := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "legacy native client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "myapp:1234",
+			Scopes:       scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), legacyClient))
+
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize").
+			WithFormField("client_id", legacyClient.ID).
+			WithFormField("response_type", "code").
+			WithCookie(session.CookieName, s).
+			Expect()
+
+		res.Status(http.StatusFound)
+		loc, err := res.Raw().Location()
+		require.NoError(t, err)
+		assert.Equal(t, "myapp", loc.Scheme)
+		assert.Equal(t, errInvalidRequest, loc.Query().Get("error"))
+		assert.Empty(t, loc.Query().Get("code"))
+	})
+
 	t.Run("Found (prompt=none with private-use URI scheme redirect)", func(t *testing.T) {
 		t.Parallel()
 		user := env.CreateUser(t, rand, useUUIDV4)

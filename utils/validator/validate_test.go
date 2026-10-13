@@ -84,7 +84,7 @@ func TestIsPrivateUseURIScheme(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.scheme, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.want, IsPrivateUseURIScheme(tt.scheme))
+			assert.Equal(t, tt.want, isPrivateUseURIScheme(tt.scheme))
 		})
 	}
 }
@@ -119,6 +119,21 @@ func TestOAuth2RedirectURI(t *testing.T) {
 		{"data", "data:text/html,<script>alert(1)</script>", true},
 		{"file", "file:///etc/passwd", true},
 		{"invalid", "not a url", true},
+		{"no scheme", "example.com/callback", true},
+		{"non reverse domain scheme parsed as host:port by is.URL", "qall:1/callback", true},
+		{"non reverse domain scheme with port-like opaque", "myapp:1234", true},
+		{"javascript parsed as host:port by is.URL", "javascript:1/alert(document.domain)", true},
+		{"vbscript", "vbscript:1", true},
+		{"intent", "intent:1/x", true},
+		{"https without host", "https:1/../../login", true},
+		{"https with empty host", "https:///callback", true},
+		{"http opaque", "http:1234", true},
+		{"websocket", "ws://example.com/callback", true},
+		{"ftp", "ftp://example.com/callback", true},
+		{"userinfo", "https://user:pass@example.com/callback", true},
+		{"private-use scheme with userinfo", "jp.trap.qall://u:p@h/callback", true},
+		{"space", "jp.trap.qall:/cb x", true},
+		{"leading space", " https://example.com/callback", true},
 		{"int", 1, true},
 	}
 	for _, tt := range tests {

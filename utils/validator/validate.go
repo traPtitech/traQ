@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/utils/optional"
@@ -29,16 +28,19 @@ var (
 	privateUseURISchemeRegex = regexp.MustCompile(`^[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+$`)
 )
 
-// IsPrivateUseURIScheme schemeがネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: com.example.app)かどうか
-func IsPrivateUseURIScheme(scheme string) bool {
+// isPrivateUseURIScheme schemeがネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: com.example.app)かどうか
+func isPrivateUseURIScheme(scheme string) bool {
 	return privateUseURISchemeRegex.MatchString(strings.ToLower(scheme))
 }
 
+var errInvalidOAuth2RedirectURI = errors.New("must be a http(s) URL or a private-use URI scheme based on a reverse domain name")
+
 // OAuth2RedirectURI OAuth2クライアントのリダイレクトURIとして有効
 //
-// 通常のURLに加えて、ネイティブアプリ向けにリバースドメイン形式のプライベートスキームのURI
-// (例: com.example.app:/oauth2redirect) を許可します (RFC 8252 Section 7.1, 8.4)。
-// フラグメントを含むURIは許可しません (RFC 6749 Section 3.1.2)。
+// ホストを持つhttp(s)のURLと、ネイティブアプリ向けのリバースドメイン形式のプライベートスキームのURI
+// (例: com.example.app:/oauth2redirect) のみを許可します (RFC 8252 Section 7.1, 8.4)。
+// 認可エンドポイントと同じく url.ParseRequestURI で解釈し、
+// フラグメント (RFC 6749 Section 3.1.2) やユーザー情報を含むURIは許可しません。
 var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	var s string
 	switch v := value.(type) {
@@ -49,7 +51,7 @@ var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	case optional.Of[string]:
 		s = v.ValueOrZero()
 	default:
-		return errors.New("must be a valid redirect uri")
+		return errInvalidOAuth2RedirectURI
 	}
 	if len(s) == 0 {
 		return nil
@@ -58,12 +60,25 @@ var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	if strings.Contains(s, "#") {
 		return errors.New("must not contain a fragment")
 	}
-	if is.URL.Validate(s) == nil {
-		return nil
+	if strings.ContainsAny(s, " \t\r\n") {
+		return errInvalidOAuth2RedirectURI
 	}
-	u, err := url.Parse(s)
-	if err != nil || !IsPrivateUseURIScheme(u.Scheme) || (len(u.Host) == 0 && len(u.Path) == 0 && len(u.Opaque) == 0) {
-		return errors.New("must be a valid URL or a private-use URI scheme based on a reverse domain name")
+	u, err := url.ParseRequestURI(s)
+	if err != nil || u.User != nil {
+		return errInvalidOAuth2RedirectURI
+	}
+	switch {
+	case u.Scheme == "http" || u.Scheme == "https":
+		// "https:1/path" のようなホストを持たないURIを弾く
+		if len(u.Opaque) > 0 || len(u.Hostname()) == 0 {
+			return errInvalidOAuth2RedirectURI
+		}
+	case isPrivateUseURIScheme(u.Scheme):
+		if len(u.Host) == 0 && len(u.Path) == 0 && len(u.Opaque) == 0 {
+			return errInvalidOAuth2RedirectURI
+		}
+	default:
+		return errInvalidOAuth2RedirectURI
 	}
 	return nil
 })

@@ -4170,7 +4170,7 @@ paths:
       description: |-
         OAuth2 認可エンドポイント
 
-        リダイレクト先がプライベートスキーム(例: `com.example.app:/callback`)の場合は、
+        リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
         `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
       parameters:
         - name: response_type
@@ -4225,7 +4225,7 @@ paths:
       description: |-
         OAuth2 認可エンドポイント
 
-        リダイレクト先がプライベートスキーム(例: `com.example.app:/callback`)の場合は、
+        リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
         `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
       requestBody:
         required: true
@@ -6329,7 +6329,7 @@ components:
           type: string
           description: |-
             コールバックURL
-            ネイティブアプリ向けにリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)も指定できます。フラグメントは含められません。
+            ホストを持つhttp(s)のURLか、ネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)のURIを指定できます。フラグメントやユーザー情報は含められません。
           format: uri
         developerId:
           type: string
@@ -6397,7 +6397,7 @@ components:
           type: string
           description: |-
             コールバックURL
-            ネイティブアプリ向けにリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)も指定できます。フラグメントは含められません。
+            ホストを持つhttp(s)のURLか、ネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)のURIを指定できます。フラグメントやユーザー情報は含められません。
           format: uri
         scopes:
           type: array
