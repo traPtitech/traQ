@@ -4171,9 +4171,7 @@ paths:
         OAuth2 認可エンドポイント
 
         リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
-        `code_challenge_method=S256` のPKCEが必須です。
-        また、プライベートスキームとループバックIPアドレス(例: `http://127.0.0.1:{port}/callback`)の場合は、
-        `prompt=none` による自動認可は行われません (RFC 8252)。
+        `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
       parameters:
         - name: response_type
           in: query
@@ -4228,9 +4226,7 @@ paths:
         OAuth2 認可エンドポイント
 
         リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
-        `code_challenge_method=S256` のPKCEが必須です。
-        また、プライベートスキームとループバックIPアドレス(例: `http://127.0.0.1:{port}/callback`)の場合は、
-        `prompt=none` による自動認可は行われません (RFC 8252)。
+        `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
       requestBody:
         required: true
         content:
