@@ -495,6 +495,57 @@ func TestHandlers_GetChannel(t *testing.T) {
 			Object()
 
 		channelEquals(t, channel, obj)
+		obj.Value("parentMessageId").IsNull()
+	})
+
+	for _, tt := range []struct {
+		name         string
+		deleteParent bool
+	}{
+		{name: "success (thread)"},
+		{name: "success (thread with deleted parent message)", deleteParent: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			parent := env.CreateChannel(t, rand)
+			parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, rand)
+			thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
+			require.NoError(t, err)
+			require.NoError(t, env.DB.Create(&model.Thread{
+				ChannelID: thread.ID,
+				MessageID: parentMessage.GetID(),
+			}).Error)
+			if tt.deleteParent {
+				env.DeleteMessage(t, parentMessage.GetID())
+			}
+
+			obj := env.R(t).GET(path, thread.ID.String()).
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
+
+			channelEquals(t, thread, obj)
+			obj.Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
+		})
+	}
+
+	t.Run("success (thread without parent message)", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
+		require.NoError(t, err)
+
+		obj := env.R(t).GET(path, thread.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		channelEquals(t, thread, obj)
+		obj.Value("parentMessageId").IsNull()
 	})
 }
 

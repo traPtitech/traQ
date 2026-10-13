@@ -94,6 +94,10 @@ type ChannelRepository interface {
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error)
+	// GetThread 指定したスレッドチャンネルの親メッセージ情報を取得します
+	//
+	// 親メッセージとの関連が存在しない場合、ErrNotFoundを返します。
+	GetThread(ctx context.Context, channelID uuid.UUID) (*model.Thread, error)
 	// GetDirectMessageChannel 指定したユーザー間のDMチャンネル取得します
 	//
 	// 存在しなかった場合、ErrNotFoundを返します。
