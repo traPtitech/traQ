@@ -232,11 +232,49 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		env.IssueToken(t, loopbackClient, user.GetID(), false)
 
 		const requestedRedirectURI = "http://127.0.0.1:49152/callback"
+		s := env.S(t, user.GetID())
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", loopbackClient.ID).
 			WithFormField("response_type", "code").
 			WithFormField("redirect_uri", requestedRedirectURI).
+			WithCookie(session.CookieName, s).
+			Expect()
+
+		res.Status(http.StatusFound)
+		loc, err := res.Raw().Location()
+		require.NoError(t, err)
+		assert.Equal(t, "/consent", loc.Path)
+		assert.Equal(t, loopbackClient.ID, loc.Query().Get("client_id"))
+
+		se, err := env.SessStore.GetSessionByToken(context.TODO(), s)
+		require.NoError(t, err)
+		v, err := se.Get(context.TODO(), oauth2ContextSession)
+		require.NoError(t, err)
+		assert.Equal(t, requestedRedirectURI, v.(authorizeRequest).RedirectURI)
+	})
+
+	t.Run("Found (prompt=none with loopback redirect)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand, useUUIDV4)
+		loopbackClient := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "loopback client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "http://127.0.0.1/callback",
+			Scopes:       scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), loopbackClient))
+		// 過去に同意済みでも自動で認可しない
+		env.IssueToken(t, loopbackClient, user.GetID(), false)
+
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize").
+			WithFormField("client_id", loopbackClient.ID).
+			WithFormField("response_type", "code").
+			WithFormField("redirect_uri", "http://127.0.0.1:49152/callback").
 			WithFormField("prompt", "none").
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
 			Expect()
@@ -245,12 +283,8 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		loc, err := res.Raw().Location()
 		require.NoError(t, err)
 		assert.Equal(t, "127.0.0.1:49152", loc.Host)
-		assert.Equal(t, "/callback", loc.Path)
-		assert.NotEmpty(t, loc.Query().Get("code"))
-
-		authorize, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
-		require.NoError(t, err)
-		assert.Equal(t, requestedRedirectURI, authorize.RedirectURI)
+		assert.Equal(t, errConsentRequired, loc.Query().Get("error"))
+		assert.Empty(t, loc.Query().Get("code"))
 	})
 
 	t.Run("Success with private-use URI scheme redirect and PKCE", func(t *testing.T) {

@@ -205,8 +205,9 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		// プライベートスキームではクライアントの同一性を保証できないため、過去の同意を理由に自動で認可しない (RFC 8252 Section 8.6)
-		if isPrivateUseRedirect {
+		// プライベートスキーム・ループバックへのリダイレクトではクライアントの同一性を保証できないため、
+		// 過去の同意を理由に自動で認可しない (RFC 8252 Section 8.6)
+		if isPrivateUseRedirect || isLoopbackRedirectURI(redirectURI) {
 			q.Set("error", errConsentRequired)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
@@ -431,6 +432,15 @@ func resolveRedirectURI(registered, requested string) (*url.URL, bool) {
 
 	u, err := url.ParseRequestURI(redirectURI)
 	return u, err == nil
+}
+
+// isLoopbackRedirectURI ループバックIPアドレス宛てのhttpリダイレクトURIかどうか (RFC 8252 Section 7.3)
+func isLoopbackRedirectURI(u *url.URL) bool {
+	if u.Scheme != "http" {
+		return false
+	}
+	ip := net.ParseIP(u.Hostname())
+	return ip != nil && ip.IsLoopback()
 }
 
 // redirectURIMatches compares redirect URIs using exact string matching,
