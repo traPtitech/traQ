@@ -198,11 +198,11 @@ func TestPostClientsRequest_Validate(t *testing.T) {
 			true,
 		},
 		{
-			"invalid callback (fragment)",
+			"invalid callback (private-use URI scheme with fragment)",
 			fields{
 				Name:        "test",
 				Description: "desc",
-				CallbackURL: "https://example.com/callback#fragment",
+				CallbackURL: "jp.trap.qall:/callback#fragment",
 				Scopes:      map[model.AccessScope]struct{}{"read": {}},
 			},
 			true,

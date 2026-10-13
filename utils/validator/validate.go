@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/utils/optional"
@@ -26,9 +27,44 @@ var (
 	privateUseURISchemeRegex = regexp.MustCompile(`^[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+$`)
 )
 
-var errInvalidOAuth2RedirectURI = errors.New("must be a http(s) URL or a private-use URI scheme based on a reverse domain name")
+// rfc3986AbsoluteURIRegex RFC 3986 の absolute-URI の正規表現
+var rfc3986AbsoluteURIRegex = func() *regexp.Regexp {
+	const (
+		unreserved = `[A-Za-z0-9\-._~]`
+		pctEncoded = `%[0-9A-Fa-f]{2}`
+		subDelims  = `[!$&'()*+,;=]`
+		h16        = `[0-9A-Fa-f]{1,4}`
+		decOctet   = `(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])`
+	)
+	pchar := `(?:` + unreserved + `|` + pctEncoded + `|` + subDelims + `|[:@])`
+	ipv4 := decOctet + `\.` + decOctet + `\.` + decOctet + `\.` + decOctet
+	ls32 := `(?:` + h16 + `:` + h16 + `|` + ipv4 + `)`
+	ipv6 := strings.Join([]string{
+		`(?:` + h16 + `:){6}` + ls32,
+		`::(?:` + h16 + `:){5}` + ls32,
+		`(?:` + h16 + `)?::(?:` + h16 + `:){4}` + ls32,
+		`(?:(?:` + h16 + `:){0,1}` + h16 + `)?::(?:` + h16 + `:){3}` + ls32,
+		`(?:(?:` + h16 + `:){0,2}` + h16 + `)?::(?:` + h16 + `:){2}` + ls32,
+		`(?:(?:` + h16 + `:){0,3}` + h16 + `)?::` + h16 + `:` + ls32,
+		`(?:(?:` + h16 + `:){0,4}` + h16 + `)?::` + ls32,
+		`(?:(?:` + h16 + `:){0,5}` + h16 + `)?::` + h16,
+		`(?:(?:` + h16 + `:){0,6}` + h16 + `)?::`,
+	}, "|")
+	ipLiteral := `\[(?:` + ipv6 + `|v[0-9A-Fa-f]+\.(?:` + unreserved + `|` + subDelims + `|:)+)\]`
+	regName := `(?:` + unreserved + `|` + pctEncoded + `|` + subDelims + `)*`
+	userinfo := `(?:` + unreserved + `|` + pctEncoded + `|` + subDelims + `|:)*`
+	authority := `(?:` + userinfo + `@)?(?:` + ipLiteral + `|` + ipv4 + `|` + regName + `)(?::[0-9]*)?`
+	hierPart := `(?://` + authority + `(?:/` + pchar + `*)*` +
+		`|/(?:` + pchar + `+(?:/` + pchar + `*)*)?` +
+		`|` + pchar + `+(?:/` + pchar + `*)*` +
+		`|)`
+	query := `(?:` + pchar + `|[/?])*`
+	return regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+\-.]*:` + hierPart + `(?:\?` + query + `)?$`)
+}()
 
-// OAuth2RedirectURI http(s)のURL、またはリバースドメイン形式のスキームのURIで、フラグメント・ユーザー情報を含まない
+var errInvalidOAuth2RedirectURI = errors.New("must be a valid URL or a URI with a private-use URI scheme based on a reverse domain name")
+
+// OAuth2RedirectURI URL、またはリバースドメイン形式のスキームのURI
 var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	var s string
 	switch v := value.(type) {
@@ -41,30 +77,12 @@ var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	default:
 		return errInvalidOAuth2RedirectURI
 	}
-	if len(s) == 0 {
+	if len(s) == 0 || is.URL.Validate(s) == nil {
 		return nil
 	}
 
-	if strings.Contains(s, "#") {
-		return errors.New("must not contain a fragment")
-	}
-	if strings.ContainsAny(s, " \t\r\n") {
-		return errInvalidOAuth2RedirectURI
-	}
-	u, err := url.ParseRequestURI(s)
-	if err != nil || u.User != nil {
-		return errInvalidOAuth2RedirectURI
-	}
-	switch {
-	case u.Scheme == "http" || u.Scheme == "https":
-		if len(u.Opaque) > 0 || len(u.Hostname()) == 0 {
-			return errInvalidOAuth2RedirectURI
-		}
-	case privateUseURISchemeRegex.MatchString(u.Scheme):
-		if len(u.Host) == 0 && len(u.Path) == 0 && len(u.Opaque) == 0 {
-			return errInvalidOAuth2RedirectURI
-		}
-	default:
+	scheme, _, _ := strings.Cut(s, ":")
+	if !privateUseURISchemeRegex.MatchString(strings.ToLower(scheme)) || !rfc3986AbsoluteURIRegex.MatchString(s) {
 		return errInvalidOAuth2RedirectURI
 	}
 	return nil

@@ -6323,7 +6323,7 @@ components:
           maxLength: 1000
         callbackUrl:
           type: string
-          description: コールバックURL (http(s)のURL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         developerId:
           type: string
@@ -6389,7 +6389,7 @@ components:
           description: クライアント名
         callbackUrl:
           type: string
-          description: コールバックURL (http(s)のURL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         scopes:
           type: array
