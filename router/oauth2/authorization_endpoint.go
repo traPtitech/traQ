@@ -119,6 +119,14 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
+	// プライベートスキームへのリダイレクトは同じスキームを登録した別のアプリに横取りされうるため、PKCE(S256)を必須にする (RFC 8252 Section 8.1)
+	isPrivateUseRedirect := validator.IsPrivateUseURIScheme(redirectURI.Scheme)
+	if isPrivateUseRedirect && (len(req.CodeChallenge) == 0 || req.CodeChallengeMethod != "S256") {
+		q.Set("error", errInvalidRequest)
+		q.Set("error_description", "code challenge with S256 method is required for private-use URI scheme redirect")
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
 
 	// スコープ確認
 	reqScopes, err := h.splitAndValidateScope(req.RawScope)
@@ -193,6 +201,12 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	case "none":
 		if se == nil {
 			q.Set("error", errLoginRequired)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
+		}
+		// プライベートスキームではクライアントの同一性を保証できないため、過去の同意を理由に自動で認可しない (RFC 8252 Section 8.6)
+		if isPrivateUseRedirect {
+			q.Set("error", errConsentRequired)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}

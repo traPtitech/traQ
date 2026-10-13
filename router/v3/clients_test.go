@@ -177,6 +177,46 @@ func TestPostClientsRequest_Validate(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"success (private-use URI scheme callback)",
+			fields{
+				Name:        "test",
+				Description: "desc",
+				CallbackURL: "jp.trap.qall:/callback",
+				Scopes:      map[model.AccessScope]struct{}{"read": {}, "qall": {}},
+			},
+			false,
+		},
+		{
+			"invalid callback (not reverse domain based scheme)",
+			fields{
+				Name:        "test",
+				Description: "desc",
+				CallbackURL: "qall:/callback",
+				Scopes:      map[model.AccessScope]struct{}{"read": {}},
+			},
+			true,
+		},
+		{
+			"invalid callback (fragment)",
+			fields{
+				Name:        "test",
+				Description: "desc",
+				CallbackURL: "https://example.com/callback#fragment",
+				Scopes:      map[model.AccessScope]struct{}{"read": {}},
+			},
+			true,
+		},
+		{
+			"invalid scope",
+			fields{
+				Name:        "test",
+				Description: "desc",
+				CallbackURL: "https://example.com",
+				Scopes:      map[model.AccessScope]struct{}{"web_rtc": {}},
+			},
+			true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -467,6 +507,16 @@ func TestPatchClientRequest_Validate(t *testing.T) {
 			"success (confidential client)",
 			fields{Confidential: optional.From(true)},
 			false,
+		},
+		{
+			"success (private-use URI scheme callback url)",
+			fields{CallbackURL: optional.From("jp.trap.qall:/callback")},
+			false,
+		},
+		{
+			"invalid callback url",
+			fields{CallbackURL: optional.From("javascript:alert(1)")},
+			true,
 		},
 	}
 	for _, tt := range tests {
