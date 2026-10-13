@@ -11,20 +11,21 @@ import (
 )
 
 type Channel struct {
-	ID       uuid.UUID              `json:"id"`
-	Name     string                 `json:"name"`
-	ParentID optional.Of[uuid.UUID] `json:"parentId"`
-	Topic    string                 `json:"topic"`
-	Children []uuid.UUID            `json:"children"`
-	Archived bool                   `json:"archived"`
-	Force    bool                   `json:"force"`
+	ID              uuid.UUID              `json:"id"`
+	Name            string                 `json:"name"`
+	ParentID        optional.Of[uuid.UUID] `json:"parentId"`
+	ParentMessageID optional.Of[uuid.UUID] `json:"parentMessageId"`
+	Topic           string                 `json:"topic"`
+	Children        []uuid.UUID            `json:"children"`
+	Archived        bool                   `json:"archived"`
+	Force           bool                   `json:"force"`
 }
 
 func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	return &Channel{
 		ID:       channel.ID,
 		Name:     channel.Name,
-		ParentID: optional.New(channel.ParentID, channel.ParentID != uuid.Nil),
+		ParentID: optional.New(channel.ParentID, channel.ParentID != uuid.Nil && !channel.IsDMChannel()),
 		Topic:    channel.Topic,
 		Children: childrenID,
 		Archived: channel.IsArchived(),

@@ -203,6 +203,32 @@ func (repo *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*m
 	return &ch, nil
 }
 
+// GetChildChannelIDs implements ChannelRepository interface.
+func (repo *Repository) GetChildChannelIDs(ctx context.Context, channelID uuid.UUID) (ids []uuid.UUID, err error) {
+	ids = make([]uuid.UUID, 0)
+	if channelID == uuid.Nil {
+		return ids, nil
+	}
+	return ids, repo.db.
+		WithContext(ctx).
+		Model(&model.Channel{}).
+		Where(&model.Channel{ParentID: channelID}).
+		Pluck("id", &ids).
+		Error
+}
+
+// GetThread implements ChannelRepository interface.
+func (repo *Repository) GetThread(ctx context.Context, channelID uuid.UUID) (*model.Thread, error) {
+	if channelID == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	var thread model.Thread
+	if err := repo.db.WithContext(ctx).First(&thread, &model.Thread{ChannelID: channelID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return &thread, nil
+}
+
 // GetPublicChannels implements ChannelRepository interface.
 func (repo *Repository) GetPublicChannels(ctx context.Context) (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)

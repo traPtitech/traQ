@@ -153,7 +153,21 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 func (h *Handlers) GetChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
-	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID)))
+	children, err := h.Repo.GetChildChannelIDs(ctx, ch.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	res := formatChannel(ch, children)
+	if ch.IsThread() {
+		thread, err := h.Repo.GetThread(ctx, ch.ID)
+		if err != nil && !errors.Is(err, repository.ErrNotFound) {
+			return herror.InternalServerError(err)
+		}
+		if err == nil {
+			res.ParentMessageID = optional.From(thread.MessageID)
+		}
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
