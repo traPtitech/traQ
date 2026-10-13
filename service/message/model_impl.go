@@ -144,7 +144,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		UpdatedAt time.Time              `json:"updatedAt"`
 		Pinned    bool                   `json:"pinned"`
 		Stamps    []model.MessageStamp   `json:"stamps"`
-		ThreadID  optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		ThreadID  optional.Of[uuid.UUID] `json:"threadId"`
 	}
 	stamps := m.GetStamps()
 	threadID := m.GetThreadID()
