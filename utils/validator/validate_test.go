@@ -58,37 +58,6 @@ func TestNotNilUUID(t *testing.T) {
 	})
 }
 
-func TestIsPrivateUseURIScheme(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scheme string
-		want   bool
-	}{
-		{"com.example.app", true},
-		{"jp.trap.qall", true},
-		{"Com.Example.App", true},
-		{"com.example-app.v2+x", true},
-		{"myapp", false},
-		{"http", false},
-		{"https", false},
-		{"javascript", false},
-		{"data", false},
-		{"file", false},
-		{"com.", false},
-		{".com", false},
-		{"com..example", false},
-		{"1com.example", false},
-		{"", false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.scheme, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, isPrivateUseURIScheme(tt.scheme))
-		})
-	}
-}
-
 func TestOAuth2RedirectURI(t *testing.T) {
 	t.Parallel()
 
@@ -107,6 +76,7 @@ func TestOAuth2RedirectURI(t *testing.T) {
 		{"private-use scheme with double slash", "jp.trap.qall://callback", false},
 		{"private-use scheme with opaque", "com.example.app:callback", false},
 		{"private-use scheme uppercase", "Com.Example.App:/callback", false},
+		{"private-use scheme with symbols", "com.example-app.v2+x:/callback", false},
 		{"optional private-use scheme", optional.From("com.example.app:/callback"), false},
 		{"optional invalid", optional.From("javascript:alert(1)"), true},
 		{"optional not valid", optional.Of[string]{}, false},
@@ -115,14 +85,16 @@ func TestOAuth2RedirectURI(t *testing.T) {
 		{"private-use scheme without path", "com.example.app:", true},
 		{"non reverse domain scheme", "myapp:/callback", true},
 		{"non reverse domain scheme with double slash", "myapp://callback", true},
+		{"scheme ending with dot", "com.:/callback", true},
+		{"scheme with empty label", "com..example:/callback", true},
 		{"javascript", "javascript:alert(1)", true},
 		{"data", "data:text/html,<script>alert(1)</script>", true},
 		{"file", "file:///etc/passwd", true},
 		{"invalid", "not a url", true},
 		{"no scheme", "example.com/callback", true},
-		{"non reverse domain scheme parsed as host:port by is.URL", "qall:1/callback", true},
-		{"non reverse domain scheme with port-like opaque", "myapp:1234", true},
-		{"javascript parsed as host:port by is.URL", "javascript:1/alert(document.domain)", true},
+		{"non reverse domain scheme like host:port", "qall:1/callback", true},
+		{"non reverse domain scheme with opaque", "myapp:1234", true},
+		{"javascript like host:port", "javascript:1/alert(document.domain)", true},
 		{"vbscript", "vbscript:1", true},
 		{"intent", "intent:1/x", true},
 		{"https without host", "https:1/../../login", true},

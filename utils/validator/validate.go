@@ -22,25 +22,13 @@ var (
 	PKCERegex = regexp.MustCompile("^[a-zA-Z0-9~._-]{43,128}$")
 	// UserRoleNameRegex ユーザーロール名の正規表現
 	UserRoleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,30}$`)
-	// privateUseURISchemeRegex リバースドメイン形式のプライベートスキーム名の正規表現 (RFC 8252 Section 7.1, RFC 3986 Section 3.1)
-	//
-	// "."を含まないスキーム(javascript, data等)はマッチしない
+	// privateUseURISchemeRegex リバースドメイン形式のURIスキーム(例: com.example.app)の正規表現
 	privateUseURISchemeRegex = regexp.MustCompile(`^[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+$`)
 )
 
-// isPrivateUseURIScheme schemeがネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: com.example.app)かどうか
-func isPrivateUseURIScheme(scheme string) bool {
-	return privateUseURISchemeRegex.MatchString(strings.ToLower(scheme))
-}
-
 var errInvalidOAuth2RedirectURI = errors.New("must be a http(s) URL or a private-use URI scheme based on a reverse domain name")
 
-// OAuth2RedirectURI OAuth2クライアントのリダイレクトURIとして有効
-//
-// ホストを持つhttp(s)のURLと、ネイティブアプリ向けのリバースドメイン形式のプライベートスキームのURI
-// (例: com.example.app:/oauth2redirect) のみを許可します (RFC 8252 Section 7.1, 8.4)。
-// 認可エンドポイントと同じく url.ParseRequestURI で解釈し、
-// フラグメント (RFC 6749 Section 3.1.2) やユーザー情報を含むURIは許可しません。
+// OAuth2RedirectURI http(s)のURL、またはリバースドメイン形式のスキームのURIで、フラグメント・ユーザー情報を含まない
 var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	var s string
 	switch v := value.(type) {
@@ -69,11 +57,10 @@ var OAuth2RedirectURI = vd.By(func(value interface{}) error {
 	}
 	switch {
 	case u.Scheme == "http" || u.Scheme == "https":
-		// "https:1/path" のようなホストを持たないURIを弾く
 		if len(u.Opaque) > 0 || len(u.Hostname()) == 0 {
 			return errInvalidOAuth2RedirectURI
 		}
-	case isPrivateUseURIScheme(u.Scheme):
+	case privateUseURISchemeRegex.MatchString(u.Scheme):
 		if len(u.Host) == 0 && len(u.Path) == 0 && len(u.Opaque) == 0 {
 			return errInvalidOAuth2RedirectURI
 		}

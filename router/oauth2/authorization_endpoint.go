@@ -119,10 +119,9 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
-	// http(s)以外(プライベートスキーム)へのリダイレクトは同じスキームを登録した別のアプリに横取りされうるため、PKCE(S256)を必須にする (RFC 8252 Section 8.1)
-	// 過去に登録されたリバースドメイン形式でないスキームのクライアントも対象にするため、http(s)以外を全て対象とする
-	isPrivateUseRedirect := redirectURI.Scheme != "http" && redirectURI.Scheme != "https"
-	if isPrivateUseRedirect && (len(req.CodeChallenge) == 0 || req.CodeChallengeMethod != "S256") {
+	// ネイティブアプリ向け(http(s)以外)のリダイレクトはPKCE(S256)必須
+	isNativeAppRedirect := redirectURI.Scheme != "http" && redirectURI.Scheme != "https"
+	if isNativeAppRedirect && (len(req.CodeChallenge) == 0 || req.CodeChallengeMethod != "S256") {
 		q.Set("error", errInvalidRequest)
 		q.Set("error_description", "code challenge with S256 method is required for private-use URI scheme redirect")
 		redirectURI.RawQuery = q.Encode()
@@ -205,8 +204,8 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
-		// プライベートスキームではクライアントの同一性を保証できないため、過去の同意を理由に自動で認可しない (RFC 8252 Section 8.6)
-		if isPrivateUseRedirect {
+		// ネイティブアプリ向けのリダイレクトでは自動で認可しない
+		if isNativeAppRedirect {
 			q.Set("error", errConsentRequired)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())

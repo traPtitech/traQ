@@ -330,7 +330,6 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 
 	t.Run("Found (legacy non reverse domain scheme redirect without PKCE)", func(t *testing.T) {
 		t.Parallel()
-		// 以前のバリデーションで登録できていた、リバースドメイン形式でないスキームのクライアント
 		legacyClient := &model.OAuth2Client{
 			ID:           random.AlphaNumeric(36),
 			Name:         "legacy native client",

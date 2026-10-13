@@ -4169,9 +4169,7 @@ paths:
       operationId: getOAuth2Authorize
       description: |-
         OAuth2 認可エンドポイント
-
-        リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
-        `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       parameters:
         - name: response_type
           in: query
@@ -4224,9 +4222,7 @@ paths:
       operationId: postOAuth2Authorize
       description: |-
         OAuth2 認可エンドポイント
-
-        リダイレクト先がhttp(s)以外のプライベートスキーム(例: `com.example.app:/callback`)の場合は、
-        `code_challenge_method=S256` のPKCEが必須で、`prompt=none` による自動認可は行われません (RFC 8252)。
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       requestBody:
         required: true
         content:
@@ -4731,7 +4727,7 @@ components:
             read: 読み取りスコープ
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
-            qall: Qall(通話)利用スコープ (通話への参加、全ユーザーの通話参加状況の取得、通話ルーム情報・参加者の発言権の変更、サウンドボードの利用・追加)
+            qall: Qall利用スコープ
     bearerAuth:
       type: http
       scheme: bearer
@@ -6327,9 +6323,7 @@ components:
           maxLength: 1000
         callbackUrl:
           type: string
-          description: |-
-            コールバックURL
-            ホストを持つhttp(s)のURLか、ネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)のURIを指定できます。フラグメントやユーザー情報は含められません。
+          description: コールバックURL (http(s)のURL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         developerId:
           type: string
@@ -6395,9 +6389,7 @@ components:
           description: クライアント名
         callbackUrl:
           type: string
-          description: |-
-            コールバックURL
-            ホストを持つhttp(s)のURLか、ネイティブアプリ向けのリバースドメイン形式のプライベートスキーム(例: `com.example.app:/callback`)のURIを指定できます。フラグメントやユーザー情報は含められません。
+          description: コールバックURL (http(s)のURL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         scopes:
           type: array

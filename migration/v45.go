@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// v45 OAuth2でQallを利用できるようにするため、qallロールを追加
+// v45 qallロールを追加
 func v45() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "45",
