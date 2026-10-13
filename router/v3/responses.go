@@ -25,7 +25,7 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	return &Channel{
 		ID:       channel.ID,
 		Name:     channel.Name,
-		ParentID: optional.New(channel.ParentID, channel.ParentID != uuid.Nil),
+		ParentID: optional.New(channel.ParentID, channel.ParentID != uuid.Nil && !channel.IsDMChannel()),
 		Topic:    channel.Topic,
 		Children: childrenID,
 		Archived: channel.IsArchived(),

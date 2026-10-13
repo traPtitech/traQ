@@ -51,7 +51,7 @@ func messageEquals(t *testing.T, expect message.Message, actual *httpexpect.Obje
 func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Object) {
 	t.Helper()
 	actual.Value("id").String().IsEqual(expect.ID.String())
-	if expect.ParentID == uuid.Nil {
+	if expect.ParentID == uuid.Nil || expect.IsDMChannel() {
 		actual.Value("parentId").IsNull()
 	} else {
 		actual.Value("parentId").String().IsEqual(expect.ParentID.String())
@@ -475,14 +475,37 @@ func TestHandlers_GetChannel(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("OAuth2 authentication", func(t *testing.T) {
 		t.Parallel()
-		e := env.R(t)
-		e.GET(path, uuid.Must(uuid.NewV4()).String()).
-			WithCookie(session.CookieName, commonSession).
-			Expect().
-			Status(http.StatusNotFound)
+		client := env.CreateOAuth2Client(t, rand, user.GetID())
+		for _, tt := range []struct {
+			name   string
+			userID uuid.UUID
+			status int
+		}{
+			{"user account", user.GetID(), http.StatusOK},
+			{"no user account", uuid.Nil, http.StatusUnauthorized},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				token := env.IssueToken(t, client, tt.userID)
+				env.R(t).GET(path, channel.ID.String()).
+					WithHeader("Authorization", "Bearer "+token.AccessToken).
+					Expect().
+					Status(tt.status)
+			})
+		}
 	})
+
+	for _, id := range []string{uuid.Must(uuid.NewV4()).String(), uuid.Nil.String(), "invalid"} {
+		t.Run("not found ("+id+")", func(t *testing.T) {
+			t.Parallel()
+			env.R(t).GET(path, id).
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusNotFound)
+		})
+	}
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -508,9 +531,17 @@ func TestHandlers_GetChannel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			parent := env.CreateChannel(t, rand)
-			parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, rand)
-			thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
+			creator := env.CreateUser(t, rand)
+			parentMessage := env.CreateMessage(t, creator.GetID(), parent.ID, rand)
+			thread, err := env.Repository.CreateChannel(context.TODO(), model.Channel{
+				Name:      random.AlphaNumeric(20),
+				ParentID:  parent.ID,
+				CreatorID: creator.GetID(),
+				UpdaterID: creator.GetID(),
+				IsVisible: true,
+			}, nil, model.ChannelTypeThread)
 			require.NoError(t, err)
+			require.False(t, env.CM.PublicChannelTree(context.TODO()).IsChannelPresent(thread.ID))
 			require.NoError(t, env.DB.Create(&model.Thread{
 				ChannelID: thread.ID,
 				MessageID: parentMessage.GetID(),
@@ -528,13 +559,22 @@ func TestHandlers_GetChannel(t *testing.T) {
 
 			channelEquals(t, thread, obj)
 			obj.Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
+			env.R(t).GET(path, thread.ID.String()).
+				Expect().
+				Status(http.StatusUnauthorized)
 		})
 	}
 
 	t.Run("success (thread without parent message)", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
-		thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
+		thread, err := env.Repository.CreateChannel(context.TODO(), model.Channel{
+			Name:      random.AlphaNumeric(20),
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+			IsVisible: true,
+		}, nil, model.ChannelTypeThread)
 		require.NoError(t, err)
 
 		obj := env.R(t).GET(path, thread.ID.String()).
@@ -546,6 +586,126 @@ func TestHandlers_GetChannel(t *testing.T) {
 
 		channelEquals(t, thread, obj)
 		obj.Value("parentMessageId").IsNull()
+	})
+
+	for _, cached := range []bool{false, true} {
+		name := "success (public channel outside tree)"
+		if cached {
+			name = "success (public channel with stale tree)"
+		}
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var ch *model.Channel
+			if cached {
+				ch = env.CreateChannel(t, rand)
+			} else {
+				var err error
+				ch, err = env.Repository.CreateChannel(context.TODO(), model.Channel{
+					Name:      random.AlphaNumeric(20),
+					IsVisible: true,
+				}, nil, model.ChannelTypePublic)
+				require.NoError(t, err)
+				require.False(t, env.CM.PublicChannelTree(context.TODO()).IsChannelPresent(ch.ID))
+			}
+			require.NoError(t, env.DB.Model(&model.Channel{ID: ch.ID}).Updates(map[string]interface{}{
+				"name":       random.AlphaNumeric(20),
+				"topic":      "topic stored in the database",
+				"is_visible": false,
+				"is_forced":  true,
+			}).Error)
+			stored, err := env.Repository.GetChannel(context.TODO(), ch.ID)
+			require.NoError(t, err)
+			for i, channelType := range []model.ChannelType{model.ChannelTypePublic, model.ChannelTypeThread, model.ChannelTypePublic} {
+				child, err := env.Repository.CreateChannel(context.TODO(), model.Channel{
+					Name:      random.AlphaNumeric(20),
+					ParentID:  ch.ID,
+					IsVisible: true,
+				}, nil, channelType)
+				require.NoError(t, err)
+				if i == 2 {
+					require.NoError(t, env.DB.Delete(child).Error)
+				} else {
+					stored.ChildrenID = append(stored.ChildrenID, child.ID)
+				}
+			}
+
+			obj := env.R(t).GET(path, ch.ID.String()).
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
+
+			channelEquals(t, stored, obj)
+			obj.Value("parentMessageId").IsNull()
+		})
+	}
+
+	t.Run("deleted channel in tree", func(t *testing.T) {
+		t.Parallel()
+		ch := env.CreateChannel(t, rand)
+		require.NoError(t, env.DB.Delete(ch).Error)
+
+		env.R(t).GET(path, ch.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("DM access", func(t *testing.T) {
+		t.Parallel()
+		member1 := env.CreateUser(t, rand)
+		member2 := env.CreateUser(t, rand)
+		admin := env.CreateAdmin(t, rand)
+		dm := env.CreateDMChannel(t, member1.GetID(), member2.GetID())
+		require.Equal(t, model.DirectMessageChannelRootID, dm.ParentID.String())
+
+		for _, tt := range []struct {
+			name   string
+			userID uuid.UUID
+			status int
+		}{
+			{"first member", member1.GetID(), http.StatusOK},
+			{"second member", member2.GetID(), http.StatusOK},
+			{"non-member", user.GetID(), http.StatusNotFound},
+			{"admin non-member", admin.GetID(), http.StatusNotFound},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				res := env.R(t).GET(path, dm.ID.String()).
+					WithCookie(session.CookieName, env.S(t, tt.userID)).
+					Expect().
+					Status(tt.status)
+				if tt.status == http.StatusOK {
+					obj := res.JSON().Object()
+					channelEquals(t, dm, obj)
+					obj.Value("parentMessageId").IsNull()
+				}
+			})
+		}
+		env.R(t).GET(path, dm.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("cached public channel changed to DM", func(t *testing.T) {
+		t.Parallel()
+		member := env.CreateUser(t, rand)
+		ch := env.CreateChannel(t, rand)
+		require.NoError(t, env.DB.Model(&model.Channel{ID: ch.ID}).Update("type", model.ChannelTypeDM).Error)
+		require.NoError(t, env.DB.Create(&model.UsersPrivateChannel{ChannelID: ch.ID, UserID: member.GetID()}).Error)
+
+		env.R(t).GET(path, ch.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+		env.R(t).GET(path, ch.ID.String()).
+			WithCookie(session.CookieName, env.S(t, member.GetID())).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object().
+			Value("parentId").IsNull()
 	})
 }
 

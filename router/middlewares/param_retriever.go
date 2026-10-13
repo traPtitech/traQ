@@ -126,6 +126,13 @@ func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 	})
 }
 
+// ChannelIDFromDB リクエストURLの`channelID`パラメータからChannelをDBから取り出す
+func (pr *ParamRetriever) ChannelIDFromDB() echo.MiddlewareFunc {
+	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.repo.GetChannel(c.Request().Context(), v)
+	})
+}
+
 // FileID リクエストURLの`fileID`パラメータからFileを取り出す
 func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c *echo.Context, v uuid.UUID) (interface{}, error) {

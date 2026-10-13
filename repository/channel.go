@@ -94,6 +94,8 @@ type ChannelRepository interface {
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error)
+	// GetChildChannelIDs 指定したチャンネルの子チャンネルIDを取得します
+	GetChildChannelIDs(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error)
 	// GetThread 指定したスレッドチャンネルの親メッセージ情報を取得します
 	//
 	// 親メッセージとの関連が存在しない場合、ErrNotFoundを返します。
