@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -51,6 +52,10 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		return err
 	}
 
+	if q.Limit.Valid && q.Limit.V > 10000 {
+		return herror.BadRequest("limit must be less than or equal to 100")
+	}
+
 	if q.In.Valid {
 		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
 		ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), q.In.V)
@@ -60,6 +65,17 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		if !ok {
 			return herror.Forbidden("invalid channelId")
 		}
+	}
+
+	if !q.Limit.Valid {
+		q.Limit = optional.From(20)
+	}
+	if !q.Offset.Valid {
+		q.Offset = optional.From(0)
+	}
+
+	if q.Limit.V + q.Offset.V > 10000 {
+		return herror.BadRequest(fmt.Sprintf("limit (%d) + offset (%d) must be less than or equal to 10000", q.Limit.V, q.Offset.V))
 	}
 
 	// 仮置き
