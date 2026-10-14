@@ -51,7 +51,7 @@ func (q Query) Validate() error {
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
 		// Cannot page through more than 10k hits with From and Size
 		// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
-		vd.Field(&q.Offset, vd.Min(0), vd.Max(9900)),
+		vd.Field(&q.Offset, vd.Min(0), vd.Max(10000)),
 		vd.Field(&q.Sort, vd.Match(allowedSortKeysRegExp)),
 	)
 }

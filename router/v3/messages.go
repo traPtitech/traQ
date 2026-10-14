@@ -52,7 +52,7 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		return err
 	}
 
-	if q.Limit.Valid && q.Limit.V > 10000 {
+	if q.Limit.Valid {
 		return herror.BadRequest("limit must be less than or equal to 100")
 	}
 
