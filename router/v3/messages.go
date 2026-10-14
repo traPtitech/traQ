@@ -74,7 +74,7 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		q.Offset = optional.From(0)
 	}
 
-	if q.Limit.V + q.Offset.V > 10000 {
+	if q.Limit.V+q.Offset.V > 10000 {
 		return herror.BadRequest(fmt.Sprintf("limit (%d) + offset (%d) must be less than or equal to 10000", q.Limit.V, q.Offset.V))
 	}
 
