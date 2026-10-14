@@ -52,10 +52,6 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		return err
 	}
 
-	if q.Limit.Valid {
-		return herror.BadRequest("limit must be less than or equal to 100")
-	}
-
 	if q.In.Valid {
 		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
 		ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), q.In.V)

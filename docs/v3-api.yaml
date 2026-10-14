@@ -189,7 +189,7 @@ paths:
         - schema:
             type: integer
             minimum: 0
-            maximum: 10000
+            maximum: 9999
           in: query
           name: offset
           description: 検索結果から取得するメッセージのオフセット
