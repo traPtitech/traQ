@@ -120,10 +120,10 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 		}
 	}
 	// ネイティブアプリ向け(http(s)以外)のリダイレクトはPKCE(S256)必須
-	isNativeAppRedirect := redirectURI.Scheme != "http" && redirectURI.Scheme != "https"
-	if isNativeAppRedirect && (len(req.CodeChallenge) == 0 || req.CodeChallengeMethod != "S256") {
+	isNativeAppRedirect := isNativeAppRedirectURI(redirectURI)
+	if isNativeAppRedirect && !hasS256CodeChallenge(req.CodeChallenge, req.CodeChallengeMethod) {
 		q.Set("error", errInvalidRequest)
-		q.Set("error_description", "code challenge with S256 method is required for private-use URI scheme redirect")
+		q.Set("error_description", errDescriptionPKCERequired)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
@@ -385,6 +385,13 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
+	// 認可リクエスト後にコールバックURLが変更されている場合があるので、ここでもPKCE(S256)を確認
+	if isNativeAppRedirectURI(redirectURI) && !hasS256CodeChallenge(reqAuth.CodeChallenge, reqAuth.CodeChallengeMethod) {
+		q.Set("error", errInvalidRequest)
+		q.Set("error_description", errDescriptionPKCERequired)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
 
 	switch {
 	case reqAuth.Types.Code && !reqAuth.Types.Token && !reqAuth.Types.IDToken: // 現状は Authorization Code Flow しかサポートしない
@@ -415,6 +422,18 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 
 	redirectURI.RawQuery = q.Encode()
 	return c.Redirect(http.StatusFound, redirectURI.String())
+}
+
+const errDescriptionPKCERequired = "code challenge with S256 method is required for private-use URI scheme redirect"
+
+// isNativeAppRedirectURI ネイティブアプリ向け(http(s)以外)のリダイレクト先かどうか
+func isNativeAppRedirectURI(u *url.URL) bool {
+	return u.Scheme != "http" && u.Scheme != "https"
+}
+
+// hasS256CodeChallenge S256のcode challengeがあるかどうか
+func hasS256CodeChallenge(codeChallenge, codeChallengeMethod string) bool {
+	return len(codeChallenge) > 0 && codeChallengeMethod == "S256"
 }
 
 // resolveRedirectURI validates the requested redirect URI against the

@@ -807,19 +807,23 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	}
 	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
-	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client) string {
+	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client, opts ...func(*authorizeRequest)) string {
+		req := authorizeRequest{
+			ResponseType: "code",
+			ClientID:     client.ID,
+			RedirectURI:  client.RedirectURI,
+			Scopes:       scopesReadWrite,
+			ValidScopes:  scopesRead,
+			State:        "state",
+			Types:        responseType{Code: true},
+			AccessTime:   time.Now(),
+			Nonce:        "nonce",
+		}
+		for _, opt := range opts {
+			opt(&req)
+		}
 		s, err := env.SessStore.IssueSession(context.TODO(), uid, map[string]interface{}{
-			oauth2ContextSession: authorizeRequest{
-				ResponseType: "code",
-				ClientID:     client.ID,
-				RedirectURI:  client.RedirectURI,
-				Scopes:       scopesReadWrite,
-				ValidScopes:  scopesRead,
-				State:        "state",
-				Types:        responseType{Code: true},
-				AccessTime:   time.Now(),
-				Nonce:        "nonce",
-			},
+			oauth2ContextSession: req,
 		})
 		require.NoError(t, err)
 
@@ -912,7 +916,10 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), nativeClient)).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), nativeClient, func(req *authorizeRequest) {
+				req.CodeChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+				req.CodeChallengeMethod = "S256"
+			})).
 			Expect()
 
 		res.Status(http.StatusFound)
@@ -922,6 +929,36 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 		assert.Equal(t, "/oauth2redirect", loc.Path)
 		assert.Equal(t, "state", loc.Query().Get("state"))
 		assert.NotEmpty(t, loc.Query().Get("code"))
+	})
+
+	t.Run("Found (private-use URI scheme redirect without PKCE)", func(t *testing.T) {
+		t.Parallel()
+		nativeClient := &model.OAuth2Client{
+			ID:           random.AlphaNumeric(36),
+			Name:         "native client",
+			Confidential: false,
+			CreatorID:    creatorID,
+			Secret:       random.AlphaNumeric(36),
+			RedirectURI:  "com.example.app:/oauth2redirect",
+			Scopes:       scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
+
+		// redirect_uriを省略した認可リクエストの後に、コールバックURLが独自スキームに変更された場合
+		e := env.R(t)
+		res := e.POST("/oauth2/authorize/decide").
+			WithFormField("submit", "approve").
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), nativeClient, func(req *authorizeRequest) {
+				req.RedirectURI = ""
+			})).
+			Expect()
+
+		res.Status(http.StatusFound)
+		loc, err := res.Raw().Location()
+		require.NoError(t, err)
+		assert.Equal(t, "com.example.app", loc.Scheme)
+		assert.Equal(t, errInvalidRequest, loc.Query().Get("error"))
+		assert.Empty(t, loc.Query().Get("code"))
 	})
 
 	t.Run("Bad Request (No form)", func(t *testing.T) {
