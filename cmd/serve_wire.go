@@ -39,6 +39,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		counter.NewMessageCounter,
 		counter.NewUserCounter,
 		counter.NewChannelCounter,
+		counter.NewThreadCounter,
 		exevent.NewStampThrottler,
 		imaging.NewProcessor,
 		notification.NewService,
