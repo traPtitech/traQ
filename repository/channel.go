@@ -39,6 +39,22 @@ type ChannelEventsQuery struct {
 	Asc       bool
 }
 
+// GetThreadChannelQuery GetThreadChannel用クエリ
+type ThreadChannelSort string
+
+const (
+	ThreadChannelSortCreatedAtAsc  ThreadChannelSort = "createdAt"
+	ThreadChannelSortCreatedAtDesc ThreadChannelSort = "-createdAt"
+)
+
+type GetThreadChannelQuery struct {
+	Archived  bool
+	Limit     int
+	Offset    int
+	Sort      ThreadChannelSort
+	ChannelID uuid.UUID
+}
+
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
 	UserID    optional.Of[uuid.UUID]
@@ -94,6 +110,8 @@ type ChannelRepository interface {
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	GetChannel(ctx context.Context, channelID uuid.UUID) (*model.Channel, error)
+	// GetThreadChannels 指定したクエリのスレッド一覧を取得します。
+	GetThreadChannels(ctx context.Context, query GetThreadChannelQuery) ([]*model.Thread, error)
 	// GetDirectMessageChannel 指定したユーザー間のDMチャンネル取得します
 	//
 	// 存在しなかった場合、ErrNotFoundを返します。
