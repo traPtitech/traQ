@@ -56,7 +56,10 @@ func TestThreadCreated(t *testing.T) {
 
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.ThreadCreated, payload.MakeThreadCreated(et, th, ch.Name, u), []*model.Bot{b})
+		expectMulticast(handlerCtx, event.ThreadCreated, &payload.ThreadCreated{
+			Base:   payload.MakeBase(et),
+			Thread: payload.MakeChannel(th, "test/testThread", u),
+		}, []*model.Bot{b})
 		assert.NoError(t, ThreadCreated(handlerCtx, et, intevent.ThreadCreated, hub.Fields{
 			"thread": th,
 		}))
