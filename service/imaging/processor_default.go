@@ -12,6 +12,7 @@ import (
 	_ "image/png"  // image.Decode用
 	"io"
 	"math"
+	"runtime"
 	"sync"
 
 	_ "golang.org/x/image/webp" // image.Decode用
@@ -77,17 +78,54 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	return orig, nil
 }
 
+// maxGIFTotalPixelsMultiplier アニメーションGIFの(論理画面の画素数)×(フレーム数)の上限を、MaxPixelsの何倍にするか
+//
+// デコード・リサイズ時のメモリ使用量と処理時間を抑えるために、フレーム数も含めて制限する。
+const maxGIFTotalPixelsMultiplier = 16
+
+// maxGIFFrames アニメーションGIFのフレーム数の上限
+//
+// 画素数が小さくても、フレームごとにパレット等の固定コストがかかるので制限する。
+const maxGIFFrames = 1000
+
 func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
-	srcImage, err := gif.DecodeAll(src)
+	_ = p.sp.Acquire(context.Background(), 1)
+	defer p.sp.Release(1)
+
+	data, err := io.ReadAll(src)
+	if err != nil {
+		return nil, err
+	}
+
+	// 画素データを展開する前に、ブロック構造だけを読んでサイズを検査する
+	info, err := scanGIF(data)
 	if err != nil {
 		return nil, ErrInvalidImageSrc
 	}
-
-	srcWidth, srcHeight := srcImage.Config.Width, srcImage.Config.Height
+	srcWidth, srcHeight := info.width, info.height
+	if srcWidth == 0 || srcHeight == 0 {
+		return nil, ErrInvalidImageSrc
+	}
 	// 画素数チェック
 	if srcWidth*srcHeight > p.c.MaxPixels {
 		return nil, ErrPixelLimitExceeded
 	}
+	// フレーム数チェック
+	if info.frameCount > maxGIFFrames {
+		return nil, ErrPixelLimitExceeded
+	}
+	// フレーム数を含めた総画素数チェック
+	//	各フレームは論理画面内に収まる (収まらなければgif.DecodeAllがエラーを返す) ため、
+	//	デコード後の画素数は srcWidth*srcHeight*frameCount 以下になる
+	if info.frameCount > p.c.MaxPixels*maxGIFTotalPixelsMultiplier/(srcWidth*srcHeight) {
+		return nil, ErrPixelLimitExceeded
+	}
+
+	srcImage, err := gif.DecodeAll(bytes.NewReader(data))
+	if err != nil {
+		return nil, ErrInvalidImageSrc
+	}
+
 	// 画像が十分小さければスキップ
 	if srcWidth <= width && srcHeight <= height {
 		return imaging2.GifToBytesReader(srcImage)
@@ -98,10 +136,10 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	ratio := floatWidth / floatSrcWidth
 	if floatSrcWidth/floatSrcHeight > floatWidth/floatHeight {
 		ratio = floatWidth / floatSrcWidth
-		height = int(math.Round(floatSrcHeight * ratio))
+		height = max(1, int(math.Round(floatSrcHeight*ratio)))
 	} else if floatSrcWidth/floatSrcHeight < floatWidth/floatHeight {
 		ratio = floatHeight / floatSrcHeight
-		width = int(math.Round(floatSrcWidth * ratio))
+		width = max(1, int(math.Round(floatSrcWidth*ratio)))
 	}
 
 	destImage := &gif.GIF{
@@ -136,10 +174,12 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		destImageMutex = &sync.Mutex{}
 		eg, _          = errgroup.WithContext(context.Background())
 	)
+	// 各GoRoutineはキャンバスのコピーを持つため、同時実行数を制限してメモリ使用量を抑える
+	eg.SetLimit(runtime.GOMAXPROCS(0))
 
 	// グローバルカラーテーブルがあれば、背景色を取得
 	palette, ok := srcImage.Config.ColorModel.(color.Palette)
-	if ok && len(palette) > 0 {
+	if ok && int(srcImage.BackgroundIndex) < len(palette) {
 		bgColorUniform = image.NewUniform(palette[srcImage.BackgroundIndex])
 	}
 
