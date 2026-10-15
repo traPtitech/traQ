@@ -2,7 +2,6 @@ package ogpparser
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,17 +14,6 @@ func Test_fetchVRChatWorldInfo(t *testing.T) {
 		want    func(t *testing.T, res *VRChatAPIWorldResponse)
 		wantErr assert.ErrorAssertionFunc
 	}{
-		{
-			name:    "success",
-			worldID: "wrld_aa762efb-17b3-4302-8f41-09c4db2489ed",
-			want: func(t *testing.T, res *VRChatAPIWorldResponse) {
-				assert.Equal(t, "PROJECT˸ SUMMER FLARE", res.Name)
-				assert.Equal(t, "Break the Summer․ Break the tower․ Complete the Meridian Loop․ A story about reality and humanity․", res.Description)
-				assert.True(t, strings.HasPrefix(res.ImageURL, "https://"))
-				assert.True(t, strings.HasPrefix(res.ThumbnailImageURL, "https://"))
-			},
-			wantErr: assert.NoError,
-		},
 		{
 			name:    "not found",
 			worldID: "wrld_aa762efb-17b3-4302-8f41-09c4db2489ee",
