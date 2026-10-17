@@ -293,7 +293,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 		for _, c := range cases {
 			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
 			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrTooDeepChannel.Error())
+			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 		}
 	})
 
