@@ -218,7 +218,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			{Name: "e", Parent: uuid.Nil},
 		}
 		for _, ch := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), ch.Name, ch.Parent).Return(true, nil).Times(1)
 			_, err := cm.CreatePublicChannel(context.TODO(), ch.Name, ch.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 		}
@@ -237,7 +236,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			{Name: "b", Parent: cNotFound},
 		}
 		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(false, nil).Times(1)
 			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
 		}
@@ -257,7 +255,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			{Name: "a", Parent: cABBC},
 		}
 		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(false, nil).Times(1)
 			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrChannelArchived.Error())
 		}
@@ -276,7 +273,25 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			{Name: "a", Parent: cEFGHI},
 		}
 		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(false, nil).Times(1)
+			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
+			assert.EqualError(t, err, ErrTooDeepChannel.Error())
+		}
+	})
+
+	t.Run("ErrChannelNameConflictsWithThread", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		cases := []struct {
+			Name   string
+			Parent uuid.UUID
+		}{
+			{Name: "a", Parent: cA},
+		}
+		for _, c := range cases {
+			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
 			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrTooDeepChannel.Error())
 		}
@@ -302,7 +317,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 		}
 	})
 
-	t.Run("Name confricts repository error", func(t *testing.T) {
+	t.Run("Thread Name confricts repository error", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		repo := mock_repository.NewMockChannelRepository(ctrl)
@@ -362,12 +377,11 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 							Return(expected, nil).
 							AnyTimes()
 
-						repo.EXPECT().
-							IsChildPresent(context.TODO(), c.Name, c.Parent).
-							Return(false, nil).
-							AnyTimes()
-
 						if c.Parent != uuid.Nil {
+							repo.EXPECT().
+								IsChildPresent(context.TODO(), c.Name, c.Parent).
+								Return(false, nil).
+								Times(1)
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,

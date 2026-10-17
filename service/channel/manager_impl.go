@@ -89,13 +89,7 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 	}
 
 	// 既にある子チャンネル名と重複する名付けはできない
-	ok, err := m.R.IsChildPresent(ctx, name, parent)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
-	}
-
-	if ok {
+	if m.T.isChildPresent(name, parent) {
 		return nil, ErrChannelNameConflicts
 	}
 
@@ -111,6 +105,15 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		// 深さを検証
 		if len(m.T.getAscendantIDs(parent))+2 > m.MaxChannelDepth {
 			return nil, ErrTooDeepChannel
+		}
+
+		// 既にあるスレッド名と重複する名付けはできない
+		ok, err := m.R.IsChildPresent(ctx, name, parent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+		}
+		if ok {
+			return nil, ErrChannelNameConflicts
 		}
 	}
 
