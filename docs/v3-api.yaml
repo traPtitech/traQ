@@ -3676,7 +3676,7 @@ paths:
         "409":
           description: |-
             Conflict
-            指定したメッセージにはすでにスレッドが作成されています。
+            指定したメッセージにはすでにスレッドが作成されているか、指定したスレッド名と同名の子チャンネルがすでに存在しています
       operationId: createThread
       tags:
         - channel
@@ -3690,6 +3690,8 @@ paths:
         指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
 
         channelIdにはPublicチャンネルのIDのみを指定することができます。
+
+        既存のスレッド名、および子チャンネル名と同名のスレッドが作成されている場合はエラーになります。
   /threads/{channelId}:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
