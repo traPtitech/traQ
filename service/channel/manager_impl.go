@@ -88,8 +88,14 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		return nil, ErrInvalidChannelName
 	}
 
-	// チャンネル名の重複を確認
-	if m.T.isChildPresent(name, parent) {
+	// 既にある子チャンネル名と重複する名付けはできない
+	ok, err := m.R.IsChildPresent(ctx, name, parent)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+	}
+
+	if ok {
 		return nil, ErrChannelNameConflicts
 	}
 
@@ -434,7 +440,7 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 		return nil, ErrChannelArchived
 	}
 
-	// 既にある名前のスレッドは作れない
+	// 既にある子チャンネル名と重複する名付けはできない
 	ok, err := m.R.IsChildPresent(ctx, name, parent)
 
 	if err != nil {
