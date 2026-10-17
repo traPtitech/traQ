@@ -392,11 +392,12 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"term": termQuery{"hasAudio": termQueryParameter{Value: q.HasAudio}}})
 	}
 
-	if !q.Limit.Valid {
-		return nil, fmt.Errorf("limit is required")
+	limit, offset := DefaultLimit, 0
+	if q.Limit.Valid {
+		limit = q.Limit.V
 	}
-	if !q.Offset.Valid {
-		return nil, fmt.Errorf("offset is required")
+	if q.Offset.Valid {
+		offset = q.Offset.V
 	}
 
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
@@ -411,8 +412,8 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithBody(bytes.NewBuffer(b)),
 		e.client.Search.WithSort(sort),
-		e.client.Search.WithSize(q.Limit.V),
-		e.client.Search.WithFrom(q.Offset.V),
+		e.client.Search.WithSize(limit),
+		e.client.Search.WithFrom(offset),
 	)
 	if err != nil {
 		return nil, err

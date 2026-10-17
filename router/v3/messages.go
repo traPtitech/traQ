@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
-	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -61,13 +60,6 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 		if !ok {
 			return herror.Forbidden("invalid channelId")
 		}
-	}
-
-	if !q.Limit.Valid {
-		q.Limit = optional.From(search.DefaultLimit)
-	}
-	if !q.Offset.Valid {
-		q.Offset = optional.From(0)
 	}
 
 	// 仮置き
