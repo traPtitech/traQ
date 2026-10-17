@@ -120,4 +120,6 @@ type ChannelRepository interface {
 	GetChannelStats(ctx context.Context, channelID uuid.UUID, excludeDeletedMessages bool) (*ChannelStats, error)
 	// RecordChannelEvent チャンネルイベントを記録します
 	RecordChannelEvent(ctx context.Context, channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error
+	// IsChildPresent 指定した名前,親チャンネルに該当する子チャンネル(含スレッド)が存在するかを返します。
+	IsChildPresent(ctx context.Context, name string, parent uuid.UUID) (bool, error)
 }
