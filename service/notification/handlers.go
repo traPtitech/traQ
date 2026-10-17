@@ -44,8 +44,6 @@ var handlerMap = map[string]eventHandler{
 	event.UserCreated:               userCreatedHandler,
 	event.UserUpdated:               userUpdatedHandler,
 	event.UserIconUpdated:           userIconUpdatedHandler,
-	event.UserOnline:                userOnlineHandler,
-	event.UserOffline:               userOfflineHandler,
 	event.UserViewStateChanged:      userViewStateChangedHandler,
 	event.UserTagAdded:              userTagUpdatedHandler,
 	event.UserTagRemoved:            userTagUpdatedHandler,
@@ -73,6 +71,23 @@ var handlerMap = map[string]eventHandler{
 	event.QallRoomStateChanged:      qallRoomStateChangedHandler,
 	event.QallSoundboardItemCreated: qallSoundboardItemCreatedHandler,
 	event.QallSoundboardItemDeleted: qallSoundboardItemDeletedHandler,
+}
+
+func (ns *Service) startConcurrentNotifications() {
+	topics := make([]string, 0, len(handlerMap))
+	for k := range handlerMap {
+		topics = append(topics, k)
+	}
+
+	sub := ns.hub.Subscribe(200, topics...)
+	go func() {
+		for msg := range sub.Receiver {
+			h, ok := handlerMap[msg.Topic()]
+			if ok {
+				go h(ns, msg)
+			}
+		}
+	}()
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -453,24 +468,6 @@ func userUpdatedHandler(ns *Service, ev hub.Message) {
 func userIconUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_ICON_UPDATED",
-		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	)
-}
-
-func userOnlineHandler(ns *Service, ev hub.Message) {
-	broadcast(ns,
-		"USER_ONLINE",
-		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	)
-}
-
-func userOfflineHandler(ns *Service, ev hub.Message) {
-	broadcast(ns,
-		"USER_OFFLINE",
 		map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
 		},
