@@ -3,9 +3,9 @@ package middlewares
 import (
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
 	"golang.org/x/time/rate"
 )
@@ -19,9 +19,9 @@ func RateLimit(limit rate.Limit, burst int, expiresIn time.Duration) echo.Middle
 			ExpiresIn: expiresIn,
 		}),
 		IdentifierExtractor: func(ctx *echo.Context) (string, error) {
-			userID := ctx.Get(consts.KeyUserID).(uuid.UUID)
+			user := ctx.Get(consts.KeyUser).(model.UserInfo)
 			ip := ctx.RealIP()
-			return userID.String() + ip, nil
+			return user.GetID().String() + ip, nil
 		},
 	})
 }

@@ -3,12 +3,10 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
-	"slices"
 
 	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
@@ -200,32 +198,6 @@ func CheckChannelAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 			}
 
 			return next(c)
-		}
-	}
-}
-
-// CheckChannelReadAccessPerm チャンネル種別とDBのDM参加者情報から取得権限を確認するミドルウェア
-func CheckChannelReadAccessPerm(repo repository.ChannelRepository) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user, ok := c.Get(consts.KeyUser).(model.UserInfo)
-			if !ok || user == nil {
-				return herror.Unauthorized()
-			}
-			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
-			switch ch.Type {
-			case model.ChannelTypePublic, model.ChannelTypeThread:
-				return next(c)
-			case model.ChannelTypeDM:
-				members, err := repo.GetPrivateChannelMemberIDs(c.Request().Context(), ch.ID)
-				if err != nil {
-					return herror.InternalServerError(err)
-				}
-				if slices.Contains(members, user.GetID()) {
-					return next(c)
-				}
-			}
-			return herror.NotFound()
 		}
 	}
 }

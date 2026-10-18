@@ -153,11 +153,7 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 func (h *Handlers) GetChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
-	children, err := h.Repo.GetChildChannelIDs(ctx, ch.ID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	res := formatChannel(ch, children)
+	res := formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID))
 	if ch.IsThread() {
 		thread, err := h.Repo.GetThread(ctx, ch.ID)
 		if err != nil && !errors.Is(err, repository.ErrNotFound) {

@@ -146,21 +146,6 @@ func (mr *MockChannelRepositoryMockRecorder) GetChannelSubscriptions(ctx, query 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelSubscriptions", reflect.TypeOf((*MockChannelRepository)(nil).GetChannelSubscriptions), ctx, query)
 }
 
-// GetChildChannelIDs mocks base method.
-func (m *MockChannelRepository) GetChildChannelIDs(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChildChannelIDs", ctx, channelID)
-	ret0, _ := ret[0].([]uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetChildChannelIDs indicates an expected call of GetChildChannelIDs.
-func (mr *MockChannelRepositoryMockRecorder) GetChildChannelIDs(ctx, channelID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildChannelIDs", reflect.TypeOf((*MockChannelRepository)(nil).GetChildChannelIDs), ctx, channelID)
-}
-
 // GetDirectMessageChannel mocks base method.
 func (m *MockChannelRepository) GetDirectMessageChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
