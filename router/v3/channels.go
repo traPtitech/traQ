@@ -156,12 +156,10 @@ func (h *Handlers) GetChannel(c *echo.Context) error {
 	res := formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID))
 	if ch.IsThread() {
 		thread, err := h.Repo.GetThread(ctx, ch.ID)
-		if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		if err != nil {
 			return herror.InternalServerError(err)
 		}
-		if err == nil {
-			res.ParentMessageID = optional.From(thread.MessageID)
-		}
+		res.ParentMessageID = optional.From(thread.MessageID)
 	}
 	return c.JSON(http.StatusOK, res)
 }

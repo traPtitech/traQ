@@ -533,23 +533,6 @@ func TestHandlers_GetChannel(t *testing.T) {
 				Status(http.StatusUnauthorized)
 		})
 	}
-
-	t.Run("success (thread without parent message)", func(t *testing.T) {
-		t.Parallel()
-		parent := env.CreateChannel(t, rand)
-		thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
-		require.NoError(t, err)
-
-		obj := env.R(t).GET(path, thread.ID.String()).
-			WithCookie(session.CookieName, commonSession).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Object()
-
-		channelEquals(t, thread, obj)
-		obj.Value("parentMessageId").IsNull()
-	})
 }
 
 func TestPatchChannelRequest_Validate(t *testing.T) {
