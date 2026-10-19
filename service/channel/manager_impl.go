@@ -484,7 +484,7 @@ func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, cha
 	// DMチャンネルかどうかを判定し、DMチャンネルならそのDMチャンネルにアクセス可能なユーザーか判定する
 	channel, err := m.GetChannel(ctx, channelID)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if errors.Is(err, ErrChannelNotFound) {
 			return false, nil
 		}
 
