@@ -206,6 +206,21 @@ func (mr *MockChannelRepositoryMockRecorder) GetPublicChannels(ctx interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetPublicChannels), ctx)
 }
 
+// IsChildPresent mocks base method.
+func (m *MockChannelRepository) IsChildPresent(ctx context.Context, name string, parent uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsChildPresent", ctx, name, parent)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsChildPresent indicates an expected call of IsChildPresent.
+func (mr *MockChannelRepositoryMockRecorder) IsChildPresent(ctx, name, parent interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChildPresent", reflect.TypeOf((*MockChannelRepository)(nil).IsChildPresent), ctx, name, parent)
+}
+
 // RecordChannelEvent mocks base method.
 func (m *MockChannelRepository) RecordChannelEvent(ctx context.Context, channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
 	m.ctrl.T.Helper()

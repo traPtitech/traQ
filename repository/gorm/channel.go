@@ -517,3 +517,16 @@ func (repo *Repository) GetChannelStats(ctx context.Context, channelID uuid.UUID
 	stats.DateTime = time.Now()
 	return &stats, nil
 }
+
+func (repo *Repository) IsChildPresent(ctx context.Context, name string, parent uuid.UUID) (bool, error) {
+	if parent == uuid.Nil {
+		return false, repository.ArgError("parent", "cannot be nil")
+	}
+	var count int64
+	err := repo.db.WithContext(ctx).
+		Model(&model.Channel{}).
+		Where(&model.Channel{Name: name, ParentID: parent}).
+		Count(&count).
+		Error
+	return count > 0, err
+}
