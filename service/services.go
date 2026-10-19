@@ -29,6 +29,7 @@ type Services struct {
 	MessageCounter       counter.MessageCounter
 	UserCounter          counter.UserCounter
 	ChannelCounter       counter.ChannelCounter
+	ThreadCounter        counter.ThreadCounter
 	StampThrottler       *exevent.StampThrottler
 	FCM                  fcm.Client
 	FileManager          file.Manager
