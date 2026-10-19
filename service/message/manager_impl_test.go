@@ -579,7 +579,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			Times(1)
 
 		err := m.RemoveStamps(context.TODO(), id, sid, uid, []uuid.UUID{uid})
-		assert.EqualError(t, err, ErrCannotRemoveStamp.Error())
+		assert.EqualError(t, err, ErrForbiddenRemoveStamp.Error())
 	})
 
 	t.Run("a bot cannot target users on another user's message", func(t *testing.T) {
@@ -606,7 +606,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			Times(1)
 
 		err := m.RemoveStamps(context.TODO(), id, sid, uid, []uuid.UUID{msgOwnerID})
-		assert.EqualError(t, err, ErrCannotRemoveStamp.Error())
+		assert.EqualError(t, err, ErrForbiddenRemoveStamp.Error())
 	})
 
 	t.Run("a bot can remove the exact target users' stamps from its own message", func(t *testing.T) {

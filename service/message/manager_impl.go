@@ -312,7 +312,7 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, requesterID uui
 			return fmt.Errorf("failed to GetUser: %w", err)
 		}
 		if !user.IsBot() || msg.GetUserID() != requesterID {
-			return ErrCannotRemoveStamp
+			return ErrForbiddenRemoveStamp
 		}
 	} else {
 		userIDs = []uuid.UUID{requesterID}

@@ -312,7 +312,7 @@ func (h *Handlers) RemoveMessageStamp(c *echo.Context) error {
 		switch err {
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
-		case message.ErrCannotRemoveStamp:
+		case message.ErrForbiddenRemoveStamp:
 			return herror.Forbidden("you are not allowed to remove this stamp")
 		default:
 			return herror.InternalServerError(err)
