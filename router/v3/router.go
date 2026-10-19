@@ -86,6 +86,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
+	blockThread := middlewares.BlockThread(h.ChannelManager)
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
@@ -198,12 +199,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
 				apiChannelsCID.GET("", h.GetChannel, requires(permission.GetChannel))
-				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel))
+				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel),blockThread)
 				apiChannelsCID.GET("/messages", h.GetMessages, requires(permission.GetMessage))
 				apiChannelsCID.POST("/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiChannelsCID.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
-				apiChannelsCID.GET("/topic", h.GetChannelTopic, requires(permission.GetChannel))
-				apiChannelsCID.PUT("/topic", h.EditChannelTopic, requires(permission.EditChannelTopic))
+				apiChannelsCID.GET("/topic", h.GetChannelTopic, requires(permission.GetChannel),blockThread)
+				apiChannelsCID.PUT("/topic", h.EditChannelTopic, requires(permission.EditChannelTopic),blockThread)
 				apiChannelsCID.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
 				apiChannelsCID.GET("/pins", h.GetChannelPins, requires(permission.GetMessage))
 				apiChannelsCID.GET("/subscribers", h.GetChannelSubscribers, requires(permission.GetChannelSubscription))

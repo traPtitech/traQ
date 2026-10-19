@@ -1294,9 +1294,11 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 	uid1 := uuid.NewV3(uuid.Nil, "u1")
 	uid2 := uuid.NewV3(uuid.Nil, "u2")
 	uid3 := uuid.NewV3(uuid.Nil, "u3")
+	//接頭語cはDMチャンネル、接頭語tはThreadチャンネル
 	cid1 := uuid.NewV3(uuid.Nil, "c 1-1")
 	cid2 := uuid.NewV3(uuid.Nil, "c 1-2")
 	cid3 := uuid.NewV3(uuid.Nil, "c 1-3")
+	tid1 := uuid.NewV3(uuid.Nil, "c 1-4")
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -1324,6 +1326,38 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 			Return([]uuid.UUID{uid1, uid3}, nil).
 			AnyTimes()
 
+		//スレッドは誰でもアクセスできるのですべてのユーザーIDを返す。
+		repo.EXPECT().
+			GetPrivateChannelMemberIDs(gomock.Any(), tid1).
+			Return([]uuid.UUID{uid1,uid2,uid3}, nil).
+			AnyTimes()
+
+		//GetChannelのリポジトリ予測
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cNotFound).
+			Return(&model.Channel{}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid1).
+			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid2).
+			Return(&model.Channel{ID: cid2, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid3).
+			Return(&model.Channel{ID: cid3, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), tid1).
+			Return(&model.Channel{ID: tid1, Type: model.ChannelTypeThread}, nil).
+			AnyTimes()
+
 		cases := []struct {
 			User    uuid.UUID
 			Channel uuid.UUID
@@ -1337,6 +1371,12 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 			{User: uid2, Channel: cid3, OK: false},
 			{User: uid3, Channel: cid1, OK: false},
 			{User: uid1, Channel: cNotFound, OK: false},
+
+			//スレッドのテストケース
+			//スレッドはどのユーザーでもアクセス可能
+			{User: uid1, Channel: tid1, OK: true},
+			{User: uid2, Channel: tid1, OK: true},
+			{User: uid3, Channel: tid1, OK: true},
 		}
 		for i, c := range cases {
 			t.Run(strconv.Itoa(i), func(t *testing.T) {
