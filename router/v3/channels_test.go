@@ -274,6 +274,38 @@ func TestPostChannelRequest_Validate(t *testing.T) {
 	}
 }
 
+func TestPostThreadRequest_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		request PostThreadRequest
+		wantErr bool
+	}{
+		{
+			"empty name",
+			PostThreadRequest{},
+			true,
+		},
+		{
+			"日本語スレッド名の許可",
+			PostThreadRequest{Name: "チャンネル", Parent: uuid.Must(uuid.NewV7())},
+			false,
+		},
+		{
+			"success",
+			PostThreadRequest{Name: "po", Parent: uuid.Must(uuid.NewV7())},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.request.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestHandlers_CreateChannels(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/channels"
@@ -345,6 +377,85 @@ func TestHandlers_CreateChannels(t *testing.T) {
 		if assert.Len(t, ch.ChildrenID, 1) {
 			assert.EqualValues(t, ch.ChildrenID[0].String(), obj.Value("id").String().Raw())
 		}
+	})
+}
+
+func TestHandlers_CreateThreads(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/threads"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	commonSession := env.S(t, user.GetID())
+	parent := env.CreateChannel(t, rand)
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path).
+			WithJSON(&PostThreadRequest{Name: "po", Parent: parent.ID}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("success(日本語名)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "チャンネル", Parent: parent.ID}).
+			Expect().
+			Status(http.StatusCreated)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		threadName := random.AlphaNumeric(20)
+		obj := e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: threadName, Parent: parent.ID}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("id").String().NotEmpty()
+		obj.Value("parentId").String().IsEqual(parent.ID.String())
+		obj.Value("archived").Boolean().IsFalse()
+		obj.Value("force").Boolean().IsFalse()
+		obj.Value("topic").String().IsEmpty()
+		obj.Value("name").String().IsEqual(threadName)
+		obj.Value("children").Array().Length().IsEqual(0)
+
+		threadID, err := uuid.FromString(obj.Value("id").String().Raw())
+		require.NoError(t, err)
+
+		thread, err := env.CM.GetChannel(context.TODO(), threadID)
+		require.NoError(t, err)
+		assert.Equal(t, parent.ID, thread.ParentID)
+		assert.Equal(t, model.ChannelTypeThread, thread.Type)
+	})
+
+	t.Run("thread parent should be rejected", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+
+		first := e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "first-thread", Parent: parent.ID}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		threadID, err := uuid.FromString(first.Value("id").String().Raw())
+		require.NoError(t, err)
+
+		e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "nested-thread", Parent: threadID}).
+			Expect().
+			Status(http.StatusBadRequest)
 	})
 }
 

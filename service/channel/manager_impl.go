@@ -116,7 +116,7 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		UpdaterID: creatorID,
 		IsForced:  false,
 		IsVisible: true,
-	}, nil, false)
+	}, nil, model.ChannelTypePublic)
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
@@ -379,7 +379,7 @@ func (m *managerImpl) GetDMChannel(ctx context.Context, user1, user2 uuid.UUID) 
 		IsVisible: true,
 	},
 		set.UUIDSetFromArray([]uuid.UUID{user1, user2}),
-		true)
+		model.ChannelTypeDM)
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
@@ -410,6 +410,55 @@ func (m *managerImpl) GetDMChannelMapping(ctx context.Context, userID uuid.UUID)
 		}
 	}
 	return result, nil
+}
+
+func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	// ルートチャンネルの下にスレッドは作れない
+	if parent == pubChannelRootUUID {
+		return nil, ErrInvalidParentChannel
+	}
+
+	// 既にある名前のスレッドは作れない
+	if m.T.isChildPresent(name, parent) {
+		return nil, ErrChannelNameConflicts
+	}
+
+	// 親チャンネルの存在を確認
+	if !m.T.isChannelPresent(parent) {
+		return nil, ErrInvalidParentChannel
+	}
+	// 親チャンネルがスレッドかどうか確認
+	if m.T.isThreadChannel(parent) {
+		return nil, ErrChannelThreadParent
+	}
+	// 親チャンネルがアーカイブされているかどうか確認
+	if m.T.isArchivedChannel(parent) {
+		return nil, ErrChannelArchived
+	}
+
+	// チャンネル作成
+	ch, err := m.R.CreateChannel(ctx, model.Channel{
+		Name:      name,
+		ParentID:  parent,
+		CreatorID: creatorID,
+		UpdaterID: creatorID,
+		IsForced:  false,
+		IsVisible: true,
+	}, nil, model.ChannelTypeThread)
+	if err != nil {
+		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+	}
+	m.T.add(ch)
+	// ロギング
+	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
+		"userId":    ch.CreatorID,
+		"channelId": ch.ID,
+	}, ch.CreatedAt)
+	m.L.Info(fmt.Sprintf("channel #%s was created", m.T.getChannelPath(ch.ID)), zap.Stringer("cid", ch.ID))
+	return ch, nil
 }
 
 func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {

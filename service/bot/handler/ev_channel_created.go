@@ -14,7 +14,7 @@ import (
 
 func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	ch := fields["channel"].(*model.Channel)
-	if ch.IsPublic {
+	if ch.IsPublic() {
 		bots, err := ctx.GetBots(event.ChannelCreated)
 		if err != nil {
 			return fmt.Errorf("failed to GetBots: %w", err)

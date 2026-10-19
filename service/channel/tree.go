@@ -33,5 +33,8 @@ type Tree interface {
 	IsForceChannel(id uuid.UUID) bool
 	// IsArchivedChannel 指定したチャンネルがアーカイブされているかどうか
 	IsArchivedChannel(id uuid.UUID) bool
+	// IsThreadChannel 指定したチャンネルがスレッドかどうか
+	IsThreadChannel(id uuid.UUID) bool
+
 	json.Marshaler
 }

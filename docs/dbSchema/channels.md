@@ -10,11 +10,11 @@
 ```sql
 CREATE TABLE `channels` (
   `id` char(36) NOT NULL,
-  `name` varchar(20) NOT NULL,
+  `name` text NOT NULL,
   `parent_id` char(36) NOT NULL,
   `topic` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `is_forced` tinyint(1) NOT NULL DEFAULT 0,
-  `is_public` tinyint(1) NOT NULL DEFAULT 0,
+  `type` enum('public','dm','thread') NOT NULL DEFAULT 'public',
   `is_visible` tinyint(1) NOT NULL DEFAULT 0,
   `creator_id` char(36) NOT NULL,
   `updater_id` char(36) NOT NULL,
@@ -22,8 +22,8 @@ CREATE TABLE `channels` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name_parent` (`name`,`parent_id`),
-  KEY `idx_channel_channels_id_is_public_is_forced` (`id`,`is_public`,`is_forced`)
+  UNIQUE KEY `name_parent` (`name`(191),`parent_id`),
+  KEY `idx_channel_channels_id_type_is_forced` (`id`,`type`,`is_forced`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -33,12 +33,12 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
-| name | varchar(20) |  | false |  |  | チャンネル名 |
+| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [threads](threads.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [user_profiles](user_profiles.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
+| name | text |  | false |  |  | チャンネル名 |
 | parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
 | topic | text |  | false |  |  | チャンネルトピック |
 | is_forced | tinyint(1) | 0 | false |  |  | 強制通知チャンネルかどうか |
-| is_public | tinyint(1) | 0 | false |  |  | 公開チャンネルかどうか |
+| type | enum('public','dm','thread') | 'public' | false |  |  | チャンネルの種類 |
 | is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
 | creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
 | updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
@@ -57,7 +57,7 @@ CREATE TABLE `channels` (
 
 | Name | Definition |
 | ---- | ---------- |
-| idx_channel_channels_id_is_public_is_forced | KEY idx_channel_channels_id_is_public_is_forced (id, is_public, is_forced) USING BTREE |
+| idx_channel_channels_id_type_is_forced | KEY idx_channel_channels_id_type_is_forced (id, type, is_forced) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | name_parent | UNIQUE KEY name_parent (name, parent_id) USING BTREE |
 
@@ -71,6 +71,7 @@ erDiagram
 "files" }o--o| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "messages" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "stars" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
+"threads" |o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "unreads" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_private_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
 "users_subscribe_channels" }o--|| "channels" : "FOREIGN KEY (channel_id) REFERENCES channels (id)"
@@ -81,11 +82,11 @@ erDiagram
 
 "channels" {
   char_36_ id PK
-  varchar_20_ name
+  text name
   char_36_ parent_id
   text topic
   tinyint_1_ is_forced
-  tinyint_1_ is_public
+  enum__public___dm___thread__ type
   tinyint_1_ is_visible
   char_36_ creator_id
   char_36_ updater_id
@@ -130,6 +131,10 @@ erDiagram
 "stars" {
   char_36_ user_id PK
   char_36_ channel_id PK
+}
+"threads" {
+  char_36_ channel_id PK
+  char_36_ message_id FK
 }
 "unreads" {
   char_36_ user_id PK
