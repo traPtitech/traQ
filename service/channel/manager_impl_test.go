@@ -1335,7 +1335,7 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		//GetChannelのリポジトリ予測
 		repo.EXPECT().
 			GetChannel(gomock.Any(), cNotFound).
-			Return(&model.Channel{}, nil).
+			Return(nil, repository.ErrNotFound).
 			AnyTimes()
 
 		repo.EXPECT().
