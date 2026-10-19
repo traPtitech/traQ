@@ -278,6 +278,25 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 		}
 	})
 
+	t.Run("ErrChannelNameConflictsWithThread", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		cases := []struct {
+			Name   string
+			Parent uuid.UUID
+		}{
+			{Name: "a", Parent: cA},
+		}
+		for _, c := range cases {
+			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
+			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
+			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
+		}
+	})
+
 	t.Run("repository error", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -290,7 +309,24 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			Return(nil, mockErr).
 			AnyTimes()
 
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
+
 		_, err := cm.CreatePublicChannel(context.TODO(), "test", uuid.Nil, uuid.Nil)
+		if assert.Error(t, err) {
+			assert.Equal(t, mockErr, errors.Unwrap(err))
+		}
+	})
+
+	t.Run("Thread Name confricts repository error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		mockErr := errors.New("mock error")
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockErr).AnyTimes()
+
+		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
 		}
@@ -340,7 +376,12 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 							Return(expected, nil).
 							AnyTimes()
+
 						if c.Parent != uuid.Nil {
+							repo.EXPECT().
+								IsChildPresent(context.TODO(), c.Name, c.Parent).
+								Return(false, nil).
+								Times(1)
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,
@@ -415,6 +456,7 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			{Name: "l", Parent: cEK},
 		}
 		for _, c := range cases {
+			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
 			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
 			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 		}
@@ -461,7 +503,24 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 			Return(nil, mockErr).
 			AnyTimes()
 
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
+
 		_, err := cm.CreateThreadChannel(context.TODO(), "test", cEK, uuid.Nil)
+		if assert.Error(t, err) {
+			assert.Equal(t, mockErr, errors.Unwrap(err))
+		}
+	})
+
+	t.Run("thread name confricts repository error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		mockErr := errors.New("mock error")
+		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockErr).AnyTimes()
+
+		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
 		}
@@ -510,7 +569,12 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypeThread).
 							Return(expected, nil).
 							AnyTimes()
+
 						if c.Parent != uuid.Nil {
+							repo.EXPECT().
+								IsChildPresent(context.TODO(), c.Name, c.Parent).
+								Return(false, nil).
+								AnyTimes()
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,
@@ -524,7 +588,6 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 						cm.P.Wait()
 						if assert.NoError(t, err) {
 							assert.Equal(t, expected, ch)
-							assert.True(t, cm.PublicChannelTree(context.TODO()).IsChannelPresent(cid))
 						}
 					})
 				}

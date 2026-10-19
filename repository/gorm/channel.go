@@ -83,14 +83,24 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"channel":    &ch,
-			"private":    ch.IsDMChannel(),
-		},
-	})
+	if channelType != model.ChannelTypeThread {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelCreated,
+			Fields: hub.Fields{
+				"channel_id": ch.ID,
+				"channel":    &ch,
+				"private":    ch.IsDMChannel(),
+			},
+		})
+	} else {
+		repo.hub.Publish(hub.Message{
+			Name: event.ThreadCreated,
+			Fields: hub.Fields{
+				"channel_id": ch.ID,
+				"thread":     &ch,
+			},
+		})
+	}
 	return &ch, nil
 }
 
@@ -528,4 +538,17 @@ func (repo *Repository) GetChannelStats(ctx context.Context, channelID uuid.UUID
 
 	stats.DateTime = time.Now()
 	return &stats, nil
+}
+
+func (repo *Repository) IsChildPresent(ctx context.Context, name string, parent uuid.UUID) (bool, error) {
+	if parent == uuid.Nil {
+		return false, repository.ArgError("parent", "cannot be nil")
+	}
+	var count int64
+	err := repo.db.WithContext(ctx).
+		Model(&model.Channel{}).
+		Where(&model.Channel{Name: name, ParentID: parent}).
+		Count(&count).
+		Error
+	return count > 0, err
 }
