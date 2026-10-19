@@ -183,16 +183,22 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
           in: query
           name: limit
-          description: 検索結果から取得するメッセージの最大件数
+          description: |-
+            検索結果から取得するメッセージの最大件数
+            limitとoffsetの合計は10000以下である必要があります
         - schema:
             type: integer
             minimum: 0
-            maximum: 9900
+            maximum: 9999
+            default: 0
           in: query
           name: offset
-          description: 検索結果から取得するメッセージのオフセット
+          description: |-
+            検索結果から取得するメッセージのオフセット
+            limitとoffsetの合計は10000以下である必要があります (limitを省略した場合は20として計算されます)
         - in: query
           name: sort
           schema:
@@ -227,7 +233,9 @@ paths:
                   - totalHits
                   - hits
         "400":
-          description: Bad Request
+          description: |-
+            Bad Request
+            limitとoffsetの合計が10000を超えている場合などに返されます。
         "503":
           description: search service is currently unavailable
   "/messages/{messageId}":
