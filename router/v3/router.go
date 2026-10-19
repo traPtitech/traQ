@@ -56,6 +56,8 @@ type Handlers struct {
 }
 
 type Config struct {
+	Origin string
+
 	Version  string
 	Revision string
 
@@ -419,6 +421,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	apiNoAuth := e.Group("/v3")
 	{
+		apiNoAuth.GET("/meta", h.GetMeta)
 		apiNoAuth.GET("/version", h.GetVersion)
 		apiNoAuth.GET("/jwks", h.GetJWKS)
 		if h.AllowSignUp {

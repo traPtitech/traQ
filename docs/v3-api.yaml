@@ -188,16 +188,22 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
           in: query
           name: limit
-          description: 検索結果から取得するメッセージの最大件数
+          description: |-
+            検索結果から取得するメッセージの最大件数
+            limitとoffsetの合計は10000以下である必要があります
         - schema:
             type: integer
             minimum: 0
-            maximum: 9900
+            maximum: 9999
+            default: 0
           in: query
           name: offset
-          description: 検索結果から取得するメッセージのオフセット
+          description: |-
+            検索結果から取得するメッセージのオフセット
+            limitとoffsetの合計は10000以下である必要があります (limitを省略した場合は20として計算されます)
         - in: query
           name: sort
           schema:
@@ -232,7 +238,9 @@ paths:
                   - totalHits
                   - hits
         "400":
-          description: Bad Request
+          description: |-
+            Bad Request
+            limitとoffsetの合計が10000を超えている場合などに返されます。
         "503":
           description: search service is currently unavailable
   "/messages/{messageId}":
@@ -2387,6 +2395,21 @@ paths:
                   $ref: "#/components/schemas/UnreadChannel"
       operationId: getMyUnreadChannels
       description: 自分が現在未読のチャンネルの未読情報を取得します。
+  /meta:
+    get:
+      summary: メタ情報を取得
+      tags:
+        - public
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+      operationId: getMeta
+      description: 初期化に必要な公開情報を取得します。
   /version:
     get:
       summary: バージョンを取得
@@ -4330,7 +4353,9 @@ paths:
       tags:
         - oauth2
       operationId: getOAuth2Authorize
-      description: OAuth2 認可エンドポイント
+      description: |-
+        OAuth2 認可エンドポイント
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       parameters:
         - name: response_type
           in: query
@@ -4381,7 +4406,9 @@ paths:
       tags:
         - oauth2
       operationId: postOAuth2Authorize
-      description: OAuth2 認可エンドポイント
+      description: |-
+        OAuth2 認可エンドポイント
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       requestBody:
         required: true
         content:
@@ -4886,6 +4913,7 @@ components:
             read: 読み取りスコープ
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
+            qall: Qall利用スコープ
     bearerAuth:
       type: http
       scheme: bearer
@@ -6457,6 +6485,7 @@ components:
         - read
         - write
         - manage_bot
+        - qall
     OAuth2Client:
       title: OAuth2Client
       type: object
@@ -6509,7 +6538,7 @@ components:
           maxLength: 1000
         callbackUrl:
           type: string
-          description: コールバックURL
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         developerId:
           type: string
@@ -6575,7 +6604,7 @@ components:
           description: クライアント名
         callbackUrl:
           type: string
-          description: コールバックURL
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         scopes:
           type: array
@@ -7894,6 +7923,18 @@ components:
         - CreateClipFolder
         - EditClipFolder
         - DeleteClipFolder
+    Meta:
+      title: Meta
+      type: object
+      description: 初期化に必要な公開情報
+      properties:
+        canonicalOrigin:
+          type: string
+          format: uri
+          description: 共有リンクなどの生成に用いる正規の公開オリジン
+          example: "https://q.trap.jp"
+      required:
+        - canonicalOrigin
     Version:
       title: Version
       type: object
