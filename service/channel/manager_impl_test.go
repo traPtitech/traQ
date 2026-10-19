@@ -1298,7 +1298,7 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 	cid1 := uuid.NewV3(uuid.Nil, "c 1-1")
 	cid2 := uuid.NewV3(uuid.Nil, "c 1-2")
 	cid3 := uuid.NewV3(uuid.Nil, "c 1-3")
-	tid1 := uuid.NewV3(uuid.Nil, "c 1-4")
+	tid1 := uuid.NewV3(uuid.Nil, "t 1-1")
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -1306,36 +1306,20 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any(), cNotFound).
-			Return([]uuid.UUID{}, nil).
-			AnyTimes()
-
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any(), cid1).
-			Return([]uuid.UUID{uid1}, nil).
-			AnyTimes()
-
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any(), cid2).
-			Return([]uuid.UUID{uid1, uid2}, nil).
-			AnyTimes()
-
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any(), cid3).
-			Return([]uuid.UUID{uid1, uid3}, nil).
-			AnyTimes()
-
-		//スレッドは誰でもアクセスできるのですべてのユーザーIDを返す。
-		repo.EXPECT().
-			GetPrivateChannelMemberIDs(gomock.Any(), tid1).
-			Return([]uuid.UUID{uid1,uid2,uid3}, nil).
-			AnyTimes()
-
 		//GetChannelのリポジトリ予測
 		repo.EXPECT().
 			GetChannel(gomock.Any(), cNotFound).
 			Return(nil, repository.ErrNotFound).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(),cA).
+			Return(&model.Channel{ID: cA, Type:model.ChannelTypePublic},nil).
+			AnyTimes()
+		
+		repo.EXPECT().
+			GetChannel(gomock.Any(),cABB).
+			Return(&model.Channel{ID: cABB, Type:model.ChannelTypePublic},nil).
 			AnyTimes()
 
 		repo.EXPECT().
@@ -1356,6 +1340,27 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		repo.EXPECT().
 			GetChannel(gomock.Any(), tid1).
 			Return(&model.Channel{ID: tid1, Type: model.ChannelTypeThread}, nil).
+			AnyTimes()
+
+		//GetPrivateChannelMemberIDsのEXPECT
+		repo.EXPECT().
+			GetPrivateChannelMemberIDs(gomock.Any(), cNotFound).
+			Return([]uuid.UUID{}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetPrivateChannelMemberIDs(gomock.Any(), cid1).
+			Return([]uuid.UUID{uid1}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetPrivateChannelMemberIDs(gomock.Any(), cid2).
+			Return([]uuid.UUID{uid1, uid2}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetPrivateChannelMemberIDs(gomock.Any(), cid3).
+			Return([]uuid.UUID{uid1, uid3}, nil).
 			AnyTimes()
 
 		cases := []struct {
