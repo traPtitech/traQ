@@ -308,6 +308,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiGroupsGID.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
 				apiGroupsGID.PATCH("", h.EditUserGroup, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 				apiGroupsGID.DELETE("", h.DeleteUserGroup, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
+				apiGroupsGID.PUT("/icon", h.PutUserGroupIcon, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
