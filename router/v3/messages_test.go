@@ -857,6 +857,7 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 	stamp := env.CreateStamp(t, user.GetID(), rand)
 	env.AddStampToMessage(t, m.GetID(), stamp.ID, user.GetID())
 	env.AddStampToMessage(t, humanExplicitM.GetID(), stamp.ID, user.GetID())
+	env.AddStampToMessage(t, humanExplicitM.GetID(), stamp.ID, user2.GetID())
 	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user.GetID())
 	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user2.GetID())
 	env.AddStampToMessage(t, botM.GetID(), stamp.ID, user3.GetID())
@@ -910,17 +911,69 @@ func TestHandlers_RemoveMessageStamp(t *testing.T) {
 		assert.Len(t, m.GetStamps(), 0)
 	})
 
-	t.Run("explicit userIds are forbidden for a human", func(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		requesterID uuid.UUID
+		ownerID     uuid.UUID
+		session     string
+	}{
+		{name: "human on own message", requesterID: user.GetID(), ownerID: user.GetID(), session: s},
+		{name: "human on another user's message", requesterID: user.GetID(), ownerID: user2.GetID(), session: s},
+		{name: "bot on own message", requesterID: bot.BotUserID, ownerID: bot.BotUserID, session: botSession},
+		{name: "bot on another user's message", requesterID: bot.BotUserID, ownerID: user.GetID(), session: botSession},
+	} {
+		for _, duplicate := range []bool{false, true} {
+			name := tc.name
+			if duplicate {
+				name += " with duplicate IDs"
+			}
+			t.Run("explicit requester ID for "+name, func(t *testing.T) {
+				msg := env.CreateMessage(t, tc.ownerID, ch.ID, rand)
+				env.AddStampToMessage(t, msg.GetID(), stamp.ID, tc.requesterID)
+				env.AddStampToMessage(t, msg.GetID(), stamp.ID, user3.GetID())
+
+				r := env.R(t).DELETE(path, msg.GetID(), stamp.ID).
+					WithQuery("userIds", tc.requesterID).
+					WithCookie(session.CookieName, tc.session)
+				if duplicate {
+					r.WithQuery("userIds", tc.requesterID)
+				}
+				r.Expect().Status(http.StatusNoContent)
+
+				msg, err := env.MM.Get(context.TODO(), msg.GetID())
+				require.NoError(t, err)
+				if assert.Len(t, msg.GetStamps(), 1) {
+					assert.Equal(t, user3.GetID(), msg.GetStamps()[0].UserID)
+				}
+			})
+		}
+	}
+
+	t.Run("other userIds are forbidden for a human", func(t *testing.T) {
 		e := env.R(t)
 		e.DELETE(path, humanExplicitM.GetID(), stamp.ID).
-			WithQuery("userIds", user.GetID()).
+			WithQuery("userIds", user2.GetID()).
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusForbidden)
 
 		m, err := env.MM.Get(context.TODO(), humanExplicitM.GetID())
 		require.NoError(t, err)
-		assert.Len(t, m.GetStamps(), 1)
+		assert.Len(t, m.GetStamps(), 2)
+	})
+
+	t.Run("mixed requester and other userIds are forbidden for a human", func(t *testing.T) {
+		e := env.R(t)
+		e.DELETE(path, humanExplicitM.GetID(), stamp.ID).
+			WithQuery("userIds", user.GetID()).
+			WithQuery("userIds", user2.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusForbidden)
+
+		m, err := env.MM.Get(context.TODO(), humanExplicitM.GetID())
+		require.NoError(t, err)
+		assert.Len(t, m.GetStamps(), 2)
 	})
 
 	t.Run("a bot cannot target users on another user's message", func(t *testing.T) {

@@ -104,7 +104,7 @@ type Manager interface {
 	AddStamps(ctx context.Context, id, stampID, userID uuid.UUID, n int) (*model.MessageStamp, error)
 	// RemoveStamps 指定したメッセージから指定したスタンプを削除します
 	// userIDsが空の場合はリクエストしたユーザーのスタンプを削除します。
-	// userIDsを指定して削除できるのは、そのメッセージの投稿者であるBotのみです。
+	// 自分以外のuserIDsを指定して削除できるのは、そのメッセージの投稿者であるBotのみです。
 	//
 	// 成功した場合、或いは既に削除されていた場合、nilを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。

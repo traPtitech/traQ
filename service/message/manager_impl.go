@@ -305,8 +305,20 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, requesterID uui
 		return ErrChannelArchived
 	}
 
-	// ユーザーを指定してスタンプを削除できるのは、Botかつ自分のメッセージのみ
-	if len(userIDs) > 0 {
+	if len(userIDs) == 0 {
+		userIDs = []uuid.UUID{requesterID}
+	}
+
+	hasOtherUser := false
+	for _, userID := range userIDs {
+		if userID != requesterID {
+			hasOtherUser = true
+			break
+		}
+	}
+
+	// 他のユーザーのスタンプを削除できるのは、Botかつ自分のメッセージのみ
+	if hasOtherUser {
 		user, err := m.R.GetUser(ctx, requesterID, false)
 		if err != nil {
 			return fmt.Errorf("failed to GetUser: %w", err)
@@ -314,8 +326,6 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, requesterID uui
 		if !user.IsBot() || msg.GetUserID() != requesterID {
 			return ErrForbiddenRemoveStamp
 		}
-	} else {
-		userIDs = []uuid.UUID{requesterID}
 	}
 
 	// スタンプを消す
