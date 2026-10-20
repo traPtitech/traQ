@@ -716,7 +716,7 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-		t.Run("bad request (not public)", func(t *testing.T) {
+	t.Run("bad request (not public)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PUT(path, dm.ID.String()).
