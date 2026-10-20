@@ -182,6 +182,7 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		fileID := uuid.NewV3(uuid.Nil, "f1")
 		userID := uuid.NewV3(uuid.Nil, "u1")
+
 		msg1 := &model.Message{
 			ID:        uuid.NewV3(uuid.Nil, "m1"),
 			ChannelID: cid,
@@ -190,6 +191,7 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 				ID: userID,
 			},
 		}
+
 		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).Times(1)
 
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, q repository.MessagesQuery) ([]*model.Message, bool, error) {
@@ -202,6 +204,7 @@ func TestManager_GetTimeline_IncludeFlags(t *testing.T) {
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
 		tl, err := mgr.GetTimeline(context.TODO(), TimelineQuery{
+			User:               userID,
 			Channel:            cid,
 			IncludeAttachments: true,
 			IncludeQuotes:      false,
