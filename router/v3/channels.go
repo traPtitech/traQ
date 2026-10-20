@@ -224,6 +224,10 @@ func (h *Handlers) EditChannelTopic(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
 
+	if !h.ChannelManager.IsPublicChannel(ctx, ch.ID) {
+		return herror.BadRequest("channel must be public")
+	}
+
 	var req PutChannelTopicRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
