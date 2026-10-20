@@ -409,6 +409,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
+        "400":
+          description: |-
+            Bad Request
+            Publicチャンネルではありません。
         "404":
           description: |-
             Not Found
