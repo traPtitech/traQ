@@ -747,6 +747,8 @@ func TestHandlers_GetChannelTopic(t *testing.T) {
 	path := "/api/v3/channels/{channelId}/topic"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	channel := env.CreateChannel(t, rand)
 	require.NoError(t, env.CM.UpdateChannel(context.TODO(), channel.ID, repository.UpdateChannelArgs{Topic: optional.From("this is channel topic")}))
 	commonSession := env.S(t, user.GetID())
@@ -766,6 +768,18 @@ func TestHandlers_GetChannelTopic(t *testing.T) {
 			WithCookie(session.CookieName, commonSession).
 			Expect().
 			Status(http.StatusNotFound)
+	})
+
+	t.Run("not public", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, dm.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusBadRequest).
+			JSON().
+			Object().
+			Value("message").String().IsEqual("channel must be public")
 	})
 
 	t.Run("success", func(t *testing.T) {
