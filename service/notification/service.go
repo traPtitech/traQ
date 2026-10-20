@@ -36,6 +36,10 @@ type Service struct {
 
 // NewService 通知サービスを作成して起動します
 func NewService(repo repository.Repository, cm channel.Manager, mm message.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
+	return newService(repo, cm, mm, fm, hub, logger, fcm, ws, vm, origin)
+}
+
+func newService(repo repository.Repository, cm channel.Manager, mm message.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, writer messageWriter, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
 	service := &Service{
 		repo:          repo,
 		cm:            cm,
@@ -44,7 +48,7 @@ func NewService(repo repository.Repository, cm channel.Manager, mm message.Manag
 		hub:           hub,
 		logger:        logger.Named("notification"),
 		fcm:           fcm,
-		messageWriter: ws,
+		messageWriter: writer,
 		vm:            vm,
 		origin:        string(origin),
 	}

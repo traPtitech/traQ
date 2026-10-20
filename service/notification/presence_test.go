@@ -67,8 +67,7 @@ func TestPresenceNotificationsPersistBeforeDelivery(t *testing.T) {
 			})
 		repo := testutils.EmptyTestRepository{UserRepository: userRepo}
 		writer := &presenceWriter{}
-		service := NewService(repo, nil, nil, nil, h, zap.NewNop(), nil, nil, nil, "")
-		service.messageWriter = writer
+		newService(repo, nil, nil, nil, h, zap.NewNop(), nil, writer, nil, "")
 
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": disconnectedAt,
@@ -102,8 +101,7 @@ func TestPresenceNotificationsReportPersistenceFailure(t *testing.T) {
 			Return(errors.New("database unavailable"))
 		repo := testutils.EmptyTestRepository{UserRepository: userRepo}
 		writer := &presenceWriter{}
-		service := NewService(repo, nil, nil, nil, h, zap.New(core), nil, nil, nil, "")
-		service.messageWriter = writer
+		newService(repo, nil, nil, nil, h, zap.New(core), nil, writer, nil, "")
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": time.Now(),
 		}})
@@ -140,8 +138,7 @@ func TestPresenceNotificationsContinueAfterPersistenceTimeout(t *testing.T) {
 			})
 		repo := testutils.EmptyTestRepository{UserRepository: userRepo}
 		writer := &presenceWriter{}
-		service := NewService(repo, nil, nil, nil, h, zap.New(core), nil, nil, nil, "")
-		service.messageWriter = writer
+		newService(repo, nil, nil, nil, h, zap.New(core), nil, writer, nil, "")
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": time.Now(),
 		}})
