@@ -13,14 +13,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/jwt"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/tracing"
 	"github.com/traPtitech/traQ/utils/twemoji"
@@ -199,15 +197,6 @@ type Server struct {
 }
 
 func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time.Duration) error {
-	go func() {
-		// TODO 適切なパッケージに移動させる
-		sub := s.Hub.Subscribe(10, event.UserOffline)
-		for ev := range sub.Receiver {
-			userID := ev.Fields["user_id"].(uuid.UUID)
-			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(context.Background(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
-		}
-	}()
 	s.SS.StampThrottler.Start()
 
 	if s.routerStopped == nil {

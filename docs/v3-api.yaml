@@ -19,6 +19,8 @@ servers:
 x-traq-codegen-schemas:
   description: HTTPエンドポイントから参照されていないが、クライアントがWebSocketイベントの型を生成するために使用するコンポーネント
   schemas:
+    UserOfflineEvent:
+      $ref: "#/components/schemas/UserOfflineEvent"
     QallRoomStateChangedEvent:
       $ref: "#/components/schemas/QallRoomStateChangedEvent"
     QallSoundboardItemCreatedEvent:
@@ -2667,11 +2669,12 @@ paths:
         + `id`: オンラインになったユーザーのId
 
         ### `USER_OFFLINE`
-        ユーザーがオフラインになった。
+        ユーザーの最後の接続の切断またはタイムアウトをサーバーが検出し、オフラインになった。
 
         対象: 全員
 
         + `id`: オフラインになったユーザーのId
+        + `last_online`: 最後の接続の切断をサーバーが検出した日時
 
         ### `USER_GROUP_CREATED`
         ユーザーグループが作成された
@@ -5563,7 +5566,7 @@ components:
           pattern: "^[a-zA-Z0-9_]{0,15}$"
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         updatedAt:
@@ -5845,7 +5848,7 @@ components:
           description: 更新日時
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         twitterId:
@@ -7294,6 +7297,23 @@ components:
       required:
         - userId
         - channelId
+    UserOfflineEvent:
+      title: UserOfflineEvent
+      type: object
+      description: USER_OFFLINEイベントのbody
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: オフラインになったユーザーのId
+        last_online:
+          type: string
+          format: date-time
+          description: 最後の接続の切断をサーバーが検出した日時
+          example: "2026-09-24T10:15:00.123456Z"
+      required:
+        - id
+        - last_online
     QallRoomStateChangedEvent:
       title: QallRoomStateChangedEvent
       type: object
