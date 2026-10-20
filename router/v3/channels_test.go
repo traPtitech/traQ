@@ -691,6 +691,8 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 	path := "/api/v3/channels/{channelId}/topic"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
 	channel := env.CreateChannel(t, rand)
 	archived := env.CreateChannel(t, rand)
 	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, user.GetID()))
@@ -712,6 +714,19 @@ func TestHandlers_EditChannelTopic(t *testing.T) {
 			WithJSON(&PutChannelTopicRequest{Topic: "test"}).
 			Expect().
 			Status(http.StatusNotFound)
+	})
+
+	t.Run("bad request (not public)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, dm.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PutChannelTopicRequest{Topic: "test"}).
+			Expect().
+			Status(http.StatusBadRequest).
+			JSON().
+			Object().
+			Value("message").String().IsEqual("channel must be public")
 	})
 
 	t.Run("bad request (archived)", func(t *testing.T) {
