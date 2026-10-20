@@ -1,7 +1,4 @@
 reviews:
-  auto_review:
-    base_branches:
-      - "feat/thread"
   path_instructions:
     - path: "**/*.go"
       instructions: |

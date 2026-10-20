@@ -51,7 +51,7 @@ func (repo *Repository) CreateWebhook(ctx context.Context, name, description str
 			}
 			return err
 		}
-		if !ch.CanReceiveWebhookMessage() {
+		if !ch.IsPublic {
 			return repository.ArgError("channelID", "private channels are not allowed")
 		}
 
@@ -111,7 +111,7 @@ func (repo *Repository) UpdateWebhook(ctx context.Context, id uuid.UUID, args re
 				}
 				return err
 			}
-			if !ch.CanReceiveWebhookMessage() {
+			if !ch.IsPublic {
 				return repository.ArgError("args.ChannelID", "private channels are not allowed")
 			}
 

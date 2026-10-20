@@ -32,7 +32,7 @@ func TestBotJoined(t *testing.T) {
 	ch := &model.Channel{
 		ID:        uuid.NewV3(uuid.Nil, "c"),
 		Name:      "test",
-		Type:      model.ChannelTypePublic,
+		IsPublic:  true,
 		CreatorID: u.ID,
 	}
 

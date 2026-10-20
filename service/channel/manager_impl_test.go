@@ -77,9 +77,9 @@ func TestInitChannelManager(t *testing.T) {
 		repo.EXPECT().
 			GetPublicChannels(gomock.Any()).
 			Return([]*model.Channel{
-				{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
-				{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
-				{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true},
+				{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
+				{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
+				{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 			}, nil).
 			Times(1)
 
@@ -120,7 +120,7 @@ func TestManagerImpl_GetChannel(t *testing.T) {
 			Name:      "a",
 			ParentID:  dmChannelRootUUID,
 			IsForced:  false,
-			Type:      model.ChannelTypeDM,
+			IsPublic:  false,
 			IsVisible: true,
 		}
 
@@ -327,7 +327,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 							ParentID:   c.Parent,
 							CreatorID:  c.Creator,
 							UpdaterID:  c.Creator,
-							Type:       model.ChannelTypePublic,
+							IsPublic:   true,
 							IsForced:   false,
 							IsVisible:  true,
 							CreatedAt:  createdAt,
@@ -351,176 +351,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 						}
 
 						ch, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, c.Creator)
-						cm.P.Wait()
-						if assert.NoError(t, err) {
-							assert.Equal(t, expected, ch)
-							assert.True(t, cm.PublicChannelTree(context.TODO()).IsChannelPresent(cid))
-						}
-					})
-				}
-			})
-		}
-	})
-}
-
-func TestManagerImpl_CreateThreadChannel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("ErrInvalidParentChannel", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "b", Parent: cNotFound},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
-		}
-	})
-
-	t.Run("RootParentChannel", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "b", Parent: pubChannelRootUUID},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
-		}
-	})
-
-	t.Run("ErrThreadNameConflicts", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "l", Parent: cEK},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
-		}
-	})
-
-	t.Run("ErrChannelArchived", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "a", Parent: cABB},
-			{Name: "a", Parent: cABBC},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrChannelArchived.Error())
-		}
-	})
-
-	t.Run("ErrChannelThreadParent", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-		_, err := cm.CreateThreadChannel(context.TODO(), "a", cEKL, uuid.Nil)
-		assert.EqualError(t, err, ErrChannelThreadParent.Error())
-
-	})
-
-	t.Run("repository error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		mockErr := errors.New("mock error")
-		repo.EXPECT().
-			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, mockErr).
-			AnyTimes()
-
-		_, err := cm.CreateThreadChannel(context.TODO(), "test", cEK, uuid.Nil)
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
-		}
-	})
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
-		cases := []struct {
-			Name    string
-			Parent  uuid.UUID
-			Creator uuid.UUID
-		}{
-			{Name: "test1", Parent: cA, Creator: cAB},
-			{Name: "test2", Parent: cA, Creator: cABC},
-			{Name: "test2", Parent: cEFGJ, Creator: cABCD},
-		}
-
-		for _, uuidVersion := range []int{4, 7} {
-			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
-				t.Parallel()
-				for i, c := range cases {
-					t.Run(strconv.Itoa(i), func(t *testing.T) {
-						ctrl := gomock.NewController(t)
-						repo := mock_repository.NewMockChannelRepository(ctrl)
-						cm := initCM(t, repo)
-
-						cid := mustGenerateUUID(uuidVersion)
-						createdAt := time.Now()
-						expected := &model.Channel{
-							ID:         cid,
-							Name:       c.Name,
-							ParentID:   c.Parent,
-							CreatorID:  c.Creator,
-							UpdaterID:  c.Creator,
-							Type:       model.ChannelTypeThread,
-							IsForced:   false,
-							IsVisible:  true,
-							CreatedAt:  createdAt,
-							UpdatedAt:  createdAt,
-							DeletedAt:  gorm.DeletedAt{},
-							ChildrenID: make([]uuid.UUID, 0),
-						}
-
-						repo.EXPECT().
-							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypeThread).
-							Return(expected, nil).
-							AnyTimes()
-						if c.Parent != uuid.Nil {
-							repo.EXPECT().
-								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
-									"userId":    c.Creator,
-									"channelId": cid,
-								}), createdAt).
-								Return(nil).
-								Times(1)
-						}
-
-						ch, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, c.Creator)
 						cm.P.Wait()
 						if assert.NoError(t, err) {
 							assert.Equal(t, expected, ch)
@@ -918,7 +748,7 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 			Name:      "a",
 			ParentID:  dmChannelRootUUID,
 			IsForced:  false,
-			Type:      model.ChannelTypeDM,
+			IsPublic:  false,
 			IsVisible: true,
 		}
 
@@ -948,14 +778,14 @@ func TestManagerImpl_ArchiveChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		expects := []*model.Channel{
-			{ID: cA, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cAB, Name: "b", ParentID: cA, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
-			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: false},
+			{ID: cA, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cAB, Name: "b", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
 		}
 		repo.EXPECT().
 			ArchiveChannels(gomock.Any(), gomock.Len(len(expects))).
@@ -1023,7 +853,7 @@ func TestManagerImpl_UnarchiveChannel(t *testing.T) {
 
 		repo.EXPECT().
 			UpdateChannel(gomock.Any(), cABB, repository.UpdateChannelArgs{Visibility: optional.From(true)}).
-			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, Type: model.ChannelTypePublic, IsVisible: true}, nil).
+			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true}, nil).
 			Times(1)
 		repo.EXPECT().
 			RecordChannelEvent(gomock.Any(), gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
@@ -1112,7 +942,7 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 					Name:      "a",
 					ParentID:  dmChannelRootUUID,
 					IsForced:  false,
-					Type:      model.ChannelTypeDM,
+					IsPublic:  false,
 					IsVisible: true,
 				}
 				repo.EXPECT().
@@ -1140,13 +970,13 @@ func TestManagerImpl_GetDMChannel(t *testing.T) {
 					Times(1)
 
 				repo.EXPECT().
-					CreateChannel(gomock.Any(), gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), model.ChannelTypeDM).
+					CreateChannel(gomock.Any(), gomock.Any(), set.UUIDSetFromArray([]uuid.UUID{uid1, uid2}), true).
 					Return(&model.Channel{
 						ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
 						Name:      "dm_" + random.AlphaNumeric(17),
 						ParentID:  dmChannelRootUUID,
 						IsForced:  false,
-						Type:      model.ChannelTypeDM,
+						IsPublic:  false,
 						IsVisible: true,
 					}, nil).
 					Times(1)
