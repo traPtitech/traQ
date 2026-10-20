@@ -102,7 +102,7 @@ func createDMChannel(handlerCtx *mock_handler.MockContext, cm *mock_channel.Mock
 		ID:        uuid.NewV3(uuid.Nil, "dm"),
 		Name:      "dm_" + random.AlphaNumeric(17),
 		IsVisible: true,
-		Type:      model.ChannelTypeDM,
+		IsPublic:  false,
 		ParentID:  uuid.FromStringOrNil("aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"),
 	}
 	u = &model.User{

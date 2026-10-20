@@ -50,8 +50,6 @@ paths:
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
       operationId: postMessage
       requestBody:
         content:
@@ -64,10 +62,7 @@ paths:
         - channel
     get:
       summary: チャンネルメッセージのリストを取得
-      description: |-
-        指定したチャンネルのメッセージのリストを取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルのメッセージのリストを取得します。
       operationId: getMessages
       tags:
         - channel
@@ -393,10 +388,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelStats
-      description: |-
-        指定したチャンネルの統計情報を取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルの統計情報を取得します。
   "/channels/{channelId}/topic":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -416,10 +408,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelTopic
-      description: |-
-        指定したチャンネルのトピックを取得します。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
+      description: 指定したチャンネルのトピックを取得します。
     put:
       summary: チャンネルトピックを編集
       responses:
@@ -438,8 +427,6 @@ paths:
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
       requestBody:
         content:
           application/json:
@@ -468,10 +455,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelViewers
-      description: |-
-        指定したチャンネルの閲覧者のリストを取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルの閲覧者のリストを取得します。
   /files:
     post:
       summary: ファイルをアップロード
@@ -679,10 +663,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelPins
-      description: |-
-        指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
   "/messages/{messageId}/stamps":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -1466,10 +1447,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
-      description: |-
-        指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
-
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1501,8 +1479,6 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
-
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1530,8 +1506,6 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
-
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
       tags:
         - channel
         - notification
@@ -1583,10 +1557,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
-      description: |-
-        自身の指定したチャンネルの購読レベルを設定します。
-
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 自身の指定したチャンネルの購読レベルを設定します。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -3549,10 +3520,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
-      description: |-
-        指定したチャンネルに参加しているBOTのリストを取得します。
-
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルに参加しているBOTのリストを取得します。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3595,10 +3563,7 @@ paths:
         "404":
           description: Not Found
       operationId: getChannel
-      description: |-
-        指定したチャンネルの情報を取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルの情報を取得します。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3626,120 +3591,6 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
-  /channels/{channelId}/threads:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-    get:
-      summary: スレッドリストを取得
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                title: ThreadList
-                type: array
-                description: スレッド取得結果
-                items:
-                  $ref: "#/components/schemas/ThreadChannel"
-        "400":
-          description: Bad Request
-        "404":
-          description: Not Found
-      operationId: getThreads
-      tags:
-        - channel
-      description: |-
-        スレッドのリストを取得します。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
-      parameters:
-        - schema:
-            type: boolean
-          in: query
-          name: archived
-          description: アーカイブされたスレッドを含めるかどうか
-        - schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          in: query
-          name: limit
-          description: 取得するスレッドの最大件数
-        - schema:
-            type: integer
-            minimum: 0
-          in: query
-          name: offset
-          description: 取得するスレッドのオフセット
-        - in: query
-          name: sort
-          schema:
-            type: string
-            default: "-createdAt"
-            enum:
-              - createdAt
-              - "-createdAt"
-          description: "ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`)"
-  /threads:
-    post:
-      summary: スレッドを作成
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ThreadChannel"
-        "400":
-          description: Bad Request
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-        "409":
-          description: |-
-            Conflict
-            指定したメッセージにはすでにスレッドが作成されています。
-      operationId: createThread
-      tags:
-        - channel
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PostThreadRequest"
-      description: |-
-        スレッドを作成します。
-        指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
-
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
-  /threads/{channelId}:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-    patch:
-      summary: スレッド情報を変更
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-        "404":
-          description: Not Found
-      operationId: editThread
-      tags:
-        - channel
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchThreadRequest"
-      description: |-
-        指定したスレッドの情報を変更します。
-
-        channelIdにはThreadチャンネルのIDのみを指定することができます。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -4019,10 +3870,7 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: |-
-        指定したチャンネルのイベントリストを取得します。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 指定したチャンネルのイベントリストを取得します。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4211,10 +4059,7 @@ paths:
           description: |-
             No Content
             既読にしました。
-      description: |-
-        自分が未読のチャンネルを既読にします。
-
-        channelIdにはPublicチャンネル、DMチャンネル、ThreadチャンネルのIDを指定することができます。
+      description: 自分が未読のチャンネルを既読にします。
       tags:
         - me
         - notification
@@ -4797,7 +4642,7 @@ paths:
     post:
       summary: LiveKit Webhook受信
       description: >
-        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。
+        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
       operationId: liveKitWebhook
       tags:
@@ -4820,7 +4665,7 @@ paths:
     get:
       summary: サウンドボード用の音声一覧を取得
       description: >
-        DBに保存されたサウンドボード情報を取得します。
+        DBに保存されたサウンドボード情報を取得します。  
         各アイテムには soundId, soundName, stampId が含まれます。
       operationId: getSoundboardList
       tags:
@@ -4838,8 +4683,8 @@ paths:
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
       description: >
-        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
-        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。
+        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
+        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
       operationId: postSoundboard
       tags:
@@ -4866,8 +4711,8 @@ paths:
     post:
       summary: アップロード済み音声を LiveKit ルームで再生
       description: >
-        S3上にある音声ファイルの署名付きURLを生成し、
-        Ingressを介して指定ルームに音声を流します。
+        S3上にある音声ファイルの署名付きURLを生成し、  
+        Ingressを介して指定ルームに音声を流します。    
         該当ルームに参加しているユーザであれば再生可能とします。
       operationId: postSoundboardPlay
       tags:
@@ -5048,11 +4893,6 @@ components:
           format: uuid
           description: 親チャンネルUUID
           nullable: true
-        parentMessageId:
-          type: string
-          format: uuid
-          description: 親メッセージUUID(スレッドチャンネルの場合)
-          nullable: true
         archived:
           type: boolean
           description: チャンネルがアーカイブされているかどうか
@@ -5075,7 +4915,6 @@ components:
       required:
         - id
         - parentId
-        - parentMessageId
         - archived
         - force
         - topic
@@ -6296,29 +6135,6 @@ components:
       required:
         - name
         - parent
-    PostThreadRequest:
-      title: PostThreadRequest
-      type: object
-      description: スレッド作成リクエスト
-      properties:
-        name:
-          type: string
-          description: スレッド名
-        parent:
-          type: string
-          format: uuid
-          description: 親メッセージのUUID
-    PatchThreadRequest:
-      title: PatchThreadRequest
-      type: object
-      description: スレッド情報変更リクエスト
-      properties:
-        name:
-          type: string
-          description: スレッド名
-        archived:
-          type: boolean
-          description: アーカイブされているかどうか
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
@@ -7564,35 +7380,6 @@ components:
       required:
         - id
         - userId
-    ThreadChannel:
-      title: ThreadChannel
-      type: object
-      description: スレッドチャンネル
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: チャンネルUUID
-        parentChannelId:
-          type: string
-          description: 親チャンネルUUID
-          format: uuid
-        parentMessageId:
-          type: string
-          description: 親メッセージUUID
-          format: uuid
-        archived:
-          type: boolean
-          description: スレッドがアーカイブされているかどうか
-        name:
-          type: string
-          description: スレッド名
-      required:
-        - id
-        - parentChannelId
-        - parentMessageId
-        - archived
-        - name
     ActivityTimelineMessage:
       title: ActivityTimelineMessage
       type: object

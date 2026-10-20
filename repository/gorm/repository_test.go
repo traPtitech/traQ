@@ -164,7 +164,7 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 		Name:      name,
 		IsForced:  false,
 		IsVisible: true,
-	}, nil, model.ChannelTypePublic)
+	}, nil, false)
 	require.NoError(t, err)
 	return ch
 }

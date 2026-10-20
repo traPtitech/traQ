@@ -28,9 +28,9 @@ func TestMessageDeleted(t *testing.T) {
 		State: model.BotActive,
 	}
 	ch := &model.Channel{
-		ID:   uuid.NewV3(uuid.Nil, "c"),
-		Name: "test",
-		Type: model.ChannelTypePublic,
+		ID:       uuid.NewV3(uuid.Nil, "c"),
+		Name:     "test",
+		IsPublic: true,
 	}
 
 	t.Run("success", func(t *testing.T) {

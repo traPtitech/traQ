@@ -73,18 +73,6 @@ func (r PostChannelRequest) Validate() error {
 	)
 }
 
-// PostThreadRequest POST /threads リクエストボディ
-type PostThreadRequest struct {
-	Name   string    `json:"name"`
-	Parent uuid.UUID `json:"parent"`
-}
-
-func (r PostThreadRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.ThreadNameRuleRequired...),
-	)
-}
-
 // CreateChannels POST /channels
 func (h *Handlers) CreateChannels(c *echo.Context) error {
 	ctx := c.Request().Context()
@@ -104,39 +92,6 @@ func (h *Handlers) CreateChannels(c *echo.Context) error {
 			return herror.BadRequest("invalid channel name")
 		case channel.ErrInvalidParentChannel:
 			return herror.BadRequest("invalid parent channel")
-		case channel.ErrTooDeepChannel:
-			return herror.BadRequest("channel depth limit exceeded")
-		case channel.ErrChannelNameConflicts:
-			return herror.Conflict("channel name conflicts")
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-
-	return c.JSON(http.StatusCreated, formatChannel(ch, make([]uuid.UUID, 0)))
-}
-
-// CreateThreads POST /threads
-func (h *Handlers) CreateThreads(c *echo.Context) error {
-	ctx := c.Request().Context()
-	userID := getRequestUserID(c)
-
-	var req PostThreadRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	ch, err := h.ChannelManager.CreateThreadChannel(ctx, req.Name, req.Parent, userID)
-	if err != nil {
-		switch err {
-		case channel.ErrChannelArchived:
-			return herror.BadRequest("parent channel has been archived")
-		case channel.ErrInvalidChannelName:
-			return herror.BadRequest("invalid channel name")
-		case channel.ErrInvalidParentChannel:
-			return herror.BadRequest("invalid parent channel")
-		case channel.ErrChannelThreadParent:
-			return herror.BadRequest("parent channel is a thread channel")
 		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
 		case channel.ErrChannelNameConflicts:
@@ -349,7 +304,7 @@ func (h *Handlers) GetChannelSubscribers(c *echo.Context) error {
 	ch := getParamChannel(c)
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
-	if !ch.CanGetSubscribers() {
+	if !ch.IsPublic || ch.IsForced {
 		return herror.Forbidden()
 	}
 

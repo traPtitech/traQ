@@ -32,7 +32,7 @@ func TestChannelCreated(t *testing.T) {
 	ch := &model.Channel{
 		ID:        uuid.NewV3(uuid.Nil, "c"),
 		Name:      "test",
-		Type:      model.ChannelTypePublic,
+		IsPublic:  true,
 		CreatorID: u.ID,
 	}
 
@@ -64,7 +64,7 @@ func TestChannelCreated(t *testing.T) {
 			"channel": &model.Channel{
 				ID:        uuid.NewV3(uuid.Nil, "pc"),
 				Name:      "private channel",
-				Type:      model.ChannelTypeDM,
+				IsPublic:  false,
 				CreatorID: u.ID,
 			},
 		}))
