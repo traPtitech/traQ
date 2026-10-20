@@ -83,7 +83,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	chTree := ns.cm.PublicChannelTree(context.Background())
 	chID := m.ChannelID
-	isDM := !chTree.IsChannelPresent(chID)
+	channel, err := ns.repo.GetChannel(context.Background(), chID)
+	if err != nil {
+		logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channelId", chID))
+		return
+	}
+	isDM := channel.IsDMChannel()
+
 	forceNotify := chTree.IsForceChannel(chID)
 
 	// 投稿ユーザー情報を取得
