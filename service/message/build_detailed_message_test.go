@@ -147,7 +147,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), nestedFileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), nestedFileID).Return(&model.FileMeta{ID: nestedFileID}, nil).Times(1)
 
-		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
+		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, true, uuid.NewV3(uuid.Nil, "u1"))
 		if assert.Len(t, result.Quotes, 1) {
 			if assert.Len(t, result.Quotes[0].Attachments, 1) {
 				assert.Equal(t, nestedFileID, result.Quotes[0].Attachments[0].ID)
