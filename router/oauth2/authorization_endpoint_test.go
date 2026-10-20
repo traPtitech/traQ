@@ -253,144 +253,6 @@ func runAuthorizationEndpointTests(t *testing.T, useUUIDV4 bool) {
 		assert.Equal(t, requestedRedirectURI, authorize.RedirectURI)
 	})
 
-	t.Run("Success with private-use URI scheme redirect and PKCE", func(t *testing.T) {
-		t.Parallel()
-		user := env.CreateUser(t, rand, useUUIDV4)
-		nativeClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "com.example.app:/oauth2redirect",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
-
-		e := env.R(t)
-		res := e.POST("/oauth2/authorize").
-			WithFormField("client_id", nativeClient.ID).
-			WithFormField("response_type", "code").
-			WithFormField("redirect_uri", nativeClient.RedirectURI).
-			WithFormField("state", "state").
-			WithFormField("code_challenge_method", "S256").
-			WithFormField("code_challenge", "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM").
-			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			Expect()
-
-		res.Status(http.StatusFound)
-		loc, err := res.Raw().Location()
-		require.NoError(t, err)
-		assert.Equal(t, "/consent", loc.Path)
-		assert.Equal(t, nativeClient.ID, loc.Query().Get("client_id"))
-	})
-
-	t.Run("Found (private-use URI scheme redirect without PKCE)", func(t *testing.T) {
-		t.Parallel()
-		nativeClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "com.example.app:/oauth2redirect",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
-
-		for name, form := range map[string]map[string]string{
-			"no code challenge": {},
-			"plain method":      {"code_challenge_method": "plain", "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"},
-			"no method":         {"code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"},
-		} {
-			t.Run(name, func(t *testing.T) {
-				t.Parallel()
-				e := env.R(t)
-				req := e.POST("/oauth2/authorize").
-					WithFormField("client_id", nativeClient.ID).
-					WithFormField("response_type", "code").
-					WithFormField("state", "state").
-					WithCookie(session.CookieName, s)
-				for k, v := range form {
-					req = req.WithFormField(k, v)
-				}
-				res := req.Expect()
-
-				res.Status(http.StatusFound)
-				loc, err := res.Raw().Location()
-				require.NoError(t, err)
-				assert.Equal(t, "com.example.app", loc.Scheme)
-				assert.Equal(t, "/oauth2redirect", loc.Path)
-				assert.Equal(t, errInvalidRequest, loc.Query().Get("error"))
-				assert.Equal(t, "state", loc.Query().Get("state"))
-				assert.Empty(t, loc.Query().Get("code"))
-			})
-		}
-	})
-
-	t.Run("Found (legacy non reverse domain scheme redirect without PKCE)", func(t *testing.T) {
-		t.Parallel()
-		legacyClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "legacy native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "myapp:1234",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), legacyClient))
-
-		e := env.R(t)
-		res := e.POST("/oauth2/authorize").
-			WithFormField("client_id", legacyClient.ID).
-			WithFormField("response_type", "code").
-			WithCookie(session.CookieName, s).
-			Expect()
-
-		res.Status(http.StatusFound)
-		loc, err := res.Raw().Location()
-		require.NoError(t, err)
-		assert.Equal(t, "myapp", loc.Scheme)
-		assert.Equal(t, errInvalidRequest, loc.Query().Get("error"))
-		assert.Empty(t, loc.Query().Get("code"))
-	})
-
-	t.Run("Found (prompt=none with private-use URI scheme redirect)", func(t *testing.T) {
-		t.Parallel()
-		user := env.CreateUser(t, rand, useUUIDV4)
-		nativeClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "com.example.app:/oauth2redirect",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
-		// 過去に同意済みでも自動で認可しない
-		env.IssueToken(t, nativeClient, user.GetID(), false)
-
-		e := env.R(t)
-		res := e.POST("/oauth2/authorize").
-			WithFormField("client_id", nativeClient.ID).
-			WithFormField("response_type", "code").
-			WithFormField("prompt", "none").
-			WithFormField("scope", "read").
-			WithFormField("code_challenge_method", "S256").
-			WithFormField("code_challenge", "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM").
-			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			Expect()
-
-		res.Status(http.StatusFound)
-		loc, err := res.Raw().Location()
-		require.NoError(t, err)
-		assert.Equal(t, "com.example.app", loc.Scheme)
-		assert.Equal(t, errConsentRequired, loc.Query().Get("error"))
-		assert.Empty(t, loc.Query().Get("code"))
-	})
-
 	t.Run("Bad Request", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -807,23 +669,19 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 	}
 	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
 
-	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client, opts ...func(*authorizeRequest)) string {
-		req := authorizeRequest{
-			ResponseType: "code",
-			ClientID:     client.ID,
-			RedirectURI:  client.RedirectURI,
-			Scopes:       scopesReadWrite,
-			ValidScopes:  scopesRead,
-			State:        "state",
-			Types:        responseType{Code: true},
-			AccessTime:   time.Now(),
-			Nonce:        "nonce",
-		}
-		for _, opt := range opts {
-			opt(&req)
-		}
+	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client) string {
 		s, err := env.SessStore.IssueSession(context.TODO(), uid, map[string]interface{}{
-			oauth2ContextSession: req,
+			oauth2ContextSession: authorizeRequest{
+				ResponseType: "code",
+				ClientID:     client.ID,
+				RedirectURI:  client.RedirectURI,
+				Scopes:       scopesReadWrite,
+				ValidScopes:  scopesRead,
+				State:        "state",
+				Types:        responseType{Code: true},
+				AccessTime:   time.Now(),
+				Nonce:        "nonce",
+			},
 		})
 		require.NoError(t, err)
 
@@ -898,67 +756,6 @@ func runAuthorizationDecideHandlerTests(t *testing.T, useUUIDV4 bool) {
 		authorize, err := env.Repository.GetAuthorize(context.TODO(), loc.Query().Get("code"))
 		require.NoError(t, err)
 		assert.Equal(t, requestedRedirectURI, authorize.RedirectURI)
-	})
-
-	t.Run("Success with private-use URI scheme redirect", func(t *testing.T) {
-		t.Parallel()
-		nativeClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "com.example.app:/oauth2redirect",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
-
-		e := env.R(t)
-		res := e.POST("/oauth2/authorize/decide").
-			WithFormField("submit", "approve").
-			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), nativeClient, func(req *authorizeRequest) {
-				req.CodeChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-				req.CodeChallengeMethod = "S256"
-			})).
-			Expect()
-
-		res.Status(http.StatusFound)
-		loc, err := res.Raw().Location()
-		require.NoError(t, err)
-		assert.Equal(t, "com.example.app", loc.Scheme)
-		assert.Equal(t, "/oauth2redirect", loc.Path)
-		assert.Equal(t, "state", loc.Query().Get("state"))
-		assert.NotEmpty(t, loc.Query().Get("code"))
-	})
-
-	t.Run("Found (private-use URI scheme redirect without PKCE)", func(t *testing.T) {
-		t.Parallel()
-		nativeClient := &model.OAuth2Client{
-			ID:           random.AlphaNumeric(36),
-			Name:         "native client",
-			Confidential: false,
-			CreatorID:    creatorID,
-			Secret:       random.AlphaNumeric(36),
-			RedirectURI:  "com.example.app:/oauth2redirect",
-			Scopes:       scopesRead,
-		}
-		require.NoError(t, env.Repository.SaveClient(context.TODO(), nativeClient))
-
-		// redirect_uriを省略した認可リクエストの後に、コールバックURLが独自スキームに変更された場合
-		e := env.R(t)
-		res := e.POST("/oauth2/authorize/decide").
-			WithFormField("submit", "approve").
-			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), nativeClient, func(req *authorizeRequest) {
-				req.RedirectURI = ""
-			})).
-			Expect()
-
-		res.Status(http.StatusFound)
-		loc, err := res.Raw().Location()
-		require.NoError(t, err)
-		assert.Equal(t, "com.example.app", loc.Scheme)
-		assert.Equal(t, errInvalidRequest, loc.Query().Get("error"))
-		assert.Empty(t, loc.Query().Get("code"))
 	})
 
 	t.Run("Bad Request (No form)", func(t *testing.T) {

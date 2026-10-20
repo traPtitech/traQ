@@ -2,7 +2,6 @@ package validator
 
 import (
 	"regexp"
-	"strings"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -80,8 +79,7 @@ var ChannelNameRuleRequired = append([]vd.Rule{
 // StampNameRule スタンプ名バリデーションルール
 var StampNameRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),
-	vd.RuneLength(1, 32).Error("must be 1-32 characters long"),
-	vd.NewStringRule(func(s string) bool { return !strings.HasPrefix(s, "0x") }, "must not start with 0x"),
+	vd.RuneLength(1, 32),
 }
 
 // StampNameRuleRequired スタンプ名バリデーションルール with Required

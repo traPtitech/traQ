@@ -2,7 +2,6 @@ package search
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -47,24 +46,12 @@ type Query struct {
 	Sort           optional.Of[string]    `query:"sort"`           // 並び順 /[-\+]?key/
 }
 
-const (
-	// DefaultLimit Limitが指定されなかった場合の取得件数
-	DefaultLimit = 20
-	// maxResultWindow Offset+Limitで取得できる検索結果の上限
-	// Cannot page through more than 10k hits with From and Size
-	// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
-	maxResultWindow = 10000
-)
-
 func (q Query) Validate() error {
-	limit := DefaultLimit
-	if q.Limit.Valid {
-		limit = q.Limit.V
-	}
 	return vd.ValidateStruct(&q,
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
-		vd.Field(&q.Offset, vd.Min(0), vd.Max(maxResultWindow-limit).
-			Error(fmt.Sprintf("limit (%d) + offset (%d) must be less than or equal to %d", limit, q.Offset.V, maxResultWindow))),
+		// Cannot page through more than 10k hits with From and Size
+		// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
+		vd.Field(&q.Offset, vd.Min(0), vd.Max(9900)),
 		vd.Field(&q.Sort, vd.Match(allowedSortKeysRegExp)),
 	)
 }

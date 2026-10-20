@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 
@@ -44,7 +45,7 @@ func (r PostClientsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(1, 1000)),
-		vd.Field(&r.CallbackURL, vd.Required, validator.OAuth2RedirectURI),
+		vd.Field(&r.CallbackURL, vd.Required, is.URL),
 		vd.Field(&r.Scopes, vd.Required),
 	)
 }
@@ -103,7 +104,7 @@ func (r PatchClientRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, validator.RequiredIfValid, vd.RuneLength(1, 1000)),
-		vd.Field(&r.CallbackURL, validator.RequiredIfValid, validator.OAuth2RedirectURI),
+		vd.Field(&r.CallbackURL, validator.RequiredIfValid, is.URL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID),
 	)
 }

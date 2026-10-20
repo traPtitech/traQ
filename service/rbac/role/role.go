@@ -48,11 +48,6 @@ func GetSystemRoles() Roles {
 			oauth2Scope: true,
 			permissions: permission.PermissionsFromArray(profilePerms),
 		},
-		Qall: &systemRole{
-			name:        Qall,
-			oauth2Scope: true,
-			permissions: permission.PermissionsFromArray(qallPerms),
-		},
 		Client: &systemRole{
 			name:        Client,
 			oauth2Scope: false,
