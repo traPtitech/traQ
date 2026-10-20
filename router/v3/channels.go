@@ -130,6 +130,10 @@ func (h *Handlers) EditChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
+	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
+		return herror.BadRequest("channel must be public")
+	}
+
 	var req PatchChannelRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err

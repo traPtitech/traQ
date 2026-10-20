@@ -458,6 +458,7 @@ func TestHandlers_EditChannel(t *testing.T) {
 	channel := env.CreateChannel(t, rand)
 	parent := env.CreateChannel(t, rand)
 	unarchived := env.CreateChannel(t, rand)
+	dm := env.CreateDMChannel(t, admin.GetID(), user.GetID())
 	archived := env.CreateChannel(t, rand)
 	require.NoError(t, env.CM.ArchiveChannel(context.TODO(), archived.ID, admin.GetID()))
 
@@ -478,6 +479,20 @@ func TestHandlers_EditChannel(t *testing.T) {
 			WithJSON(&PatchChannelRequest{Name: optional.From("po")}).
 			Expect().
 			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request (not public)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		newName := random.AlphaNumeric(20)
+		e.PATCH(path, dm.ID).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Name: optional.From(newName)}).
+			Expect().
+			Status(http.StatusBadRequest).
+			JSON().
+			Object().
+			Value("message").String().IsEqual("channel must be public")
 	})
 
 	t.Run("bad request (invalid name)", func(t *testing.T) {
