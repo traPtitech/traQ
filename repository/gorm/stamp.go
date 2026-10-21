@@ -402,7 +402,7 @@ func (r *stampRepository) GetStampStats(ctx context.Context, stampID uuid.UUID) 
 	}
 
 	if ok, err := gormutil.
-		RecordExists(r.db.WithContext(ctx), &model.MessageStamp{StampID: stampID}); err != nil {
+		RecordExists(r.db.WithContext(ctx), &model.Stamp{ID: stampID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, repository.ErrNotFound
@@ -411,7 +411,7 @@ func (r *stampRepository) GetStampStats(ctx context.Context, stampID uuid.UUID) 
 	if err := r.db.WithContext(ctx).
 		Unscoped().
 		Model(&model.MessageStamp{}).
-		Select("COUNT(stamp_id) AS count", "SUM(count) AS total_count").
+		Select("COUNT(stamp_id) AS count", "COALESCE(SUM(count), 0) AS total_count").
 		Where(&model.MessageStamp{StampID: stampID}).
 		Find(&stats).
 		Error; err != nil {

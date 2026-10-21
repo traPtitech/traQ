@@ -467,14 +467,27 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetStampStats(context.TODO(), uuid.Must(uuid.NewV4()))
-		assert.Error(t, err)
+		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
 	t.Run("not found(UUIDv7)", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.GetStampStats(context.TODO(), uuid.Must(uuid.NewV7()))
-		assert.Error(t, err)
+		assert.ErrorIs(t, err, repository.ErrNotFound)
+	})
+
+	t.Run("no message stamps", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, repo, rand, false)
+		stamp := mustMakeStamp(t, repo, rand, user.GetID())
+
+		stats, err := repo.GetStampStats(context.TODO(), stamp.ID)
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, 0, stats.Count)
+			assert.EqualValues(t, 0, stats.TotalCount)
+		}
 	})
 
 	t.Run("success", func(t *testing.T) {
