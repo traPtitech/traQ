@@ -1401,6 +1401,11 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
+			GetChannel(gomock.Any(), gomock.Any()).
+			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM},nil).
+			Times(1)
+
+		repo.EXPECT().
 			GetPrivateChannelMemberIDs(gomock.Any(), gomock.Any()).
 			Return(nil, mockErr).
 			Times(1)
