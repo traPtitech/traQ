@@ -159,12 +159,6 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 			//エラーに応じたレスポンス
 			return repository.ArgError("name", err.Error())
 		}
-		// 名前重複チェック
-		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
-			return err
-		} else if exists {
-			return repository.ErrAlreadyExists
-		}
 		// ファイル存在チェック
 		if stamp.FileID == uuid.Nil {
 			return repository.ArgError("fileID", "FileID's file is not found")
@@ -175,7 +169,11 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 			return repository.ArgError("fileID", "fileID's file is not found")
 		}
 
-		return tx.Create(stamp).Error
+		err := tx.Create(stamp).Error
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return repository.ErrAlreadyExists
+		}
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -210,17 +208,6 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
 				return repository.ArgError("args.Name", err.Error())
 			}
-
-			// 重複チェックで名前が一致するレコードを取得
-			var existingStamp model.Stamp
-			if err := tx.Where("name = ?", args.Name.V).First(&existingStamp).Error; err != nil {
-				if !errors.Is(err, gorm.ErrRecordNotFound) {
-					return err
-				}
-			} else if existingStamp.ID != s.ID {
-				// 名前が一致する他のレコードが存在し、IDも異なる場合はエラーを返す
-				return repository.ErrAlreadyExists
-			}
 			changes["name"] = args.Name.V
 		}
 		if args.FileID.Valid {
@@ -241,7 +228,11 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 		}
 
 		if len(changes) > 0 {
-			return tx.Model(&s).Updates(changes).Error
+			err := tx.Model(&s).Updates(changes).Error
+			if gormutil.IsMySQLDuplicatedRecordErr(err) {
+				return repository.ErrAlreadyExists
+			}
+			return err
 		}
 		return nil
 	})
