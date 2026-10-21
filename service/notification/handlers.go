@@ -83,7 +83,15 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	chTree := ns.cm.PublicChannelTree(context.Background())
 	chID := m.ChannelID
-	isDM := !chTree.IsChannelPresent(chID)
+	channel, err := ns.repo.GetChannel(context.Background(), chID)
+	if err != nil {
+		logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channelId", chID))
+		return
+	}
+
+	isDM := channel.IsDMChannel()
+	isThread := channel.IsThread()
+
 	forceNotify := chTree.IsForceChannel(chID)
 
 	// 投稿ユーザー情報を取得
@@ -116,17 +124,26 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	dmMembers := set.UUID{}     // isDMの場合 DMのメンバー
 
 	// メッセージボディ作成
-	if !isDM {
+	if isDM {
+		// DM
+		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
+		fcmPayload.Path = "/users/" + mUser.GetName()
+		fcmPayload.SetBodyWithEllipsis(parsed.NotificationText())
+
+	} else if isThread {
+		// スレッドチャンネル
+		// スレッドの親は必ずpublicChannel→親のパスを取得 + スレッド名
+		path := chTree.GetChannelPath(channel.ParentID) + "/" + channel.Name
+		fcmPayload.Title = "#" + path
+		fcmPayload.Path = "/channels/" + path
+		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
+	} else {
 		// 公開チャンネル
 		path := chTree.GetChannelPath(chID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
-	} else {
-		// DM
-		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
-		fcmPayload.Path = "/users/" + mUser.GetName()
-		fcmPayload.SetBodyWithEllipsis(parsed.NotificationText())
+
 	}
 
 	if len(parsed.Attachments) > 0 {
@@ -160,7 +177,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		markedUsers.Add(users...)
 		dmMembers.Add(users...)
 
-	default: // 通常チャンネルメッセージ
+	default: // 通常チャンネル,スレッドチャンネルメッセージ
 		// チャンネル通知購読者取得
 		notify, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtNotifyLevelOf(chID))
 		if err != nil {

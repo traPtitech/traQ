@@ -18,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac/permission"
@@ -202,9 +203,18 @@ func (h *Handlers) PostWebhook(c *echo.Context) error {
 		channelID = id
 	}
 
-	// 投稿先チャンネル確認
-	if !h.ChannelManager.PublicChannelTree(ctx).IsChannelPresent(channelID) {
-		return herror.BadRequest("invalid channel")
+	// 投稿先チャンネルの存在確認
+	ch, err := h.ChannelManager.GetChannel(ctx, channelID)
+	if err != nil {
+		switch err {
+		case channel.ErrChannelNotFound:
+			return herror.NotFound("channel not found")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	if ch.IsDMChannel() {
+		return herror.NotFound("channel not found")
 	}
 
 	// 埋め込み変換
