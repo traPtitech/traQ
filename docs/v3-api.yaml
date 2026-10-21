@@ -3823,7 +3823,9 @@ paths:
       - $ref: "#/components/parameters/messageIdInPath"
     delete:
       summary: Webhookの投稿メッセージを削除
-      description: 指定されたWebhookが投稿したメッセージを削除します。
+      description: |-
+        指定されたWebhookが投稿したメッセージを削除します。
+        アーカイブされているチャンネルのメッセージを削除することはできません。
       tags:
         - webhook
       operationId: DeleteWebhookMessage
@@ -3832,6 +3834,10 @@ paths:
           description: |-
             No Content
             正常に削除できました。
+        "400":
+          description: |-
+            Bad Request
+            チャンネルがアーカイブされています。
         "403":
           description: |-
             Forbidden
