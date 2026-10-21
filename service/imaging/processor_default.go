@@ -49,10 +49,7 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 
 	imgCfg, _, err := image.DecodeConfig(src)
 	if err != nil {
-		if err == image.ErrFormat {
-			return nil, ErrInvalidImageSrc
-		}
-		return nil, err
+		return nil, ErrInvalidImageSrc
 	}
 
 	// 画素数チェック
