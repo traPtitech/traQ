@@ -63,6 +63,7 @@ var List = []Permission{
 	CreateChannel,
 	GetChannel,
 	EditChannel,
+	EditThread,
 	DeleteChannel,
 	ChangeParentChannel,
 	EditChannelTopic,
