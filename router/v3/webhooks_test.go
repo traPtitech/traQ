@@ -552,6 +552,7 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	wh := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	wh2 := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
 	message := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
+	toDelete := env.CreateMessage(t, wh.GetBotUserID(), ch.ID, "test")
 	archived := env.CreateChannel(t, rand)
 	archivedWh := env.CreateWebhook(t, rand, user.GetID(), archived.ID)
 	archivedM := env.CreateMessage(t, archivedWh.GetBotUserID(), archived.ID, "test")
@@ -605,12 +606,12 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.DELETE(path, wh.GetID(), message.GetID()).
+		e.DELETE(path, wh.GetID(), toDelete.GetID()).
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(context.TODO(), message.GetID())
+		_, err := env.Repository.GetMessageByID(context.TODO(), toDelete.GetID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
