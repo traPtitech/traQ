@@ -611,7 +611,9 @@ func TestHandlers_DeleteWebhookMessage(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := env.Repository.GetMessageByID(context.TODO(), toDelete.GetID())
-		assert.ErrorIs(t, err, repository.ErrNotFound)
+		e.GET("/api/v3/messages/{messageId}", toDelete.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
 	})
 }
