@@ -125,6 +125,9 @@ func (h *Handlers) EditClient(c *echo.Context) error {
 		Confidential: req.Confidential,
 	}
 	if err := h.Repo.UpdateClient(c.Request().Context(), oc.ID, args); err != nil {
+		if repository.IsArgError(err) {
+			return herror.BadRequest(err)
+		}
 		return herror.InternalServerError(err)
 	}
 

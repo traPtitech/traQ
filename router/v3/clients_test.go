@@ -546,6 +546,7 @@ func TestHandlers_EditClient(t *testing.T) {
 	c1 := env.CreateOAuth2Client(t, rand, user1.GetID())
 	c2 := env.CreateOAuth2Client(t, rand, user2.GetID())
 	c3 := env.CreateOAuth2Client(t, rand, user1.GetID(), WithConfidential(true))
+	bot := env.CreateBot(t, rand, user1.GetID())
 	user1Session := env.S(t, user1.GetID())
 	adminSession := env.S(t, admin.GetID())
 
@@ -564,6 +565,26 @@ func TestHandlers_EditClient(t *testing.T) {
 		e.PATCH(path, c1.ID).
 			WithCookie(session.CookieName, user1Session).
 			WithJSON(&PatchClientRequest{Name: optional.From(strings.Repeat("a", 100))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (developer id, non existent id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, c1.ID).
+			WithCookie(session.CookieName, user1Session).
+			WithJSON(&PatchClientRequest{DeveloperID: optional.From(uuid.Must(uuid.NewV4()))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (developer id, bot user)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, c1.ID).
+			WithCookie(session.CookieName, user1Session).
+			WithJSON(&PatchClientRequest{DeveloperID: optional.From(bot.BotUserID)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
