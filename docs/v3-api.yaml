@@ -205,7 +205,7 @@ paths:
           name: sort
           schema:
             type: string
-            default: "-createdAt"
+            default: createdAt
             enum:
               - createdAt
               - "-createdAt"

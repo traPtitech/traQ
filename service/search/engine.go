@@ -12,6 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // ErrServiceUnavailable エラー 現在検索サービスが利用できません
@@ -65,7 +66,7 @@ func (q Query) Validate() error {
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
 		vd.Field(&q.Offset, vd.Min(0), vd.Max(maxResultWindow-limit).
 			Error(fmt.Sprintf("limit (%d) + offset (%d) must be less than or equal to %d", limit, q.Offset.V, maxResultWindow))),
-		vd.Field(&q.Sort, vd.Match(allowedSortKeysRegExp)),
+		vd.Field(&q.Sort, validator.RequiredIfValid, vd.Match(allowedSortKeysRegExp)),
 	)
 }
 
@@ -107,7 +108,7 @@ const (
 
 var (
 	allowedSortKeys       = []string{createdAtSortKey, updatedAtSortKey}
-	allowedSortKeysRegExp = regexp.MustCompile("([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")")
+	allowedSortKeysRegExp = regexp.MustCompile("^([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")$")
 )
 
 // `-`のつかないソートキーを指定した時、対応する値の降順にするか
