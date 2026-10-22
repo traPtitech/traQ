@@ -2637,11 +2637,20 @@ paths:
       tags:
         - notification
       responses:
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "503":
+          description: Service Unavailable
         "101":
           description: Switching Protocols
       operationId: ws
       description: |-
         # WebSocketプロトコル
+        接続時は認証・権限に応じて401・403、ストリーマー終了時は503を返します。
+        コマンド名は大小文字を区別せず、未知のコマンドにはERRORを返します。
+        受信上限は512Bで、binary受信時は1003で切断します。ping間隔は54秒、pong待ちは60秒です。送信バッファは256件で、満杯の場合はイベントを破棄します。
         ## 送信
         `コマンド:引数1:引数2:...`のような形式のTextMessageをサーバーに送信することで、このWebSocketセッションに対する設定が実行できる。
         ### `viewstate`コマンド
@@ -2650,7 +2659,7 @@ paths:
 
         `viewstate:{チャンネルID}:{閲覧状態}`
         + チャンネルID: 対象のチャンネルID
-        + 閲覧状態: `none`, `monitoring`, `editing`
+        + 閲覧状態: `none`, `stale_viewing`, `monitoring`, `editing`。未知の値は`none`として扱います。
 
         最初の`viewstate`コマンドを送る前、または`viewstate:null`, `viewstate:`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。
 
@@ -3277,12 +3286,19 @@ paths:
       tags:
         - bot
       responses:
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "503":
+          description: Service Unavailable
         "101":
           description: Switching Protocols
       operationId: connectBotWS
       summary: WebSocket Mode BOT用通知ストリームに接続します
       description: |-
         # BOT WebSocketプロトコル
+        Bot以外は403です。接続時にBotのmode・stateや通常APIのscope判定は行いません。同じBotの複数接続には同じイベントを配信します。
 
         ## 送信
 
