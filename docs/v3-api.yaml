@@ -5033,7 +5033,7 @@ components:
         topic:
           type: string
           description: トピック
-          maxLength: 200
+          maxLength: 500
       required:
         - topic
     ChannelViewer:
@@ -5703,7 +5703,7 @@ components:
         twitterId:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         name:
           type: string
           pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
@@ -5806,7 +5806,7 @@ components:
         twitter_id:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         display_name:
           type: string
           description: ユーザー表示名
@@ -6281,7 +6281,7 @@ components:
           format: uuid
         clientId:
           type: string
-          description: OAuth2クライアントUUID
+          description: OAuth2クライアントID（36文字の英数字）
         scopes:
           type: array
           description: スコープ
@@ -6314,7 +6314,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: クライアントID（36文字の英数字）
         name:
           type: string
           description: クライアント名
@@ -6375,7 +6375,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: クライアントID（36文字の英数字）
         developerId:
           type: string
           description: クライアント開発者UUID
@@ -6714,8 +6714,8 @@ components:
           description: |-
             BOTユーザーID
             自動的に接頭辞"BOT_"が付与されます
-          maxLength: 16
-          pattern: "^[a-zA-Z0-9_-]{1,16}$"
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_-]{1,20}$"
         displayName:
           type: string
           maxLength: 32
@@ -8151,7 +8151,7 @@ components:
       name: clientId
       in: path
       required: true
-      description: OAuth2クライアントUUID
+      description: OAuth2クライアントID（36文字の英数字）
       schema:
         type: string
     tokenIdInPath:
