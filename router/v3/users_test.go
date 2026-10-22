@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
@@ -957,6 +958,31 @@ func TestHandlers_EditUser(t *testing.T) {
 	admin := env.CreateAdmin(t, rand)
 	userSession := env.S(t, user.GetID())
 	adminSession := env.S(t, admin.GetID())
+
+	t.Run("user roles", func(t *testing.T) {
+		custom := random2.AlphaNumeric(20)
+		require.NoError(t, env.Repository.CreateUserRoles(context.TODO(), &model.UserRole{Name: custom}))
+		for _, name := range []string{"", "unknown-role", role.Read, role.Write, role.OpenID, role.Profile, role.ManageBot, role.Qall, role.Bot, role.Client, role.Admin, role.User, custom} {
+			t.Run(name, func(t *testing.T) {
+				target := env.CreateUser(t, rand)
+				status := http.StatusBadRequest
+				if name == role.Admin || name == role.User || name == custom {
+					status = http.StatusNoContent
+				}
+				env.R(t).PATCH(path, target.GetID()).
+					WithCookie(session.CookieName, adminSession).
+					WithJSON(&PatchUserRequest{Role: optional.From(name)}).
+					Expect().Status(status)
+				updated, err := env.Repository.GetUser(context.TODO(), target.GetID(), true)
+				require.NoError(t, err)
+				if status == http.StatusNoContent {
+					assert.Equal(t, name, updated.GetRole())
+				} else {
+					assert.Equal(t, target.GetRole(), updated.GetRole())
+				}
+			})
+		}
+	})
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
