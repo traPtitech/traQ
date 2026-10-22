@@ -1357,9 +1357,11 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 	uid1 := uuid.NewV3(uuid.Nil, "u1")
 	uid2 := uuid.NewV3(uuid.Nil, "u2")
 	uid3 := uuid.NewV3(uuid.Nil, "u3")
+	//接頭語cはDMチャンネル、接頭語tはThreadチャンネル
 	cid1 := uuid.NewV3(uuid.Nil, "c 1-1")
 	cid2 := uuid.NewV3(uuid.Nil, "c 1-2")
 	cid3 := uuid.NewV3(uuid.Nil, "c 1-3")
+	tid1 := uuid.NewV3(uuid.Nil, "t 1-1")
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -1367,6 +1369,43 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
+		//GetChannelのリポジトリ予測
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cNotFound).
+			Return(nil, repository.ErrNotFound).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(),cA).
+			Return(&model.Channel{ID: cA, Type:model.ChannelTypePublic},nil).
+			AnyTimes()
+		
+		repo.EXPECT().
+			GetChannel(gomock.Any(),cABB).
+			Return(&model.Channel{ID: cABB, Type:model.ChannelTypePublic},nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid1).
+			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid2).
+			Return(&model.Channel{ID: cid2, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cid3).
+			Return(&model.Channel{ID: cid3, Type: model.ChannelTypeDM}, nil).
+			AnyTimes()
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), tid1).
+			Return(&model.Channel{ID: tid1, Type: model.ChannelTypeThread}, nil).
+			AnyTimes()
+
+		//GetPrivateChannelMemberIDsのEXPECT
 		repo.EXPECT().
 			GetPrivateChannelMemberIDs(gomock.Any(), cNotFound).
 			Return([]uuid.UUID{}, nil).
@@ -1400,6 +1439,12 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 			{User: uid2, Channel: cid3, OK: false},
 			{User: uid3, Channel: cid1, OK: false},
 			{User: uid1, Channel: cNotFound, OK: false},
+
+			//スレッドのテストケース
+			//スレッドはどのユーザーでもアクセス可能
+			{User: uid1, Channel: tid1, OK: true},
+			{User: uid2, Channel: tid1, OK: true},
+			{User: uid3, Channel: tid1, OK: true},
 		}
 		for i, c := range cases {
 			t.Run(strconv.Itoa(i), func(t *testing.T) {
@@ -1418,6 +1463,11 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		cm := initCM(t, repo)
 
 		mockErr := errors.New("mock error")
+		repo.EXPECT().
+			GetChannel(gomock.Any(), gomock.Any()).
+			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM},nil).
+			Times(1)
+
 		repo.EXPECT().
 			GetPrivateChannelMemberIDs(gomock.Any(), gomock.Any()).
 			Return(nil, mockErr).
