@@ -493,6 +493,9 @@ paths:
       description: |-
         指定したチャンネルにファイルをアップロードします。
         アーカイブされているチャンネルにはアップロード出来ません。
+        multipart本文の上限は30MiBです。MIMEタイプはアップロード時の申告値を使用します。
+        画像サムネイルはJPEG/PNG/GIF/WebP、波形はaudio/mpeg・audio/mp3・audio/wav・audio/x-wavの場合に生成します。
+        DMへのアップロードは参加者のみアクセス可能にします。
     get:
       summary: ファイルメタのリストを取得
       responses:
@@ -535,6 +538,8 @@ paths:
       description: |-
         指定したクエリでファイルメタのリストを取得します。
         クエリパラメータ`channelId`, `mine`の少なくともいずれかが必須です。
+        通常のユーザーファイルのみを返します。limitの省略時と0指定時は20件、負のoffsetは400、orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        channelIdのnil UUIDは未指定扱いです。存在しない、またはアクセスできないチャンネルの指定は400を返します。
   "/files/{fileId}/meta":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -559,6 +564,7 @@ paths:
       description: |-
         指定したファイルのメタ情報を取得します。
         指定したファイルへのアクセス権限が必要です。
+        Cache-Controlはprivate, max-age=86400です。
   "/files/{fileId}/thumbnail":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -586,6 +592,8 @@ paths:
             image/svg+xml:
               schema:
                 type: string
+        "400":
+          description: サムネイルのtypeが不正
         "403":
           description: Forbidden
         "404":
@@ -596,6 +604,7 @@ paths:
       description: |-
         指定したファイルのサムネイル画像を取得します。
         指定したファイルへのアクセス権限が必要です。
+        typeは大小文字を区別せず、不正値は400です。Cache-Controlはprivate, max-age=31536000、X-TRAQ-FILE-TYPEは元ファイルの種別、X-TRAQ-FILE-CACHEはtrueです。
   "/files/{fileId}":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -619,6 +628,14 @@ paths:
               schema:
                 type: string
               description: "https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Content-Disposition"
+        "206":
+          description: Partial Content
+        "302":
+          description: 署名URLへのリダイレクト
+        "304":
+          description: Not Modified
+        "416":
+          description: Range Not Satisfiable
         "403":
           description: Forbidden
         "404":
@@ -634,6 +651,10 @@ paths:
       description: |-
         指定したファイル本体を取得します。
         指定したファイルへのアクセス権限が必要です。
+        DMの通常ファイルは非参加者に403を返します。アイコン・スタンプにはこのアクセス制限を適用しません。
+        S3/Swiftで直接アクセスURLを発行できる場合は、有効期間5分の署名URLへ302でリダイレクトします。
+        直接配信ではETag・Last-Modified・Rangeに対応し、条件に応じて304・206・416を返します。Cache-Controlはprivate, max-age=31536000です。
+        直接配信のX-TRAQ-FILE-TYPEはファイル種別を表し、アイコン・スタンプにはX-TRAQ-FILE-CACHE: trueも付与します。
     delete:
       summary: ファイルを削除
       responses:
@@ -651,6 +672,7 @@ paths:
       description: |-
         指定したファイルを削除します。
         指定したファイルの削除権限が必要です。
+        アップロード本人の通常ファイルのみ削除できます。アイコン・スタンプ・soundboardは403を返します。
   "/channels/{channelId}/pins":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
