@@ -792,7 +792,9 @@ paths:
           description: Conflict
       tags:
         - stamp
-      description: 指定したスタンプの情報を変更します。
+      description: |-
+        指定したスタンプの情報を変更します。
+        名前は0xで始められません。creatorIdの譲渡先は有効な人間ユーザーに限ります。
       requestBody:
         content:
           application/json:
@@ -812,7 +814,9 @@ paths:
           description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "409":
           description: Conflict
-      description: スタンプを新規作成します。
+      description: |-
+        スタンプを新規作成します。
+        名前は0xで始められません。
       requestBody:
         content:
           multipart/form-data:
@@ -855,7 +859,9 @@ paths:
           in: query
           name: type
           description: 取得するスタンプの種類
-      description: スタンプのリストを取得します。
+      description: |-
+        スタンプのリストを取得します。
+        include-unicodeとtypeの併用、または各値が不正な場合は400を返します。
   /users/me/stamp-history:
     get:
       summary: スタンプ履歴を取得
@@ -877,15 +883,15 @@ paths:
             type: integer
             default: 100
             maximum: 100
-            minimum: 1
+            minimum: 0
           in: query
           name: limit
           description: 件数
       description: |-
         自分のスタンプ履歴を最大100件まで取得します。
         結果は降順で返されます。
-
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
+        limitの省略時と0指定時は100件を返します。
   /users/me/stamp-recommendations:
     get:
       summary: スタンプレコメンドを取得
@@ -927,6 +933,7 @@ paths:
         自分のスタンプレコメンドを最大200件まで取得します。
         結果は推薦度の高い順で返されます。
         スタンプを使用したことがないユーザーの場合は空配列が返されます。
+        集計対象は直近10,000件のスタンプ使用履歴です。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
