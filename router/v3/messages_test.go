@@ -12,6 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 func TestHandlers_GetMyUnreadChannels(t *testing.T) {
@@ -183,6 +184,27 @@ func TestPostMessageRequest_Validate(t *testing.T) {
 	}
 }
 
+func TestPostMessageRequest_Nonce(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		nonce   optional.Of[string]
+		invalid bool
+	}{
+		{"omitted", optional.Of[string]{}, false},
+		{"empty", optional.From(""), true},
+		{"valid", optional.From("abc_012-XYZ"), false},
+		{"maximum length", optional.From(strings.Repeat("a", 32)), false},
+		{"too long", optional.From(strings.Repeat("a", 33)), true},
+		{"invalid characters", optional.From("あ"), true},
+		{"whitespace", optional.From("a b"), true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := (PostMessageRequest{Content: "hello", Nonce: tc.nonce}).Validate()
+			assert.Equal(t, tc.invalid, err != nil)
+		})
+	}
+}
+
 func TestHandlers_EditMessage(t *testing.T) {
 	t.Parallel()
 
@@ -217,6 +239,32 @@ func TestHandlers_EditMessage(t *testing.T) {
 	require.NoError(t, env.Repository.DeleteWebhook(context.TODO(), w3.GetID()))
 
 	s := env.S(t, user.GetID())
+
+	t.Run("nonce is ignored", func(t *testing.T) {
+		nonce := strings.ReplaceAll(uuid.Must(uuid.NewV4()).String(), "-", "")
+		for _, value := range []any{nonce, nonce, "", map[string]string{"invalid": "nonce"}} {
+			env.R(t).PUT(path, m.GetID()).
+				WithCookie(session.CookieName, s).
+				WithJSON(map[string]any{"content": "edited", "nonce": value}).
+				Expect().Status(http.StatusNoContent)
+		}
+		for _, target := range []struct {
+			path string
+			id   uuid.UUID
+		}{
+			{"/api/v3/channels/{id}/messages", pub.ID},
+			{"/api/v3/users/{id}/messages", user2.GetID()},
+		} {
+			env.R(t).POST(target.path, target.id).
+				WithCookie(session.CookieName, s).
+				WithJSON(map[string]any{"content": "posted", "nonce": ""}).
+				Expect().Status(http.StatusBadRequest)
+		}
+		env.R(t).POST("/api/v3/channels/{channelId}/messages", pub.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(map[string]any{"content": "posted", "nonce": nonce}).
+			Expect().Status(http.StatusCreated)
+	})
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
