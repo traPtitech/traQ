@@ -93,6 +93,7 @@ func checkIfNoneMatch(c *echo.Context) condResult {
 		}
 		if buf[0] == ',' {
 			buf = buf[1:]
+			continue
 		}
 		if buf[0] == '*' {
 			return condFalse
