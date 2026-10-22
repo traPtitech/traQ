@@ -292,11 +292,11 @@ func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 	}
 
 	// Add failed participants
-	for _, id := range failedUsers {
+	for id, message := range failedUsers {
 		response = append(response, map[string]string{
 			"participantId": id,
 			"status":        "failed",
-			"error":         failedUsers[id],
+			"error":         message,
 		})
 	}
 
