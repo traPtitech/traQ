@@ -296,6 +296,10 @@ func (ct *treeImpl) regenerateJSON() {
 func (ct *treeImpl) GetModel(id uuid.UUID) (*model.Channel, error) {
 	ct.RLock()
 	defer ct.RUnlock()
+	return ct.getModel(id)
+}
+
+func (ct *treeImpl) getModel(id uuid.UUID) (*model.Channel, error) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		return nil, ErrChannelNotFound
@@ -382,10 +386,14 @@ func (ct *treeImpl) IsChildPresent(name string, parent uuid.UUID) bool {
 }
 
 func (ct *treeImpl) isChildPresent(name string, parent uuid.UUID) bool {
+	return ct.isOtherChildPresent(name, parent, uuid.Nil)
+}
+
+func (ct *treeImpl) isOtherChildPresent(name string, parent, excludedID uuid.UUID) bool {
 	name = strings.ToLower(name)
 	if parent == uuid.Nil {
 		for _, n := range ct.roots {
-			if strings.ToLower(n.name) == name {
+			if n.id != excludedID && strings.ToLower(n.name) == name {
 				return true
 			}
 		}
@@ -393,7 +401,7 @@ func (ct *treeImpl) isChildPresent(name string, parent uuid.UUID) bool {
 	}
 	if n, ok := ct.nodes[parent]; ok {
 		for _, n := range n.children {
-			if strings.ToLower(n.name) == name {
+			if n.id != excludedID && strings.ToLower(n.name) == name {
 				return true
 			}
 		}
