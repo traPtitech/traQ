@@ -3,6 +3,7 @@ package channel
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -188,7 +189,7 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 				p = ch.ParentID
 			}
 
-			if m.T.isChildPresent(n, p) {
+			if (p != ch.ParentID || !strings.EqualFold(n, ch.Name)) && m.T.isChildPresent(n, p) {
 				return ErrChannelNameConflicts
 			}
 		}

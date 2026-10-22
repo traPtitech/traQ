@@ -468,6 +468,24 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		}{
 			{
 				ID: cA,
+				Args: func(_ int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{Name: optional.From("a")}
+				},
+			},
+			{
+				ID: cA,
+				Args: func(_ int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{Name: optional.From("A"), Parent: optional.From(pubChannelRootUUID)}
+				},
+			},
+			{
+				ID: cA,
+				Args: func(_ int) repository.UpdateChannelArgs {
+					return repository.UpdateChannelArgs{Parent: optional.From(pubChannelRootUUID)}
+				},
+			},
+			{
+				ID: cA,
 				Args: func(uuidVersion int) repository.UpdateChannelArgs {
 					return repository.UpdateChannelArgs{
 						UpdaterID: mustGenerateUUID(uuidVersion),
