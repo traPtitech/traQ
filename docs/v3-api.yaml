@@ -4308,12 +4308,51 @@ paths:
             ユーザーグループが見つかりません。
       operationId: getUserGroupAdmins
       description: 指定したグループの管理者のリストを取得します。
+  /jwks:
+    get:
+      operationId: getJWKS
+      summary: JWT検証用の公開鍵を取得
+      description: JWTの署名検証に使用するJSON Web Key Setを公開します。
+      tags: [oauth2]
+      security: []
+      responses:
+        "200":
+          description: JSON Web Key Set
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [keys]
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+  /oauth2/oidc/discovery:
+    get:
+      operationId: getOIDCDiscovery
+      summary: OpenID Connect Discoveryを取得
+      description: /.well-known/openid-configurationでも公開します。RP-Initiated Logoutには対応していません。
+      tags: [oauth2]
+      security: []
+      responses:
+        "200":
+          description: Discovery設定
+          content:
+            application/json:
+              schema:
+                type: object
   /oauth2/token:
     post:
       tags:
         - oauth2
       operationId: postOAuth2Token
-      description: OAuth2 トークンエンドポイント
+      description: |-
+        authorization_code・password・client_credentials・refresh_tokenに対応します。クライアント認証はHTTP Basicを優先し、なければフォームのclient_id/client_secretを使います。confidential clientではsecretが必要で、client_credentialsはconfidential clientのみ利用できます。
+        authorization_codeはcode、passwordはusername/password、refresh_tokenはrefresh_tokenが必須です。codeは有効期間5分・一度限りで、交換時のredirect_uriは認可要求時の値（省略を含む）と一致する必要があり、不一致は401 invalid_grantです。PKCE不一致やchallengeなしのverifierは400 invalid_requestです。
+        scope省略時はクライアント（refresh時は元トークン）のscopeを使い、指定時は利用可能なscopeとの共通部分を発行します。public clientのrefreshではclient_idを要求しません。
+        openidはID tokenを発行し、profileは追加プロフィールclaimを含めます。openidを含む場合はrefresh tokenを発行しません。それ以外のrefresh token発行はサーバー設定に従い、client_credentialsでは発行しません。refresh成功時は旧トークンを失効させます。
+        エラー応答はerrorと任意のerror_descriptionを持つJSONです。
       requestBody:
         required: true
         content:
@@ -4329,15 +4368,30 @@ paths:
                 $ref: "#/components/schemas/OAuth2Token"
         "400":
           description: トークン発行に失敗しました。
-        "403":
-          description: トークン発行に失敗しました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuth2Error"
+        "401":
+          description: クライアント認証・ユーザー認証・redirect URI検証に失敗しました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuth2Error"
+        "500":
+          description: トークン発行時のサーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuth2Error"
       summary: OAuth2 トークンエンドポイント
   /oauth2/authorize/decide:
     post:
       tags:
         - oauth2
       operationId: postOAuth2AuthorizeDecide
-      description: OAuth2 認可承諾
+      description: |-
+        認可要求から5分以内にsubmit=approveを送ると承認し、それ以外はaccess_deniedを返します。認可要求を保存したセッションcookieが必要です。未認証は401、Botは403です。
       requestBody:
         required: true
         content:
@@ -4349,6 +4403,8 @@ paths:
           description: RedirectURIに結果をリダイレクトします。
         "400":
           description: リクエストが不正です。
+        "401":
+          description: 未認証
         "403":
           description: リクエストが許可されていません。
       summary: OAuth2 認可承諾API
@@ -4358,11 +4414,14 @@ paths:
         - oauth2
       operationId: getOAuth2Authorize
       description: |-
-        OAuth2 認可エンドポイント
-        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
+        response_typeはcodeのみで、未指定はinvalid_request、未対応値はunsupported_response_typeです。promptは省略またはnoneのみ対応します。
+        クライアント・redirect URIの検証前後の直接エラーはmessage形式のJSONです。検証済みredirect URIにはcodeまたはerrorとstateをクエリで返し、元のクエリを保持します。未ログイン時は/login、同意が必要な場合は/consentへ302で遷移します。
+        redirect_uriは登録値と完全一致が必要です。ただしhttpのloopback IPアドレスでは、portだけの相違を許可します。省略時は登録値を使います。
+        PKCEはplain/S256に対応し、method省略時はplainです。http(s)以外のredirect URIではS256が必須で、prompt=noneはconsent_requiredになります。prompt=noneはログイン済みかつ要求scopeを承認済みの場合だけ成功します。
       parameters:
         - name: response_type
           in: query
+          required: true
           schema:
             $ref: "#/components/schemas/OAuth2ResponseType"
         - name: client_id
@@ -4411,8 +4470,10 @@ paths:
         - oauth2
       operationId: postOAuth2Authorize
       description: |-
-        OAuth2 認可エンドポイント
-        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
+        response_typeはcodeのみで、未指定はinvalid_request、未対応値はunsupported_response_typeです。promptは省略またはnoneのみ対応します。
+        クライアント・redirect URIの検証前後の直接エラーはmessage形式のJSONです。検証済みredirect URIにはcodeまたはerrorとstateをクエリで返し、元のクエリを保持します。未ログイン時は/login、同意が必要な場合は/consentへ302で遷移します。
+        redirect_uriは登録値と完全一致が必要です。ただしhttpのloopback IPアドレスでは、portだけの相違を許可します。省略時は登録値を使います。
+        PKCEはplain/S256に対応し、method省略時はplainです。http(s)以外のredirect URIではS256が必須で、prompt=noneはconsent_requiredになります。prompt=noneはログイン済みかつ要求scopeを承認済みの場合だけ成功します。
       requestBody:
         required: true
         content:
@@ -4434,11 +4495,15 @@ paths:
       responses:
         "200":
           description: OK
-      description: OAuth2 トークン無効化エンドポイント
+        "400":
+          description: リクエストが不正です。
+        "500":
+          description: 失効処理のサーバーエラー
+      description: |-
+        クライアント認証は不要です。access tokenまたはrefresh tokenを失効させ、空・未指定・存在しないtokenも200で応答します。エラーはmessage形式のJSONです。
       tags:
         - oauth2
       requestBody:
-        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -7625,6 +7690,16 @@ components:
         - content
         - createdAt
         - updatedAt
+    OAuth2Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        error_description:
+          type: string
+        error_uri:
+          type: string
     OAuth2Decide:
       type: object
       required:
@@ -7640,6 +7715,7 @@ components:
       properties:
         grant_type:
           type: string
+          enum: [authorization_code, password, client_credentials, refresh_token]
         code:
           type: string
         redirect_uri:
@@ -7671,16 +7747,19 @@ components:
           type: string
         expires_in:
           type: integer
+          description: 有効期間（秒）。0の場合は省略します。
         refresh_token:
           type: string
         scope:
           type: string
+          description: 要求時と発行時のscope数が異なる場合のみ返します。
         id_token:
           type: string
     OAuth2Authorization:
       type: object
       required:
         - client_id
+        - response_type
       properties:
         response_type:
           $ref: "#/components/schemas/OAuth2ResponseType"
@@ -7702,19 +7781,17 @@ components:
           $ref: "#/components/schemas/OAuth2Prompt"
     OAuth2Prompt:
       type: string
+      description: 省略または空文字列では対話的に認可します。
       enum:
+        - ""
         - none
     OAuth2ResponseType:
       type: string
       enum:
         - code
-        - token
-        - none
     OAuth2Revoke:
       title: OAuth2Revoke
       type: object
-      required:
-        - token
       description: POST /oauth2/revoke 用リクエストボディ
       properties:
         token:
