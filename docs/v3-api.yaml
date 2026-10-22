@@ -9,6 +9,14 @@ info:
     PNG/JPEGはPNGに変換し、GIFはアニメーションを保って、縦横比を維持したままスタンプ128×128・アイコン256×256以内に縮小します。
     入力画素数の上限はConfig.Imaging.MaxPixels（既定2560×1600）です。GIFはさらに1000フレーム以下、論理画面の画素数×フレーム数がMaxPixelsの16倍以下に制限されます。
     スタンプ・ユーザー・Bot・Webhookのアイコン画像GETはETag、Last-Modified、Rangeに対応し、条件に応じて304・206・416を返します。
+
+    認証情報がない場合は401、凍結・無効ユーザーは403です。認証付きv3 APIはユーザーIDとIPの組ごとに毎秒100リクエスト・burst 1000に制限され、超過時は429です。
+    Botは自身のQR・パスワード・FCM・閲覧状態・スター・未読・購読・セッション・トークン・外部連携・設定、およびパレット・Webhook管理・Client管理・クリップ・OGP・ユーザーWebSocket・OAuth同意の操作を利用できません。
+    メッセージ投稿・編集と通常ファイルアップロードはContent-Lengthが必須で、chunkedなど未指定の場合は411です。メッセージのリクエスト本文は100KiB、ファイルアップロードの本文は30MiBを超えると413です。
+    通常APIのエラーはmessageフィールド、OAuthのプロトコルエラーはerror・error_descriptionフィールドで返します。共通処理に直接渡されたnet.OpErrorは502になります。
+    ETagを返す一覧GETはIf-None-Match一致時に304、If-Match不一致時に412を返します。prettyクエリを指定するとJSONを整形します。
+    X-TRAQ-VERSIONはサーバーバージョン、X-Request-IDはリクエストIDです。ファイル系のX-TRAQ-FILE-TYPE・X-TRAQ-FILE-CACHEは各操作の説明を参照してください。
+    CORSではIf-Match・If-None-Matchを送信でき、ETag・Last-Modified・Content-Range・Accept-RangesをJavaScriptから参照できます。gzipはサーバー設定に従い、Content-Security-Policyにはframe-ancestors 'none'を設定します。
   license:
     name: MIT
     url: "https://github.com/traPtitech/traQ/blob/master/LICENSE"
