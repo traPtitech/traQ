@@ -102,6 +102,12 @@ type MessageRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteUnreadsByChannelID(ctx context.Context, channelID, userID uuid.UUID) error
+	// DeleteDeactivatedUserUnreads 凍結中のユーザーの未読レコードを最大limit件削除します
+	//
+	// 成功した場合、削除した件数とnilを返します。
+	// limitが非正の場合、ArgErrorを返します。
+	// DBによるエラーを返すことがあります。
+	DeleteDeactivatedUserUnreads(ctx context.Context, limit int) (int64, error)
 	// GetUserUnreadChannels 指定したユーザーの未読チャンネル一覧を取得します
 	//
 	// 成功した場合、UserUnreadChannelの配列とnilを返します。

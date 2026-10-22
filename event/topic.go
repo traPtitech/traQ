@@ -113,6 +113,10 @@ const (
 	// 		user_id: uuid.UUID
 	// 		noticeable: bool
 	MessageUnread = "message.unread"
+	// UnreadsDeleted 未読レコードが削除された
+	// 	Fields:
+	// 		deleted_unreads: []*model.Unread
+	UnreadsDeleted = "unreads.deleted"
 	// MessageStamped メッセージにスタンプが押された
 	// 	Fields:
 	// 		message_id: uuid.UUID
