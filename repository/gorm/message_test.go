@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -342,6 +343,79 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{UserID: user.GetID()})))
 		}
 	})
+}
+
+func TestRepositoryImpl_DeleteDeactivatedUserUnreads(t *testing.T) {
+	t.Parallel()
+	// Use a dedicated database because the deletion operates across all users.
+	repo, assert, require, active, channel := setupWithUserAndChannel(t, ex4, false)
+	sub := repo.(*Repository).hub.Subscribe(8, event.UnreadsDeleted)
+	defer repo.(*Repository).hub.Unsubscribe(sub)
+	deactivated := []model.UserInfo{
+		mustMakeUser(t, repo, rand, false),
+		mustMakeUser(t, repo, rand, true),
+	}
+	suspended := mustMakeUser(t, repo, rand, false)
+	channel2 := mustMakeChannel(t, repo, rand)
+	db := getDB(repo)
+
+	for i := range 5 {
+		ch := channel
+		if i%2 != 0 {
+			ch = channel2
+		}
+		msg := mustMakeMessage(t, repo, active.GetID(), ch.ID)
+		require.NoError(repo.SetMessageUnreads(context.Background(), map[uuid.UUID]bool{
+			deactivated[i%2].GetID(): i%2 == 0,
+			active.GetID():           false,
+			suspended.GetID():        true,
+		}, msg.ID))
+	}
+	for _, user := range deactivated {
+		require.NoError(db.Model(&model.User{}).Where("id = ?", user.GetID()).Update("status", model.UserAccountStatusDeactivated).Error)
+	}
+	require.NoError(db.Model(&model.User{}).Where("id = ?", active.GetID()).Update("status", model.UserAccountStatusActive).Error)
+	require.NoError(db.Model(&model.User{}).Where("id = ?", suspended.GetID()).Update("status", model.UserAccountStatusSuspended).Error)
+
+	remaining := func() int {
+		return count(t, db.Model(&model.Unread{}).Where("user_id IN ?", []uuid.UUID{deactivated[0].GetID(), deactivated[1].GetID()}))
+	}
+	for _, limit := range []int{0, -1} {
+		deleted, err := repo.DeleteDeactivatedUserUnreads(context.Background(), limit)
+		assert.Zero(deleted)
+		assert.True(repository.IsArgError(err), "expected ArgError, got %v", err)
+		assert.Equal(5, remaining())
+	}
+
+	for i, expected := range []int64{2, 2, 1, 0} {
+		deleted, err := repo.DeleteDeactivatedUserUnreads(context.Background(), 2)
+		require.NoError(err)
+		assert.Equal(expected, deleted)
+		if expected > 0 {
+			select {
+			case ev := <-sub.Receiver:
+				unreads := ev.Fields["deleted_unreads"].([]*model.Unread)
+				require.Len(unreads, int(deleted))
+				for _, unread := range unreads {
+					assert.Contains([]uuid.UUID{deactivated[0].GetID(), deactivated[1].GetID()}, unread.UserID)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("missing unread deletion event")
+			}
+		}
+		assert.Equal(max(5-(i+1)*2, 0), remaining())
+		assert.Equal(5, count(t, db.Model(&model.Unread{}).Where("user_id = ?", active.GetID())))
+		assert.Equal(5, count(t, db.Model(&model.Unread{}).Where("user_id = ?", suspended.GetID())))
+	}
+
+	deleted, err := repo.DeleteDeactivatedUserUnreads(context.Background(), 10)
+	require.NoError(err)
+	assert.Zero(deleted)
+	select {
+	case <-sub.Receiver:
+		t.Fatal("unexpected unread deletion event for an empty batch")
+	default:
+	}
 }
 
 func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {

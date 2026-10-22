@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/service/unread"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
@@ -26,6 +27,7 @@ type Services struct {
 	ChannelManager       channel.Manager
 	OnlineCounter        *counter.OnlineCounter
 	UnreadMessageCounter counter.UnreadMessageCounter
+	UnreadCleaner        *unread.Service
 	MessageCounter       counter.MessageCounter
 	UserCounter          counter.UserCounter
 	ChannelCounter       counter.ChannelCounter
