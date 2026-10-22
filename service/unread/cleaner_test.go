@@ -34,7 +34,9 @@ func TestServiceSchedule(t *testing.T) {
 			return 0, nil
 		}}
 		s := NewService(repo, zap.NewNop())
-		defer s.Shutdown(context.Background())
+		defer func() {
+			assert.NoError(t, s.Shutdown(context.Background()))
+		}()
 
 		synctest.Wait()
 		assert.Zero(t, calls, "must not delete at startup")
