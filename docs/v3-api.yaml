@@ -1497,6 +1497,7 @@ paths:
         既にグループから削除されているメンバーを指定した場合は204を返します。
         対象のユーザーグループの管理者権限が必要です。
         必要なrole権限: `edit_user_group`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
     patch:
       summary: グループメンバーを編集
       responses:
@@ -1532,6 +1533,7 @@ paths:
         指定したユーザーグループ内の指定したユーザーの属性を編集します。
         対象のユーザーグループの管理者権限が必要です。
         必要なrole権限: `edit_user_group`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
   /groups:
     get:
       summary: ユーザーグループのリストを取得
@@ -2674,6 +2676,7 @@ paths:
         他人の状態は変更できません。
         他ユーザーのタグは変更できず、403を返します。
         必要なrole権限: `edit_user_tag`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
     delete:
       summary: ユーザーからタグを削除します
       responses:
@@ -2692,6 +2695,7 @@ paths:
       description: |-
         既に存在しないタグを削除しようとした場合は204を返します。
         必要なrole権限: `edit_user_tag`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
       operationId: removeUserTag
       security:
         - cookieAuth: []
@@ -2786,6 +2790,8 @@ paths:
     delete:
       summary: 自分からタグを削除します
       responses:
+        "404":
+          description: 不正なUUIDまたはnil UUIDです。
         "204":
           description: |-
             No Content
@@ -2797,6 +2803,7 @@ paths:
       description: |-
         既に存在しないタグを削除しようとした場合は204を返します。
         必要なrole権限: `edit_user_tag`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
       operationId: removeMyUserTag
       security:
         - cookieAuth: []
@@ -2835,6 +2842,7 @@ paths:
       description: |-
         自分の指定したタグの状態を変更します。
         必要なrole権限: `edit_user_tag`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
   /users/me/stars:
     get:
       summary: スターチャンネルリストを取得
@@ -2892,6 +2900,8 @@ paths:
     delete:
       summary: チャンネルをスターから削除します
       responses:
+        "404":
+          description: 不正なUUIDまたはnil UUIDです。
         "204":
           description: |-
             No Content
@@ -2902,6 +2912,7 @@ paths:
       description: |-
         既にスターから削除されているチャンネルを指定した場合は204を返します。
         必要なrole権限: `edit_channel_star`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
       operationId: removeMyStar
       security:
         - cookieAuth: []
@@ -4433,6 +4444,7 @@ paths:
         指定したフォルダから指定したメッセージのクリップを除外します。
         既に外されているメッセージを指定した場合は204を返します。
         必要なrole権限: `edit_clip_folder`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
       tags:
         - clip
   "/webhooks/{webhookId}/messages":
@@ -4781,6 +4793,8 @@ paths:
         - cookieAuth: []
         - OAuth2: ["write"]
       responses:
+        "404":
+          description: 不正なUUIDまたはnil UUIDです。
         "204":
           description: |-
             No Content
@@ -4788,6 +4802,7 @@ paths:
       description: |-
         自分が未読のチャンネルを既読にします。
         必要なrole権限: `delete_unread`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
       tags:
         - me
         - notification
@@ -4825,6 +4840,7 @@ paths:
         グループから管理者が存在しなくなる場合は400エラーを返します。
         指定ユーザーが管理者でなくても204を返します。
         必要なrole権限: `edit_user_group`。
+        パスのUUIDが不正またはnil UUIDの場合は404を返します。
   "/groups/{groupId}/admins":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
