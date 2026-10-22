@@ -112,3 +112,30 @@ func TestOAuth2RedirectURI(t *testing.T) {
 		})
 	}
 }
+
+func TestNotInternalURL(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		url     string
+		wantErr bool
+	}{
+		{"", false},
+		{"https://8.8.8.8/", false},
+		{"http://127.0.0.1/", true},
+		{"http://10.0.0.1/", true},
+		{"http://[::1]/", true},
+		{"http://[", true},
+	} {
+		t.Run(tc.url, func(t *testing.T) {
+			t.Parallel()
+			for _, value := range []any{tc.url, optional.From(tc.url)} {
+				if tc.wantErr {
+					assert.Error(t, NotInternalURL.Validate(value))
+				} else {
+					assert.NoError(t, NotInternalURL.Validate(value))
+				}
+			}
+		})
+	}
+}
