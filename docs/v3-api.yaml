@@ -2,7 +2,13 @@ openapi: 3.0.0
 info:
   title: traQ v3
   version: "3.0"
-  description: traQ v3 API
+  description: |-
+    traQ v3 API
+
+    スタンプ・アイコン画像のアップロードはPNG/JPEG/GIFに対応し、SVGは受け付けません。サイズ上限はスタンプ1MiB、アイコン2MiBで、超過は400です。
+    PNG/JPEGはPNGに変換し、GIFはアニメーションを保って、縦横比を維持したままスタンプ128×128・アイコン256×256以内に縮小します。
+    入力画素数の上限はConfig.Imaging.MaxPixels（既定2560×1600）です。GIFはさらに1000フレーム以下、論理画面の画素数×フレーム数がMaxPixelsの16倍以下に制限されます。
+    スタンプ・ユーザー・Bot・Webhookのアイコン画像GETはETag、Last-Modified、Rangeに対応し、条件に応じて304・206・416を返します。
   license:
     name: MIT
     url: "https://github.com/traPtitech/traQ/blob/master/LICENSE"
@@ -803,11 +809,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Stamp"
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "409":
           description: Conflict
-        "413":
-          description: Request Entity Too Large
       description: スタンプを新規作成します。
       requestBody:
         content:
@@ -816,7 +820,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
+                contentType: "image/png, image/jpeg, image/gif"
         description: ""
       operationId: createStamp
       tags:
@@ -1093,13 +1097,11 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: |-
             Not Found
             ユーザーグループが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserGroupIcon
       requestBody:
         content:
@@ -1746,13 +1748,11 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: |-
             Not Found
             Webhookが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeWebhookIcon
       requestBody:
         content:
@@ -1803,15 +1803,13 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "403":
           description: Forbidden
         "404":
           description: |-
             Not Found
             ユーザーが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserIcon
       requestBody:
         content:
@@ -1861,9 +1859,7 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
-        "413":
-          description: Request Entity Too Large
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
       description: 自分のアイコン画像を変更します。
       operationId: changeMyIcon
       requestBody:
@@ -3251,15 +3247,13 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "403":
           description: Forbidden
         "404":
           description: |-
             Not Found
             BOTが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeBotIcon
       requestBody:
         content:
@@ -4028,7 +4022,10 @@ paths:
         "404":
           description: Not Found
       operationId: getStampImage
-      description: 指定したIDのスタンプ画像を返します。
+      description: |-
+        指定したIDのスタンプ画像を返します。
+        Cache-Controlは付与しません。
+        標準UnicodeスタンプはSVGを返すことがあります。
     put:
       summary: スタンプ画像を変更
       operationId: changeStampImage
@@ -4036,14 +4033,14 @@ paths:
         "204":
           description: No Content
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: Not Found
-        "413":
-          description: Request Entity Too Large
       tags:
         - stamp
-      description: 指定したスタンプの画像を変更します。
+      description: |-
+        指定したスタンプの画像を変更します。
+        作成者またはEditStampCreatedByOthers権限が必要です。
       requestBody:
         content:
           multipart/form-data:
@@ -4054,7 +4051,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+                  description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
               required:
                 - file
         description: ""
@@ -5294,7 +5291,7 @@ components:
         file:
           type: string
           format: binary
-          description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+          description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
       required:
         - name
         - file
@@ -6042,7 +6039,7 @@ components:
         file:
           type: string
           format: binary
-          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
+          description: "アイコン画像(2MiB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
       required:
         - file
     PutMyPasswordRequest:

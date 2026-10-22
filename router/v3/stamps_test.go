@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -13,8 +14,33 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 )
+
+func TestHandlers_GetUnicodeStampImage(t *testing.T) {
+	t.Parallel()
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="4"/></svg>`
+	meta, err := env.FM.Save(context.Background(), file.SaveArgs{
+		FileName: "1f600.svg", FileSize: int64(len(svg)), FileType: model.FileTypeStamp, Src: strings.NewReader(svg),
+	})
+	require.NoError(t, err)
+	stamp, err := env.Repository.CreateStamp(context.Background(), repository.CreateStampArgs{
+		Name: random.AlphaNumeric(16), FileID: meta.GetID(), CreatorID: uuid.Nil, IsUnicode: true,
+	})
+	require.NoError(t, err)
+	res := env.R(t).GET("/api/v3/stamps/{stampId}/image", stamp.ID).
+		WithCookie(session.CookieName, env.S(t, user.GetID())).
+		Expect().Status(http.StatusOK)
+	res.Body().IsEqual(svg)
+	contentType := res.Raw().Header.Get("Content-Type")
+	require.Equal(t, "image/svg+xml", contentType)
+	operation := loadOpenAPIOperation(t, "/stamps/{stampId}/image", "get")
+	require.Contains(t, operation.Responses["200"].Content, contentType)
+}
 
 func stampEquals(t *testing.T, expect *model.Stamp, actual *httpexpect.Object) {
 	t.Helper()
