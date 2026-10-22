@@ -964,6 +964,7 @@ func TestHandlers_ReissueBot(t *testing.T) {
 
 		obj.Value("verificationToken").String().NotEmpty()
 		obj.Value("accessToken").String().NotEmpty()
+		obj.Value("accessTokenRevoked").Boolean().IsFalse()
 	})
 }
 
