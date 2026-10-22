@@ -1490,7 +1490,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
-      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+      description: |-
+        指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+        購読レベル2（未読管理・通知あり）のユーザーのみを返します。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1522,6 +1524,7 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
+        EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onはレベル2にし、offはレベル2を0にしますがレベル1は維持します。onとoffの両方に含まれるユーザーは変更しません。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1549,6 +1552,7 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
+        EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onを省略すると、現在レベル2の全員をレベル0にします。レベル1は維持します。
       tags:
         - channel
         - notification
@@ -1600,7 +1604,9 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
-      description: 自身の指定したチャンネルの購読レベルを設定します。
+      description: |-
+        自身の指定したチャンネルの購読レベルを設定します。
+        変更時にSubscribersChangedチャンネルイベントを記録します。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
