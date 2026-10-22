@@ -419,6 +419,23 @@ func (h *Handlers) EditUser(c *echo.Context) error {
 		return err
 	}
 
+	if req.Role.Valid {
+		roles, err := h.Repo.GetAllUserRoles(c.Request().Context())
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		valid := false
+		for _, r := range roles {
+			if r.Name == req.Role.V && !r.Oauth2Scope && r.Name != role.Bot && r.Name != role.Client {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return herror.BadRequest("invalid user role")
+		}
+	}
+
 	args := repository.UpdateUserArgs{
 		DisplayName: req.DisplayName,
 		TwitterID:   req.TwitterID,
