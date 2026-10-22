@@ -3,6 +3,7 @@ package unread
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -26,35 +27,120 @@ func (r *cleanerRepository) DeleteDeactivatedUserUnreads(ctx context.Context, li
 
 func TestServiceSchedule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		calls := 0
+		started := time.Now()
+		runs := make(chan time.Time, 4)
 		repo := &cleanerRepository{deleteUnreads: func(ctx context.Context, limit int) (int64, error) {
-			require.NoError(t, ctx.Err())
+			assert.NoError(t, ctx.Err())
 			assert.Equal(t, deleteBatchSize, limit)
-			calls++
+			runs <- time.Now()
 			return 0, nil
 		}}
 		s := NewService(repo, zap.NewNop())
 		defer func() {
 			assert.NoError(t, s.Shutdown(context.Background()))
+			// jitterbug.Stop does not interrupt its internal sleep.
+			time.Sleep(deleteInterval)
 		}()
 
 		synctest.Wait()
-		assert.Zero(t, calls, "must not delete at startup")
-		time.Sleep(deleteMinInterval - time.Nanosecond)
+		assert.Empty(t, runs, "must not delete immediately at startup")
+		time.Sleep(deleteInitialMinDelay - time.Nanosecond)
 		synctest.Wait()
-		assert.Zero(t, calls)
+		assert.Empty(t, runs)
+		time.Sleep(deleteInitialMaxDelay - deleteInitialMinDelay + time.Nanosecond)
+		synctest.Wait()
+		require.Len(t, runs, 1, "must run once after a short initial delay")
+		firstRun := <-runs
+		assert.GreaterOrEqual(t, firstRun.Sub(started), deleteInitialMinDelay)
+		assert.Less(t, firstRun.Sub(started), deleteInitialMaxDelay)
+
+		time.Sleep(time.Until(firstRun.Add(deleteMinInterval)) - time.Nanosecond)
+		synctest.Wait()
+		assert.Empty(t, runs, "must wait for the daily interval after the initial run")
 		time.Sleep(deleteInterval - deleteMinInterval + time.Nanosecond)
 		synctest.Wait()
-		assert.Equal(t, 1, calls)
+		require.Len(t, runs, 1)
+		secondRun := <-runs
+		assert.GreaterOrEqual(t, secondRun.Sub(firstRun), deleteMinInterval)
+		assert.Less(t, secondRun.Sub(firstRun), deleteInterval)
 		time.Sleep(deleteInterval)
 		synctest.Wait()
-		assert.Equal(t, 2, calls)
+		require.Len(t, runs, 1)
+		thirdRun := <-runs
+		assert.GreaterOrEqual(t, thirdRun.Sub(secondRun), deleteMinInterval)
+		assert.Less(t, thirdRun.Sub(secondRun), deleteInterval)
 
 		require.NoError(t, s.Shutdown(context.Background()))
 		time.Sleep(deleteInterval)
 		synctest.Wait()
-		assert.Equal(t, 2, calls, "must not delete after shutdown")
+		assert.Empty(t, runs, "must not delete after shutdown")
 	})
+}
+
+func TestServiceShutdownDuringInitialDelay(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		calls := 0
+		repo := &cleanerRepository{deleteUnreads: func(context.Context, int) (int64, error) {
+			calls++
+			return 0, nil
+		}}
+		s := NewService(repo, zap.NewNop())
+		synctest.Wait()
+		time.Sleep(deleteInitialMinDelay - time.Nanosecond)
+		synctest.Wait()
+
+		require.NoError(t, s.Shutdown(context.Background()))
+		time.Sleep(deleteInitialMaxDelay + deleteInterval)
+		synctest.Wait()
+		assert.Zero(t, calls, "shutdown during the initial delay must prevent all cleanup")
+	})
+}
+
+func TestServiceContinuesAfterInitialFailure(t *testing.T) {
+	for _, timeout := range []bool{false, true} {
+		name := "error"
+		if timeout {
+			name = "timeout"
+		}
+		t.Run(name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var calls atomic.Int64
+				repo := &cleanerRepository{deleteUnreads: func(ctx context.Context, _ int) (int64, error) {
+					if calls.Add(1) == 1 {
+						if timeout {
+							<-ctx.Done()
+							return 0, ctx.Err()
+						}
+						return 0, errors.New("database unavailable")
+					}
+					assert.NoError(t, ctx.Err(), "the periodic run must have a fresh context")
+					return 0, nil
+				}}
+				core, logs := observer.New(zap.InfoLevel)
+				s := NewService(repo, zap.New(core))
+				defer func() {
+					assert.NoError(t, s.Shutdown(context.Background()))
+					// jitterbug.Stop does not interrupt its internal sleep.
+					time.Sleep(deleteInterval)
+				}()
+
+				time.Sleep(deleteInitialMaxDelay + deleteTimeout)
+				synctest.Wait()
+				assert.Equal(t, int64(1), calls.Load(), "must wait for the next tick after an initial failure")
+				require.Equal(t, 1, logs.Len())
+				level := zap.ErrorLevel
+				if timeout {
+					level = zap.InfoLevel
+				}
+				assert.Equal(t, level, logs.All()[0].Level)
+
+				time.Sleep(deleteInterval)
+				synctest.Wait()
+				assert.Equal(t, int64(2), calls.Load(), "periodic cleanup must still run after an initial failure")
+				assert.Equal(t, 1, logs.Len())
+			})
+		})
+	}
 }
 
 func TestServiceDeleteUnreadsBatches(t *testing.T) {
@@ -236,8 +322,6 @@ func TestServiceShutdownCancelsQuery(t *testing.T) {
 		<-queryStarted
 		require.NoError(t, s.Shutdown(context.Background()))
 		assert.Zero(t, logs.Len(), "shutdown cancellation is not a cleanup failure")
-		// jitterbug.Stop does not interrupt its internal sleep.
-		time.Sleep(deleteInterval)
 	})
 }
 

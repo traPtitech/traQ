@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	deleteInterval    = 24 * time.Hour
-	deleteMinInterval = 23 * time.Hour
-	deleteTimeout     = 10 * time.Minute
-	deleteBatchSize   = 5000
-	deleteBatchPause  = 100 * time.Millisecond
+	deleteInitialMinDelay = time.Minute
+	deleteInitialMaxDelay = 5 * time.Minute
+	deleteInterval        = 24 * time.Hour
+	deleteMinInterval     = 23 * time.Hour
+	deleteTimeout         = 10 * time.Minute
+	deleteBatchSize       = 5000
+	deleteBatchPause      = 100 * time.Millisecond
 )
 
 // Service 凍結ユーザーの未読を定期的に削除するサービス。
@@ -37,9 +39,28 @@ func NewService(repo repository.Repository, logger *zap.Logger) *Service {
 		cancel: cancel,
 		done:   make(chan struct{}),
 	}
-	ticker := jitterbug.New(deleteInterval, &jitterbug.Uniform{Min: deleteMinInterval})
 	go func() {
 		defer close(s.done)
+
+		// 再起動が多くても清掃が先送りされ続けないよう、初回だけ短く待機する。
+		delay := (&jitterbug.Uniform{Min: deleteInitialMinDelay}).Jitter(deleteInitialMaxDelay)
+		timer := time.NewTimer(delay)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+			if ctx.Err() != nil {
+				return
+			}
+		case <-ctx.Done():
+			return
+		}
+
+		s.deleteOnce(ctx)
+		if ctx.Err() != nil {
+			return
+		}
+
+		ticker := jitterbug.New(deleteInterval, &jitterbug.Uniform{Min: deleteMinInterval})
 		defer ticker.Stop()
 		s.run(ctx, ticker.C)
 	}()
@@ -53,19 +74,20 @@ func (s *Service) run(ctx context.Context, ticks <-chan time.Time) {
 			if !ok || ctx.Err() != nil {
 				return
 			}
-			if err := s.deleteUnreads(ctx); err != nil {
-				if ctx.Err() != nil {
-					return
-				}
-				if errors.Is(err, context.DeadlineExceeded) {
-					s.logger.Info("unread deletion time limit reached; remaining unreads will be deleted on the next run")
-					continue
-				}
-				s.logger.Error("failed to delete deactivated user unreads", zap.Error(err))
-			}
+			s.deleteOnce(ctx)
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func (s *Service) deleteOnce(ctx context.Context) {
+	if err := s.deleteUnreads(ctx); err != nil && ctx.Err() == nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			s.logger.Info("unread deletion time limit reached; remaining unreads will be deleted on the next run")
+			return
+		}
+		s.logger.Error("failed to delete deactivated user unreads", zap.Error(err))
 	}
 }
 
