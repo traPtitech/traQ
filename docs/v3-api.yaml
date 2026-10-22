@@ -5749,7 +5749,7 @@ components:
     OIDCUserInfo:
       title: OIDCUserInfo
       type: object
-      description: 自分のユーザー詳細情報
+      description: 自分のユーザー詳細情報。traqとupdated_atはprofileスコープまたはcookie認証時のみ返されます。
       properties:
         sub:
           type: string
@@ -5796,7 +5796,7 @@ components:
           type: array
           description: タグリスト
           items:
-            $ref: "#/components/schemas/UserTag"
+            type: string
         last_online:
           type: string
           description: 最終オンライン日時
@@ -5834,7 +5834,6 @@ components:
         - bio
         - groups
         - tags
-        - updated_at
         - last_online
         - twitter_id
         - display_name
