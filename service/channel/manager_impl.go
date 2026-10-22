@@ -88,7 +88,7 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		return nil, ErrInvalidChannelName
 	}
 
-	// チャンネル名の重複を確認
+	// 既にある子チャンネル名と重複する名付けはできない
 	if m.T.isChildPresent(name, parent) {
 		return nil, ErrChannelNameConflicts
 	}
@@ -105,6 +105,15 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		// 深さを検証
 		if len(m.T.getAscendantIDs(parent))+2 > m.MaxChannelDepth {
 			return nil, ErrTooDeepChannel
+		}
+
+		// 既にあるスレッド名と重複する名付けはできない
+		ok, err := m.R.IsChildPresent(ctx, name, parent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+		}
+		if ok {
+			return nil, ErrChannelNameConflicts
 		}
 	}
 
@@ -410,6 +419,60 @@ func (m *managerImpl) GetDMChannelMapping(ctx context.Context, userID uuid.UUID)
 		}
 	}
 	return result, nil
+}
+
+func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+	m.T.RLock()
+	defer m.T.RUnlock()
+
+	// ルートチャンネルの下にスレッドは作れない
+	if parent == pubChannelRootUUID {
+		return nil, ErrInvalidParentChannel
+	}
+
+	// 親チャンネルが存在しなければスレッド作成できない
+	if !m.T.isChannelPresent(parent) {
+		return nil, ErrInvalidParentChannel
+	}
+	// 親チャンネルがスレッドならスレッド作成できない
+	if m.T.isThreadChannel(parent) {
+		return nil, ErrChannelThreadParent
+	}
+	// 親チャンネルがアーカイブされているならスレッド作成できない
+	if m.T.isArchivedChannel(parent) {
+		return nil, ErrChannelArchived
+	}
+
+	// 既にある子チャンネル名と重複する名付けはできない
+	ok, err := m.R.IsChildPresent(ctx, name, parent)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+	}
+
+	if ok {
+		return nil, ErrChannelNameConflicts
+	}
+
+	// チャンネル作成
+	ch, err := m.R.CreateChannel(ctx, model.Channel{
+		Name:      name,
+		ParentID:  parent,
+		CreatorID: creatorID,
+		UpdaterID: creatorID,
+		IsForced:  false,
+		IsVisible: true,
+	}, nil, model.ChannelTypeThread)
+	if err != nil {
+		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+	}
+	// ロギング
+	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
+		"userId":    ch.CreatorID,
+		"channelId": ch.ID,
+	}, ch.CreatedAt)
+	m.L.Info(fmt.Sprintf("channel #%s was created", m.T.getChannelPath(ch.ID)), zap.Stringer("cid", ch.ID))
+	return ch, nil
 }
 
 func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error) {

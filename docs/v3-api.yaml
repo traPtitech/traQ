@@ -2728,6 +2728,14 @@ paths:
 
         + `id`: 変化したチャンネルのId
 
+        ### `THREAD_CREATED`
+        スレッドが作成された。
+
+        対象: 全員
+
+        + `id`: 作成されたスレッドのId
+
+
         ### `MESSAGE_CREATED`
         メッセージが投稿された。
 
@@ -3595,6 +3603,120 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+  /channels/{channelId}/threads:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      summary: スレッドリストを取得
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                title: ThreadList
+                type: array
+                description: スレッド取得結果
+                items:
+                  $ref: "#/components/schemas/ThreadChannel"
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      operationId: getThreads
+      tags:
+        - channel
+      description: |-
+        スレッドのリストを取得します。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: archived
+          description: アーカイブされたスレッドを含めるかどうか
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: 取得するスレッドの最大件数
+        - schema:
+            type: integer
+            minimum: 0
+          in: query
+          name: offset
+          description: 取得するスレッドのオフセット
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: "-createdAt"
+            enum:
+              - createdAt
+              - "-createdAt"
+          description: "ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`)"
+  /threads:
+    post:
+      summary: スレッドを作成
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadChannel"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: |-
+            Conflict
+            指定したメッセージにすでにスレッドが作成されている、もしくは親を同じくする同名の子チャンネルまたはスレッドが存在しています。
+      operationId: createThread
+      tags:
+        - channel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostThreadRequest"
+      description: |-
+        スレッドを作成します。
+        指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
+        スレッドを作成するチャンネルの、既存の子チャンネルおよびスレッドと重複する名前で作成しようとした場合はエラーになります。
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+  /threads/{channelId}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    patch:
+      summary: スレッド情報を変更
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+      operationId: editThread
+      tags:
+        - channel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchThreadRequest"
+      description: |-
+        指定したスレッドの情報を変更します。
+
+        channelIdにはThreadチャンネルのIDのみを指定することができます。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
