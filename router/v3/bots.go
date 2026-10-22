@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -52,7 +53,7 @@ func (r PostBotRequest) Validate() error {
 	if r.Mode == model.BotModeHTTP.String() {
 		endpointRules = append(endpointRules, vd.Required)
 	}
-	endpointRules = append(endpointRules, is.URL, validator.NotInternalURL)
+	endpointRules = append(endpointRules, is.URL, botEndpointURL, validator.NotInternalURL)
 
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
@@ -62,6 +63,11 @@ func (r PostBotRequest) Validate() error {
 		vd.Field(&r.Endpoint, endpointRules...),
 	)
 }
+
+var botEndpointURL = vd.NewStringRule(func(value string) bool {
+	u, err := url.Parse(value)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Hostname() != ""
+}, "must be an HTTP or HTTPS URL with a host")
 
 // CreateBot POST /bots
 func (h *Handlers) CreateBot(c *echo.Context) error {
@@ -147,7 +153,7 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 		vd.Field(&r.DisplayName, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
 		vd.Field(&r.Mode, validator.RequiredIfValid, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
-		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
+		vd.Field(&r.Endpoint, is.URL, botEndpointURL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
 		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
