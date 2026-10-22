@@ -101,7 +101,7 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 		return herror.BadRequest("invalid client")
 	}
 
-	q := &url.Values{}
+	q := redirectURI.Query()
 	if len(req.State) > 0 {
 		q.Set("state", req.State)
 	}
@@ -296,9 +296,13 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 
-		q.Set("client_id", req.ClientID)
-		q.Set("scopes", req.ValidScopes.String())
-		return c.Redirect(http.StatusFound, "/consent?"+q.Encode())
+		consentQuery := url.Values{}
+		if len(req.State) > 0 {
+			consentQuery.Set("state", req.State)
+		}
+		consentQuery.Set("client_id", req.ClientID)
+		consentQuery.Set("scopes", req.ValidScopes.String())
+		return c.Redirect(http.StatusFound, "/consent?"+consentQuery.Encode())
 	default:
 		q.Set("error", errUnsupportedResponseType)
 		redirectURI.RawQuery = q.Encode()
@@ -367,7 +371,7 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 		return herror.Forbidden("invalid client")
 	}
 
-	q := url.Values{}
+	q := redirectURI.Query()
 	if len(reqAuth.State) > 0 {
 		q.Set("state", reqAuth.State)
 	}
