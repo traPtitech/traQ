@@ -18,7 +18,6 @@ func (h *Handler) OIDCDiscovery(c *echo.Context) error {
 		TokenEndpoint:                    h.Origin + "/api/v3/oauth2/token",
 		UserinfoEndpoint:                 h.Origin + "/api/v3/users/me/oidc",
 		RevocationEndpoint:               h.Origin + "/api/v3/oauth2/revoke",
-		EndSessionEndpoint:               h.Origin + "/api/v3/logout",
 		JwksURI:                          h.Origin + "/api/v3/jwks",
 		ScopesSupported:                  supportedScopes,
 		ResponseTypesSupported:           supportedResponseTypes,
