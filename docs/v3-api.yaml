@@ -56,6 +56,7 @@ paths:
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
       operationId: postMessage
       requestBody:
         content:
@@ -68,7 +69,9 @@ paths:
         - channel
     get:
       summary: チャンネルメッセージのリストを取得
-      description: 指定したチャンネルのメッセージのリストを取得します。
+      description: |-
+        指定したチャンネルのメッセージのリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
       operationId: getMessages
       tags:
         - channel
@@ -102,7 +105,9 @@ paths:
   "/messages":
     get:
       summary: メッセージを検索
-      description: メッセージを検索します。
+      description: |-
+        メッセージを検索します。
+        既定では公開チャンネルのみ検索します。inを指定すると自分が参加するDMも検索できますが、アクセスできないチャンネルは403です。
       operationId: searchMessages
       tags:
         - message
@@ -283,6 +288,7 @@ paths:
         指定したメッセージを編集します。
         自身が投稿したメッセージのみ編集することができます。
         アーカイブされているチャンネルのメッセージを編集することは出来ません。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
       requestBody:
         content:
           application/json:
@@ -1406,7 +1412,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PostMessageRequest"
-      description: 指定したユーザーにダイレクトメッセージを送信します。
+      description: |-
+        指定したユーザーにダイレクトメッセージを送信します。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
+        自分自身・Bot・Webhookユーザーにも送信できます。
     get:
       summary: ダイレクトメッセージのリストを取得
       operationId: getDirectMessages
@@ -1439,7 +1448,10 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したユーザーとのダイレクトメッセージのリストを取得します。
+      description: |-
+        指定したユーザーとのダイレクトメッセージのリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
   "/users/{userId}/stats":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -2574,6 +2586,7 @@ paths:
       description: |-
         パブリックチャンネルの直近の投稿メッセージを作成日時の降順で取得します。
         `all`が`true`でない場合、購読チャンネルのみのタイムラインを取得します
+        対象は直近7日間です。all=falseでも強制通知チャンネルを含み、アーカイブ済みチャンネルも対象です。
       parameters:
         - schema:
             type: integer
@@ -3946,7 +3959,9 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したチャンネルのイベントリストを取得します。
+      description: |-
+        指定したチャンネルのイベントリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4449,6 +4464,7 @@ paths:
       description: |-
         指定したユーザーとのダイレクトメッセージチャンネルの情報を返します。
         ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
+        DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
   "/messages/{messageId}/clips":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -8323,15 +8339,17 @@ components:
       name: limit
       schema:
         type: integer
-        minimum: 1
+        minimum: 0
         maximum: 200
-      description: 取得する件数
+        default: 20
+      description: 取得する件数。0も既定の20件として扱います。
       example: 50
     offsetInQuery:
       in: query
       name: offset
       schema:
         type: integer
+        minimum: 0
         default: 0
       description: 取得するオフセット
       example: 150
@@ -8364,11 +8382,8 @@ components:
       name: order
       schema:
         type: string
-        enum:
-          - asc
-          - desc
         default: desc
-      description: 昇順か降順か
+      description: 大小文字を問わずascなら昇順、それ以外は降順。
     channelIdInPath:
       name: channelId
       in: path
