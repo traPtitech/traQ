@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -48,20 +49,27 @@ type PostBotRequest struct {
 }
 
 func (r PostBotRequest) Validate() error {
-	var endpointRules []vd.Rule
-	if r.Mode == model.BotModeHTTP.String() {
-		endpointRules = append(endpointRules, vd.Required)
-	}
-	endpointRules = append(endpointRules, is.URL, validator.NotInternalURL)
-
-	return vd.ValidateStruct(&r,
+	if err := vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
 		vd.Field(&r.DisplayName, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(0, 1000)),
-		vd.Field(&r.Mode, vd.Required, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
-		vd.Field(&r.Endpoint, endpointRules...),
-	)
+	); err != nil {
+		return err
+	}
+	return validateBotDeliveryConfig(model.BotMode(r.Mode), r.Endpoint)
 }
+
+func validateBotDeliveryConfig(mode model.BotMode, endpoint string) error {
+	return vd.Errors{
+		"mode":     vd.Validate(mode.String(), vd.Required, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
+		"endpoint": vd.Validate(endpoint, vd.Required.When(mode == model.BotModeHTTP), is.URL, botEndpointURLRule, validator.NotInternalURL),
+	}.Filter()
+}
+
+var botEndpointURLRule = vd.NewStringRule(func(value string) bool {
+	u, err := url.Parse(value)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Hostname() != ""
+}, "must be an HTTP or HTTPS URL with a host")
 
 // CreateBot POST /bots
 func (h *Handlers) CreateBot(c *echo.Context) error {
@@ -146,8 +154,6 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.DisplayName, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
-		vd.Field(&r.Mode, validator.RequiredIfValid, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
-		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
 		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
@@ -167,10 +173,15 @@ func (h *Handlers) EditBot(c *echo.Context) error {
 		return herror.Forbidden("you are not permitted to set privileged flag to bots")
 	}
 
-	willBeHTTPMode := req.Mode.ValueOrZero() == model.BotModeHTTP.String() || !req.Mode.Valid && b.Mode == model.BotModeHTTP
-	willHaveNoEndpoint := b.PostURL == "" && !req.Endpoint.Valid || req.Endpoint.Valid && req.Endpoint.V == ""
-	if willBeHTTPMode && willHaveNoEndpoint {
-		return herror.BadRequest("endpoint is required for HTTP mode bots")
+	mode, endpoint := b.Mode, b.PostURL
+	if req.Mode.Valid {
+		mode = model.BotMode(req.Mode.V)
+	}
+	if req.Endpoint.Valid {
+		endpoint = req.Endpoint.V
+	}
+	if err := validateBotDeliveryConfig(mode, endpoint); err != nil {
+		return herror.BadRequest(err)
 	}
 
 	args := repository.UpdateBotArgs{
