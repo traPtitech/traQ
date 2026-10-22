@@ -61,11 +61,8 @@ type responseType struct {
 	None    bool
 }
 
-func (t responseType) valid() bool {
-	if t.None {
-		return !t.Code && !t.Token && !t.IDToken
-	}
-	return t.Code || t.Token || t.IDToken
+func (t responseType) isCodeFlow() bool {
+	return t.Code && !t.Token && !t.IDToken && !t.None
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
@@ -146,6 +143,11 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	}
 
 	// ResponseType確認
+	if len(strings.Fields(req.ResponseType)) == 0 {
+		q.Set("error", errInvalidRequest)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
 	var types responseType
 	for _, v := range strings.Fields(req.ResponseType) {
 		switch v {
@@ -163,7 +165,7 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
-	if !types.valid() {
+	if !types.isCodeFlow() {
 		q.Set("error", errUnsupportedResponseType)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
@@ -273,41 +275,34 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 
-	switch {
-	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
-		if se == nil {
-			// 未ログインの場合はログインしてから再度叩かせる
-			current := c.Request().URL.Clone()
-			v, _ := query.Values(req)
-			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
+	if se == nil {
+		// 未ログインの場合はログインしてから再度叩かせる
+		current := c.Request().URL.Clone()
+		v, _ := query.Values(req)
+		current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
 
-			var loginURL url.URL
-			loginURL.Path = "/login"
-			loginQuery := &url.Values{}
-			loginQuery.Set("redirect", current.String())
-			loginURL.RawQuery = loginQuery.Encode()
-			return c.Redirect(http.StatusFound, loginURL.String())
-		}
+		var loginURL url.URL
+		loginURL.Path = "/login"
+		loginQuery := &url.Values{}
+		loginQuery.Set("redirect", current.String())
+		loginURL.RawQuery = loginQuery.Encode()
+		return c.Redirect(http.StatusFound, loginURL.String())
+	}
 
-		if err := se.Set(ctx, oauth2ContextSession, req); err != nil {
-			h.L(c).Error(err.Error(), zap.Error(err))
-			q.Set("error", errServerError)
-			redirectURI.RawQuery = q.Encode()
-			return c.Redirect(http.StatusFound, redirectURI.String())
-		}
-
-		consentQuery := url.Values{}
-		if len(req.State) > 0 {
-			consentQuery.Set("state", req.State)
-		}
-		consentQuery.Set("client_id", req.ClientID)
-		consentQuery.Set("scopes", req.ValidScopes.String())
-		return c.Redirect(http.StatusFound, "/consent?"+consentQuery.Encode())
-	default:
-		q.Set("error", errUnsupportedResponseType)
+	if err := se.Set(ctx, oauth2ContextSession, req); err != nil {
+		h.L(c).Error(err.Error(), zap.Error(err))
+		q.Set("error", errServerError)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
+
+	consentQuery := url.Values{}
+	if len(req.State) > 0 {
+		consentQuery.Set("state", req.State)
+	}
+	consentQuery.Set("client_id", req.ClientID)
+	consentQuery.Set("scopes", req.ValidScopes.String())
+	return c.Redirect(http.StatusFound, "/consent?"+consentQuery.Encode())
 }
 
 type authorizationDecideHandlerRequest struct {
@@ -398,7 +393,7 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 	}
 
 	switch {
-	case reqAuth.Types.Code && !reqAuth.Types.Token && !reqAuth.Types.IDToken: // 現状は Authorization Code Flow しかサポートしない
+	case reqAuth.Types.isCodeFlow():
 		data := &model.OAuth2Authorize{
 			Code:                random.SecureAlphaNumeric(36),
 			ClientID:            reqAuth.ClientID,

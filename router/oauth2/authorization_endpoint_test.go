@@ -18,26 +18,16 @@ import (
 	"github.com/traPtitech/traQ/utils/random"
 )
 
-func TestResponseType_valid(t *testing.T) {
+func TestResponseType_isCodeFlow(t *testing.T) {
 	t.Parallel()
 
-	cases := [][5]bool{
-		{false, false, false, false},
-		{true, false, false, true},
-		{false, true, false, true},
-		{false, false, true, true},
-		{true, true, false, true},
-		{true, false, true, false},
-		{false, true, true, false},
-		{true, true, true, false},
-	}
-	for _, v := range cases {
-		rt := responseType{
-			Code:  v[0],
-			Token: v[1],
-			None:  v[2],
-		}
-		assert.Equal(t, v[3], rt.valid())
+	assert.True(t, (responseType{Code: true}).isCodeFlow())
+	for _, rt := range []responseType{
+		{}, {Token: true}, {IDToken: true}, {None: true},
+		{Code: true, Token: true}, {Code: true, IDToken: true}, {Code: true, None: true},
+		{Code: true, Token: true, IDToken: true},
+	} {
+		assert.False(t, rt.isCodeFlow(), "%+v", rt)
 	}
 }
 
