@@ -10,6 +10,9 @@ info:
     入力画素数の上限はConfig.Imaging.MaxPixels（既定2560×1600）です。GIFはさらに1000フレーム以下、論理画面の画素数×フレーム数がMaxPixelsの16倍以下に制限されます。
     スタンプ・ユーザー・Bot・Webhookのアイコン画像GETはETag、Last-Modified、Rangeに対応し、条件に応じて304・206・416を返します。
 
+    通常APIはr_session cookieまたはBearerトークンで認証します。空でないAuthorizationヘッダを優先し、不正でもcookieへフォールバックしません。
+    各操作のsecurityは認証方式の選択肢です。OAuth2では列挙したscopeに加えて、ユーザーroleにも記載の権限が必要です。cookieはrole権限、Bot専用トークンはBotのscopeとrole権限で判定します。リソースの所有者・参加者などの条件は各操作の説明に従います。
+    roleとscopeの権限はサーバー設定に依存し、ここでは組み込みの定義を記載しています。対応するOAuth scopeがない操作はcookie認証を使用します。client_credentialsではユーザーroleの代わりにClient roleを使用します。
     認証情報がない場合は401、凍結・無効ユーザーは403です。認証付きv3 APIはユーザーIDとIPの組ごとに毎秒100リクエスト・burst 1000に制限され、超過時は429です。
     Botは自身のQR・パスワード・FCM・閲覧状態・スター・未読・購読・セッション・トークン・外部連携・設定、およびパレット・Webhook管理・Client管理・クリップ・OGP・ユーザーWebSocket・OAuth同意の操作を利用できません。
     メッセージ投稿・編集と通常ファイルアップロードはContent-Lengthが必須で、chunkedなど未指定の場合は411です。メッセージのリクエスト本文は100KiB、ファイルアップロードの本文は30MiBを超えると413です。
@@ -66,7 +69,12 @@ paths:
         アーカイブされているチャンネルに投稿することはできません。
         embedはリクエスト本文で指定します。クエリのembedは無視されます。
         投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用通知の有無はnotifyCitationに従います。
+        必要なrole権限: `post_message`。
       operationId: postMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -81,7 +89,12 @@ paths:
       description: |-
         指定したチャンネルのメッセージのリストを取得します。
         limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        必要なrole権限: `get_message`。
       operationId: getMessages
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - channel
         - message
@@ -117,7 +130,12 @@ paths:
       description: |-
         メッセージを検索します。
         既定では公開チャンネルのみ検索します。inを指定すると自分が参加するDMも検索できますが、アクセスできないチャンネルは403です。
+        必要なrole権限: `get_message`。
       operationId: searchMessages
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - message
       parameters:
@@ -277,7 +295,13 @@ paths:
         "404":
           description: Not Found
       operationId: getMessage
-      description: 指定したメッセージを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したメッセージを取得します。
+        必要なrole権限: `get_message`。
     put:
       summary: メッセージを編集
       responses:
@@ -298,6 +322,7 @@ paths:
         自身が投稿したメッセージのみ編集することができます。
         アーカイブされているチャンネルのメッセージを編集することは出来ません。
         embedはリクエスト本文で指定します。クエリのembedは無視されます。
+        必要なrole権限: `edit_message`。
       requestBody:
         content:
           application/json:
@@ -306,6 +331,10 @@ paths:
       tags:
         - message
       operationId: editMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
     delete:
       summary: メッセージを削除
       responses:
@@ -322,11 +351,16 @@ paths:
       tags:
         - message
       operationId: deleteMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したメッセージを削除します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
         アーカイブされているチャンネルのメッセージは削除できず、400を返します。
         関連するピン留め・未読・クリップも削除します。
+        必要なrole権限: `delete_message`。
   "/messages/{messageId}/pin":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -347,7 +381,13 @@ paths:
             Not Found
             指定したメッセージ、またはピン留めが見つかりません。
       operationId: getPin
-      description: 指定したメッセージのピン留め情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したメッセージのピン留め情報を取得します。
+        必要なrole権限: `get_message`。
     post:
       summary: ピン留めする
       responses:
@@ -369,10 +409,15 @@ paths:
         - message
         - pin
       operationId: createPin
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したメッセージをピン留めします。
         アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
         上限は1チャンネル100件です。重複と上限超過は400を返し、成功時はPinAddedチャンネルイベントを記録します。
+        必要なrole権限: `create_message_pin`。
     delete:
       summary: ピン留めを外す
       responses:
@@ -386,11 +431,17 @@ paths:
           description: |-
             Not Found
             指定したメッセージ、またはピン留めが見つかりません。
-      description: 指定したメッセージのピン留めを外します。
+      description: |-
+        指定したメッセージのピン留めを外します。
+        必要なrole権限: `delete_message_pin`。
       tags:
         - message
         - pin
       operationId: removePin
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
   "/channels/{channelId}/stats":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -411,7 +462,14 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelStats
-      description: 指定したチャンネルの統計情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        指定したチャンネルの統計情報を取得します。
+        必要なrole権限: `get_channel`。
   "/channels/{channelId}/topic":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -435,7 +493,14 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelTopic
-      description: 指定したチャンネルのトピックを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        指定したチャンネルのトピックを取得します。
+        必要なrole権限: `get_channel`。
     put:
       summary: チャンネルトピックを編集
       responses:
@@ -455,12 +520,17 @@ paths:
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
         同じtopicの再設定は、アーカイブ済みでも204を返します。
+        必要なrole権限: `edit_channel_topic`。
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelTopicRequest"
       operationId: editChannelTopic
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
   "/channels/{channelId}/viewers":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -483,7 +553,14 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelViewers
-      description: 指定したチャンネルの閲覧者のリストを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        指定したチャンネルの閲覧者のリストを取得します。
+        必要なrole権限: `get_channel`。
   /files:
     post:
       summary: ファイルをアップロード
@@ -508,12 +585,17 @@ paths:
             schema:
               $ref: "#/components/schemas/PostFileRequest"
       operationId: postFile
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したチャンネルにファイルをアップロードします。
         アーカイブされているチャンネルにはアップロード出来ません。
         multipart本文の上限は30MiBです。MIMEタイプはアップロード時の申告値を使用します。
         画像サムネイルはJPEG/PNG/GIF/WebP、波形はaudio/mpeg・audio/mp3・audio/wav・audio/x-wavの場合に生成します。
         DMへのアップロードは参加者のみアクセス可能にします。
+        必要なrole権限: `upload_file`。
     get:
       summary: ファイルメタのリストを取得
       responses:
@@ -534,6 +616,10 @@ paths:
       tags:
         - file
       operationId: getFiles
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       parameters:
         - schema:
             type: string
@@ -558,6 +644,7 @@ paths:
         クエリパラメータ`channelId`, `mine`の少なくともいずれかが必須です。
         通常のユーザーファイルのみを返します。limitの省略時と0指定時は20件、負のoffsetは400、orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
         channelIdのnil UUIDは未指定扱いです。存在しない、またはアクセスできないチャンネルの指定は400を返します。
+        必要なrole権限: `download_file`。
   "/files/{fileId}/meta":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -579,10 +666,15 @@ paths:
             Not Found
             ファイルが見つかりません。
       operationId: getFileMeta
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       description: |-
         指定したファイルのメタ情報を取得します。
         指定したファイルへのアクセス権限が必要です。
         Cache-Controlはprivate, max-age=86400です。
+        必要なrole権限: `download_file`。
   "/files/{fileId}/thumbnail":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -619,10 +711,15 @@ paths:
             Not Found
             ファイルが見つからない、またはサムネイル画像が存在しません。
       operationId: getThumbnailImage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       description: |-
         指定したファイルのサムネイル画像を取得します。
         指定したファイルへのアクセス権限が必要です。
         typeは大小文字を区別せず、不正値は400です。Cache-Controlはprivate, max-age=31536000、X-TRAQ-FILE-TYPEは元ファイルの種別、X-TRAQ-FILE-CACHEはtrueです。
+        必要なrole権限: `download_file`。
   "/files/{fileId}":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -666,6 +763,10 @@ paths:
           deprecated: true
           description: このクエリパラメータは廃止されており、意味を持ちません（現在、このパラメータが0の場合も1の場合もレスポンスにはContent-Dispositionヘッダーが付与されます）
       operationId: getFile
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       description: |-
         指定したファイル本体を取得します。
         指定したファイルへのアクセス権限が必要です。
@@ -673,6 +774,7 @@ paths:
         S3/Swiftで直接アクセスURLを発行できる場合は、有効期間5分の署名URLへ302でリダイレクトします。
         直接配信ではETag・Last-Modified・Rangeに対応し、条件に応じて304・206・416を返します。Cache-Controlはprivate, max-age=31536000です。
         直接配信のX-TRAQ-FILE-TYPEはファイル種別を表し、アイコン・スタンプにはX-TRAQ-FILE-CACHE: trueも付与します。
+        必要なrole権限: `download_file`。
     delete:
       summary: ファイルを削除
       responses:
@@ -687,10 +789,15 @@ paths:
       tags:
         - file
       operationId: deleteFile
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したファイルを削除します。
         指定したファイルの削除権限が必要です。
         アップロード本人の通常ファイルのみ削除できます。アイコン・スタンプ・soundboardは403を返します。
+        必要なrole権限: `delete_file`。
   "/channels/{channelId}/pins":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -713,7 +820,13 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelPins
-      description: 指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
+        必要なrole権限: `get_message`。
   "/messages/{messageId}/stamps":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -733,8 +846,14 @@ paths:
                   $ref: "#/components/schemas/MessageStamp"
         "404":
           description: Not Found
-      description: 指定したメッセージに押されているスタンプのリストを取得します。
+      description: |-
+        指定したメッセージに押されているスタンプのリストを取得します。
+        必要なrole権限: `get_message`。
       operationId: getMessageStamps
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
   "/messages/{messageId}/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -753,6 +872,10 @@ paths:
             Not Found
             メッセージ、またはスタンプが見つかりません。
       operationId: addMessageStamp
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       tags:
         - message
         - stamp
@@ -765,6 +888,7 @@ paths:
       description: |-
         指定したメッセージに指定したスタンプを押します。
         countはユーザーごとに加算され、累積値に上限はありません。
+        必要なrole権限: `add_message_stamp`。
     delete:
       summary: スタンプを消す
       responses:
@@ -777,12 +901,17 @@ paths:
             Not Found
             メッセージ、またはスタンプが見つかりません。
       operationId: removeMessageStamp
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       tags:
         - message
         - stamp
       description: |-
         指定したメッセージから指定した自身が押したスタンプを削除します。
         アーカイブ済みチャンネルでは400を返します。
+        必要なrole権限: `remove_message_stamp`。
   "/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
@@ -800,7 +929,13 @@ paths:
         "404":
           description: Not Found
       operationId: getStamp
-      description: 指定したスタンプの情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したスタンプの情報を取得します。
+        必要なrole権限: `get_stamp`。
     delete:
       summary: スタンプを削除
       responses:
@@ -816,11 +951,18 @@ paths:
         指定したスタンプを削除します。
         対象のスタンプの削除権限が必要です。
       operationId: deleteStamp
+      security:
+        - cookieAuth: []
+        - OAuth2: []
+        - bearerAuth: []
       tags:
         - stamp
     patch:
       summary: スタンプ情報を変更
       operationId: editStamp
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       responses:
         "204":
           description: |-
@@ -839,6 +981,7 @@ paths:
       description: |-
         指定したスタンプの情報を変更します。
         名前は0xで始められません。creatorIdの譲渡先は有効な人間ユーザーに限ります。
+        必要なrole権限: `edit_stamp`。
       requestBody:
         content:
           application/json:
@@ -861,6 +1004,7 @@ paths:
       description: |-
         スタンプを新規作成します。
         名前は0xで始められません。
+        必要なrole権限: `create_stamp`。
       requestBody:
         content:
           multipart/form-data:
@@ -871,6 +1015,9 @@ paths:
                 contentType: "image/png, image/jpeg, image/gif"
         description: ""
       operationId: createStamp
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - stamp
     get:
@@ -885,6 +1032,10 @@ paths:
                 items:
                   $ref: "#/components/schemas/StampWithThumbnail"
       operationId: getStamps
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - stamp
       parameters:
@@ -906,6 +1057,7 @@ paths:
       description: |-
         スタンプのリストを取得します。
         include-unicodeとtypeの併用、または各値が不正な場合は400を返します。
+        必要なrole権限: `get_stamp`。
   /users/me/stamp-history:
     get:
       summary: スタンプ履歴を取得
@@ -922,6 +1074,10 @@ paths:
                 items:
                   $ref: "#/components/schemas/StampHistoryEntry"
       operationId: getMyStampHistory
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       parameters:
         - schema:
             type: integer
@@ -936,6 +1092,7 @@ paths:
         結果は降順で返されます。
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
         limitの省略時と0指定時は100件を返します。
+        必要なrole権限: `get_my_stamp_history`。
   /users/me/stamp-recommendations:
     get:
       summary: スタンプレコメンドを取得
@@ -964,6 +1121,10 @@ paths:
                     - stampId
                     - score
       operationId: getMyStampRecommendations
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       parameters:
         - schema:
             type: integer
@@ -978,6 +1139,7 @@ paths:
         結果は推薦度の高い順で返されます。
         スタンプを使用したことがないユーザーの場合は空配列が返されます。
         集計対象は直近10,000件のスタンプ使用履歴です。
+        必要なrole権限: `get_my_stamp_recommendations`。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
@@ -999,7 +1161,10 @@ paths:
       description: |-
         自身のQRコードを取得します。
         返されたQRコードまたはトークンは、発行後の5分間のみ有効です
+        必要なrole権限: `get_user_qr_code`。
       operationId: getMyQRCode
+      security:
+        - cookieAuth: []
       parameters:
         - schema:
             type: boolean
@@ -1026,7 +1191,13 @@ paths:
             Not Found
             スタンプが見つかりません。
       operationId: getStampStats
-      description: 指定したスタンプの統計情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したスタンプの統計情報を取得します。
+        必要なrole権限: `get_stamp`。
   "/users/{userId}":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1044,7 +1215,14 @@ paths:
         "404":
           description: Not Found
       operationId: getUser
-      description: 指定したユーザーの詳細情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        指定したユーザーの詳細情報を取得します。
+        必要なrole権限: `get_user`。
     patch:
       summary: ユーザー情報を変更
       responses:
@@ -1059,6 +1237,8 @@ paths:
         "404":
           description: Not Found
       operationId: editUser
+      security:
+        - cookieAuth: []
       tags:
         - user
       requestBody:
@@ -1071,6 +1251,7 @@ paths:
         管理者権限が必要です。
         displayNameが空文字の場合、レスポンスではnameを表示名として返します。twitterIdの空文字は設定を解除します。
         state=0は全cookieセッションを失効させ、state=2は失効させません。state=1を指定するとUserActivatedを発行します。
+        必要なrole権限: `edit_other_users`。
   "/groups/{groupId}":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1086,9 +1267,15 @@ paths:
         "404":
           description: Not Found
       operationId: getUserGroup
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - group
-      description: 指定したユーザーグループの情報を取得します。
+      description: |-
+        指定したユーザーグループの情報を取得します。
+        必要なrole権限: `get_user_group`。
     delete:
       summary: ユーザーグループを削除
       responses:
@@ -1105,7 +1292,12 @@ paths:
       description: |-
         指定したユーザーグループを削除します。
         対象のユーザーグループの管理者権限が必要です。
+        必要なrole権限: `delete_user_group`。
       operationId: deleteUserGroup
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       tags:
         - group
     patch:
@@ -1130,6 +1322,10 @@ paths:
       tags:
         - group
       operationId: editUserGroup
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1140,6 +1336,7 @@ paths:
         指定したユーザーグループの情報を編集します。
         対象のユーザーグループの管理者権限が必要です。
         typeを新たにgradeへ変更するにはCreateSpecialUserGroup権限が必要です。同じgradeの再送は許可されます。
+        必要なrole権限: `edit_user_group`。
   "/groups/{groupId}/icon":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1157,6 +1354,10 @@ paths:
             Not Found
             ユーザーグループが見つかりません。
       operationId: changeUserGroupIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -1172,6 +1373,7 @@ paths:
         ユーザーグループのアイコンを変更します。
         対象のユーザーグループの管理者権限が必要です。
         AllUserGroupsAdmin権限がある場合は全グループの管理者として扱います。
+        必要なrole権限: `edit_user_group`。
   "/groups/{groupId}/members":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1194,7 +1396,13 @@ paths:
             Not Found
             ユーザーグループが見つかりません。
       operationId: getUserGroupMembers
-      description: 指定したグループのメンバーのリストを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したグループのメンバーのリストを取得します。
+        必要なrole権限: `get_user_group`。
     post:
       summary: グループメンバーを追加
       responses:
@@ -1223,10 +1431,15 @@ paths:
       tags:
         - group
       operationId: addUserGroupMember
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したグループにメンバーを追加します。
         対象のユーザーグループの管理者権限が必要です。
         既存メンバーはroleを更新し、MemberUpdatedを発行します。Bot・無効ユーザーも追加できますが、Webhookユーザーは追加できません。
+        必要なrole権限: `edit_user_group`。
     delete:
       summary: グループメンバーを一括削除
       responses:
@@ -1245,9 +1458,14 @@ paths:
       tags:
         - group
       operationId: removeUserGroupMembers
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したグループから全てのメンバーを削除します。
         対象のユーザーグループの管理者権限が必要です。
+        必要なrole権限: `edit_user_group`。
   "/groups/{groupId}/members/{userId}":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1270,10 +1488,15 @@ paths:
       tags:
         - group
       operationId: removeUserGroupMember
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したユーザーグループから指定したユーザーを削除します。
         既にグループから削除されているメンバーを指定した場合は204を返します。
         対象のユーザーグループの管理者権限が必要です。
+        必要なrole権限: `edit_user_group`。
     patch:
       summary: グループメンバーを編集
       responses:
@@ -1294,6 +1517,10 @@ paths:
             Not Found
             ユーザーグループが見つかりません。
       operationId: editUserGroupMember
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1304,6 +1531,7 @@ paths:
       description: |-
         指定したユーザーグループ内の指定したユーザーの属性を編集します。
         対象のユーザーグループの管理者権限が必要です。
+        必要なrole権限: `edit_user_group`。
   /groups:
     get:
       summary: ユーザーグループのリストを取得
@@ -1319,8 +1547,14 @@ paths:
                 description: ユーザーグループの配列
                 items:
                   $ref: "#/components/schemas/UserGroup"
-      description: ユーザーグループのリストを取得します。
+      description: |-
+        ユーザーグループのリストを取得します。
+        必要なrole権限: `get_user_group`。
       operationId: getUserGroups
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       parameters: []
     post:
       summary: ユーザーグループを作成
@@ -1347,7 +1581,12 @@ paths:
         ユーザーグループを作成します。
         作成者は自動的にグループ管理者になります。
         gradeグループの作成にはCreateSpecialUserGroup権限が必要です。
+        必要なrole権限: `create_user_group`。
       operationId: createUserGroup
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1366,7 +1605,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/MyUserDetail"
       operationId: getMe
-      description: 自身のユーザー詳細情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        自身のユーザー詳細情報を取得します。
+        必要なrole権限: `get_me`。
     patch:
       summary: 自分のユーザー情報を変更
       responses:
@@ -1379,6 +1625,10 @@ paths:
       tags:
         - me
       operationId: editMe
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1388,6 +1638,7 @@ paths:
         自身のユーザー情報を変更します。
         displayNameが空文字の場合、レスポンスではnameを表示名として返します。twitterIdの空文字は設定を解除します。
         homeChannelの省略・nullは変更なし、nil UUIDは解除を表します。設定先は公開チャンネルに限ります。
+        必要なrole権限: `edit_me`。
   "/users/me/oidc":
     get:
       summary: 自分のユーザー詳細を取得 (OIDC UserInfo)
@@ -1401,9 +1652,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/OIDCUserInfo"
       operationId: getOIDCUserInfo
-      description: |
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - OAuth2: ["openid"]
+        - OAuth2: ["profile"]
+        - bearerAuth: []
+      description: |-
         OIDCトークンを用いてユーザー詳細を取得します。
         OIDC UserInfo Endpointです。
+        必要なrole権限: `get_oidc_userinfo`。
   "/users/{userId}/messages":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1426,6 +1685,10 @@ paths:
         - message
         - user
       operationId: postDirectMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1436,9 +1699,14 @@ paths:
         embedはリクエスト本文で指定します。クエリのembedは無視されます。
         自分自身・Bot・Webhookユーザーにも送信できます。
         投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用通知の有無はnotifyCitationに従います。
+        必要なrole権限: `post_message`。
     get:
       summary: ダイレクトメッセージのリストを取得
       operationId: getDirectMessages
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - message
         - user
@@ -1472,6 +1740,7 @@ paths:
         指定したユーザーとのダイレクトメッセージのリストを取得します。
         limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
         DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
+        必要なrole権限: `get_message`。
   "/users/{userId}/stats":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1491,9 +1760,15 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getUserStats
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       description: |-
         指定したユーザーの統計情報を取得します。
         スタンプは使用回数の多い順で返します。
+        必要なrole権限: `get_user`。
   "/channels/{channelId}/subscribers":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1522,9 +1797,14 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       description: |-
         指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
         購読レベル2（未読管理・通知あり）のユーザーのみを返します。
+        必要なrole権限: `get_channel_subscription`。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1546,6 +1826,10 @@ paths:
         - channel
         - notification
       operationId: editChannelSubscribers
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -1557,6 +1841,7 @@ paths:
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
         EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onはレベル2にし、offはレベル2を0にしますがレベル1は維持します。onとoffの両方に含まれるユーザーは変更しません。
+        必要なrole権限: `edit_channel_subscription`。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1585,10 +1870,15 @@ paths:
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
         EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onを省略すると、現在レベル2の全員をレベル0にします。レベル1は維持します。
+        必要なrole権限: `edit_channel_subscription`。
       tags:
         - channel
         - notification
       operationId: setChannelSubscribers
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
   /users/me/subscriptions:
     get:
       summary: 自分のチャンネル購読状態を取得
@@ -1606,7 +1896,12 @@ paths:
                 items:
                   $ref: "#/components/schemas/UserSubscribeState"
       operationId: getMyChannelSubscriptions
-      description: 自身のチャンネル購読状態を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        自身のチャンネル購読状態を取得します。
+        必要なrole権限: `get_channel_subscription`。
   "/users/me/subscriptions/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1631,6 +1926,9 @@ paths:
         - me
         - notification
       operationId: setChannelSubscribeLevel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       requestBody:
         content:
           application/json:
@@ -1639,6 +1937,7 @@ paths:
       description: |-
         自身の指定したチャンネルの購読レベルを設定します。
         変更時にSubscribersChangedチャンネルイベントを記録します。
+        必要なrole権限: `edit_channel_subscription`。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -1655,6 +1954,10 @@ paths:
       tags:
         - webhook
       operationId: getWebhooks
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       parameters:
         - schema:
             type: boolean
@@ -1666,6 +1969,7 @@ paths:
         Webhookのリストを取得します。
         allがtrueで無い場合は、自分がオーナーのWebhookのリストを返します。
         all=trueでもAccessOthersWebhook権限がなければ自分のWebhookのみ返します。個々のWebhookの管理操作には所有者または同権限が必要です。
+        必要なrole権限: `get_webhook`。
     post:
       summary: Webhookを新規作成
       responses:
@@ -1678,6 +1982,9 @@ paths:
         "400":
           description: Bad Request
       operationId: createWebhook
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       tags:
         - webhook
       requestBody:
@@ -1689,6 +1996,7 @@ paths:
         Webhookを新規作成します。
         `secret`が空文字の場合、insecureウェブフックが作成されます。
         投稿先は公開チャンネルに限ります。descriptionの空文字は400、secretの省略・空文字は署名不要を表します。
+        必要なrole権限: `create_webhook`。
   "/webhooks/{webhookId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -1708,7 +2016,13 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: getWebhook
-      description: 指定したWebhookの詳細を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+      description: |-
+        指定したWebhookの詳細を取得します。
+        必要なrole権限: `get_webhook`。
     post:
       summary: Webhookを送信
       responses:
@@ -1719,6 +2033,9 @@ paths:
         "404":
           description: Not Found
       operationId: postWebhook
+      security:
+        - webhookSignature: []
+        - {}
       parameters:
         - schema:
             type: string
@@ -1766,10 +2083,14 @@ paths:
       tags:
         - webhook
       operationId: deleteWebhook
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       description: |-
         指定したWebhookを削除します。
         Webhookによって投稿されたメッセージは削除されません。
         対応するBotユーザーを無効化します。
+        必要なrole権限: `delete_webhook`。
     patch:
       summary: Webhook情報を変更
       responses:
@@ -1784,6 +2105,9 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: editWebhook
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       requestBody:
         content:
           application/json:
@@ -1794,6 +2118,7 @@ paths:
       description: |-
         指定したWebhookの情報を変更します。
         descriptionの空文字は400、secretの空文字は署名不要を表します。ownerIdは有効な人間ユーザーに限り、譲渡後は旧所有者の所有権によるアクセスが失われます。
+        必要なrole権限: `edit_webhook`。
   "/webhooks/{webhookId}/icon":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -1822,9 +2147,14 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: getWebhookIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       description: |-
         指定したWebhookのアイコン画像を取得します
         所有者またはAccessOthersWebhook権限が必要です。対応するBotユーザーのアイコンはユーザーアイコン取得APIからも取得できます。
+        必要なrole権限: `get_webhook`。
     put:
       summary: Webhookのアイコンを変更
       responses:
@@ -1839,6 +2169,9 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: changeWebhookIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       requestBody:
         content:
           multipart/form-data:
@@ -1850,7 +2183,9 @@ paths:
         description: ""
       tags:
         - webhook
-      description: 指定したWebhookのアイコン画像を変更します。
+      description: |-
+        指定したWebhookのアイコン画像を変更します。
+        必要なrole権限: `edit_webhook`。
   "/users/{userId}/icon":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1879,7 +2214,13 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getUserIcon
-      description: 指定したユーザーのアイコン画像を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したユーザーのアイコン画像を取得します。
+        必要なrole権限: `download_file`。
     put:
       summary: ユーザーのアイコン画像を変更します
       responses:
@@ -1896,6 +2237,8 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: changeUserIcon
+      security:
+        - cookieAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -1909,6 +2252,7 @@ paths:
       description: |-
         指定したユーザーのアイコン画像を変更します。
         管理者権限が必要です。
+        必要なrole権限: `edit_other_users`。
   /users/me/icon:
     get:
       summary: 自分のアイコン画像を取得
@@ -1935,7 +2279,13 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getMyIcon
-      description: 自分のアイコン画像を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        自分のアイコン画像を取得します。
+        必要なrole権限: `download_file`。
     put:
       summary: 自分のアイコン画像を変更
       responses:
@@ -1945,8 +2295,14 @@ paths:
             変更されました。
         "400":
           description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
-      description: 自分のアイコン画像を変更します。
+      description: |-
+        自分のアイコン画像を変更します。
+        必要なrole権限: `change_my_icon`。
       operationId: changeMyIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -1974,6 +2330,8 @@ paths:
       tags:
         - me
       operationId: changeMyPassword
+      security:
+        - cookieAuth: []
       requestBody:
         content:
           application/json:
@@ -1984,6 +2342,7 @@ paths:
         自身のパスワードを変更します。
         対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
         現在のpasswordは非空であることを検証します。外部認証が有効な場合は外部サーバーで照合します。
+        必要なrole権限: `change_my_password`。
   "/users/{userId}/password":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -2011,10 +2370,13 @@ paths:
       tags:
         - user
       operationId: changeUserPassword
+      security:
+        - cookieAuth: []
       description: |-
         指定したユーザーのパスワードを変更します。
         管理者権限が必要です。
         対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
+        必要なrole権限: `edit_other_users`。
   /users/me/fcm-device:
     post:
       summary: FCMデバイスを登録
@@ -2029,9 +2391,13 @@ paths:
         - me
         - notification
       operationId: registerFCMDevice
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       description: |-
         自身のFCMデバイスを登録します。
         tokenは190文字までです。他ユーザーに登録済みのtokenは400、自分のtokenの再登録は204を返します。
+        必要なrole権限: `register_fcm_device`。
       requestBody:
         content:
           application/json:
@@ -2051,10 +2417,15 @@ paths:
                 items:
                   $ref: "#/components/schemas/MyChannelViewState"
       operationId: getMyViewStates
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
       tags:
         - me
         - notification
-      description: 自身のチャンネル閲覧状態一覧を取得します。
+      description: |-
+        自身のチャンネル閲覧状態一覧を取得します。
+        必要なrole権限: `connect_notification_stream`。
   /users:
     post:
       summary: ユーザーを登録
@@ -2074,6 +2445,9 @@ paths:
             Conflict
             nameが重複しています。
       operationId: createUser
+      security:
+        - cookieAuth: []
+        - {}
       tags:
         - user
       requestBody:
@@ -2086,6 +2460,7 @@ paths:
         ユーザーを登録します。
         管理者権限が必要です。
         公開signupが有効な場合は未認証で利用できます。Authorizationヘッダあり・ログイン済みは管理者を含め400、凍結済みセッションは403です。password省略時はパスワードなしで作成します。
+        AllowSignUp=falseではcookie認証とregister_user権限が必要です。AllowSignUp=trueでは未ログイン時のみ利用でき、Authorizationヘッダ付き要求は400です。
     get:
       summary: ユーザーのリストを取得
       responses:
@@ -2101,6 +2476,11 @@ paths:
         "400":
           description: Bad Request
       operationId: getUsers
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       tags:
         - user
       parameters:
@@ -2120,6 +2500,7 @@ paths:
         `include-suspended`を指定しない場合、レスポンスにはユーザーアカウント状態が"1: 有効"であるユーザーのみが含まれます。
         `include-suspended`と`name`を同時に指定することはできません。
         nameとinclude-suspended=trueの併用は400、不正な真偽値はfalse扱いです。結果はID順で返します。
+        必要なrole権限: `get_user`。
   /channels:
     post:
       summary: チャンネルを作成
@@ -2139,6 +2520,9 @@ paths:
             Conflict
             指定した名前のチャンネルは既に存在しています。
       operationId: createChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - channel
       requestBody:
@@ -2150,6 +2534,7 @@ paths:
         チャンネルを作成します。
         階層が6以上になるチャンネルは作成できません。
         同じ親のチャンネル名は大小文字を区別せず重複を判定します。
+        必要なrole権限: `create_channel`。
     get:
       summary: チャンネルリストを取得
       responses:
@@ -2160,12 +2545,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelList"
       operationId: getChannels
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       tags:
         - channel
       description: |-
         チャンネルのリストを取得します。
         include-dm=trueとpathの併用は400、解決できないpathは404です。pathは大小文字を区別せず、先頭の#や末尾の/は付けられません。
         アーカイブ済みチャンネルも含まれ、archivedで判別できます。
+        必要なrole権限: `get_channel`。
       parameters:
         - schema:
             type: boolean
@@ -2200,8 +2591,14 @@ paths:
           description: |-
             Not Found
             ユーザーが見つかりません。
-      description: 指定したユーザーのタグリストを取得します。
+      description: |-
+        指定したユーザーのタグリストを取得します。
+        必要なrole権限: `get_user_tag`。
       operationId: getUserTags
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
     post:
       summary: ユーザーにタグを追加
       responses:
@@ -2227,6 +2624,10 @@ paths:
         - user
         - user tag
       operationId: addUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -2236,6 +2637,7 @@ paths:
       description: |-
         指定したユーザーに指定したタグを追加します。
         Webhookユーザーにタグを追加することは出来ません。
+        必要なrole権限: `edit_user_tag`。
   "/users/{userId}/tags/{tagId}":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -2254,6 +2656,10 @@ paths:
             Not Found
             ユーザーか、タグが見つかりません。
       operationId: editUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -2267,6 +2673,7 @@ paths:
         指定したユーザーの指定したタグの状態を変更します。
         他人の状態は変更できません。
         他ユーザーのタグは変更できず、403を返します。
+        必要なrole権限: `edit_user_tag`。
     delete:
       summary: ユーザーからタグを削除します
       responses:
@@ -2282,8 +2689,14 @@ paths:
           description: |-
             Not Found
             ユーザーが見つかりません。
-      description: 既に存在しないタグを削除しようとした場合は204を返します。
+      description: |-
+        既に存在しないタグを削除しようとした場合は204を返します。
+        必要なrole権限: `edit_user_tag`。
       operationId: removeUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       tags:
         - user
         - user tag
@@ -2302,9 +2715,15 @@ paths:
         "404":
           description: Not Found
       operationId: getTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       tags:
         - user tag
-      description: 指定したタグの情報を取得します。
+      description: |-
+        指定したタグの情報を取得します。
+        必要なrole権限: `get_user_tag`。
   /users/me/tags:
     get:
       summary: 自分のタグリストを取得
@@ -2322,7 +2741,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/UserTag"
       operationId: getMyUserTags
-      description: 自分に付けられているタグの配列を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        自分に付けられているタグの配列を取得します。
+        必要なrole権限: `get_user_tag`。
     post:
       summary: 自分にタグを追加
       responses:
@@ -2342,13 +2767,19 @@ paths:
         - me
         - user tag
       operationId: addMyUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/PostUserTagRequest"
         description: ""
-      description: 自分に新しくタグを追加します。
+      description: |-
+        自分に新しくタグを追加します。
+        必要なrole権限: `edit_user_tag`。
   "/users/me/tags/{tagId}":
     parameters:
       - $ref: "#/components/parameters/tagIdInPath"
@@ -2363,8 +2794,14 @@ paths:
           description: |-
             Forbidden
             タグがロックされています。
-      description: 既に存在しないタグを削除しようとした場合は204を返します。
+      description: |-
+        既に存在しないタグを削除しようとした場合は204を返します。
+        必要なrole権限: `edit_user_tag`。
       operationId: removeMyUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       tags:
         - user tag
         - me
@@ -2382,6 +2819,10 @@ paths:
             Not Found
             タグが見つかりません。
       operationId: editMyUserTag
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -2391,7 +2832,9 @@ paths:
       tags:
         - user tag
         - me
-      description: 自分の指定したタグの状態を変更します。
+      description: |-
+        自分の指定したタグの状態を変更します。
+        必要なrole権限: `edit_user_tag`。
   /users/me/stars:
     get:
       summary: スターチャンネルリストを取得
@@ -2410,7 +2853,12 @@ paths:
                   type: string
                   format: uuid
       operationId: getMyStars
-      description: 自分がスターしているチャンネルのUUIDの配列を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        自分がスターしているチャンネルのUUIDの配列を取得します。
+        必要なrole権限: `get_channel_star`。
     post:
       summary: チャンネルをスターに追加
       responses:
@@ -2424,6 +2872,9 @@ paths:
         - me
         - star
       operationId: addMyStar
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       requestBody:
         content:
           application/json:
@@ -2434,6 +2885,7 @@ paths:
         スター済みのチャンネルIDを指定した場合、204を返します。
         不正なチャンネルIDを指定した場合、400を返します。
         DMは400ですが、アーカイブ済みの公開チャンネルには追加できます。
+        必要なrole権限: `edit_channel_star`。
   "/users/me/stars/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -2447,8 +2899,13 @@ paths:
       tags:
         - me
         - star
-      description: 既にスターから削除されているチャンネルを指定した場合は204を返します。
+      description: |-
+        既にスターから削除されているチャンネルを指定した場合は204を返します。
+        必要なrole権限: `edit_channel_star`。
       operationId: removeMyStar
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
   /users/me/unread:
     get:
       summary: 未読チャンネルを取得
@@ -2466,13 +2923,17 @@ paths:
                 items:
                   $ref: "#/components/schemas/UnreadChannel"
       operationId: getMyUnreadChannels
-      description: 自分が現在未読のチャンネルの未読情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        自分が現在未読のチャンネルの未読情報を取得します。
+        必要なrole権限: `get_unread`。
   /meta:
     get:
       summary: メタ情報を取得
       tags:
         - public
-      security: []
       responses:
         "200":
           description: OK
@@ -2481,6 +2942,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Meta"
       operationId: getMeta
+      security: []
       description: 初期化に必要な公開情報を取得します。
   /version:
     get:
@@ -2495,6 +2957,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Version"
       operationId: getServerVersion
+      security: []
       description: サーバーバージョン及びサーバーフラグ情報を取得します。
   /login:
     post:
@@ -2521,6 +2984,7 @@ paths:
       tags:
         - authentication
       operationId: login
+      security: []
       parameters:
         - $ref: "#/components/parameters/redirectInQuery"
       requestBody:
@@ -2547,6 +3011,7 @@ paths:
       tags:
         - authentication
       operationId: logout
+      security: []
       parameters:
         - $ref: "#/components/parameters/redirectInQuery"
         - schema:
@@ -2576,9 +3041,12 @@ paths:
                 items:
                   $ref: "#/components/schemas/LoginSession"
       operationId: getMySessions
+      security:
+        - cookieAuth: []
       description: |-
         自分のログインセッションのリストを取得します。
         直近28日以内に作成されたセッションが対象です。
+        必要なrole権限: `get_my_sessions`。
   "/users/me/sessions/{sessionId}":
     parameters:
       - $ref: "#/components/parameters/sessionIdInPath"
@@ -2590,12 +3058,15 @@ paths:
             No Content
             無効化しました。
       operationId: revokeMySession
+      security:
+        - cookieAuth: []
       tags:
         - authentication
         - me
       description: |-
         指定した自分のセッションを無効化(ログアウト)します。
         既に存在しない・無効化されているセッションを指定した場合も`204`を返します。
+        必要なrole権限: `delete_my_sessions`。
   /activity/timeline:
     get:
       summary: アクテビティタイムラインを取得
@@ -2617,6 +3088,7 @@ paths:
         パブリックチャンネルの直近の投稿メッセージを作成日時の降順で取得します。
         `all`が`true`でない場合、購読チャンネルのみのタイムラインを取得します
         対象は直近7日間です。all=falseでも強制通知チャンネルを含み、アーカイブ済みチャンネルも対象です。
+        必要なrole権限: `get_message`。
       parameters:
         - schema:
             type: integer
@@ -2639,6 +3111,10 @@ paths:
           name: per_channel
           description: 同じチャンネルのメッセージは最新のもののみ取得するか
       operationId: getActivityTimeline
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
   /ws:
     get:
       summary: WebSocket通知ストリームに接続します
@@ -2654,6 +3130,9 @@ paths:
         "101":
           description: Switching Protocols
       operationId: ws
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
       description: |-
         # WebSocketプロトコル
         接続時は認証・権限に応じて401・403、ストリーマー終了時は503を返します。
@@ -2664,332 +3143,207 @@ paths:
         ### `viewstate`コマンド
         このWebSocketセッションが見ているチャンネル(イベントを受け取るチャンネル)を設定する。
         現時点では1つのセッションに対して1つのチャンネルしか設定できない。
-
         `viewstate:{チャンネルID}:{閲覧状態}`
         + チャンネルID: 対象のチャンネルID
         + 閲覧状態: `none`, `stale_viewing`, `monitoring`, `editing`。未知の値は`none`として扱います。
-
         最初の`viewstate`コマンドを送る前、または`viewstate:null`, `viewstate:`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。
-
         ### `rtcstate`コマンド
         自分のWebRTC状態を変更する。
         他のコネクションが既に状態を保持している場合、変更することができません。
-
         `rtcstate:{チャンネルID}:({状態}:{セッションID})*`
-
         コネクションが切断された場合、自分のWebRTC状態はリセットされます。
-
         ### `timeline_streaming`コマンド
         全てのパブリックチャンネルの`MESSAGE_CREATED`イベントを受け取るかどうかを設定する。
         初期状態は`off`です。
-
         `timeline_streaming:(on|off|true|false)`
-
         ### `ping`コマンド
         サーバーとの接続を確認する。
         `ping`を送信すると、`PING`イベント（`{"type":"PING","body":null}`）が返されます。
-
         ## 受信
         TextMessageとして各種イベントが`type`と`body`を持つJSONとして非同期に送られます。
-
         例:
         ```json
         {"type":"USER_ONLINE","body":{"id":"7dd8e07f-7f5d-4331-9176-b56a4299768b"}}
         ```
-
         ## イベント一覧
-
         ### `USER_JOINED`
         ユーザーが新規登録された。
-
         対象: 全員
-
         + `id`: 登録されたユーザーのId
-
         ### `USER_UPDATED`
         ユーザーの情報が更新された。
-
         対象: 全員
-
         + `id`: 情報が更新されたユーザーのId
-
         ### `USER_TAGS_UPDATED`
         ユーザーのタグが更新された。
-
         対象: 全員
-
         + `id`: タグが更新されたユーザーのId
         + `tag_id`: 更新されたタグのId
-
         ### `USER_ICON_UPDATED`
         ユーザーのアイコンが更新された。
-
         対象: 全員
-
         + `id`: アイコンが更新されたユーザーのId
-
         ### `USER_WEBRTC_STATE_CHANGED`
         ユーザーのWebRTCの状態が変化した
-
         対象: 全員
-
         + `user_id`: 変更があったユーザーのId
         + `channel_id`: ユーザーの変更後の接続チャンネルのId
         + `sessions`: ユーザーの変更後の状態(配列)
           + `state`: 状態
           + `sessionId`: セッションID
-
         ### `USER_VIEWSTATE_CHANGED`
         ユーザーのチャンネルの閲覧状態が変化した
-
         対象: 変化したWSセッションを含めた、該当ユーザーのWSセッション全て
-
         + `view_states`: 変化したWSセッションを含めた、該当ユーザーの変更後の状態(配列)
           + `key`: WSセッションの識別子
           + `channel_id`: 閲覧しているチャンネルId
           + `state`: 閲覧状態
-
         ### `USER_ONLINE`
         ユーザーがオンラインになった。
-
         対象: 全員
-
         + `id`: オンラインになったユーザーのId
-
         ### `USER_OFFLINE`
         ユーザーの最後の接続の切断またはタイムアウトをサーバーが検出し、オフラインになった。
-
         対象: 全員
-
         + `id`: オフラインになったユーザーのId
         + `last_online`: 最後の接続の切断をサーバーが検出した日時
-
         ### `USER_GROUP_CREATED`
         ユーザーグループが作成された
-
         対象: 全員
-
         + `id`: 作成されたユーザーグループのId
-
         ### `USER_GROUP_UPDATED`
         ユーザーグループが更新された
-
         対象: 全員
-
         + `id`: 作成されたユーザーグループのId
-
         ### `USER_GROUP_DELETED`
         ユーザーグループが削除された
-
         対象: 全員
-
         + `id`: 削除されたユーザーグループのId
-
         ### `CHANNEL_CREATED`
         チャンネルが新規作成された。
-
         対象: 該当チャンネルを閲覧可能な全員
-
         + `id`: 作成されたチャンネルのId
         + `dm_user_id`: (DMの場合のみ) DM相手のユーザーId
-
         ### `CHANNEL_UPDATED`
         チャンネルの情報が変更された。
-
         対象: 該当チャンネルを閲覧可能な全員
-
         + `id`: 変更があったチャンネルのId
         + `dm_user_id`: (DMの場合のみ) DM相手のユーザーId
-
         ### `CHANNEL_DELETED`
         チャンネルが削除された。
-
         対象: 該当チャンネルを閲覧可能な全員
-
         + `id`: 削除されたチャンネルのId
         + `dm_user_id`: (DMの場合のみ) DM相手のユーザーId
-
         ### `CHANNEL_STARED`
         自分がチャンネルをスターした。
-
         対象: 自分
-
         + `id`: スターしたチャンネルのId
-
         ### `CHANNEL_UNSTARED`
         自分がチャンネルのスターを解除した。
-
         対象: 自分
-
         + `id`: スターしたチャンネルのId
-
         ### `CHANNEL_VIEWERS_CHANGED`
         チャンネルの閲覧者が変化した。
-
         対象: 該当チャンネルを閲覧しているユーザー
-
         + `id`: 変化したチャンネルのId
         + `viewers`: 変化後の閲覧者(配列)
           + `userId`: ユーザーId
           + `state`: 閲覧状態
           + `updatedAt`: 閲覧状態の更新日時
-
         ### `CHANNEL_SUBSCRIBERS_CHANGED`
         チャンネルの購読者が変化した。
-
         対象: 該当チャンネルを閲覧しているユーザー
-
         + `id`: 変化したチャンネルのId
-
         ### `MESSAGE_CREATED`
         メッセージが投稿された。
-
         対象: 投稿チャンネルを閲覧しているユーザー・投稿チャンネルに通知をつけているユーザー・メンションを受けたユーザー
-
         + `id`: 投稿されたメッセージのId
         + `is_citing`: 投稿されたメッセージがWebSocketを接続しているユーザーの投稿を引用しているかどうか
-
         ### `MESSAGE_UPDATED`
         メッセージが更新された。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `id`: 更新されたメッセージのId
-
         ### `MESSAGE_DELETED`
         メッセージが削除された。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `id`: 削除されたメッセージのId
-
         ### `MESSAGE_STAMPED`
         メッセージにスタンプが押された。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `message_id`: メッセージId
         + `user_id`: スタンプを押したユーザーのId
         + `stamp_id`: スタンプのId
         + `count`: そのユーザーが押した数
         + `created_at`: そのユーザーがそのスタンプをそのメッセージに最初に押した日時
-
         ### `MESSAGE_UNSTAMPED`
         メッセージからスタンプが外された。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `message_id`: メッセージId
         + `user_id`: スタンプを押したユーザーのId
         + `stamp_id`: スタンプのId
-
         ### `MESSAGE_PINNED`
         メッセージがピン留めされた。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `message_id`: ピンされたメッセージのID
         + `channel_id`: ピンされたメッセージのチャンネルID
-
         ### `MESSAGE_UNPINNED`
         ピン留めされたメッセージのピンが外された。
-
         対象: 投稿チャンネルを閲覧しているユーザー
-
         + `message_id`: ピンが外されたメッセージのID
         + `channel_id`: ピンが外されたメッセージのチャンネルID
-
         ### `MESSAGE_READ`
         自分があるチャンネルのメッセージを読んだ。
-
         対象: 自分
-
         + `id`: 読んだチャンネルId
-
         ### `STAMP_CREATED`
         スタンプが新しく追加された。
-
         対象: 全員
-
         + `id`: 作成されたスタンプのId
-
         ### `STAMP_UPDATED`
         スタンプが修正された。
-
         対象: 全員
-
         + `id`: 修正されたスタンプのId
-
         ### `STAMP_DELETED`
         スタンプが削除された。
-
         対象: 全員
-
         + `id`: 削除されたスタンプのId
-
         ### `STAMP_PALETTE_CREATED`
         スタンプパレットが新しく追加された。
-
         対象: 自分
-
         + `id`: 作成されたスタンプパレットのId
-
         ### `STAMP_PALETTE_UPDATED`
         スタンプパレットが修正された。
-
         対象: 自分
-
         + `id`: 修正されたスタンプパレットのId
-
         ### `STAMP_PALETTE_DELETED`
         スタンプパレットが削除された。
-
         対象: 自分
-
         + `id`: 削除されたスタンプパレットのId
-
         ### `CLIP_FOLDER_CREATED`
         クリップフォルダーが作成された。
-
         対象：自分
-
         + `id`: 作成されたクリップフォルダーのId
-
         ### `CLIP_FOLDER_UPDATED`
         クリップフォルダーが修正された。
-
         対象: 自分
-
         + `id`: 更新されたクリップフォルダーのId
-
         ### `CLIP_FOLDER_DELETED`
         クリップフォルダーが削除された。
-
         対象: 自分
-
         + `id`: 削除されたクリップフォルダーのId
-
         ### `CLIP_FOLDER_MESSAGE_DELETED`
         クリップフォルダーからメッセージが除外された。
-
         対象: 自分
-
         + `folder_id`: メッセージが除外されたクリップフォルダーのId
         + `message_id`: クリップフォルダーから除外されたメッセージのId
-
         ### `CLIP_FOLDER_MESSAGE_ADDED`
         クリップフォルダーにメッセージが追加された。
-
         対象: 自分
-
         + `folder_id`: メッセージが追加されたクリップフォルダーのId
         + `message_id`: クリップフォルダーに追加されたメッセージのId
-
         ### `QALL_ROOM_STATE_CHANGED`
         ルーム状態が変更された。
-
         対象: 全員
-
         + `room_id`: 変更されたルームのId
         + `state`: 変更後のルーム状態
           + `roomId`: ルームのID
@@ -3001,23 +3355,17 @@ paths:
             + `canPublish`: 発言権限
           + `isWebinar`: ウェビナールームかどうか
           + `metadata`: ルームに関連付けられたカスタム属性
-
         ### `QALL_SOUNDBOARD_ITEM_CREATED`
         サウンドボードアイテムが作成された。
-
         対象: 全員
-
         + `sound_id`: 作成されたサウンドのId
         + `name`: サウンド名
         + `creator_id`: 作成者のId
-
         ### `QALL_SOUNDBOARD_ITEM_DELETED`
         サウンドボードアイテムが削除された。
-
         対象: 全員
-
         + `sound_id`: 削除されたサウンドのId
-
+        必要なrole権限: `connect_notification_stream`。
   /users/me/tokens:
     get:
       summary: 有効トークンのリストを取得
@@ -3035,7 +3383,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/ActiveOAuth2Token"
       operationId: getMyTokens
-      description: 有効な自分に発行されたOAuth2トークンのリストを取得します。
+      security:
+        - cookieAuth: []
+      description: |-
+        有効な自分に発行されたOAuth2トークンのリストを取得します。
+        必要なrole権限: `get_my_tokens`。
   "/users/me/tokens/{tokenId}":
     parameters:
       - $ref: "#/components/parameters/tokenIdInPath"
@@ -3049,7 +3401,11 @@ paths:
         "404":
           description: Not Found
       operationId: revokeMyToken
-      description: 自分の指定したトークンの認可を取り消します。
+      security:
+        - cookieAuth: []
+      description: |-
+        自分の指定したトークンの認可を取り消します。
+        必要なrole権限: `revoke_my_token`。
       tags:
         - oauth2
         - me
@@ -3085,6 +3441,7 @@ paths:
         "404":
           description: Not Found
       operationId: getPublicUserIcon
+      security: []
       description: |-
         ユーザーのアイコン画像を取得します。
         Bot・Webhook・凍結ユーザーも対象です。ユーザーまたは画像メタが存在しない場合は404、Cache-Controlはpublic, max-age=3600です。
@@ -3109,6 +3466,9 @@ paths:
         "404":
           description: Not Found
       operationId: getClient
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       parameters:
         - schema:
             type: boolean
@@ -3119,6 +3479,7 @@ paths:
       description: |-
         指定したOAuth2クライアントの情報を取得します。
         詳細情報の取得には対象のクライアントの管理権限が必要です。
+        必要なrole権限: `get_clients`。
     delete:
       summary: OAuth2クライアントを削除
       responses:
@@ -3135,7 +3496,11 @@ paths:
       description: |-
         指定したOAuth2クライアントを削除します。
         対象のクライアントの管理権限が必要です。正常に削除された場合、このクライアントに対する認可は全て取り消されます。
+        必要なrole権限: `delete_my_client`。
       operationId: deleteClient
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       tags:
         - oauth2
     patch:
@@ -3156,6 +3521,9 @@ paths:
       tags:
         - oauth2
       operationId: editClient
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       requestBody:
         content:
           application/json:
@@ -3167,6 +3535,7 @@ paths:
         対象のクライアントの管理権限が必要です。
         クライアント開発者UUIDを変更した場合は、変更先ユーザーにクライアント管理権限が移譲され、自分自身は権限を失います。
         descriptionの空文字は400を返します。
+        必要なrole権限: `edit_my_client`。
   "/clients/{clientId}/tokens":
     delete:
       summary: OAuthクライアントのトークンを削除
@@ -3184,8 +3553,11 @@ paths:
       tags:
         - oauth2
       operationId: revokeClientTokens
+      security:
+        - cookieAuth: []
       description: |-
         自分が許可している指定したOAuthクライアントのアクセストークンを全てRevokeします。
+        必要なrole権限: `revoke_my_token`。
   /clients:
     get:
       summary: OAuth2クライアントのリストを取得
@@ -3202,6 +3574,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/OAuth2Client"
       operationId: getClients
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       parameters:
         - schema:
             type: boolean
@@ -3212,6 +3587,7 @@ paths:
       description: |-
         自身が開発者のOAuth2クライアントのリストを取得します。
         `all`が`true`の場合、全開発者の全クライアントのリストを返します。
+        必要なrole権限: `get_clients`。
     post:
       summary: OAuth2クライアントを作成
       responses:
@@ -3226,9 +3602,13 @@ paths:
       tags:
         - oauth2
       operationId: createClient
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       description: |-
         OAuth2クライアントを作成します。
         descriptionの空文字は400を返します。
+        必要なrole権限: `create_client`。
       requestBody:
         content:
           application/json:
@@ -3251,12 +3631,16 @@ paths:
             Conflict
             既に使われている名前です。
       operationId: createBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       description: |-
         BOTを作成します。
         作成後に購読イベントの設定を行う必要があります。
         さらにHTTP Modeの場合はアクティベーションを行う必要があります。
         初期stateはHTTPモードが0、WebSocketモードが1です。WebSocketモードでもendpointは保存します。
         HTTPモードのendpointは必須です。WebSocketモードでは省略・空文字を許可しますが、値がある場合はどちらのモードもホストを持つhttp/https URLが必要です。
+        必要なrole権限: `create_bot`。
       tags:
         - bot
       requestBody:
@@ -3277,6 +3661,10 @@ paths:
                 items:
                   $ref: "#/components/schemas/Bot"
       operationId: getBots
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       parameters:
         - schema:
             type: boolean
@@ -3289,6 +3677,7 @@ paths:
       description: |-
         BOT情報のリストを取得します。
         allを指定しない場合、自分が開発者のBOTのみを返します。
+        必要なrole権限: `get_bot`。
   /bots/ws:
     get:
       tags:
@@ -3303,6 +3692,8 @@ paths:
         "101":
           description: Switching Protocols
       operationId: connectBotWS
+      security:
+        - bearerAuth: []
       summary: WebSocket Mode BOT用通知ストリームに接続します
       description: |-
         # BOT WebSocketプロトコル
@@ -3367,9 +3758,15 @@ paths:
             Not Found
             BOTが見つかりません。
       operationId: getBotIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       tags:
         - bot
-      description: 指定したBOTのアイコン画像を取得を取得します。
+      description: |-
+        指定したBOTのアイコン画像を取得を取得します。
+        必要なrole権限: `get_bot`。
     put:
       summary: BOTのアイコン画像を変更
       responses:
@@ -3386,6 +3783,9 @@ paths:
             Not Found
             BOTが見つかりません。
       operationId: changeBotIcon
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       requestBody:
         content:
           multipart/form-data:
@@ -3399,6 +3799,7 @@ paths:
       description: |-
         指定したBOTのアイコン画像を変更を変更します。
         対象のBOTの管理権限が必要です。
+        必要なrole権限: `edit_bot`。
   "/bots/{botId}":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3420,6 +3821,10 @@ paths:
         "404":
           description: Not Found
       operationId: getBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       parameters:
         - schema:
             type: boolean
@@ -3430,6 +3835,7 @@ paths:
       description: |-
         指定したBOTのBOT情報を取得します。
         BOT詳細情報を取得する場合は、対象のBOTの管理権限が必要です。
+        必要なrole権限: `get_bot`。
     delete:
       summary: BOTを削除
       responses:
@@ -3442,12 +3848,16 @@ paths:
         "404":
           description: Not Found
       operationId: deleteBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       tags:
         - bot
       description: |-
         指定したBOTを削除します。
         対象のBOTの管理権限が必要です。
         Botユーザーを無効化し、トークンとチャンネル参加を削除します。BOT_LEFTイベントは配信しません。
+        必要なrole権限: `delete_bot`。
     patch:
       summary: BOT情報を変更
       responses:
@@ -3462,6 +3872,9 @@ paths:
         "404":
           description: Not Found
       operationId: editBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       description: |-
         指定したBOTの情報を変更します。
         対象のBOTの管理権限が必要です。
@@ -3469,6 +3882,7 @@ paths:
         privilegedはfalseであっても指定すると非管理者は403です。HTTPモードではendpointが必須で、値がある場合はモードを問わずホストを持つhttp/https URLを指定します。
         subscribeEventsは有効なイベント、developerIdは有効な人間ユーザーに限ります。空のdisplayNameは400です。
         すべての更新で変更後のmode・endpointを再検証するため、保存済みendpointが不正なら同時に修正する必要があります。
+        必要なrole権限: `edit_bot`。
       tags:
         - bot
       requestBody:
@@ -3492,11 +3906,15 @@ paths:
             Not Found
             BOTが見つかりません。
       operationId: activateBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       tags:
         - bot
       description: |-
         指定したBOTを有効化します。
         対象のBOTの管理権限が必要です。
+        必要なrole権限: `edit_bot`。
   "/bots/{botId}/actions/inactivate":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3516,7 +3934,12 @@ paths:
       tags:
         - bot
       operationId: inactivateBot
-      description: 指定したBOTを無効化します。対象のBOTの管理権限が必要です。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
+      description: |-
+        指定したBOTを無効化します。対象のBOTの管理権限が必要です。
+        必要なrole権限: `edit_bot`。
   "/bots/{botId}/actions/reissue":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3536,12 +3959,16 @@ paths:
             Not Found
             BOTが見つかりません。
       operationId: reissueBot
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
       tags:
         - bot
       description: |-
         指定したBOTの現在の各種トークンを無効化し、再発行を行います。
         対象のBOTの管理権限が必要です。
         HTTPモードではstateが2になり、再度activateが必要です。
+        必要なrole権限: `edit_bot`。
   "/bots/{botId}/logs":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3566,6 +3993,10 @@ paths:
             Not Found
             BOTが見つかりません。
       operationId: getBotLogs
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       parameters:
         - in: query
           name: limit
@@ -3580,6 +4011,7 @@ paths:
         指定したBOTのイベントログを取得します。
         対象のBOTの管理権限が必要です。
         limitの省略時と0指定時は30件です。limitは最大200件、負のlimit・offsetは400を返します。
+        必要なrole権限: `get_bot`。
   "/bots/{botId}/actions/join":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3603,7 +4035,12 @@ paths:
         チャンネルに参加したBOTは、そのチャンネルの各種イベントを受け取るようになります。
         対象のBOTの管理権限が必要です。
         Bot本人も操作できます。公開チャンネルのみ指定でき、DMは400です。アーカイブ済みチャンネルへの参加と重複参加は成功扱いです。
+        必要なrole権限: `bot_action_join_channel`。
       operationId: letBotJoinChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       tags:
         - bot
       requestBody:
@@ -3632,6 +4069,10 @@ paths:
       tags:
         - bot
       operationId: letBotLeaveChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -3641,6 +4082,7 @@ paths:
         指定したBOTを指定したチャンネルから退出させます。
         対象のBOTの管理権限が必要です。
         Bot本人も操作できます。正しい形式のIDであれば、チャンネルや参加の存在を確認せず204を返します。
+        必要なrole権限: `bot_action_leave_channel`。
   "/channels/{channelId}/bots":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -3664,9 +4106,15 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       description: |-
         指定したチャンネルに参加しているBOTのリストを取得します。
         自分が参加するDMでは空配列、アクセスできないチャンネルでは404を返します。
+        必要なrole権限: `get_channel`。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3683,8 +4131,14 @@ paths:
           description: |-
             Service Unavailable
             WebRTCは現在機能を停止しています
-      description: Skyway WebRTC用の認証API
+      description: |-
+        Skyway WebRTC用の認証API
+        必要なrole権限: `web_rtc`。
       operationId: postWebRTCAuthenticate
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - webrtc
       requestBody:
@@ -3709,9 +4163,15 @@ paths:
         "404":
           description: Not Found
       operationId: getChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       description: |-
         指定したチャンネルの情報を取得します。
         DMの場合、parentIdは内部DMルートのID、nameはdm_で始まるランダム名です。
+        必要なrole権限: `get_channel`。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3728,6 +4188,8 @@ paths:
             Conflict
             変更後の名前のチャンネルが既に存在しています。
       operationId: editChannel
+      security:
+        - cookieAuth: []
       tags:
         - channel
       requestBody:
@@ -3740,6 +4202,7 @@ paths:
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
         名前の重複判定は大小文字を区別しません。アーカイブは子孫にも適用されますが、解除は子孫に適用されません。親がアーカイブ済みの場合の解除、自分の子孫への移動は400です。
+        必要なrole権限: `edit_channel`。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -3753,7 +4216,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/WebRTCUserStates"
       operationId: getWebRTCState
-      description: 現在のWebRTC状態を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
+      description: |-
+        現在のWebRTC状態を取得します。
+        必要なrole権限: `web_rtc`。
   /clip-folders:
     post:
       summary: クリップフォルダを作成
@@ -3767,6 +4236,9 @@ paths:
         "400":
           description: Bad Request
       operationId: createClipFolder
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - clip
       requestBody:
@@ -3777,6 +4249,7 @@ paths:
       description: |-
         クリップフォルダを作成します。
         既にあるフォルダと同名のフォルダを作成することは可能です。
+        必要なrole権限: `create_clip_folder`。
     get:
       summary: クリップフォルダのリストを取得
       responses:
@@ -3792,10 +4265,14 @@ paths:
       tags:
         - clip
       operationId: getClipFolders
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
       parameters: []
       description: |-
         自身が所有するクリップフォルダのリストを取得します。
         クリップフォルダの取得・変更は所有者のみ可能で、管理者にも他人のフォルダへのアクセスは許可しません。
+        必要なrole権限: `get_clip_folder`。
   "/clip-folders/{folderId}":
     parameters:
       - $ref: "#/components/parameters/folderIdInPath"
@@ -3815,7 +4292,12 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: getClipFolder
-      description: 指定したクリップフォルダの情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        指定したクリップフォルダの情報を取得します。
+        必要なrole権限: `get_clip_folder`。
     delete:
       summary: クリップフォルダを削除
       responses:
@@ -3828,9 +4310,14 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: deleteClipFolder
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - clip
-      description: 指定したクリップフォルダを削除します。
+      description: |-
+        指定したクリップフォルダを削除します。
+        必要なrole権限: `delete_clip_folder`。
     patch:
       summary: クリップフォルダ情報を編集
       responses:
@@ -3843,6 +4330,9 @@ paths:
         "404":
           description: Not Found
       operationId: editClipFolder
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - clip
       requestBody:
@@ -3850,7 +4340,9 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PatchClipFolderRequest"
-      description: 指定したクリップフォルダの情報を編集します。
+      description: |-
+        指定したクリップフォルダの情報を編集します。
+        必要なrole権限: `edit_clip_folder`。
   "/clip-folders/{folderId}/messages":
     parameters:
       - $ref: "#/components/parameters/folderIdInPath"
@@ -3874,6 +4366,9 @@ paths:
             Conflict
             既に追加されています。
       operationId: clipMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - clip
       requestBody:
@@ -3881,7 +4376,9 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PostClipFolderMessageRequest"
-      description: 指定したメッセージを指定したクリップフォルダに追加します。
+      description: |-
+        指定したメッセージを指定したクリップフォルダに追加します。
+        必要なrole権限: `edit_clip_folder`。
     get:
       summary: フォルダ内のクリップのリストを取得
       responses:
@@ -3899,6 +4396,9 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: getClips
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
       parameters:
         - $ref: "#/components/parameters/limitInQuery"
         - $ref: "#/components/parameters/offsetInQuery"
@@ -3909,6 +4409,7 @@ paths:
         指定したフォルダ内のクリップのリストを取得します。
         `order`を指定しない場合、クリップした日時の新しい順で返されます。
         limitの省略時と0指定時は20件です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。入力不正は400、続きの有無はX-TRAQ-Moreで返します。
+        必要なrole権限: `get_clip_folder`、`get_message`。
   "/clip-folders/{folderId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/folderIdInPath"
@@ -3925,9 +4426,13 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: unclipMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       description: |-
         指定したフォルダから指定したメッセージのクリップを除外します。
         既に外されているメッセージを指定した場合は204を返します。
+        必要なrole権限: `edit_clip_folder`。
       tags:
         - clip
   "/webhooks/{webhookId}/messages":
@@ -3938,6 +4443,10 @@ paths:
       tags:
         - webhook
       operationId: getWebhookMessages
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       responses:
         "200":
           description: OK
@@ -3964,7 +4473,9 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定されたWebhookが投稿したメッセージのリストを返します。
+      description: |-
+        指定されたWebhookが投稿したメッセージのリストを返します。
+        必要なrole権限: `get_webhook`。
   "/webhooks/{webhookId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -3974,9 +4485,13 @@ paths:
       description: |-
         指定されたWebhookが投稿したメッセージを削除します。
         アーカイブされているチャンネルのメッセージを削除することはできません。
+        必要なrole権限: `get_webhook`、`get_message`。
       tags:
         - webhook
       operationId: DeleteWebhookMessage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
       responses:
         "204":
           description: |-
@@ -4021,6 +4536,11 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelEvents
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/limitInQuery"
         - $ref: "#/components/parameters/offsetInQuery"
@@ -4031,6 +4551,7 @@ paths:
       description: |-
         指定したチャンネルのイベントリストを取得します。
         limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        必要なrole権限: `get_channel`。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4047,7 +4568,12 @@ paths:
                 items:
                   $ref: "#/components/schemas/StampPalette"
       operationId: getStampPalettes
-      description: 自身が所有しているスタンプパレットのリストを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        自身が所有しているスタンプパレットのリストを取得します。
+        必要なrole権限: `get_stamp_palette`。
     post:
       summary: スタンプパレットを作成
       responses:
@@ -4061,8 +4587,13 @@ paths:
           description: Bad Request
       tags:
         - stamp
-      description: スタンプパレットを作成します。
+      description: |-
+        スタンプパレットを作成します。
+        必要なrole権限: `create_stamp_palette`。
       operationId: createStampPalette
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       requestBody:
         content:
           application/json:
@@ -4085,7 +4616,12 @@ paths:
         "404":
           description: Not Found
       operationId: getStampPalette
-      description: 指定したスタンプパレットの情報を取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        指定したスタンプパレットの情報を取得します。
+        必要なrole権限: `get_stamp_palette`。
     delete:
       summary: スタンプパレットを削除
       responses:
@@ -4100,9 +4636,13 @@ paths:
         "404":
           description: Not Found
       operationId: deleteStampPalette
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       description: |-
         指定したスタンプパレットを削除します。
         対象のスタンプパレットの管理権限が必要です。
+        必要なrole権限: `delete_stamp_palette`。
       tags:
         - stamp
     patch:
@@ -4121,6 +4661,9 @@ paths:
         "404":
           description: Not Found
       operationId: editStampPalette
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       tags:
         - stamp
       requestBody:
@@ -4132,6 +4675,7 @@ paths:
         指定したスタンプパレットを編集します。
         リクエストのスタンプの配列の順番は保存されて変更されます。
         対象のスタンプパレットの管理権限が必要です。
+        必要なrole権限: `edit_stamp_palette`。
   /activity/onlines:
     get:
       summary: オンラインユーザーリストを取得
@@ -4148,7 +4692,14 @@ paths:
                 items:
                   type: string
       operationId: getOnlineUsers
-      description: 現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
+      description: |-
+        現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
+        必要なrole権限: `get_user`。
   "/stamps/{stampId}/image":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
@@ -4178,13 +4729,21 @@ paths:
         "404":
           description: Not Found
       operationId: getStampImage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
       description: |-
         指定したIDのスタンプ画像を返します。
         Cache-Controlは付与しません。
         標準UnicodeスタンプはSVGを返すことがあります。
+        必要なrole権限: `get_stamp`、`download_file`。
     put:
       summary: スタンプ画像を変更
       operationId: changeStampImage
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       responses:
         "204":
           description: No Content
@@ -4197,6 +4756,7 @@ paths:
       description: |-
         指定したスタンプの画像を変更します。
         作成者またはEditStampCreatedByOthers権限が必要です。
+        必要なrole権限: `edit_stamp`。
       requestBody:
         content:
           multipart/form-data:
@@ -4217,12 +4777,17 @@ paths:
     delete:
       summary: チャンネルを既読にする
       operationId: readChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
       responses:
         "204":
           description: |-
             No Content
             既読にしました。
-      description: 自分が未読のチャンネルを既読にします。
+      description: |-
+        自分が未読のチャンネルを既読にします。
+        必要なrole権限: `delete_unread`。
       tags:
         - me
         - notification
@@ -4250,11 +4815,16 @@ paths:
       tags:
         - group
       operationId: removeUserGroupAdmin
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したユーザーグループから指定した管理者を削除します。
         対象のユーザーグループの管理者権限が必要です。
         グループから管理者が存在しなくなる場合は400エラーを返します。
         指定ユーザーが管理者でなくても204を返します。
+        必要なrole権限: `edit_user_group`。
   "/groups/{groupId}/admins":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -4284,9 +4854,14 @@ paths:
       tags:
         - group
       operationId: addUserGroupAdmin
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+        - bearerAuth: []
       description: |-
         指定したグループに管理者を追加します。
         対象のユーザーグループの管理者権限が必要です。
+        必要なrole権限: `edit_user_group`。
     get:
       summary: グループ管理者を取得
       tags:
@@ -4307,14 +4882,20 @@ paths:
             Not Found
             ユーザーグループが見つかりません。
       operationId: getUserGroupAdmins
-      description: 指定したグループの管理者のリストを取得します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - bearerAuth: []
+      description: |-
+        指定したグループの管理者のリストを取得します。
+        必要なrole権限: `get_user_group`。
   /jwks:
     get:
       operationId: getJWKS
+      security: []
       summary: JWT検証用の公開鍵を取得
       description: JWTの署名検証に使用するJSON Web Key Setを公開します。
       tags: [oauth2]
-      security: []
       responses:
         "200":
           description: JSON Web Key Set
@@ -4331,10 +4912,10 @@ paths:
   /oauth2/oidc/discovery:
     get:
       operationId: getOIDCDiscovery
+      security: []
       summary: OpenID Connect Discoveryを取得
       description: /.well-known/openid-configurationでも公開します。RP-Initiated Logoutには対応していません。
       tags: [oauth2]
-      security: []
       responses:
         "200":
           description: Discovery設定
@@ -4347,6 +4928,9 @@ paths:
       tags:
         - oauth2
       operationId: postOAuth2Token
+      security:
+        - clientBasicAuth: []
+        - {}
       description: |-
         authorization_code・password・client_credentials・refresh_tokenに対応します。クライアント認証はHTTP Basicを優先し、なければフォームのclient_id/client_secretを使います。confidential clientではsecretが必要で、client_credentialsはconfidential clientのみ利用できます。
         authorization_codeはcode、passwordはusername/password、refresh_tokenはrefresh_tokenが必須です。codeは有効期間5分・一度限りで、交換時のredirect_uriは認可要求時の値（省略を含む）と一致する必要があり、不一致は401 invalid_grantです。PKCE不一致やchallengeなしのverifierは400 invalid_requestです。
@@ -4390,8 +4974,11 @@ paths:
       tags:
         - oauth2
       operationId: postOAuth2AuthorizeDecide
+      security:
+        - cookieAuth: []
       description: |-
         認可要求から5分以内にsubmit=approveを送ると承認し、それ以外はaccess_deniedを返します。認可要求を保存したセッションcookieが必要です。未認証は401、Botは403です。
+        AuthorizationヘッダがあればBearer認証を先に検証しますが、認可要求を保存したcookieも必要です。
       requestBody:
         required: true
         content:
@@ -4413,11 +5000,13 @@ paths:
       tags:
         - oauth2
       operationId: getOAuth2Authorize
+      security: []
       description: |-
         response_typeはcodeのみで、未指定はinvalid_request、未対応値はunsupported_response_typeです。promptは省略またはnoneのみ対応します。
         クライアント・redirect URIの検証前後の直接エラーはmessage形式のJSONです。検証済みredirect URIにはcodeまたはerrorとstateをクエリで返し、元のクエリを保持します。未ログイン時は/login、同意が必要な場合は/consentへ302で遷移します。
         redirect_uriは登録値と完全一致が必要です。ただしhttpのloopback IPアドレスでは、portだけの相違を許可します。省略時は登録値を使います。
         PKCEはplain/S256に対応し、method省略時はplainです。http(s)以外のredirect URIではS256が必須で、prompt=noneはconsent_requiredになります。prompt=noneはログイン済みかつ要求scopeを承認済みの場合だけ成功します。
+        ログイン状態はセッションcookieで確認します。Bearerヘッダによるログイン判定は行いません。
       parameters:
         - name: response_type
           in: query
@@ -4469,11 +5058,13 @@ paths:
       tags:
         - oauth2
       operationId: postOAuth2Authorize
+      security: []
       description: |-
         response_typeはcodeのみで、未指定はinvalid_request、未対応値はunsupported_response_typeです。promptは省略またはnoneのみ対応します。
         クライアント・redirect URIの検証前後の直接エラーはmessage形式のJSONです。検証済みredirect URIにはcodeまたはerrorとstateをクエリで返し、元のクエリを保持します。未ログイン時は/login、同意が必要な場合は/consentへ302で遷移します。
         redirect_uriは登録値と完全一致が必要です。ただしhttpのloopback IPアドレスでは、portだけの相違を許可します。省略時は登録値を使います。
         PKCEはplain/S256に対応し、method省略時はplainです。http(s)以外のredirect URIではS256が必須で、prompt=noneはconsent_requiredになります。prompt=noneはログイン済みかつ要求scopeを承認済みの場合だけ成功します。
+        ログイン状態はセッションcookieで確認します。Bearerヘッダによるログイン判定は行いません。
       requestBody:
         required: true
         content:
@@ -4492,6 +5083,7 @@ paths:
     post:
       summary: OAuth2 トークン無効化エンドポイント
       operationId: revokeOAuth2Token
+      security: []
       responses:
         "200":
           description: OK
@@ -4525,14 +5117,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/ExternalProviderUser"
       operationId: getMyExternalAccounts
+      security:
+        - cookieAuth: []
       description: |-
         自分に紐付けられている外部ログインアカウント一覧を取得します。
         externalName未設定時はexternalIdを代用します。linkedAtはRFC3339形式です。
+        必要なrole権限: `get_my_external_account`。
     parameters: []
   /users/me/ex-accounts/link:
     post:
       summary: 外部ログインアカウントを紐付ける
       operationId: linkExternalAccount
+      security:
+        - cookieAuth: []
       responses:
         "302":
           description: |-
@@ -4548,6 +5145,7 @@ paths:
         指定した`providerName`がサーバー側で有効である必要があります。
         リクエストが受理された場合、外部サービスの認証画面にリダイレクトされ、認証される必要があります。
         外部認証ルートへ302でリダイレクトします。
+        必要なrole権限: `edit_my_external_account`。
       requestBody:
         content:
           application/json:
@@ -4557,6 +5155,8 @@ paths:
     post:
       summary: 外部ログインアカウントの紐付けを解除
       operationId: unlinkExternalAccount
+      security:
+        - cookieAuth: []
       responses:
         "204":
           description: |-
@@ -4567,6 +5167,7 @@ paths:
       description: |-
         自分に紐付けられている外部ログインアカウントの紐付けを解除します。
         未連携のproviderNameは400を返します。
+        必要なrole権限: `edit_my_external_account`。
       tags:
         - authentication
         - me
@@ -4600,10 +5201,16 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getUserDMChannel
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
       description: |-
         指定したユーザーとのダイレクトメッセージチャンネルの情報を返します。
         ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
         DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
+        必要なrole権限: `get_channel`。
   "/messages/{messageId}/clips":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -4625,7 +5232,12 @@ paths:
           description: |
             Not Found
       operationId: getMessageClips
-      description: 対象のメッセージの自分のクリップの一覧を返します。
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+      description: |-
+        対象のメッセージの自分のクリップの一覧を返します。
+        必要なrole権限: `get_clip_folder`。
   /ogp:
     get:
       summary: OGP情報を取得
@@ -4641,6 +5253,9 @@ paths:
         "400":
           description: 指定したURLが不正です。
       operationId: getOgp
+      security:
+        - cookieAuth: []
+        - OAuth2: []
       description: |
         指定されたURLのOGP情報を取得します。
         指定されたURLに対するOGP情報が見つからなかった場合、typeがemptyに設定された空のOGP情報を返します。
@@ -4662,6 +5277,9 @@ paths:
         "400":
           description: 指定したURLが不正です。
       operationId: deleteOgpCache
+      security:
+        - cookieAuth: []
+        - OAuth2: []
       description: 指定されたURLのOGP情報のキャッシュを削除します。
       parameters:
         - schema:
@@ -4673,8 +5291,14 @@ paths:
   /users/me/settings:
     get:
       summary: ユーザー設定を取得
-      description: ユーザー設定を取得します。
+      description: |-
+        ユーザー設定を取得します。
+        必要なrole権限: `get_me`。
       operationId: getUserSettings
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       tags:
         - me
       responses:
@@ -4690,7 +5314,12 @@ paths:
       description: |-
         メッセージ引用通知の設定情報を取得します。
         設定未作成の場合はfalseを返します。
+        必要なrole権限: `get_me`。
       operationId: getMyNotifyCitation
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
       tags:
         - me
       responses:
@@ -4716,13 +5345,20 @@ paths:
       tags:
         - me
       operationId: changeMyNotifyCitation
-      description: メッセージ引用通知の設定情報を変更します
+      security:
+        - cookieAuth: []
+        - OAuth2: ["write"]
+      description: |-
+        メッセージ引用通知の設定情報を変更します
+        必要なrole権限: `edit_me`。
   "/channels/{channelId}/path":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
       summary: 指定したチャンネルパスを取得
-      description: 指定されたチャンネルのパスを取得します。
+      description: |-
+        指定されたチャンネルのパスを取得します。
+        必要なrole権限: `get_channel`。
       tags:
         - channel
       responses:
@@ -4735,13 +5371,23 @@ paths:
         "404":
           description: Not Found
       operationId: getChannelPath
+      security:
+        - cookieAuth: []
+        - OAuth2: ["read"]
+        - OAuth2: ["manage_bot"]
+        - bearerAuth: []
   /qall/endpoints:
     get:
       summary: LiveKitエンドポイントを取得
       description: |-
         接続可能なLiveKitエンドポイントを取得します。
         未設定時はendpointに空文字を返します。Qallの通常APIにはWebRTC権限が必要で、Bearer認証ではqallスコープも必要です。
+        必要なrole権限: `web_rtc`。
       operationId: getQallEndpoints
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       responses:
@@ -4760,7 +5406,12 @@ paths:
         指定したルームに参加するためのLiveKitトークンを取得します。
         発行先は公開チャンネルに限り、不存在・非公開チャンネルは404です。isWebinarは文字列trueの場合だけ有効です。
         トークンの有効期間は24時間で、自分のmetadata更新を許可します。参加者のNameにはユーザーUUIDを設定します。
+        必要なrole権限: `web_rtc`。
       operationId: getLiveKitToken
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       parameters:
@@ -4786,9 +5437,14 @@ paths:
   /qall/rooms:
     get:
       summary: ルームと参加者の一覧を取得
-      description: >
+      description: |-
         現在存在する(またはアクティブな)ルームと、そのルームに所属している参加者情報を取得します。
+        必要なrole権限: `web_rtc`。
       operationId: getRooms
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       responses:
@@ -4825,9 +5481,14 @@ paths:
           description: Internal Server Error
     patch:
       summary: ルームのメタデータを更新
-      description: >
+      description: |-
         ルームのメタデータを更新します。
+        必要なrole権限: `web_rtc`。
       operationId: updateRoomMetadata
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       parameters:
@@ -4854,7 +5515,12 @@ paths:
       description: |-
         ルーム内の参加者の発言権限を変更します。
         ルームが存在しなければ404、自分が未参加またはCanPublishを持たなければ403です。
+        必要なrole権限: `web_rtc`。
       operationId: changeParticipantRole
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       parameters:
@@ -4893,6 +5559,8 @@ paths:
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
         AuthorizationのJWTと本文のSHA256で認証し、不正な場合は400を返します。未処理のイベントも200で受理します。
       operationId: liveKitWebhook
+      security:
+        - liveKitSignature: []
       tags:
         - qall
       requestBody:
@@ -4912,10 +5580,15 @@ paths:
   /qall/soundboard:
     get:
       summary: サウンドボード用の音声一覧を取得
-      description: >
+      description: |-
         DBに保存されたサウンドボード情報を取得します。  
         各アイテムには soundId, soundName, stampId が含まれます。
+        必要なrole権限: `web_rtc`。
       operationId: getSoundboardList
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       responses:
@@ -4930,11 +5603,16 @@ paths:
 
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
-      description: >
+      description: |-
         15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
         クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
+        必要なrole権限: `web_rtc`。
       operationId: postSoundboard
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       requestBody:
@@ -4963,7 +5641,12 @@ paths:
         Ingressを介して指定ルームに音声を流します。    
         該当ルームに参加しているユーザであれば再生可能とします。
         ルームが存在しなければ404、自分が未参加なら403です。
+        必要なrole権限: `web_rtc`。
       operationId: postSoundboardPlay
+      security:
+        - cookieAuth: []
+        - OAuth2: ["qall"]
+        - bearerAuth: []
       tags:
         - qall
       requestBody:
@@ -5007,9 +5690,26 @@ components:
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
             qall: Qall利用スコープ
+            openid: OpenID Connect・基本userinfo
+            profile: 追加プロフィール情報
     bearerAuth:
       type: http
       scheme: bearer
+      description: Bot作成・トークン再発行で得たBot専用アクセストークン。
+    clientBasicAuth:
+      type: http
+      scheme: basic
+      description: OAuthクライアントIDとsecret。フォーム認証の条件はtoken endpointを参照。
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: X-TRAQ-Signature
+      description: Webhook secretによる本文のHMAC-SHA1（16進数）。secretが空なら不要。
+    liveKitSignature:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: LiveKitが発行する、本文のSHA-256を含む署名付きJWT。
   schemas:
     Message:
       title: Message
@@ -8642,5 +9342,5 @@ tags:
   - name: qall
     description: Qall API
 security:
+  - cookieAuth: []
   - OAuth2: []
-  - bearerAuth: []
