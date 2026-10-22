@@ -437,6 +437,7 @@ paths:
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
+        同じtopicの再設定は、アーカイブ済みでも204を返します。
       requestBody:
         content:
           application/json:
@@ -2100,6 +2101,7 @@ paths:
       description: |-
         チャンネルを作成します。
         階層が6以上になるチャンネルは作成できません。
+        同じ親のチャンネル名は大小文字を区別せず重複を判定します。
     get:
       summary: チャンネルリストを取得
       responses:
@@ -2112,7 +2114,10 @@ paths:
       operationId: getChannels
       tags:
         - channel
-      description: チャンネルのリストを取得します。
+      description: |-
+        チャンネルのリストを取得します。
+        include-dm=trueとpathの併用は400、解決できないpathは404です。pathは大小文字を区別せず、先頭の#や末尾の/は付けられません。
+        アーカイブ済みチャンネルも含まれ、archivedで判別できます。
       parameters:
         - schema:
             type: boolean
@@ -2380,6 +2385,7 @@ paths:
         指定したチャンネルをスターチャンネルに追加します。
         スター済みのチャンネルIDを指定した場合、204を返します。
         不正なチャンネルIDを指定した場合、400を返します。
+        DMは400ですが、アーカイブ済みの公開チャンネルには追加できます。
   "/users/me/stars/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -3573,7 +3579,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
-      description: 指定したチャンネルに参加しているBOTのリストを取得します。
+      description: |-
+        指定したチャンネルに参加しているBOTのリストを取得します。
+        自分が参加するDMでは空配列、アクセスできないチャンネルでは404を返します。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3616,7 +3624,9 @@ paths:
         "404":
           description: Not Found
       operationId: getChannel
-      description: 指定したチャンネルの情報を取得します。
+      description: |-
+        指定したチャンネルの情報を取得します。
+        DMの場合、parentIdは内部DMルートのID、nameはdm_で始まるランダム名です。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3644,6 +3654,7 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
+        名前の重複判定は大小文字を区別しません。アーカイブは子孫にも適用されますが、解除は子孫に適用されません。親がアーカイブ済みの場合の解除、自分の子孫への移動は400です。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
