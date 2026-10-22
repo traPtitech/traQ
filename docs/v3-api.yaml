@@ -3221,6 +3221,8 @@ paths:
         BOTを作成します。
         作成後に購読イベントの設定を行う必要があります。
         さらにHTTP Modeの場合はアクティベーションを行う必要があります。
+        初期stateはHTTPモードが0、WebSocketモードが1です。WebSocketモードでもendpointは保存します。
+        HTTPモードのendpointは必須です。WebSocketモードでは省略・空文字を許可しますが、値がある場合はどちらのモードもホストを持つhttp/https URLが必要です。
       tags:
         - bot
       requestBody:
@@ -3404,6 +3406,7 @@ paths:
       description: |-
         指定したBOTを削除します。
         対象のBOTの管理権限が必要です。
+        Botユーザーを無効化し、トークンとチャンネル参加を削除します。BOT_LEFTイベントは配信しません。
     patch:
       summary: BOT情報を変更
       responses:
@@ -3422,6 +3425,9 @@ paths:
         指定したBOTの情報を変更します。
         対象のBOTの管理権限が必要です。
         BOT開発者UUIDを変更した場合は、変更先ユーザーにBOT管理権限が移譲され、自分自身は権限を失います。
+        privilegedはfalseであっても指定すると非管理者は403です。HTTPモードではendpointが必須で、値がある場合はモードを問わずホストを持つhttp/https URLを指定します。
+        subscribeEventsは有効なイベント、developerIdは有効な人間ユーザーに限ります。空のdisplayNameは400です。
+        すべての更新で変更後のmode・endpointを再検証するため、保存済みendpointが不正なら同時に修正する必要があります。
       tags:
         - bot
       requestBody:
@@ -3494,6 +3500,7 @@ paths:
       description: |-
         指定したBOTの現在の各種トークンを無効化し、再発行を行います。
         対象のBOTの管理権限が必要です。
+        HTTPモードではstateが2になり、再度activateが必要です。
   "/bots/{botId}/logs":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3519,11 +3526,19 @@ paths:
             BOTが見つかりません。
       operationId: getBotLogs
       parameters:
-        - $ref: "#/components/parameters/limitInQuery"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 30
+            minimum: 0
+            maximum: 200
+          description: 取得件数
         - $ref: "#/components/parameters/offsetInQuery"
       description: |-
         指定したBOTのイベントログを取得します。
         対象のBOTの管理権限が必要です。
+        limitの省略時と0指定時は30件です。limitは最大200件、負のlimit・offsetは400を返します。
   "/bots/{botId}/actions/join":
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
@@ -3546,6 +3561,7 @@ paths:
         指定したBOTを指定したチャンネルに参加させます。
         チャンネルに参加したBOTは、そのチャンネルの各種イベントを受け取るようになります。
         対象のBOTの管理権限が必要です。
+        Bot本人も操作できます。公開チャンネルのみ指定でき、DMは400です。アーカイブ済みチャンネルへの参加と重複参加は成功扱いです。
       operationId: letBotJoinChannel
       tags:
         - bot
@@ -3583,6 +3599,7 @@ paths:
       description: |-
         指定したBOTを指定したチャンネルから退出させます。
         対象のBOTの管理権限が必要です。
+        Bot本人も操作できます。正しい形式のIDであれば、チャンネルや参加の存在を確認せず204を返します。
   "/channels/{channelId}/bots":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
