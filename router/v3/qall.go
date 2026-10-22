@@ -128,9 +128,7 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 
 	info, err := ingressClient.CreateIngress(ctx, ingReq)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": fmt.Sprintf("failed to create ingress: %v", err),
-		})
+		return herror.InternalServerError(err)
 	}
 
 	resp := struct {
