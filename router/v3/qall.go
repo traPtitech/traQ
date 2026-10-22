@@ -48,7 +48,7 @@ func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
 
 	mimeType := uploadedFile.Header.Get(echo.HeaderContentType)
 	soundName := c.FormValue("name")
-	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
+	creatorID := getRequestUserID(c)
 	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
 
 	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
