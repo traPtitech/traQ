@@ -74,7 +74,7 @@ func addUserTags(c *echo.Context, repo repository.Repository, userID uuid.UUID) 
 	if err := repo.AddUserTag(c.Request().Context(), userID, t.ID); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
-			return c.NoContent(http.StatusConflict)
+			return herror.Conflict("this tag is already added")
 		default:
 			return herror.InternalServerError(err)
 		}
