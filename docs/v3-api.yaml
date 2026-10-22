@@ -6235,7 +6235,6 @@ components:
         - count
         - noticeable
         - since
-        - until
         - updatedAt
         - oldestMessageId
     PostLoginRequest:
@@ -6652,7 +6651,6 @@ components:
         - endpoint
         - privileged
         - channels
-        - bio
     BotEventLog:
       title: BotEventLog
       type: object
@@ -6920,7 +6918,6 @@ components:
           description: クリップした日時
           format: date-time
       required:
-        - folderId
         - message
         - clippedAt
     ChannelEvent:
