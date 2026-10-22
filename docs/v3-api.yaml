@@ -1131,6 +1131,7 @@ paths:
       description: |-
         指定したユーザーグループの情報を編集します。
         対象のユーザーグループの管理者権限が必要です。
+        typeを新たにgradeへ変更するにはCreateSpecialUserGroup権限が必要です。同じgradeの再送は許可されます。
   "/groups/{groupId}/icon":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1162,6 +1163,7 @@ paths:
       description: |-
         ユーザーグループのアイコンを変更します。
         対象のユーザーグループの管理者権限が必要です。
+        AllUserGroupsAdmin権限がある場合は全グループの管理者として扱います。
   "/groups/{groupId}/members":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1216,6 +1218,7 @@ paths:
       description: |-
         指定したグループにメンバーを追加します。
         対象のユーザーグループの管理者権限が必要です。
+        既存メンバーはroleを更新し、MemberUpdatedを発行します。Bot・無効ユーザーも追加できますが、Webhookユーザーは追加できません。
     delete:
       summary: グループメンバーを一括削除
       responses:
@@ -1335,6 +1338,7 @@ paths:
       description: |-
         ユーザーグループを作成します。
         作成者は自動的にグループ管理者になります。
+        gradeグループの作成にはCreateSpecialUserGroup権限が必要です。
       operationId: createUserGroup
       requestBody:
         content:
@@ -3764,7 +3768,9 @@ paths:
         - clip
       operationId: getClipFolders
       parameters: []
-      description: 自身が所有するクリップフォルダのリストを取得します。
+      description: |-
+        自身が所有するクリップフォルダのリストを取得します。
+        クリップフォルダの取得・変更は所有者のみ可能で、管理者にも他人のフォルダへのアクセスは許可しません。
   "/clip-folders/{folderId}":
     parameters:
       - $ref: "#/components/parameters/folderIdInPath"
@@ -3877,6 +3883,7 @@ paths:
       description: |-
         指定したフォルダ内のクリップのリストを取得します。
         `order`を指定しない場合、クリップした日時の新しい順で返されます。
+        limitの省略時と0指定時は20件です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。入力不正は400、続きの有無はX-TRAQ-Moreで返します。
   "/clip-folders/{folderId}/messages/{messageId}":
     parameters:
       - $ref: "#/components/parameters/folderIdInPath"
@@ -4218,6 +4225,7 @@ paths:
         指定したユーザーグループから指定した管理者を削除します。
         対象のユーザーグループの管理者権限が必要です。
         グループから管理者が存在しなくなる場合は400エラーを返します。
+        指定ユーザーが管理者でなくても204を返します。
   "/groups/{groupId}/admins":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -5780,6 +5788,9 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 30
+          pattern: "^[^@＠#＃:： 　]+$"
           description: グループ名
         description:
           type: string
@@ -5787,6 +5798,7 @@ components:
           maxLength: 100
         type:
           type: string
+          maxLength: 30
           description: グループタイプ
     PostUserGroupRequest:
       title: PostUserGroupRequest
@@ -5795,6 +5807,9 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 30
+          pattern: "^[^@＠#＃:： 　]+$"
           description: グループ名
         description:
           type: string
@@ -5802,11 +5817,10 @@ components:
           maxLength: 100
         type:
           type: string
+          maxLength: 30
           description: グループタイプ
       required:
         - name
-        - description
-        - type
     MyUserDetail:
       title: MyUserDetail
       type: object
