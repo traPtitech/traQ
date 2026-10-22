@@ -1931,7 +1931,10 @@ paths:
             schema:
               $ref: "#/components/schemas/PutMyPasswordRequest"
         description: ""
-      description: 自身のパスワードを変更します。
+      description: |-
+        自身のパスワードを変更します。
+        対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
+        現在のpasswordは非空であることを検証します。外部認証が有効な場合は外部サーバーで照合します。
   "/users/{userId}/password":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1962,6 +1965,7 @@ paths:
       description: |-
         指定したユーザーのパスワードを変更します。
         管理者権限が必要です。
+        対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
   /users/me/fcm-device:
     post:
       summary: FCMデバイスを登録
@@ -2470,7 +2474,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PostLoginRequest"
-      description: ログインします。
+      description: |-
+        ログインします。
+        nameは英数字・ハイフン・アンダースコアの1〜32文字、passwordは非空のみを検証します。
+        成功時は既存セッションを置き換え、r_sessionをHttpOnly・SameSite=Lax・Path=/・有効期間28日で発行します。
   /logout:
     post:
       summary: ログアウト
@@ -2494,7 +2501,10 @@ paths:
           in: query
           name: all
           description: 全てのセッションでログアウトするかどうか
-      description: ログアウトします。
+      description: |-
+        ログアウトします。
+        対象はcookieセッションのみです。all=trueは当該ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
+        通常は204、redirect指定時は302を返し、セッションの保存・失効処理が失敗した場合はエラーを返します。
   /users/me/sessions:
     get:
       summary: 自分のログインセッションリストを取得
@@ -2512,7 +2522,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/LoginSession"
       operationId: getMySessions
-      description: 自分のログインセッションのリストを取得します。
+      description: |-
+        自分のログインセッションのリストを取得します。
+        直近28日以内に作成されたセッションが対象です。
   "/users/me/sessions/{sessionId}":
     parameters:
       - $ref: "#/components/parameters/sessionIdInPath"
@@ -3009,7 +3021,9 @@ paths:
         "404":
           description: Not Found
       operationId: getPublicUserIcon
-      description: ユーザーのアイコン画像を取得します。
+      description: |-
+        ユーザーのアイコン画像を取得します。
+        Bot・Webhook・凍結ユーザーも対象です。ユーザーまたは画像メタが存在しない場合は404、Cache-Controlはpublic, max-age=3600です。
   "/clients/{clientId}":
     parameters:
       - $ref: "#/components/parameters/clientIdInPath"
@@ -4344,7 +4358,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/ExternalProviderUser"
       operationId: getMyExternalAccounts
-      description: 自分に紐付けられている外部ログインアカウント一覧を取得します。
+      description: |-
+        自分に紐付けられている外部ログインアカウント一覧を取得します。
+        externalName未設定時はexternalIdを代用します。linkedAtはRFC3339形式です。
     parameters: []
   /users/me/ex-accounts/link:
     post:
@@ -4364,6 +4380,7 @@ paths:
         自分に外部ログインアカウントを紐付けます。
         指定した`providerName`がサーバー側で有効である必要があります。
         リクエストが受理された場合、外部サービスの認証画面にリダイレクトされ、認証される必要があります。
+        外部認証ルートへ302でリダイレクトします。
       requestBody:
         content:
           application/json:
@@ -4380,7 +4397,9 @@ paths:
             紐付けを解除しました。
         "400":
           description: Bad Request
-      description: 自分に紐付けられている外部ログインアカウントの紐付けを解除します。
+      description: |-
+        自分に紐付けられている外部ログインアカウントの紐付けを解除します。
+        未連携のproviderNameは400を返します。
       tags:
         - authentication
         - me
@@ -6092,7 +6111,7 @@ components:
       properties:
         password:
           type: string
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
           description: 現在のパスワード
         newPassword:
           type: string
@@ -6301,11 +6320,11 @@ components:
         name:
           type: string
           description: ユーザー名
-          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
+          pattern: "^[a-zA-Z0-9_-]{1,32}$"
         password:
           type: string
           description: パスワード
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
       required:
         - name
         - password
