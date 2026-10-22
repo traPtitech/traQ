@@ -1653,6 +1653,7 @@ paths:
       description: |-
         Webhookのリストを取得します。
         allがtrueで無い場合は、自分がオーナーのWebhookのリストを返します。
+        all=trueでもAccessOthersWebhook権限がなければ自分のWebhookのみ返します。個々のWebhookの管理操作には所有者または同権限が必要です。
     post:
       summary: Webhookを新規作成
       responses:
@@ -1675,6 +1676,7 @@ paths:
       description: |-
         Webhookを新規作成します。
         `secret`が空文字の場合、insecureウェブフックが作成されます。
+        投稿先は公開チャンネルに限ります。descriptionの空文字は400、secretの省略・空文字は署名不要を表します。
   "/webhooks/{webhookId}":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -1717,11 +1719,11 @@ paths:
           name: X-TRAQ-Channel-Id
           description: 投稿先のチャンネルID(変更する場合)
         - schema:
-            type: integer
-            default: 0
+            type: boolean
+            default: false
           in: query
           name: embed
-          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+          description: 1・t・T・true・TRUE・Trueをtrueとして解釈し、それ以外はfalseとして扱います。
       requestBody:
         content:
           text/plain:
@@ -1735,6 +1737,9 @@ paths:
         Webhookにメッセージを投稿します。
         secureなウェブフックに対しては`X-TRAQ-Signature`ヘッダーが必須です。
         アーカイブされているチャンネルには投稿できません。
+        Content-Typeはtext/plainまたはtext/plain; charset=utf-8との大小文字を無視した完全一致のみ受け付け、それ以外は415です。
+        署名は本文のHMAC-SHA1をhex化した値です。hexの復号結果が空の場合は署名未指定として400、不一致も400です。
+        X-TRAQ-Channel-Idで任意の公開チャンネルに投稿先を変更できます。不正・非公開・不存在IDは400です。
     delete:
       summary: Webhookを削除
       responses:
@@ -1752,6 +1757,7 @@ paths:
       description: |-
         指定したWebhookを削除します。
         Webhookによって投稿されたメッセージは削除されません。
+        対応するBotユーザーを無効化します。
     patch:
       summary: Webhook情報を変更
       responses:
@@ -1773,7 +1779,9 @@ paths:
               $ref: "#/components/schemas/PatchWebhookRequest"
       tags:
         - webhook
-      description: 指定したWebhookの情報を変更します。
+      description: |-
+        指定したWebhookの情報を変更します。
+        descriptionの空文字は400、secretの空文字は署名不要を表します。ownerIdは有効な人間ユーザーに限り、譲渡後は旧所有者の所有権によるアクセスが失われます。
   "/webhooks/{webhookId}/icon":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -1802,7 +1810,9 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: getWebhookIcon
-      description: 指定したWebhookのアイコン画像を取得します
+      description: |-
+        指定したWebhookのアイコン画像を取得します
+        所有者またはAccessOthersWebhook権限が必要です。対応するBotユーザーのアイコンはユーザーアイコン取得APIからも取得できます。
     put:
       summary: Webhookのアイコンを変更
       responses:
@@ -3135,6 +3145,7 @@ paths:
         指定したOAuth2クライアントの情報を変更します。
         対象のクライアントの管理権限が必要です。
         クライアント開発者UUIDを変更した場合は、変更先ユーザーにクライアント管理権限が移譲され、自分自身は権限を失います。
+        descriptionの空文字は400を返します。
   "/clients/{clientId}/tokens":
     delete:
       summary: OAuthクライアントのトークンを削除
@@ -3194,7 +3205,9 @@ paths:
       tags:
         - oauth2
       operationId: createClient
-      description: OAuth2クライアントを作成します。
+      description: |-
+        OAuth2クライアントを作成します。
+        descriptionの空文字は400を返します。
       requestBody:
         content:
           application/json:
@@ -6109,6 +6122,7 @@ components:
           maxLength: 32
         description:
           type: string
+          minLength: 1
           description: 説明
           maxLength: 1000
         channelId:
@@ -6487,6 +6501,7 @@ components:
           maxLength: 32
         description:
           type: string
+          minLength: 1
           description: 説明
           maxLength: 1000
         callbackUrl:
@@ -6566,6 +6581,7 @@ components:
             $ref: "#/components/schemas/OAuth2Scope"
         description:
           type: string
+          minLength: 1
           description: 説明
           maxLength: 1000
         confidential:
