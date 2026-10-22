@@ -346,8 +346,9 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 }
 
 func TestRepositoryImpl_DeleteDeactivatedUserUnreads(t *testing.T) {
-	// Run before parallel tests because the deletion operates across all users.
-	repo, assert, require, active, channel := setupWithUserAndChannel(t, ex1, false)
+	t.Parallel()
+	// Use a dedicated database because the deletion operates across all users.
+	repo, assert, require, active, channel := setupWithUserAndChannel(t, ex4, false)
 	sub := repo.(*Repository).hub.Subscribe(8, event.UnreadsDeleted)
 	defer repo.(*Repository).hub.Unsubscribe(sub)
 	deactivated := []model.UserInfo{

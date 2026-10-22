@@ -33,6 +33,7 @@ const (
 	ex1      = "ex1"
 	ex2      = "ex2"
 	ex3      = "ex3"
+	ex4      = "ex4"
 	rand     = "random"
 )
 
@@ -57,6 +58,7 @@ func TestMain(m *testing.M) {
 		ex1,
 		ex2,
 		ex3,
+		ex4,
 		common2,
 		common3,
 	}
