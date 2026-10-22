@@ -57,6 +57,7 @@ paths:
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
         embedはリクエスト本文で指定します。クエリのembedは無視されます。
+        投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用通知の有無はnotifyCitationに従います。
       operationId: postMessage
       requestBody:
         content:
@@ -316,7 +317,8 @@ paths:
       description: |-
         指定したメッセージを削除します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
-        アーカイブされているチャンネルのメッセージを編集することは出来ません。
+        アーカイブされているチャンネルのメッセージは削除できず、400を返します。
+        関連するピン留め・未読・クリップも削除します。
   "/messages/{messageId}/pin":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -362,6 +364,7 @@ paths:
       description: |-
         指定したメッセージをピン留めします。
         アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
+        上限は1チャンネル100件です。重複と上限超過は400を返し、成功時はPinAddedチャンネルイベントを記録します。
     delete:
       summary: ピン留めを外す
       responses:
@@ -751,7 +754,9 @@ paths:
             schema:
               $ref: "#/components/schemas/PostMessageStampRequest"
         description: ""
-      description: 指定したメッセージに指定したスタンプを押します。
+      description: |-
+        指定したメッセージに指定したスタンプを押します。
+        countはユーザーごとに加算され、累積値に上限はありません。
     delete:
       summary: スタンプを消す
       responses:
@@ -767,7 +772,9 @@ paths:
       tags:
         - message
         - stamp
-      description: 指定したメッセージから指定した自身が押したスタンプを削除します。
+      description: |-
+        指定したメッセージから指定した自身が押したスタンプを削除します。
+        アーカイブ済みチャンネルでは400を返します。
   "/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
@@ -1416,6 +1423,7 @@ paths:
         指定したユーザーにダイレクトメッセージを送信します。
         embedはリクエスト本文で指定します。クエリのembedは無視されます。
         自分自身・Bot・Webhookユーザーにも送信できます。
+        投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用通知の有無はnotifyCitationに従います。
     get:
       summary: ダイレクトメッセージのリストを取得
       operationId: getDirectMessages
