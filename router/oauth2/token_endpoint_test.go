@@ -12,6 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
 )
 
@@ -294,6 +295,30 @@ func runTokenEndpointPasswordTests(t *testing.T, useUUIDV4 bool) {
 		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, env.Repository.SaveClient(context.TODO(), client))
+	for _, tc := range []struct {
+		name  string
+		state model.UserAccountStatus
+	}{
+		{"deactivated", model.UserAccountStatusDeactivated},
+		{"suspended", model.UserAccountStatusSuspended},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			inactiveUser := env.CreateUser(t, rand, useUUIDV4)
+			require.NoError(t, env.Repository.UpdateUser(context.Background(), inactiveUser.GetID(), repository.UpdateUserArgs{
+				UserState: optional.From(tc.state),
+			}))
+			env.R(t).POST("/oauth2/token").
+				WithFormField("grant_type", grantTypePassword).
+				WithFormField("username", inactiveUser.GetName()).
+				WithFormField("password", "!test_test@test-").
+				WithBasicAuth(client.ID, client.Secret).Expect().Status(http.StatusUnauthorized).
+				JSON().Object().Value("error").String().IsEqual(errInvalidGrant)
+			tokens, err := env.Repository.GetTokensByUser(context.Background(), inactiveUser.GetID())
+			require.NoError(t, err)
+			assert.Empty(t, tokens)
+		})
+	}
 
 	t.Run("Success with Basic Auth", func(t *testing.T) {
 		t.Parallel()

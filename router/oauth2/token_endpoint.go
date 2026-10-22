@@ -240,7 +240,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c *echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
-	if user.Authenticate(req.Password) != nil {
+	if !user.IsActive() || user.Authenticate(req.Password) != nil {
 		return c.JSON(http.StatusUnauthorized, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 	}
 
