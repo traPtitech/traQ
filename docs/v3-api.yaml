@@ -4649,8 +4649,9 @@ paths:
   /qall/endpoints:
     get:
       summary: LiveKitエンドポイントを取得
-      description: >
+      description: |-
         接続可能なLiveKitエンドポイントを取得します。
+        未設定時はendpointに空文字を返します。Qallの通常APIにはWebRTC権限が必要で、Bearer認証ではqallスコープも必要です。
       operationId: getQallEndpoints
       tags:
         - qall
@@ -4661,15 +4662,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/qallEndpointResponse"
-        "404":
-          description: Not Found
         "500":
           description: Internal Server Error
   /qall/token:
     get:
       summary: LiveKitトークンを取得
-      description: >
+      description: |-
         指定したルームに参加するためのLiveKitトークンを取得します。
+        発行先は公開チャンネルに限り、不存在・非公開チャンネルは404です。isWebinarは文字列trueの場合だけ有効です。
+        トークンの有効期間は24時間で、自分のmetadata更新を許可します。参加者のNameにはユーザーUUIDを設定します。
       operationId: getLiveKitToken
       tags:
         - qall
@@ -4677,6 +4678,10 @@ paths:
         - $ref: "#/components/parameters/roomIdInQuery"
         - $ref: "#/components/parameters/isWebinarInQuery"
       responses:
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "200":
           description: 成功 - LiveKitトークンを返します
           content:
@@ -4757,8 +4762,9 @@ paths:
   /qall/rooms/{roomId}/participants:
     patch:
       summary: ルームでの発言権限を変更
-      description: >
+      description: |-
         ルーム内の参加者の発言権限を変更します。
+        ルームが存在しなければ404、自分が未参加またはCanPublishを持たなければ403です。
       operationId: changeParticipantRole
       tags:
         - qall
@@ -4774,6 +4780,10 @@ paths:
               items:
                 $ref: "#/components/schemas/qallParticipantRequest"
       responses:
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "200":
           description: 成功 - 発言権限を変更（部分的成功含む）
           content:
@@ -4789,9 +4799,10 @@ paths:
   /qall/webhook:
     post:
       summary: LiveKit Webhook受信
-      description: >
+      description: |-
         LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
+        AuthorizationのJWTと本文のSHA256で認証し、不正な場合は400を返します。未処理のイベントも200で受理します。
       operationId: liveKitWebhook
       tags:
         - qall
@@ -4858,10 +4869,11 @@ paths:
   /qall/soundboard/play:
     post:
       summary: アップロード済み音声を LiveKit ルームで再生
-      description: >
+      description: |-
         S3上にある音声ファイルの署名付きURLを生成し、  
         Ingressを介して指定ルームに音声を流します。    
         該当ルームに参加しているユーザであれば再生可能とします。
+        ルームが存在しなければ404、自分が未参加なら403です。
       operationId: postSoundboardPlay
       tags:
         - qall
@@ -4872,6 +4884,10 @@ paths:
             schema:
               $ref: "#/components/schemas/soundboardPlayRequest"
       responses:
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "200":
           description: Ingressの作成に成功
           content:
