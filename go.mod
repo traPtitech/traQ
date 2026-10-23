@@ -41,6 +41,7 @@ require (
 	github.com/labstack/echo/v5 v5.4.2
 	github.com/leandro-lugaresi/hub v1.1.2
 	github.com/lestrrat-go/jwx/v3 v3.4.0
+	github.com/lestrrat-go/jwx/v4 v4.6.0
 	github.com/livekit/protocol v1.53.0
 	github.com/livekit/server-sdk-go/v2 v2.19.0
 	github.com/lthibault/jitterbug/v2 v2.2.2
