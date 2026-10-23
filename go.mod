@@ -40,7 +40,7 @@ require (
 	github.com/labstack/echo-prometheus v0.0.1
 	github.com/labstack/echo/v5 v5.4.1
 	github.com/leandro-lugaresi/hub v1.1.2
-	github.com/lestrrat-go/jwx/v3 v3.3.0
+	github.com/lestrrat-go/jwx/v3 v3.4.0
 	github.com/livekit/protocol v1.53.0
 	github.com/livekit/server-sdk-go/v2 v2.19.0
 	github.com/lthibault/jitterbug/v2 v2.2.2
@@ -157,7 +157,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/goccy/go-json v0.10.6 // indirect
+	github.com/goccy/go-json v0.11.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
