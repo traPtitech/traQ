@@ -433,6 +433,9 @@ func (h *Handlers) GetUserDMChannel(c *echo.Context) error {
 
 // GetChannelPath GET /channels/:channelID/path
 func (h *Handlers) GetChannelPath(c *echo.Context) error {
+	if !getParamChannel(c).IsPublic {
+		return herror.NotFound()
+	}
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 

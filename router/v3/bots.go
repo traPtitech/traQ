@@ -310,9 +310,10 @@ func (h *Handlers) ReissueBot(c *echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]any{
-		"verificationToken": b.VerificationToken,
-		"accessToken":       t.AccessToken,
+	return c.JSON(http.StatusOK, BotTokens{
+		VerificationToken:  b.VerificationToken,
+		AccessToken:        t.AccessToken,
+		AccessTokenRevoked: t.DeletedAt.Valid,
 	})
 }
 
