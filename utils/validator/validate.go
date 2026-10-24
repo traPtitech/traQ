@@ -95,7 +95,7 @@ var NotInternalURL = vd.By(func(value interface{}) error {
 	case nil:
 		return nil
 	case string:
-		if len(s) == 0 {
+		if len(v) == 0 {
 			return nil
 		}
 		s = v
@@ -105,7 +105,10 @@ var NotInternalURL = vd.By(func(value interface{}) error {
 		}
 		s = v.V
 	}
-	u, _ := url.Parse(s)
+	u, err := url.Parse(s)
+	if err != nil {
+		return err
+	}
 	if iputil.IsPrivateHost(u.Hostname()) {
 		return errors.New("must not be internal url")
 	}
