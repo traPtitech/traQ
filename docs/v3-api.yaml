@@ -1047,6 +1047,8 @@ paths:
       description: |-
         指定したユーザーの情報を変更します。
         管理者権限が必要です。
+        displayNameが空文字の場合、レスポンスではnameを表示名として返します。twitterIdの空文字は設定を解除します。
+        state=0は全cookieセッションを失効させ、state=2は失効させません。state=1を指定するとUserActivatedを発行します。
   "/groups/{groupId}":
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
@@ -1356,7 +1358,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PatchMeRequest"
-      description: 自身のユーザー情報を変更します。
+      description: |-
+        自身のユーザー情報を変更します。
+        displayNameが空文字の場合、レスポンスではnameを表示名として返します。twitterIdの空文字は設定を解除します。
+        homeChannelの省略・nullは変更なし、nil UUIDは解除を表します。設定先は公開チャンネルに限ります。
   "/users/me/oidc":
     get:
       summary: 自分のユーザー詳細を取得 (OIDC UserInfo)
@@ -1453,7 +1458,9 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getUserStats
-      description: 指定したユーザーの統計情報を取得します。
+      description: |-
+        指定したユーザーの統計情報を取得します。
+        スタンプは使用回数の多い順で返します。
   "/channels/{channelId}/subscribers":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1924,7 +1931,10 @@ paths:
             schema:
               $ref: "#/components/schemas/PutMyPasswordRequest"
         description: ""
-      description: 自身のパスワードを変更します。
+      description: |-
+        自身のパスワードを変更します。
+        対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
+        現在のpasswordは非空であることを検証します。外部認証が有効な場合は外部サーバーで照合します。
   "/users/{userId}/password":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1955,6 +1965,7 @@ paths:
       description: |-
         指定したユーザーのパスワードを変更します。
         管理者権限が必要です。
+        対象ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
   /users/me/fcm-device:
     post:
       summary: FCMデバイスを登録
@@ -1969,7 +1980,9 @@ paths:
         - me
         - notification
       operationId: registerFCMDevice
-      description: 自身のFCMデバイスを登録します。
+      description: |-
+        自身のFCMデバイスを登録します。
+        tokenは190文字までです。他ユーザーに登録済みのtokenは400、自分のtokenの再登録は204を返します。
       requestBody:
         content:
           application/json:
@@ -2023,6 +2036,7 @@ paths:
       description: |-
         ユーザーを登録します。
         管理者権限が必要です。
+        公開signupが有効な場合は未認証で利用できます。Authorizationヘッダあり・ログイン済みは管理者を含め400、凍結済みセッションは403です。password省略時はパスワードなしで作成します。
     get:
       summary: ユーザーのリストを取得
       responses:
@@ -2056,6 +2070,7 @@ paths:
         ユーザーのリストを取得します。
         `include-suspended`を指定しない場合、レスポンスにはユーザーアカウント状態が"1: 有効"であるユーザーのみが含まれます。
         `include-suspended`と`name`を同時に指定することはできません。
+        nameとinclude-suspended=trueの併用は400、不正な真偽値はfalse扱いです。結果はID順で返します。
   /channels:
     post:
       summary: チャンネルを作成
@@ -2198,6 +2213,7 @@ paths:
       description: |-
         指定したユーザーの指定したタグの状態を変更します。
         他人の状態は変更できません。
+        他ユーザーのタグは変更できず、403を返します。
     delete:
       summary: ユーザーからタグを削除します
       responses:
@@ -2458,7 +2474,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PostLoginRequest"
-      description: ログインします。
+      description: |-
+        ログインします。
+        nameは英数字・ハイフン・アンダースコアの1〜32文字、passwordは非空のみを検証します。
+        成功時は既存セッションを置き換え、r_sessionをHttpOnly・SameSite=Lax・Path=/・有効期間28日で発行します。
   /logout:
     post:
       summary: ログアウト
@@ -2482,7 +2501,10 @@ paths:
           in: query
           name: all
           description: 全てのセッションでログアウトするかどうか
-      description: ログアウトします。
+      description: |-
+        ログアウトします。
+        対象はcookieセッションのみです。all=trueは当該ユーザーの全cookieセッションを失効させます。OAuthトークンは失効させません。
+        通常は204、redirect指定時は302を返し、セッションの保存・失効処理が失敗した場合はエラーを返します。
   /users/me/sessions:
     get:
       summary: 自分のログインセッションリストを取得
@@ -2500,7 +2522,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/LoginSession"
       operationId: getMySessions
-      description: 自分のログインセッションのリストを取得します。
+      description: |-
+        自分のログインセッションのリストを取得します。
+        直近28日以内に作成されたセッションが対象です。
   "/users/me/sessions/{sessionId}":
     parameters:
       - $ref: "#/components/parameters/sessionIdInPath"
@@ -2997,7 +3021,9 @@ paths:
         "404":
           description: Not Found
       operationId: getPublicUserIcon
-      description: ユーザーのアイコン画像を取得します。
+      description: |-
+        ユーザーのアイコン画像を取得します。
+        Bot・Webhook・凍結ユーザーも対象です。ユーザーまたは画像メタが存在しない場合は404、Cache-Controlはpublic, max-age=3600です。
   "/clients/{clientId}":
     parameters:
       - $ref: "#/components/parameters/clientIdInPath"
@@ -4328,7 +4354,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/ExternalProviderUser"
       operationId: getMyExternalAccounts
-      description: 自分に紐付けられている外部ログインアカウント一覧を取得します。
+      description: |-
+        自分に紐付けられている外部ログインアカウント一覧を取得します。
+        externalName未設定時はexternalIdを代用します。linkedAtはRFC3339形式です。
     parameters: []
   /users/me/ex-accounts/link:
     post:
@@ -4348,6 +4376,7 @@ paths:
         自分に外部ログインアカウントを紐付けます。
         指定した`providerName`がサーバー側で有効である必要があります。
         リクエストが受理された場合、外部サービスの認証画面にリダイレクトされ、認証される必要があります。
+        外部認証ルートへ302でリダイレクトします。
       requestBody:
         content:
           application/json:
@@ -4364,7 +4393,9 @@ paths:
             紐付けを解除しました。
         "400":
           description: Bad Request
-      description: 自分に紐付けられている外部ログインアカウントの紐付けを解除します。
+      description: |-
+        自分に紐付けられている外部ログインアカウントの紐付けを解除します。
+        未連携のproviderNameは400を返します。
       tags:
         - authentication
         - me
@@ -4484,7 +4515,9 @@ paths:
   /users/me/settings/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
-      description: メッセージ引用通知の設定情報を取得します。
+      description: |-
+        メッセージ引用通知の設定情報を取得します。
+        設定未作成の場合はfalseを返します。
       operationId: getMyNotifyCitation
       tags:
         - me
@@ -6074,7 +6107,7 @@ components:
       properties:
         password:
           type: string
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
           description: 現在のパスワード
         newPassword:
           type: string
@@ -6095,7 +6128,7 @@ components:
           description: 新しい表示名
         twitterId:
           type: string
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
           description: TwitterID
         bio:
           type: string
@@ -6103,6 +6136,7 @@ components:
           maxLength: 1000
         homeChannel:
           type: string
+          nullable: true
           description: |-
             ホームチャンネルのUUID
             `00000000-0000-0000-0000-000000000000`を指定すると、ホームチャンネルが`null`に設定されます
@@ -6130,7 +6164,7 @@ components:
         twitterId:
           type: string
           description: TwitterID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         state:
           $ref: "#/components/schemas/UserAccountState"
         role:
@@ -6143,6 +6177,8 @@ components:
       properties:
         token:
           type: string
+          minLength: 1
+          maxLength: 190
           description: FCMのデバイストークン
           example: "bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1"
       required:
@@ -6280,11 +6316,11 @@ components:
         name:
           type: string
           description: ユーザー名
-          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
+          pattern: "^[a-zA-Z0-9_-]{1,32}$"
         password:
           type: string
           description: パスワード
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
       required:
         - name
         - password
