@@ -2,7 +2,13 @@ openapi: 3.0.0
 info:
   title: traQ v3
   version: "3.0"
-  description: traQ v3 API
+  description: |-
+    traQ v3 API
+
+    スタンプ・アイコン画像はPNG/JPEG/GIFに対応し、SVGは受け付けません。サイズ上限はスタンプ1MiB、アイコン2MiBで、超過は400です。
+    PNG/JPEGはPNGに変換し、GIFはアニメーションを保って、縦横比を維持したままスタンプ128×128・アイコン256×256以内に縮小します。
+    入力画素数の上限はConfig.Imaging.MaxPixels（既定2560×1600）です。GIFはさらに1000フレーム以下、論理画面の画素数×フレーム数がMaxPixelsの16倍以下に制限されます。
+    スタンプ・ユーザー・Bot・Webhookのアイコン画像GETはETag、Last-Modified、Rangeに対応し、条件に応じて304・206・416を返します。
   license:
     name: MIT
     url: "https://github.com/traPtitech/traQ/blob/master/LICENSE"
@@ -487,6 +493,9 @@ paths:
       description: |-
         指定したチャンネルにファイルをアップロードします。
         アーカイブされているチャンネルにはアップロード出来ません。
+        multipart本文の上限は30MiBです。MIMEタイプはアップロード時の申告値を使用します。
+        画像サムネイルはJPEG/PNG/GIF/WebP、波形はaudio/mpeg・audio/mp3・audio/wav・audio/x-wavの場合に生成します。
+        DMへのアップロードは参加者のみアクセス可能にします。
     get:
       summary: ファイルメタのリストを取得
       responses:
@@ -529,6 +538,8 @@ paths:
       description: |-
         指定したクエリでファイルメタのリストを取得します。
         クエリパラメータ`channelId`, `mine`の少なくともいずれかが必須です。
+        通常のユーザーファイルのみを返します。limitの省略時と0指定時は20件、負のoffsetは400、orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        channelIdのnil UUIDは未指定扱いです。存在しない、またはアクセスできないチャンネルの指定は400を返します。
   "/files/{fileId}/meta":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -553,6 +564,7 @@ paths:
       description: |-
         指定したファイルのメタ情報を取得します。
         指定したファイルへのアクセス権限が必要です。
+        Cache-Controlはprivate, max-age=86400です。
   "/files/{fileId}/thumbnail":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -580,6 +592,8 @@ paths:
             image/svg+xml:
               schema:
                 type: string
+        "400":
+          description: サムネイルのtypeが不正
         "403":
           description: Forbidden
         "404":
@@ -590,6 +604,7 @@ paths:
       description: |-
         指定したファイルのサムネイル画像を取得します。
         指定したファイルへのアクセス権限が必要です。
+        typeは大小文字を区別せず、不正値は400です。Cache-Controlはprivate, max-age=31536000、X-TRAQ-FILE-TYPEは元ファイルの種別、X-TRAQ-FILE-CACHEはtrueです。
   "/files/{fileId}":
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
@@ -613,6 +628,14 @@ paths:
               schema:
                 type: string
               description: "https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Content-Disposition"
+        "206":
+          description: Partial Content
+        "302":
+          description: 署名URLへのリダイレクト
+        "304":
+          description: Not Modified
+        "416":
+          description: Range Not Satisfiable
         "403":
           description: Forbidden
         "404":
@@ -628,6 +651,10 @@ paths:
       description: |-
         指定したファイル本体を取得します。
         指定したファイルへのアクセス権限が必要です。
+        DMの通常ファイルは非参加者に403を返します。アイコン・スタンプにはこのアクセス制限を適用しません。
+        S3/Swiftで直接アクセスURLを発行できる場合は、有効期間5分の署名URLへ302でリダイレクトします。
+        直接配信ではETag・Last-Modified・Rangeに対応し、条件に応じて304・206・416を返します。Cache-Controlはprivate, max-age=31536000です。
+        直接配信のX-TRAQ-FILE-TYPEはファイル種別を表し、アイコン・スタンプにはX-TRAQ-FILE-CACHE: trueも付与します。
     delete:
       summary: ファイルを削除
       responses:
@@ -645,6 +672,7 @@ paths:
       description: |-
         指定したファイルを削除します。
         指定したファイルの削除権限が必要です。
+        アップロード本人の通常ファイルのみ削除できます。アイコン・スタンプ・soundboardは403を返します。
   "/channels/{channelId}/pins":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -786,7 +814,9 @@ paths:
           description: Conflict
       tags:
         - stamp
-      description: 指定したスタンプの情報を変更します。
+      description: |-
+        指定したスタンプの情報を変更します。
+        名前は0xで始められません。creatorIdの譲渡先は有効な人間ユーザーに限ります。
       requestBody:
         content:
           application/json:
@@ -803,12 +833,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Stamp"
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "409":
           description: Conflict
-        "413":
-          description: Request Entity Too Large
-      description: スタンプを新規作成します。
+      description: |-
+        スタンプを新規作成します。
+        名前は0xで始められません。
       requestBody:
         content:
           multipart/form-data:
@@ -816,7 +846,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
+                contentType: "image/png, image/jpeg, image/gif"
         description: ""
       operationId: createStamp
       tags:
@@ -851,7 +881,9 @@ paths:
           in: query
           name: type
           description: 取得するスタンプの種類
-      description: スタンプのリストを取得します。
+      description: |-
+        スタンプのリストを取得します。
+        include-unicodeとtypeの併用、または各値が不正な場合は400を返します。
   /users/me/stamp-history:
     get:
       summary: スタンプ履歴を取得
@@ -873,15 +905,15 @@ paths:
             type: integer
             default: 100
             maximum: 100
-            minimum: 1
+            minimum: 0
           in: query
           name: limit
           description: 件数
       description: |-
         自分のスタンプ履歴を最大100件まで取得します。
         結果は降順で返されます。
-
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
+        limitの省略時と0指定時は100件を返します。
   /users/me/stamp-recommendations:
     get:
       summary: スタンプレコメンドを取得
@@ -923,6 +955,7 @@ paths:
         自分のスタンプレコメンドを最大200件まで取得します。
         結果は推薦度の高い順で返されます。
         スタンプを使用したことがないユーザーの場合は空配列が返されます。
+        集計対象は直近10,000件のスタンプ使用履歴です。
   /users/me/qr-code:
     get:
       summary: QRコードを取得
@@ -1093,13 +1126,11 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: |-
             Not Found
             ユーザーグループが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserGroupIcon
       requestBody:
         content:
@@ -1746,13 +1777,11 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: |-
             Not Found
             Webhookが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeWebhookIcon
       requestBody:
         content:
@@ -1803,15 +1832,13 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "403":
           description: Forbidden
         "404":
           description: |-
             Not Found
             ユーザーが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserIcon
       requestBody:
         content:
@@ -1861,9 +1888,7 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
-        "413":
-          description: Request Entity Too Large
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
       description: 自分のアイコン画像を変更します。
       operationId: changeMyIcon
       requestBody:
@@ -3251,15 +3276,13 @@ paths:
             No Content
             変更されました。
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "403":
           description: Forbidden
         "404":
           description: |-
             Not Found
             BOTが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeBotIcon
       requestBody:
         content:
@@ -4022,13 +4045,12 @@ paths:
               schema:
                 type: string
                 format: binary
-            image/svg+xml:
-              schema:
-                type: string
         "404":
           description: Not Found
       operationId: getStampImage
-      description: 指定したIDのスタンプ画像を返します。
+      description: |-
+        指定したIDのスタンプ画像を返します。
+        Cache-Controlは付与しません。
     put:
       summary: スタンプ画像を変更
       operationId: changeStampImage
@@ -4036,14 +4058,14 @@ paths:
         "204":
           description: No Content
         "400":
-          description: Bad Request
+          description: 入力不正、または画像サイズ・画素数・フレーム数の上限超過
         "404":
           description: Not Found
-        "413":
-          description: Request Entity Too Large
       tags:
         - stamp
-      description: 指定したスタンプの画像を変更します。
+      description: |-
+        指定したスタンプの画像を変更します。
+        作成者またはEditStampCreatedByOthers権限が必要です。
       requestBody:
         content:
           multipart/form-data:
@@ -4054,7 +4076,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+                  description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
               required:
                 - file
         description: ""
@@ -5294,7 +5316,7 @@ components:
         file:
           type: string
           format: binary
-          description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+          description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
       required:
         - name
         - file
@@ -6042,7 +6064,7 @@ components:
         file:
           type: string
           format: binary
-          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
+          description: "アイコン画像(2MiB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
       required:
         - file
     PutMyPasswordRequest:
