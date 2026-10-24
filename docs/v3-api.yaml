@@ -56,6 +56,8 @@ paths:
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
         アーカイブされているチャンネルに投稿することはできません。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
+        投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用はMessageCitedを発行し、引用通知はnotifyCitationに従います。
       operationId: postMessage
       requestBody:
         content:
@@ -68,7 +70,9 @@ paths:
         - channel
     get:
       summary: チャンネルメッセージのリストを取得
-      description: 指定したチャンネルのメッセージのリストを取得します。
+      description: |-
+        指定したチャンネルのメッセージのリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
       operationId: getMessages
       tags:
         - channel
@@ -102,7 +106,9 @@ paths:
   "/messages":
     get:
       summary: メッセージを検索
-      description: メッセージを検索します。
+      description: |-
+        メッセージを検索します。
+        既定では公開チャンネルのみ検索します。inを指定すると自分が参加するDMも検索できますが、アクセスできないチャンネルは403です。
       operationId: searchMessages
       tags:
         - message
@@ -283,6 +289,7 @@ paths:
         指定したメッセージを編集します。
         自身が投稿したメッセージのみ編集することができます。
         アーカイブされているチャンネルのメッセージを編集することは出来ません。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
       requestBody:
         content:
           application/json:
@@ -310,7 +317,8 @@ paths:
       description: |-
         指定したメッセージを削除します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
-        アーカイブされているチャンネルのメッセージを編集することは出来ません。
+        アーカイブされているチャンネルのメッセージは削除できず、400を返します。
+        関連するピン留め・未読・クリップも削除します。
   "/messages/{messageId}/pin":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -356,6 +364,7 @@ paths:
       description: |-
         指定したメッセージをピン留めします。
         アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
+        上限は1チャンネル100件です。重複と上限超過は400を返し、成功時はPinAddedチャンネルイベントを記録します。
     delete:
       summary: ピン留めを外す
       responses:
@@ -437,6 +446,7 @@ paths:
       description: |-
         指定したチャンネルのトピックを編集します。
         アーカイブされているチャンネルのトピックは編集できません。
+        同じtopicの再設定は、アーカイブ済みでも204を返します。
       requestBody:
         content:
           application/json:
@@ -744,7 +754,9 @@ paths:
             schema:
               $ref: "#/components/schemas/PostMessageStampRequest"
         description: ""
-      description: 指定したメッセージに指定したスタンプを押します。
+      description: |-
+        指定したメッセージに指定したスタンプを押します。
+        countはユーザーごとに加算され、累積値に上限はありません。
     delete:
       summary: スタンプを消す
       responses:
@@ -760,7 +772,9 @@ paths:
       tags:
         - message
         - stamp
-      description: 指定したメッセージから指定した自身が押したスタンプを削除します。
+      description: |-
+        指定したメッセージから指定した自身が押したスタンプを削除します。
+        アーカイブ済みチャンネルでは400を返します。
   "/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
@@ -1405,7 +1419,11 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PostMessageRequest"
-      description: 指定したユーザーにダイレクトメッセージを送信します。
+      description: |-
+        指定したユーザーにダイレクトメッセージを送信します。
+        embedはリクエスト本文で指定します。クエリのembedは無視されます。
+        自分自身・Bot・Webhookユーザーにも送信できます。
+        投稿時に未読・最新メッセージ情報を更新し、購読・ユーザー/グループメンション・引用に応じて通知します。引用はMessageCitedを発行し、引用通知はnotifyCitationに従います。
     get:
       summary: ダイレクトメッセージのリストを取得
       operationId: getDirectMessages
@@ -1438,7 +1456,10 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したユーザーとのダイレクトメッセージのリストを取得します。
+      description: |-
+        指定したユーザーとのダイレクトメッセージのリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
+        DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
   "/users/{userId}/stats":
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -1489,7 +1510,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
-      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+      description: |-
+        指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
+        購読レベル2（未読管理・通知あり）のユーザーのみを返します。
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
@@ -1521,6 +1544,7 @@ paths:
         指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
+        EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onはレベル2にし、offはレベル2を0にしますがレベル1は維持します。onとoffの両方に含まれるユーザーは変更しません。
     put:
       summary: チャンネルの通知購読者を設定
       responses:
@@ -1548,6 +1572,7 @@ paths:
         指定したチャンネルの通知購読者を設定します。
         リクエストに含めなかったユーザーの通知購読状態はオフになります。
         また、存在しないユーザーを指定した場合は無視されます。
+        EditChannelSubscription権限があれば全ユーザーの購読を変更できます。onを省略すると、現在レベル2の全員をレベル0にします。レベル1は維持します。
       tags:
         - channel
         - notification
@@ -1599,7 +1624,9 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PutChannelSubscribeLevelRequest"
-      description: 自身の指定したチャンネルの購読レベルを設定します。
+      description: |-
+        自身の指定したチャンネルの購読レベルを設定します。
+        変更時にSubscribersChangedチャンネルイベントを記録します。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -2100,6 +2127,7 @@ paths:
       description: |-
         チャンネルを作成します。
         階層が6以上になるチャンネルは作成できません。
+        同じ親のチャンネル名は大小文字を区別せず重複を判定します。
     get:
       summary: チャンネルリストを取得
       responses:
@@ -2112,7 +2140,10 @@ paths:
       operationId: getChannels
       tags:
         - channel
-      description: チャンネルのリストを取得します。
+      description: |-
+        チャンネルのリストを取得します。
+        include-dm=trueとpathの併用は400、解決できないpathは404です。pathは大小文字を区別せず、先頭の#や末尾の/は付けられません。
+        アーカイブ済みチャンネルも含まれ、archivedで判別できます。
       parameters:
         - schema:
             type: boolean
@@ -2380,6 +2411,7 @@ paths:
         指定したチャンネルをスターチャンネルに追加します。
         スター済みのチャンネルIDを指定した場合、204を返します。
         不正なチャンネルIDを指定した場合、400を返します。
+        DMは400ですが、アーカイブ済みの公開チャンネルには追加できます。
   "/users/me/stars/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -2562,6 +2594,7 @@ paths:
       description: |-
         パブリックチャンネルの直近の投稿メッセージを作成日時の降順で取得します。
         `all`が`true`でない場合、購読チャンネルのみのタイムラインを取得します
+        対象は直近7日間です。all=falseでも強制通知チャンネルを含み、アーカイブ済みチャンネルも対象です。
       parameters:
         - schema:
             type: integer
@@ -3573,7 +3606,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
-      description: 指定したチャンネルに参加しているBOTのリストを取得します。
+      description: |-
+        指定したチャンネルに参加しているBOTのリストを取得します。
+        自分が参加するDMでは空配列、アクセスできないチャンネルでは404を返します。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -3616,7 +3651,9 @@ paths:
         "404":
           description: Not Found
       operationId: getChannel
-      description: 指定したチャンネルの情報を取得します。
+      description: |-
+        指定したチャンネルの情報を取得します。
+        DMの場合、parentIdは内部DMルートのID、nameはdm_で始まるランダム名です。
     patch:
       summary: チャンネル情報を変更
       responses:
@@ -3644,6 +3681,7 @@ paths:
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
+        名前の重複判定は大小文字を区別しません。アーカイブは子孫にも適用されますが、解除は子孫に適用されません。親がアーカイブ済みの場合の解除、自分の子孫への移動は400です。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得
@@ -3929,7 +3967,9 @@ paths:
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
         - $ref: "#/components/parameters/orderInQuery"
-      description: 指定したチャンネルのイベントリストを取得します。
+      description: |-
+        指定したチャンネルのイベントリストを取得します。
+        limitの省略時と0指定時は20件、負のoffsetは400です。orderは大小文字を問わずascのみ昇順で、それ以外は降順です。
   /stamp-palettes:
     get:
       summary: スタンプパレットのリストを取得
@@ -4432,6 +4472,7 @@ paths:
       description: |-
         指定したユーザーとのダイレクトメッセージチャンネルの情報を返します。
         ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
+        DMチャンネルが未作成の場合は作成し、CHANNEL_CREATEDイベントを配信します。
   "/messages/{messageId}/clips":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -8306,15 +8347,17 @@ components:
       name: limit
       schema:
         type: integer
-        minimum: 1
+        minimum: 0
         maximum: 200
-      description: 取得する件数
+        default: 20
+      description: 取得する件数。0も既定の20件として扱います。
       example: 50
     offsetInQuery:
       in: query
       name: offset
       schema:
         type: integer
+        minimum: 0
         default: 0
       description: 取得するオフセット
       example: 150
@@ -8347,11 +8390,8 @@ components:
       name: order
       schema:
         type: string
-        enum:
-          - asc
-          - desc
         default: desc
-      description: 昇順か降順か
+      description: 大小文字を問わずascなら昇順、それ以外は降順。
     channelIdInPath:
       name: channelId
       in: path
