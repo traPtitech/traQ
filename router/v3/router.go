@@ -9,6 +9,7 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
@@ -89,6 +90,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
+	validateUUID := middlewares.ValidateUUIDParam
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
@@ -123,7 +125,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiUsersUIDTags.GET("", h.GetUserTags, requires(permission.GetUserTag))
 					apiUsersUIDTags.POST("", h.AddUserTag, requires(permission.EditUserTag))
-					apiUsersUIDTagsTID := apiUsersUIDTags.Group("/:tagID")
+					apiUsersUIDTagsTID := apiUsersUIDTags.Group("/:tagID", validateUUID(consts.ParamTagID))
 					{
 						apiUsersUIDTagsTID.PATCH("", h.EditUserTag, requires(permission.EditUserTag))
 						apiUsersUIDTagsTID.DELETE("", h.RemoveUserTag, requires(permission.EditUserTag))
@@ -147,7 +149,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiUsersMeTags.GET("", h.GetMyUserTags, requires(permission.GetUserTag))
 					apiUsersMeTags.POST("", h.AddMyUserTag, requires(permission.EditUserTag))
-					apiUsersMeTagsTID := apiUsersMeTags.Group("/:tagID")
+					apiUsersMeTagsTID := apiUsersMeTags.Group("/:tagID", validateUUID(consts.ParamTagID))
 					{
 						apiUsersMeTagsTID.PATCH("", h.EditMyUserTag, requires(permission.EditUserTag))
 						apiUsersMeTagsTID.DELETE("", h.RemoveMyUserTag, requires(permission.EditUserTag))
@@ -157,12 +159,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiUsersMeStars.GET("", h.GetMyStars, requires(permission.GetChannelStar))
 					apiUsersMeStars.POST("", h.PostStar, requires(permission.EditChannelStar))
-					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar, requires(permission.EditChannelStar))
+					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar, requires(permission.EditChannelStar), validateUUID(consts.ParamChannelID))
 				}
 				apiUsersMeUnread := apiUsersMe.Group("/unread", blockBot)
 				{
 					apiUsersMeUnread.GET("", h.GetMyUnreadChannels, requires(permission.GetUnread))
-					apiUsersMeUnread.DELETE("/:channelID", h.ReadChannel, requires(permission.DeleteUnread))
+					apiUsersMeUnread.DELETE("/:channelID", h.ReadChannel, requires(permission.DeleteUnread), validateUUID(consts.ParamChannelID))
 				}
 				apiUsersMeSubscriptions := apiUsersMe.Group("/subscriptions", blockBot)
 				{
@@ -316,7 +318,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
 					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDMembers.DELETE("", h.RemoveUserGroupMembers, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
+					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm, validateUUID(consts.ParamUserID))
 					{
 						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
 						apiGroupsGIDMembersUID.DELETE("", h.RemoveUserGroupMember, requires(permission.EditUserGroup))
@@ -326,7 +328,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiGroupsGIDAdmins.GET("", h.GetUserGroupAdmins, requires(permission.GetUserGroup))
 					apiGroupsGIDAdmins.POST("", h.AddUserGroupAdmin, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm)
+					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm, validateUUID(consts.ParamUserID))
 					{
 						apiGroupsGIDAdminsUID.DELETE("", h.RemoveUserGroupAdmin, requires(permission.EditUserGroup))
 					}
@@ -391,7 +393,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiClipFoldersFIDMessages.GET("", h.GetClipFolderMessages, requires(permission.GetClipFolder, permission.GetMessage))
 					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessage, requires(permission.EditClipFolder))
-					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder), validateUUID(consts.ParamMessageID))
 				}
 			}
 		}
