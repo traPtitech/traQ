@@ -342,6 +342,7 @@ func (r *stampRepository) GetUserStampHistory(ctx context.Context, userID uuid.U
 	err = r.db.WithContext(ctx).
 		Table("messages_stamps ms1").
 		Select("ms1.stamp_id, ms1.updated_at AS datetime").
+		Joins("INNER JOIN stamps ON stamps.id = ms1.stamp_id AND stamps.deleted_at IS NULL").
 		Joins("LEFT JOIN messages_stamps ms2 ON (ms1.updated_at < ms2.updated_at AND ms1.stamp_id = ms2.stamp_id AND ms1.user_id = ms2.user_id)").
 		Where("ms2.stamp_id IS NULL AND ms1.user_id = ?", userID).
 		Order("datetime DESC").
@@ -378,7 +379,7 @@ func (r *stampRepository) GetUserStampRecommendations(ctx context.Context, userI
 		Select("stamp_id, SUM(1 / POWER(GREATEST(DATEDIFF(NOW(), recent_stamps.updated_at), 0) + 1, 0.8)) AS score").
 		Group("stamp_id").
 		Joins("LEFT JOIN stamps ON stamps.id = recent_stamps.stamp_id").
-		Where("stamps.id IS NOT NULL").
+		Where("stamps.id IS NOT NULL AND stamps.deleted_at IS NULL").
 		Order("score DESC").
 		Limit(limit).
 		Scan(&recs).
