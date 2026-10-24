@@ -146,6 +146,26 @@ func TestPostBotRequest_Validate(t *testing.T) {
 			true,
 		},
 		{
+			"endpoint without scheme",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "example.com"},
+			true,
+		},
+		{
+			"unsupported endpoint scheme",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "ftp://example.com"},
+			true,
+		},
+		{
+			"endpoint without host",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https:///path"},
+			true,
+		},
+		{
+			"invalid WebSocket mode endpoint",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "WebSocket", Endpoint: "ftp://example.com"},
+			true,
+		},
+		{
 			"bad endpoint (not url)",
 			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "bad_url"},
 			true,
@@ -392,6 +412,17 @@ func TestHandlers_EditBot(t *testing.T) {
 	require.NoError(t, err)
 	wsBotWithoutEndpoint, err := env.Repository.CreateBot(context.TODO(), random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "")
 	require.NoError(t, err)
+
+	for _, endpoint := range []string{"example.com", "ftp://example.com", "https:///path"} {
+		t.Run("invalid endpoint "+endpoint, func(t *testing.T) {
+			for _, id := range []uuid.UUID{bot1.ID, wsBotWithEndpoint.ID} {
+				env.R(t).PATCH(path, id).
+					WithCookie(session.CookieName, commonSession).
+					WithJSON(&PatchBotRequest{Endpoint: optional.From(endpoint)}).
+					Expect().Status(http.StatusBadRequest)
+			}
+		})
+	}
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()

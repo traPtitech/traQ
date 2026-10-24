@@ -362,6 +362,14 @@ func TestHandlers_EditUserGroup(t *testing.T) {
 
 	s := env.S(t, user.GetID())
 
+	t.Run("unchanged special group type", func(t *testing.T) {
+		grade := env.CreateUserGroup(t, rand, "", "grade", user.GetID())
+		env.R(t).PATCH(path, grade.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchUserGroupRequest{Type: optional.From("grade")}).
+			Expect().Status(http.StatusNoContent)
+	})
+
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
