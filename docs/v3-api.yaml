@@ -915,10 +915,10 @@ paths:
             type: integer
             default: 100
             maximum: 200
-            minimum: 1
+            minimum: 0
           in: query
           name: limit
-          description: 件数
+          description: 件数。0の場合は空配列を返します。
       description: |-
         自分のスタンプレコメンドを最大200件まで取得します。
         結果は推薦度の高い順で返されます。
@@ -4462,7 +4462,7 @@ paths:
   /users/me/settings/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
-      description: メッセージ引用通知の設定情報を変更します。
+      description: メッセージ引用通知の設定情報を取得します。
       operationId: getMyNotifyCitation
       tags:
         - me
@@ -5033,7 +5033,7 @@ components:
         topic:
           type: string
           description: トピック
-          maxLength: 200
+          maxLength: 500
       required:
         - topic
     ChannelViewer:
@@ -5225,8 +5225,7 @@ components:
           format: int32
           minimum: 1
           maximum: 100
-      required:
-        - count
+          default: 1
     Stamp:
       title: Stamp
       type: object
@@ -5703,7 +5702,7 @@ components:
         twitterId:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         name:
           type: string
           pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
@@ -5750,7 +5749,7 @@ components:
     OIDCUserInfo:
       title: OIDCUserInfo
       type: object
-      description: 自分のユーザー詳細情報
+      description: 自分のユーザー詳細情報。traqとupdated_atはprofileスコープまたはcookie認証時のみ返されます。
       properties:
         sub:
           type: string
@@ -5797,7 +5796,7 @@ components:
           type: array
           description: タグリスト
           items:
-            $ref: "#/components/schemas/UserTag"
+            type: string
         last_online:
           type: string
           description: 最終オンライン日時
@@ -5806,7 +5805,7 @@ components:
         twitter_id:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         display_name:
           type: string
           description: ユーザー表示名
@@ -5835,7 +5834,6 @@ components:
         - bio
         - groups
         - tags
-        - updated_at
         - last_online
         - twitter_id
         - display_name
@@ -6015,11 +6013,11 @@ components:
           type: string
           description: Webhookシークレット
           maxLength: 50
+          default: ""
       required:
         - name
         - description
         - channelId
-        - secret
     PutUserIconRequest:
       title: PutUserIconRequest
       type: object
@@ -6140,11 +6138,10 @@ components:
           format: uuid
           description: |-
             親チャンネルのUUID
-            ルートに作成する場合はnullを指定
+            省略・null・nil UUIDの場合はルートに作成します。空文字は指定できません。
           nullable: true
       required:
         - name
-        - parent
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
@@ -6235,7 +6232,6 @@ components:
         - count
         - noticeable
         - since
-        - until
         - updatedAt
         - oldestMessageId
     PostLoginRequest:
@@ -6281,7 +6277,7 @@ components:
           format: uuid
         clientId:
           type: string
-          description: OAuth2クライアントUUID
+          description: OAuth2クライアントID（36文字の英数字）
         scopes:
           type: array
           description: スコープ
@@ -6314,7 +6310,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: クライアントID（36文字の英数字）
         name:
           type: string
           description: クライアント名
@@ -6375,7 +6371,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: クライアントID（36文字の英数字）
         developerId:
           type: string
           description: クライアント開発者UUID
@@ -6652,7 +6648,6 @@ components:
         - endpoint
         - privileged
         - channels
-        - bio
     BotEventLog:
       title: BotEventLog
       type: object
@@ -6714,8 +6709,8 @@ components:
           description: |-
             BOTユーザーID
             自動的に接頭辞"BOT_"が付与されます
-          maxLength: 16
-          pattern: "^[a-zA-Z0-9_-]{1,16}$"
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_-]{1,20}$"
         displayName:
           type: string
           maxLength: 32
@@ -6894,9 +6889,9 @@ components:
           type: string
           description: 説明
           maxLength: 1000
+          default: ""
       required:
         - name
-        - description
     PostClipFolderMessageRequest:
       title: PostClipFolderMessageRequest
       type: object
@@ -6920,7 +6915,6 @@ components:
           description: クリップした日時
           format: date-time
       required:
-        - folderId
         - message
         - clippedAt
     ChannelEvent:
@@ -7291,10 +7285,10 @@ components:
           type: string
           description: 説明
           maxLength: 1000
+          default: ""
       required:
         - stamps
         - name
-        - description
     PatchStampPaletteRequest:
       title: PatchStampPaletteRequest
       type: object
@@ -8151,7 +8145,7 @@ components:
       name: clientId
       in: path
       required: true
-      description: OAuth2クライアントUUID
+      description: OAuth2クライアントID（36文字の英数字）
       schema:
         type: string
     tokenIdInPath:
