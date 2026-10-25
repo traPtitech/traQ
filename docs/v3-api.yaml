@@ -871,7 +871,7 @@ paths:
             type: integer
             default: 100
             maximum: 100
-            minimum: 0
+            minimum: 1
           in: query
           name: limit
           description: 件数
@@ -913,7 +913,7 @@ paths:
             type: integer
             default: 100
             maximum: 200
-            minimum: 0
+            minimum: 1
           in: query
           name: limit
           description: 件数
@@ -6273,7 +6273,7 @@ components:
           format: uuid
         clientId:
           type: string
-          description: OAuth2クライアントID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         scopes:
           type: array
           description: スコープ
@@ -6306,7 +6306,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         name:
           type: string
           description: クライアント名
@@ -6367,7 +6367,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         developerId:
           type: string
           description: クライアント開発者UUID
@@ -6703,8 +6703,8 @@ components:
         name:
           type: string
           description: |-
-            BOTユーザーID
-            自動的に接頭辞"BOT_"が付与されます
+            BOT ユーザー名の接頭辞 BOT_ を除く部分 (1〜20 文字)
+            接頭辞 BOT_ は自動的に付与されます。
           maxLength: 20
           pattern: "^[a-zA-Z0-9_-]{1,20}$"
         displayName:
@@ -8137,7 +8137,7 @@ components:
       name: clientId
       in: path
       required: true
-      description: OAuth2クライアントID
+      description: OAuth2 クライアント ID (36 文字の英数字)
       schema:
         type: string
     tokenIdInPath:
