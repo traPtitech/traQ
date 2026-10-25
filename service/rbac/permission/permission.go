@@ -1,5 +1,7 @@
 package permission
 
+import "slices"
+
 // Permission パーミッション
 type Permission string
 
@@ -33,6 +35,7 @@ func (set Permissions) Array() []Permission {
 	for k := range set {
 		result = append(result, k)
 	}
+	slices.Sort(result)
 	return result
 }
 

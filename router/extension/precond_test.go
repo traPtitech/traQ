@@ -139,6 +139,16 @@ func TestCheckPreconditions(t *testing.T) {
 			Status(http.StatusNotModified)
 	})
 
+	for _, header := range []string{",", ",,,", `"other",`, `"other", , `} {
+		t.Run("OK (If-None-Match trailing comma)/"+header, func(t *testing.T) {
+			t.Parallel()
+			exp(t, server).GET("/").
+				WithHeader(consts.HeaderIfNoneMatch, header).
+				Expect().
+				Status(http.StatusOK)
+		})
+	}
+
 	t.Run("NotModified (GET * If-None-Match)", func(t *testing.T) {
 		t.Parallel()
 		e := exp(t, server)

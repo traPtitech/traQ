@@ -376,6 +376,9 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user1.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user1.GetID())
+	deletedStamp := mustMakeStamp(t, repo, rand, uuid.Nil)
+	mustAddMessageStamp(t, repo, message.ID, deletedStamp.ID, user.GetID())
+	assert.NoError(t, repo.DeleteStamp(context.TODO(), deletedStamp.ID))
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -417,6 +420,10 @@ func TestRepositoryImpl_GetUserStampRecommendations(t *testing.T) {
 	mustAddMessageStamp(t, repo, message1.ID, stamp2.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message1.ID, stamp1.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message2.ID, stamp1.ID, user.GetID())
+	deletedStamp := mustMakeStamp(t, repo, rand, uuid.Nil)
+	mustAddMessageStamp(t, repo, message1.ID, deletedStamp.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message2.ID, deletedStamp.ID, user.GetID())
+	assert.NoError(t, repo.DeleteStamp(context.TODO(), deletedStamp.ID))
 
 	repoImpl := repo.(*Repository)
 	repoImpl.db.Model(&model.MessageStamp{}).

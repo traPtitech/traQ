@@ -221,7 +221,8 @@ func TestHandlers_AddUserTag(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			WithJSON(&PostUserTagRequest{Tag: "409_conflict"}).
 			Expect().
-			Status(http.StatusConflict)
+			Status(http.StatusConflict).
+			JSON().Object().Value("message").String().NotEmpty()
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -280,7 +281,8 @@ func TestHandlers_AddMyUserTag(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			WithJSON(&PostUserTagRequest{Tag: "409_conflict"}).
 			Expect().
-			Status(http.StatusConflict)
+			Status(http.StatusConflict).
+			JSON().Object().Value("message").String().NotEmpty()
 	})
 
 	t.Run("success", func(t *testing.T) {

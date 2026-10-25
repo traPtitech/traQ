@@ -5,6 +5,11 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
+// IsAssignableToHuman ユーザーに割り当て可能なロールかどうかを返します。
+func IsAssignableToHuman(r *model.UserRole) bool {
+	return !r.Oauth2Scope && r.Name != Bot && r.Name != Client
+}
+
 // GetSystemRoles システム定義ロールのRolesを返します
 func GetSystemRoles() Roles {
 	return Roles{

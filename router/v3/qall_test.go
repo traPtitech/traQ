@@ -1,15 +1,56 @@
 package v3
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/qall"
 )
+
+type soundboardCreatorRecorder struct {
+	qall.Soundboard
+	creatorID uuid.UUID
+}
+
+func (s *soundboardCreatorRecorder) SaveSoundboardItem(_ context.Context, _ uuid.UUID, _, _ string, _ model.FileType, _ io.Reader, _ *uuid.UUID, creatorID uuid.UUID) error {
+	s.creatorID = creatorID
+	return nil
+}
+
+func TestHandlers_CreateSoundboardItemCreator(t *testing.T) {
+	t.Parallel()
+	userID := uuid.Must(uuid.NewV7())
+	var body bytes.Buffer
+	w := multipart.NewWriter(&body)
+	require.NoError(t, w.WriteField("creatorId", uuid.Must(uuid.NewV7()).String()))
+	file, err := w.CreateFormFile("file", "sound.wav")
+	require.NoError(t, err)
+	_, err = file.Write([]byte("sound"))
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+	req := httptest.NewRequest(http.MethodPost, "/", &body)
+	req.Header.Set(echo.HeaderContentType, w.FormDataContentType())
+	res := httptest.NewRecorder()
+	c := echo.New().NewContext(req, res)
+	c.Set(consts.KeyUser, &model.User{ID: userID})
+	soundboard := &soundboardCreatorRecorder{}
+	h := &Handlers{Soundboard: soundboard}
+	require.NoError(t, h.CreateSoundboardItem(c))
+	require.Equal(t, http.StatusNoContent, res.Code)
+	require.Equal(t, userID, soundboard.creatorID)
+}
 
 func TestHandlers_GetQallEndpoints(t *testing.T) {
 	t.Parallel()

@@ -146,6 +146,26 @@ func TestPostBotRequest_Validate(t *testing.T) {
 			true,
 		},
 		{
+			"endpoint without scheme",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "example.com"},
+			true,
+		},
+		{
+			"unsupported endpoint scheme",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "ftp://example.com"},
+			true,
+		},
+		{
+			"endpoint without host",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https:///path"},
+			true,
+		},
+		{
+			"invalid WebSocket mode endpoint",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "WebSocket", Endpoint: "ftp://example.com"},
+			true,
+		},
+		{
 			"bad endpoint (not url)",
 			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "bad_url"},
 			true,
@@ -566,6 +586,37 @@ func TestHandlers_EditBot(t *testing.T) {
 	})
 }
 
+func TestHandlers_EditBotDeliveryConfig(t *testing.T) {
+	t.Parallel()
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	s := env.S(t, user.GetID())
+	for _, tc := range []struct {
+		name     string
+		mode     model.BotMode
+		endpoint string
+		patch    PatchBotRequest
+		status   int
+	}{
+		{"invalid endpoint patch", model.BotModeHTTP, "https://example.com", PatchBotRequest{Endpoint: optional.From("ftp://example.com")}, http.StatusBadRequest},
+		{"mode change with internal URL", model.BotModeWebSocket, "http://127.0.0.1:8080", PatchBotRequest{Mode: optional.From("HTTP")}, http.StatusBadRequest},
+		{"HTTP metadata with invalid URL", model.BotModeHTTP, "example.com", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusBadRequest},
+		{"HTTP metadata without endpoint", model.BotModeHTTP, "", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusBadRequest},
+		{"WebSocket metadata without endpoint", model.BotModeWebSocket, "", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusNoContent},
+		{"repair endpoint", model.BotModeHTTP, "example.com", PatchBotRequest{Endpoint: optional.From("https://example.com")}, http.StatusNoContent},
+		{"invalid mode", model.BotModeWebSocket, "", PatchBotRequest{Mode: optional.From("invalid")}, http.StatusBadRequest},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bot, err := env.Repository.CreateBot(context.Background(), random.AlphaNumeric(16), "before", "description", uuid.Nil, user.GetID(), tc.mode, model.BotActive, tc.endpoint)
+			require.NoError(t, err)
+			env.R(t).PATCH("/api/v3/bots/{botId}", bot.ID).
+				WithCookie(session.CookieName, s).WithJSON(tc.patch).
+				Expect().Status(tc.status)
+
+		})
+	}
+}
+
 func TestHandlers_DeleteBot(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/bots/{botId}"
@@ -964,6 +1015,7 @@ func TestHandlers_ReissueBot(t *testing.T) {
 
 		obj.Value("verificationToken").String().NotEmpty()
 		obj.Value("accessToken").String().NotEmpty()
+		obj.Value("accessTokenRevoked").Boolean().IsFalse()
 	})
 }
 

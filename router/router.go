@@ -113,8 +113,8 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 	e.Use(middlewares.RequestCounter())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:  []string{"*"},
-		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID},
-		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature, consts.HeaderChannelID},
+		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID, consts.HeaderETag, echo.HeaderLastModified, "Content-Range", "Accept-Ranges"},
+		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature, consts.HeaderChannelID, consts.HeaderIfMatch, consts.HeaderIfNoneMatch},
 		MaxAge:        3600,
 	}))
 	e.Use(echoprometheus.NewMiddleware("echo"))

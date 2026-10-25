@@ -133,7 +133,13 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 }
 
 func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repository.UpdateChannelArgs) error {
-	ch, err := m.GetChannel(ctx, id)
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	ch, err := m.T.getModel(id)
+	if err != nil {
+		ch, err = m.R.GetChannel(ctx, id)
+	}
 	if err != nil {
 		return ErrChannelNotFound
 	}
@@ -142,9 +148,6 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 	if ch.Topic == args.Topic.V {
 		args.Topic = optional.New("", false)
 	}
-
-	m.T.Lock()
-	defer m.T.Unlock()
 
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
 	if args.Topic.Valid {
@@ -188,7 +191,7 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 				p = ch.ParentID
 			}
 
-			if m.T.isChildPresent(n, p) {
+			if m.T.isOtherChildPresent(n, p, id) {
 				return ErrChannelNameConflicts
 			}
 		}

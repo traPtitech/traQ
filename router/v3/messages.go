@@ -13,6 +13,8 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -86,12 +88,24 @@ func (h *Handlers) GetMessage(c *echo.Context) error {
 
 // PostMessageRequest POST /channels/:channelID/messages等リクエストボディ
 type PostMessageRequest struct {
-	Content string `json:"content"`
-	Embed   bool   `json:"embed" query:"embed"`
-	Nonce   string `json:"nonce"`
+	Content string              `json:"content"`
+	Embed   bool                `json:"embed" query:"embed"`
+	Nonce   optional.Of[string] `json:"nonce"`
 }
 
 func (r PostMessageRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Content, vd.Required, vd.RuneLength(1, 10000)),
+		vd.Field(&r.Nonce, validator.MessageNonceRule...),
+	)
+}
+
+type PutMessageRequest struct {
+	Content string `json:"content"`
+	Embed   bool   `json:"embed"`
+}
+
+func (r PutMessageRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Content, vd.Required, vd.RuneLength(1, 10000)),
 	)
@@ -103,15 +117,9 @@ func (h *Handlers) EditMessage(c *echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
-	var req PostMessageRequest
+	var req PutMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	if req.Nonce != "" {
-		if !h.NonceManager.NonceChecker(req.Nonce) {
-			return herror.BadRequest("this nonce is duplicated")
-		}
 	}
 
 	// 他人のテキストは編集できない
@@ -339,8 +347,8 @@ func (h *Handlers) PostMessage(c *echo.Context) error {
 		return err
 	}
 
-	if req.Nonce != "" {
-		if !h.NonceManager.NonceChecker(req.Nonce) {
+	if req.Nonce.Valid {
+		if !h.NonceManager.NonceChecker(req.Nonce.V) {
 			return herror.BadRequest("this nonce is duplicated")
 		}
 	}
@@ -392,8 +400,8 @@ func (h *Handlers) PostDirectMessage(c *echo.Context) error {
 		return err
 	}
 
-	if req.Nonce != "" {
-		if !h.NonceManager.NonceChecker(req.Nonce) {
+	if req.Nonce.Valid {
+		if !h.NonceManager.NonceChecker(req.Nonce.V) {
 			return herror.BadRequest("this nonce is duplicated")
 		}
 	}
