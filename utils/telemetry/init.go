@@ -65,7 +65,7 @@ func Init(ctx context.Context, serviceName string) (func(context.Context) error,
 	if err != nil {
 		return nil, errors.Join(
 			fmt.Errorf("failed to create OTLP metrics exporter: %w", err),
-			shutdownTracer(context.Background()),
+			shutdownTracer(context.WithoutCancel(ctx)),
 		)
 	}
 
