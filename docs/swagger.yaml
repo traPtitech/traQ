@@ -2268,7 +2268,7 @@ components:
       properties:
         name:
           type: string
-          maxLength: 16
+          maxLength: 20
           description: 'botユーザーID。自動的に先頭に"BOT_"が付与されます'
         displayName:
           type: string

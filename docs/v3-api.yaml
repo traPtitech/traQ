@@ -6672,8 +6672,8 @@ components:
           description: |-
             BOTユーザーID
             自動的に接頭辞"BOT_"が付与されます
-          maxLength: 16
-          pattern: "^[a-zA-Z0-9_-]{1,16}$"
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_-]{1,20}$"
         displayName:
           type: string
           maxLength: 32
