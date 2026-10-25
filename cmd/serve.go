@@ -38,14 +38,14 @@ func serveCommand() *cobra.Command {
 
 			logger.Info(fmt.Sprintf("traQ %s (revision %s)", Version, Revision))
 
-			// OpenTelemetry Tracing
-			shutdownTracer, err := telemetry.InitTracer(context.Background(), "traQ")
+			// OpenTelemetry
+			shutdownTelemetry, err := telemetry.Init(context.Background(), "traQ")
 			if err != nil {
-				logger.Fatal("failed to initialize tracer", zap.Error(err))
+				logger.Fatal("failed to initialize OpenTelemetry", zap.Error(err))
 			}
 			defer func() {
-				if err := shutdownTracer(context.Background()); err != nil {
-					logger.Error("failed to shutdown tracer", zap.Error(err))
+				if err := shutdownTelemetry(context.Background()); err != nil {
+					logger.Error("failed to shutdown OpenTelemetry", zap.Error(err))
 				}
 			}()
 
