@@ -20,7 +20,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/tracing"
+	"github.com/traPtitech/traQ/utils/telemetry"
 	"github.com/traPtitech/traQ/utils/twemoji"
 )
 
@@ -39,7 +39,7 @@ func serveCommand() *cobra.Command {
 			logger.Info(fmt.Sprintf("traQ %s (revision %s)", Version, Revision))
 
 			// OpenTelemetry Tracing
-			shutdownTracer, err := tracing.InitTracer(context.Background(), "traQ")
+			shutdownTracer, err := telemetry.InitTracer(context.Background(), "traQ")
 			if err != nil {
 				logger.Fatal("failed to initialize tracer", zap.Error(err))
 			}
