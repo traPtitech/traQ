@@ -45,7 +45,7 @@ type Query struct {
 	HasAudio       optional.Of[bool]      `query:"hasAudio"`       // 添付ファイル（音声ファイル）
 	Limit          optional.Of[int]       `query:"limit"`          // 取得件数
 	Offset         optional.Of[int]       `query:"offset"`         // 取得Offset
-	Sort           optional.Of[string]    `query:"sort"`           // 並び順 /[-\+]?key/
+	Sort           optional.Of[string]    `query:"sort"`           // 並び順（空文字列・null は省略扱い）
 }
 
 const (

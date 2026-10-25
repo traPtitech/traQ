@@ -1,28 +1,46 @@
 package search
 
 import (
+	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/require"
-
-	"github.com/traPtitech/traQ/utils/optional"
 )
 
 func TestQueryValidateSort(t *testing.T) {
 	t.Parallel()
 
-	for _, sort := range []optional.Of[string]{
-		{}, optional.From("createdAt"), optional.From("+createdAt"), optional.From("-updatedAt"),
+	for _, tc := range []struct {
+		query   string
+		invalid bool
+	}{
+		{"", false},
+		{"sort=", false},
+		{"sort=null", false},
+		{"sort=createdAt", false},
+		{"sort=%2BcreatedAt", false},
+		{"sort=-updatedAt", false},
+		{"sort=xxcreatedAtyy", true},
+		{"sort=createdAt%2CupdatedAt", true},
+		{"sort=--createdAt", true},
+		{"sort=createdAt%0A", true},
 	} {
-		t.Run(sort.ValueOrZero(), func(t *testing.T) {
+		t.Run(tc.query, func(t *testing.T) {
 			t.Parallel()
-			require.NoError(t, Query{Sort: sort}.Validate())
-		})
-	}
-	for _, sort := range []string{"", "xxcreatedAtyy", "createdAt,updatedAt", "--createdAt", "createdAt\n"} {
-		t.Run("invalid/"+sort, func(t *testing.T) {
-			t.Parallel()
-			require.Error(t, Query{Sort: optional.From(sort)}.Validate())
+
+			c := echo.New().NewContext(httptest.NewRequest("GET", "/?"+tc.query, nil), httptest.NewRecorder())
+			var query Query
+			require.NoError(t, c.Bind(&query))
+
+			if tc.invalid {
+				require.Error(t, query.Validate())
+			} else {
+				require.NoError(t, query.Validate())
+				if !query.Sort.Valid {
+					require.Equal(t, "createdAt:desc", query.GetSortKey())
+				}
+			}
 		})
 	}
 }

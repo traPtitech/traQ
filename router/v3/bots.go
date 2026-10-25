@@ -53,6 +53,7 @@ func (r PostBotRequest) Validate() error {
 		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
 		vd.Field(&r.DisplayName, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(0, 1000)),
+		vd.Field(&r.Endpoint, validator.NotInternalURL),
 	); err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func (r PostBotRequest) Validate() error {
 func validateBotDeliveryConfig(mode model.BotMode, endpoint string) error {
 	return vd.Errors{
 		"mode":     vd.Validate(mode.String(), vd.Required, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
-		"endpoint": vd.Validate(endpoint, vd.Required.When(mode == model.BotModeHTTP), is.URL, botEndpointURLRule, validator.NotInternalURL),
+		"endpoint": vd.Validate(endpoint, vd.Required.When(mode == model.BotModeHTTP), is.URL, botEndpointURLRule),
 	}.Filter()
 }
 
@@ -182,6 +183,11 @@ func (h *Handlers) EditBot(c *echo.Context) error {
 	}
 	if err := validateBotDeliveryConfig(mode, endpoint); err != nil {
 		return herror.BadRequest(err)
+	}
+	if endpoint != b.PostURL || mode == model.BotModeHTTP && b.Mode != model.BotModeHTTP {
+		if err := vd.Validate(endpoint, validator.NotInternalURL); err != nil {
+			return herror.BadRequest(err)
+		}
 	}
 
 	args := repository.UpdateBotArgs{

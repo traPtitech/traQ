@@ -31,22 +31,28 @@ func (s *soundboardCreatorRecorder) SaveSoundboardItem(_ context.Context, _ uuid
 
 func TestHandlers_CreateSoundboardItemCreator(t *testing.T) {
 	t.Parallel()
+
 	userID := uuid.Must(uuid.NewV7())
+
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
 	require.NoError(t, w.WriteField("creatorId", uuid.Must(uuid.NewV7()).String()))
+
 	file, err := w.CreateFormFile("file", "sound.wav")
 	require.NoError(t, err)
 	_, err = file.Write([]byte("sound"))
 	require.NoError(t, err)
 	require.NoError(t, w.Close())
+
 	req := httptest.NewRequest(http.MethodPost, "/", &body)
 	req.Header.Set(echo.HeaderContentType, w.FormDataContentType())
 	res := httptest.NewRecorder()
 	c := echo.New().NewContext(req, res)
 	c.Set(consts.KeyUser, &model.User{ID: userID})
+
 	soundboard := &soundboardCreatorRecorder{}
 	h := &Handlers{Soundboard: soundboard}
+
 	require.NoError(t, h.CreateSoundboardItem(c))
 	require.Equal(t, http.StatusNoContent, res.Code)
 	require.Equal(t, userID, soundboard.creatorID)

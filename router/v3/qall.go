@@ -279,22 +279,22 @@ func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 		}
 	}
 
-	response := make([]map[string]string, 0)
+	response := make([]RoomParticipantUpdateResult, 0, len(succeedUsers)+len(failedUsers))
 
 	// Add successful participants
-	for _, id := range succeedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "success",
+	for _, userID := range succeedUsers {
+		response = append(response, RoomParticipantUpdateResult{
+			ParticipantID: userID,
+			Status:        "success",
 		})
 	}
 
 	// Add failed participants
-	for id, message := range failedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "failed",
-			"error":         message,
+	for userID, errorMessage := range failedUsers {
+		response = append(response, RoomParticipantUpdateResult{
+			ParticipantID: userID,
+			Status:        "failed",
+			Error:         errorMessage,
 		})
 	}
 

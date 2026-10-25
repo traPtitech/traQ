@@ -469,7 +469,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 			{
 				ID: cA,
 				Args: func(_ int) repository.UpdateChannelArgs {
-					return repository.UpdateChannelArgs{Name: optional.From("a")}
+					return repository.UpdateChannelArgs{Name: optional.From("a"), Parent: optional.From(pubChannelRootUUID)}
 				},
 			},
 			{
@@ -597,7 +597,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 								Times(1)
 							newChan.IsForced = args.ForcedNotification.V
 						}
-						if args.Name.Valid {
+						if args.Name.Valid && args.Name.V != ch.Name {
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.ID, model.ChannelEventNameChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,
@@ -608,7 +608,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 								Times(1)
 							newChan.Name = args.Name.V
 						}
-						if args.Parent.Valid {
+						if args.Parent.Valid && args.Parent.V != ch.ParentID {
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.ID, model.ChannelEventParentChanged, model.ChannelEventDetail{
 									"userId": args.UpdaterID,

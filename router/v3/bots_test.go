@@ -588,9 +588,11 @@ func TestHandlers_EditBot(t *testing.T) {
 
 func TestHandlers_EditBotDeliveryConfig(t *testing.T) {
 	t.Parallel()
+
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	s := env.S(t, user.GetID())
+
 	for _, tc := range []struct {
 		name     string
 		mode     model.BotMode
@@ -599,8 +601,10 @@ func TestHandlers_EditBotDeliveryConfig(t *testing.T) {
 		status   int
 	}{
 		{"invalid endpoint patch", model.BotModeHTTP, "https://example.com", PatchBotRequest{Endpoint: optional.From("ftp://example.com")}, http.StatusBadRequest},
+		{"internal endpoint patch", model.BotModeHTTP, "https://example.com", PatchBotRequest{Endpoint: optional.From("http://127.0.0.1:8080")}, http.StatusBadRequest},
 		{"mode change with internal URL", model.BotModeWebSocket, "http://127.0.0.1:8080", PatchBotRequest{Mode: optional.From("HTTP")}, http.StatusBadRequest},
 		{"HTTP metadata with invalid URL", model.BotModeHTTP, "example.com", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusBadRequest},
+		{"HTTP metadata without DNS resolution", model.BotModeHTTP, "https://unresolvable.invalid", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusNoContent},
 		{"HTTP metadata without endpoint", model.BotModeHTTP, "", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusBadRequest},
 		{"WebSocket metadata without endpoint", model.BotModeWebSocket, "", PatchBotRequest{DisplayName: optional.From("after")}, http.StatusNoContent},
 		{"repair endpoint", model.BotModeHTTP, "example.com", PatchBotRequest{Endpoint: optional.From("https://example.com")}, http.StatusNoContent},
@@ -609,10 +613,10 @@ func TestHandlers_EditBotDeliveryConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			bot, err := env.Repository.CreateBot(context.Background(), random.AlphaNumeric(16), "before", "description", uuid.Nil, user.GetID(), tc.mode, model.BotActive, tc.endpoint)
 			require.NoError(t, err)
+
 			env.R(t).PATCH("/api/v3/bots/{botId}", bot.ID).
 				WithCookie(session.CookieName, s).WithJSON(tc.patch).
 				Expect().Status(tc.status)
-
 		})
 	}
 }

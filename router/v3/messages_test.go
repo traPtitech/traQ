@@ -281,7 +281,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PUT(path, m.GetID()).
-			WithJSON(&PostMessageRequest{Content: "po"}).
+			WithJSON(&PutMessageRequest{Content: "po"}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -291,7 +291,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, m.GetID()).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PostMessageRequest{Content: ""}).
+			WithJSON(&PutMessageRequest{Content: ""}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -301,7 +301,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path, uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
-			WithJSON(&PostMessageRequest{Content: "po"}).
+			WithJSON(&PutMessageRequest{Content: "po"}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -385,7 +385,7 @@ func TestHandlers_EditMessage(t *testing.T) {
 			e := env.R(t)
 			e.PUT(path, tt.m.GetID()).
 				WithCookie(session.CookieName, s).
-				WithJSON(&PostMessageRequest{Content: "po", Embed: true}).
+				WithJSON(&PutMessageRequest{Content: "po", Embed: true}).
 				Expect().
 				Status(tt.expect)
 		})

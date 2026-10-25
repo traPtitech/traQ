@@ -196,7 +196,7 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 			}
 		}
 
-		if args.Name.Valid {
+		if args.Name.Valid && args.Name.V != ch.Name {
 			// チャンネル名検証
 			if !validator.ChannelRegex.MatchString(args.Name.V) {
 				return ErrInvalidChannelName
@@ -207,7 +207,7 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 				"after":  args.Name.V,
 			}
 		}
-		if args.Parent.Valid {
+		if args.Parent.Valid && args.Parent.V != ch.ParentID {
 			if args.Parent.V != pubChannelRootUUID {
 				// 親チャンネル検証
 				if !m.T.isChannelPresent(args.Parent.V) {

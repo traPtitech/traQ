@@ -1225,12 +1225,15 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 
 func TestHandlers_GetChannelPath(t *testing.T) {
 	t.Parallel()
+
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	other := env.CreateUser(t, rand)
+
 	public := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user.GetID(), other.GetID())
 	s := env.S(t, user.GetID())
+
 	for _, tc := range []struct {
 		name   string
 		id     uuid.UUID
@@ -1242,9 +1245,11 @@ func TestHandlers_GetChannelPath(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
 			res := env.R(t).GET("/api/v3/channels/{channelId}/path", tc.id).
 				WithCookie(session.CookieName, s).
 				Expect().Status(tc.status)
+
 			if tc.status == http.StatusOK {
 				res.JSON().Object().Value("path").String().NotEmpty()
 			}
