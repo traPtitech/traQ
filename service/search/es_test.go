@@ -12,6 +12,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -71,11 +72,12 @@ func TestESEngine_Do_From(t *testing.T) {
 		{name: "unknown ID", from: []uuid.UUID{unknownID}, wantUsers: []uuid.UUID{unknownID}},
 		{name: "duplicate IDs", from: []uuid.UUID{group1, group1, user1, user1}, wantUsers: []uuid.UUID{user1, user2}},
 		{name: "large group", from: []uuid.UUID{largeGroup}, wantUsers: largeGroupUsers},
+		{name: "many source IDs", from: largeGroupUsers, wantUsers: largeGroupUsers},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := &searchTestRepository{groups: groups, calls: make(map[uuid.UUID]int)}
+			repo := &searchTestRepository{groups: groups}
 			var requestBody string
 			client, err := elasticsearch.NewClient(elasticsearch.Config{
 				Transport: searchTestTransport(func(req *http.Request) (*http.Response, error) {
@@ -113,11 +115,11 @@ func TestESEngine_Do_From(t *testing.T) {
 				}
 			}
 			assert.JSONEq(t, fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"isPublic":{"value":true}}}%s]}}}`, wantFrom), requestBody)
-			for _, id := range tc.from {
-				assert.Equal(t, 1, repo.calls[id], "each distinct ID should be resolved once")
-			}
 			if len(tc.from) == 0 {
-				assert.Empty(t, repo.calls)
+				assert.Zero(t, repo.calls)
+			} else {
+				assert.Equal(t, 1, repo.calls, "all source IDs should be resolved in one batch")
+				assert.ElementsMatch(t, lo.Uniq(tc.from), repo.requestedIDs)
 			}
 		})
 	}
@@ -138,20 +140,28 @@ func TestESEngine_Do_FromGroupError(t *testing.T) {
 
 type searchTestRepository struct {
 	repository.Repository
-	groups map[uuid.UUID]*model.UserGroup
-	calls  map[uuid.UUID]int
-	err    error
+	groups       map[uuid.UUID]*model.UserGroup
+	calls        int
+	requestedIDs []uuid.UUID
+	err          error
 }
 
-func (r *searchTestRepository) GetUserGroup(_ context.Context, id uuid.UUID) (*model.UserGroup, error) {
+func (r *searchTestRepository) GetUserGroupMemberIDs(_ context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
+	r.calls++
+	r.requestedIDs = groupIDs
 	if r.err != nil {
 		return nil, r.err
 	}
-	r.calls[id]++
-	if group, ok := r.groups[id]; ok {
-		return group, nil
+	members := make(map[uuid.UUID][]uuid.UUID)
+	for _, id := range groupIDs {
+		if group, ok := r.groups[id]; ok {
+			members[id] = []uuid.UUID{}
+			for _, member := range group.Members {
+				members[id] = append(members[id], member.UserID)
+			}
+		}
 	}
-	return nil, fmt.Errorf("group lookup: %w", repository.ErrNotFound)
+	return members, nil
 }
 
 type searchTestMessageManager struct {

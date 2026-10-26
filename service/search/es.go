@@ -3,7 +3,6 @@ package search
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -354,22 +353,17 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if len(q.From) > 0 {
+		fromIDs := lo.Uniq(q.From)
+		groupMembers, err := e.repo.GetUserGroupMemberIDs(context.Background(), fromIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user group members for from: %w", err)
+		}
 		userIDs := make([]uuid.UUID, 0, len(q.From))
-
-		for _, fromID := range lo.Uniq(q.From) {
-			group, err := e.repo.GetUserGroup(context.Background(), fromID)
-
-			switch {
-			case errors.Is(err, repository.ErrNotFound):
+		for _, fromID := range fromIDs {
+			if members, ok := groupMembers[fromID]; ok {
+				userIDs = append(userIDs, members...)
+			} else {
 				userIDs = append(userIDs, fromID)
-
-			case err != nil:
-				return nil, fmt.Errorf("failed to get user group for from: %w", err)
-
-			default:
-				for _, member := range group.Members {
-					userIDs = append(userIDs, member.UserID)
-				}
 			}
 		}
 
