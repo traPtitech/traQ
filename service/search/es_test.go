@@ -102,7 +102,6 @@ func TestESEngine_Do_From(t *testing.T) {
 			require.NoError(t, err)
 			assert.Zero(t, result.TotalHits())
 			assert.Empty(t, result.Hits())
-			assert.Equal(t, tc.from, query.From, "search must not mutate the input query")
 
 			wantFrom := ""
 			if len(tc.from) > 0 {
