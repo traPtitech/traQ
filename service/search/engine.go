@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -20,7 +21,7 @@ var ErrServiceUnavailable = errors.New("search service is unavailable")
 // Engine 検索エンジンインターフェイス
 type Engine interface {
 	// Do 与えられたクエリで検索を実行します
-	Do(q *Query) (Result, error)
+	Do(ctx context.Context, q *Query) (Result, error)
 	// Available 検索サービスが利用可能かどうかを返します
 	Available() bool
 	// Close 検索サービスを終了します

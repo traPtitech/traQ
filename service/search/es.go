@@ -298,7 +298,7 @@ type termQueryParameter struct {
 	Value any `json:"value,omitempty"`
 }
 
-func (e *esEngine) Do(q *Query) (Result, error) {
+func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
 	var musts []searchQuery
@@ -354,7 +354,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	if len(q.From) > 0 {
 		fromIDs := lo.Uniq(q.From)
-		groupMembers, err := e.repo.GetUserGroupMemberIDs(context.Background(), fromIDs)
+		groupMembers, err := e.repo.GetUserGroupMemberIDs(ctx, fromIDs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get user group members for from: %w", err)
 		}
@@ -417,6 +417,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	sr, err := e.client.Search(
+		e.client.Search.WithContext(ctx),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithBody(bytes.NewBuffer(b)),
 		e.client.Search.WithSort(sort),
@@ -438,7 +439,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultFromResponse(res)
+	return e.parseResultFromResponse(ctx, res)
 }
 
 func (e *esEngine) Available() bool {

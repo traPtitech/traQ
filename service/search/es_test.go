@@ -95,10 +95,10 @@ func TestESEngine_Do_From(t *testing.T) {
 				}),
 			})
 			require.NoError(t, err)
-			engine := &esEngine{client: client, repo: repo, mm: searchTestMessageManager{}, l: zap.NewNop()}
+			engine := &esEngine{client: client, repo: repo, mm: &searchTestMessageManager{}, l: zap.NewNop()}
 			query := &Query{From: tc.from}
 
-			result, err := engine.Do(query)
+			result, err := engine.Do(context.Background(), query)
 			require.NoError(t, err)
 			assert.Zero(t, result.TotalHits())
 			assert.Empty(t, result.Hits())
@@ -133,9 +133,74 @@ func TestESEngine_Do_FromGroupError(t *testing.T) {
 		repo: &searchTestRepository{err: wantErr},
 		l:    zap.NewNop(),
 	}
-	result, err := engine.Do(&Query{From: []uuid.UUID{uuid.Must(uuid.NewV4())}})
+	result, err := engine.Do(context.Background(), &Query{From: []uuid.UUID{uuid.Must(uuid.NewV4())}})
 	assert.Nil(t, result)
 	assert.ErrorIs(t, err, wantErr)
+}
+
+func TestESEngine_Do_Context(t *testing.T) {
+	t.Parallel()
+
+	type contextKey struct{}
+	for _, cancelAt := range []string{"none", "group lookup", "elasticsearch", "message loading"} {
+		t.Run(cancelAt, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithCancel(context.WithValue(context.Background(), contextKey{}, "search request"))
+			defer cancel()
+			repo := &searchTestRepository{}
+			manager := &searchTestMessageManager{}
+			var searchCtx context.Context
+			client, err := elasticsearch.NewClient(elasticsearch.Config{
+				DisableRetry: true,
+				Transport: searchTestTransport(func(req *http.Request) (*http.Response, error) {
+					searchCtx = req.Context()
+					if cancelAt == "elasticsearch" {
+						cancel()
+						assert.ErrorIs(t, searchCtx.Err(), context.Canceled)
+						return nil, context.Canceled
+					}
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+						Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0},"hits":[]}}`)),
+					}, nil
+				}),
+			})
+			require.NoError(t, err)
+			engine := &esEngine{client: client, repo: repo, mm: manager, l: zap.NewNop()}
+			switch cancelAt {
+			case "group lookup":
+				cancel()
+			case "message loading":
+				manager.beforeGet = cancel
+			}
+
+			result, err := engine.Do(ctx, &Query{From: []uuid.UUID{uuid.Must(uuid.NewV4())}})
+			if cancelAt == "none" {
+				require.NoError(t, err)
+				assert.NotNil(t, result)
+			} else {
+				assert.ErrorIs(t, err, context.Canceled)
+				assert.Nil(t, result)
+			}
+
+			require.NotNil(t, repo.ctx)
+			assert.Equal(t, "search request", repo.ctx.Value(contextKey{}))
+			if cancelAt == "group lookup" {
+				assert.Nil(t, searchCtx, "cancelled group lookups must stop before Elasticsearch")
+			} else {
+				require.NotNil(t, searchCtx)
+				assert.Equal(t, "search request", searchCtx.Value(contextKey{}))
+			}
+			if cancelAt == "group lookup" || cancelAt == "elasticsearch" {
+				assert.Nil(t, manager.ctx, "failed searches must stop before message loading")
+			} else {
+				require.NotNil(t, manager.ctx)
+				assert.Equal(t, "search request", manager.ctx.Value(contextKey{}))
+			}
+		})
+	}
 }
 
 type searchTestRepository struct {
@@ -143,12 +208,17 @@ type searchTestRepository struct {
 	groups       map[uuid.UUID]*model.UserGroup
 	calls        int
 	requestedIDs []uuid.UUID
+	ctx          context.Context
 	err          error
 }
 
-func (r *searchTestRepository) GetUserGroupMemberIDs(_ context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
+func (r *searchTestRepository) GetUserGroupMemberIDs(ctx context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
 	r.calls++
 	r.requestedIDs = groupIDs
+	r.ctx = ctx
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -166,10 +236,16 @@ func (r *searchTestRepository) GetUserGroupMemberIDs(_ context.Context, groupIDs
 
 type searchTestMessageManager struct {
 	message.Manager
+	ctx       context.Context
+	beforeGet func()
 }
 
-func (searchTestMessageManager) GetIn(context.Context, []uuid.UUID) ([]message.Message, error) {
-	return nil, nil
+func (m *searchTestMessageManager) GetIn(ctx context.Context, _ []uuid.UUID) ([]message.Message, error) {
+	m.ctx = ctx
+	if m.beforeGet != nil {
+		m.beforeGet()
+	}
+	return nil, ctx.Err()
 }
 
 type searchTestTransport func(*http.Request) (*http.Response, error)
