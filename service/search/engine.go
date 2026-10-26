@@ -34,7 +34,7 @@ type Query struct {
 	Before         optional.Of[time.Time] `query:"before"`         // 以前(投稿日時)
 	In             optional.Of[uuid.UUID] `query:"in"`             // 投稿チャンネル
 	To             []uuid.UUID            `query:"to"`             // メンション先
-	From           []uuid.UUID            `query:"from"`           // 投稿者
+	From           []uuid.UUID            `query:"from"`           // 投稿者のユーザーIDまたは所属グループID
 	Citation       optional.Of[uuid.UUID] `query:"citation"`       // 引用しているメッセージ
 	Bot            optional.Of[bool]      `query:"bot"`            // 投稿者がBotか
 	HasURL         optional.Of[bool]      `query:"hasURL"`         // URLの存在

@@ -3,6 +3,7 @@ package search
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -352,18 +354,30 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if len(q.From) > 0 {
-		orQueries := make([]searchQuery, 0, len(q.From))
-		for _, fromID := range q.From {
-			orQueries = append(orQueries, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: fromID}}})
+		userIDs := make([]uuid.UUID, 0, len(q.From))
+
+		for _, fromID := range lo.Uniq(q.From) {
+			group, err := e.repo.GetUserGroup(context.Background(), fromID)
+
+			switch {
+			case errors.Is(err, repository.ErrNotFound):
+				userIDs = append(userIDs, fromID)
+
+			case err != nil:
+				return nil, fmt.Errorf("failed to get user group for from: %w", err)
+
+			default:
+				for _, member := range group.Members {
+					userIDs = append(userIDs, member.UserID)
+				}
+			}
 		}
 
-		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
-		if len(q.From) == 1 {
-			// OR検索が不要
-			sq = orQueries[0]
+		if len(userIDs) == 0 {
+			musts = append(musts, searchQuery{"match_none": m{}})
+		} else {
+			musts = append(musts, searchQuery{"terms": m{"userId": lo.Uniq(userIDs)}})
 		}
-
-		musts = append(musts, sq)
 	}
 
 	if q.Citation.Valid {
