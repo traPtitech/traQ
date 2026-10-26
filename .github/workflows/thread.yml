@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   IMAGE_NAME: traq
@@ -17,6 +16,9 @@ jobs:
   image:
     name: Build Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
     steps:
