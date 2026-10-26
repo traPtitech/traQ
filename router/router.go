@@ -52,7 +52,6 @@ Preferred-Languages: ja,en`)
 	}
 
 	api := r.e.Group("/api")
-	api.GET("/metrics", echoprometheus.NewHandler())
 	api.GET("/ping", func(c *echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })
 	r.v1.Setup(api)
 	r.v3.Setup(api)
