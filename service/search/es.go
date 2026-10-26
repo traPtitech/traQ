@@ -12,6 +12,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -297,7 +298,7 @@ type termQueryParameter struct {
 	Value any `json:"value,omitempty"`
 }
 
-func (e *esEngine) Do(q *Query) (Result, error) {
+func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
 	var musts []searchQuery
@@ -352,18 +353,25 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if len(q.From) > 0 {
-		orQueries := make([]searchQuery, 0, len(q.From))
-		for _, fromID := range q.From {
-			orQueries = append(orQueries, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: fromID}}})
+		fromIDs := lo.Uniq(q.From)
+		groupMembers, err := e.repo.GetUserGroupMemberIDs(ctx, fromIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user group members for from: %w", err)
+		}
+		userIDs := make([]uuid.UUID, 0, len(q.From))
+		for _, fromID := range fromIDs {
+			if members, ok := groupMembers[fromID]; ok {
+				userIDs = append(userIDs, members...)
+			} else {
+				userIDs = append(userIDs, fromID)
+			}
 		}
 
-		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
-		if len(q.From) == 1 {
-			// OR検索が不要
-			sq = orQueries[0]
+		if len(userIDs) == 0 {
+			musts = append(musts, searchQuery{"match_none": m{}})
+		} else {
+			musts = append(musts, searchQuery{"terms": m{"userId": lo.Uniq(userIDs)}})
 		}
-
-		musts = append(musts, sq)
 	}
 
 	if q.Citation.Valid {
@@ -409,6 +417,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	sr, err := e.client.Search(
+		e.client.Search.WithContext(ctx),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithBody(bytes.NewBuffer(b)),
 		e.client.Search.WithSort(sort),
@@ -430,7 +439,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultFromResponse(res)
+	return e.parseResultFromResponse(ctx, res)
 }
 
 func (e *esEngine) Available() bool {
