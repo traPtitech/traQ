@@ -211,7 +211,7 @@ func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query rep
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetThreadChannels", ctx, query)
 	ret0, _ := ret[0].([]*model.Thread)
-  ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
@@ -228,6 +228,7 @@ func (m *MockChannelRepository) IsChildPresent(ctx context.Context, name string,
 func (mr *MockChannelRepositoryMockRecorder) GetThreadChannels(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadChannels), ctx, query)
+}
 
 // IsChildPresent indicates an expected call of IsChildPresent.
 func (mr *MockChannelRepositoryMockRecorder) IsChildPresent(ctx, name, parent interface{}) *gomock.Call {
