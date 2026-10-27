@@ -392,7 +392,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"term": termQuery{"hasAudio": termQueryParameter{Value: q.HasAudio}}})
 	}
 
-	limit, offset := 20, 0
+	limit, offset := DefaultLimit, 0
 	if q.Limit.Valid {
 		limit = q.Limit.V
 	}

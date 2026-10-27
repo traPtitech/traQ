@@ -375,7 +375,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			WithHeader("X-TRAQ-Channel-id", dm.ID.String()).
 			WithText("xxpoxx").
 			Expect().
-			Status(http.StatusBadRequest)
+			Status(http.StatusNotFound)
 	})
 
 	t.Run("bad request (archived)", func(t *testing.T) {

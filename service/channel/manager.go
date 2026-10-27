@@ -16,6 +16,7 @@ var (
 	ErrChannelNameConflicts = errors.New("channel name conflicts")
 	ErrInvalidChannelName   = errors.New("invalid channel name")
 	ErrInvalidChannelPath   = errors.New("invalid channel path")
+	ErrInvalidChannelType   = errors.New("invalid channel type")
 	ErrInvalidParentChannel = errors.New("invalid parent channel")
 	ErrTooDeepChannel       = errors.New("too deep channel")
 	ErrChannelArchived      = errors.New("channel archived")
@@ -43,6 +44,7 @@ type Manager interface {
 
 	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error)
 	GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error)
+	UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error
 
 	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
 	IsPublicChannel(ctx context.Context, id uuid.UUID) bool

@@ -88,7 +88,7 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		return nil, ErrInvalidChannelName
 	}
 
-	// チャンネル名の重複を確認
+	// 既にある子チャンネル名と重複する名付けはできない
 	if m.T.isChildPresent(name, parent) {
 		return nil, ErrChannelNameConflicts
 	}
@@ -105,6 +105,15 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		// 深さを検証
 		if len(m.T.getAscendantIDs(parent))+2 > m.MaxChannelDepth {
 			return nil, ErrTooDeepChannel
+		}
+
+		// 既にあるスレッド名と重複する名付けはできない
+		ok, err := m.R.IsChildPresent(ctx, name, parent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+		}
+		if ok {
+			return nil, ErrChannelNameConflicts
 		}
 	}
 
@@ -136,6 +145,10 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 	ch, err := m.GetChannel(ctx, id)
 	if err != nil {
 		return ErrChannelNotFound
+	}
+
+	if ch.Type != model.ChannelTypePublic && ch.Type != model.ChannelTypeDM {
+		return ErrInvalidChannelType
 	}
 
 	// トピックが同じだった場合、トピックの引数自体を無効化
@@ -253,6 +266,57 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 	return nil
 }
 
+func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return ErrChannelNotFound
+	}
+
+	if ch.Type != model.ChannelTypeThread {
+		return ErrInvalidChannelType
+	}
+
+	_, err = m.GetChannel(ctx, ch.ParentID)
+	if err != nil {
+		return fmt.Errorf("failed to UpdateThread: %w", err)
+	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
+	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
+		eventRecords[model.ChannelEventVisibilityChanged] = model.ChannelEventDetail{
+			"userId":     args.UpdaterID,
+			"visibility": args.Visibility.V,
+		}
+	}
+
+	if args.Name.Valid {
+
+		eventRecords[model.ChannelEventNameChanged] = model.ChannelEventDetail{
+			"userId": args.UpdaterID,
+			"before": ch.Name,
+			"after":  args.Name.V,
+		}
+	}
+
+	_, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
+		UpdaterID:  args.UpdaterID,
+		Name:       args.Name,
+		Visibility: args.Visibility,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to UpdateChannel: %w", err)
+	}
+
+	updated := time.Now()
+	for eventType, detail := range eventRecords {
+		m.recordChannelEvent(id, eventType, detail, updated)
+	}
+	return nil
+}
+
 func (m *managerImpl) ArchiveChannel(ctx context.Context, id uuid.UUID, updaterID uuid.UUID) error {
 	ch, err := m.GetChannel(ctx, id)
 	if err != nil {
@@ -264,6 +328,9 @@ func (m *managerImpl) ArchiveChannel(ctx context.Context, id uuid.UUID, updaterI
 	}
 	if ch.IsDMChannel() {
 		return ErrInvalidChannel // DMチャンネルはアーカイブ不可
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel // スレッドはアーカイブ不可
 	}
 
 	m.T.Lock()
@@ -309,6 +376,9 @@ func (m *managerImpl) UnarchiveChannel(ctx context.Context, id uuid.UUID, update
 	}
 	if !ch.IsArchived() {
 		return nil // アーカイブされていない
+	}
+	if ch.IsThread() {
+		return ErrInvalidChannel
 	}
 
 	m.T.Lock()
@@ -413,30 +483,36 @@ func (m *managerImpl) GetDMChannelMapping(ctx context.Context, userID uuid.UUID)
 }
 
 func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
-	m.T.Lock()
-	defer m.T.Unlock()
+	m.T.RLock()
+	defer m.T.RUnlock()
 
 	// ルートチャンネルの下にスレッドは作れない
 	if parent == pubChannelRootUUID {
 		return nil, ErrInvalidParentChannel
 	}
 
-	// 既にある名前のスレッドは作れない
-	if m.T.isChildPresent(name, parent) {
-		return nil, ErrChannelNameConflicts
-	}
-
-	// 親チャンネルの存在を確認
+	// 親チャンネルが存在しなければスレッド作成できない
 	if !m.T.isChannelPresent(parent) {
 		return nil, ErrInvalidParentChannel
 	}
-	// 親チャンネルがスレッドかどうか確認
+	// 親チャンネルがスレッドならスレッド作成できない
 	if m.T.isThreadChannel(parent) {
 		return nil, ErrChannelThreadParent
 	}
-	// 親チャンネルがアーカイブされているかどうか確認
+	// 親チャンネルがアーカイブされているならスレッド作成できない
 	if m.T.isArchivedChannel(parent) {
 		return nil, ErrChannelArchived
+	}
+
+	// 既にある子チャンネル名と重複する名付けはできない
+	ok, err := m.R.IsChildPresent(ctx, name, parent)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+	}
+
+	if ok {
+		return nil, ErrChannelNameConflicts
 	}
 
 	// チャンネル作成
@@ -451,7 +527,6 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
-	m.T.add(ch)
 	// ロギング
 	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
 		"userId":    ch.CreatorID,

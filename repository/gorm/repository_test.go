@@ -262,7 +262,8 @@ func mustMakeDummyFile(t *testing.T, repo repository.Repository, useUUIDv4 bool)
 func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
 	if name == rand {
-		name = random.AlphaNumeric(20)
+		// スタンプ名は禁止されている "0x" で始まらないようにする
+		name = "stamp_" + random.AlphaNumeric(20)
 	}
 	fid := mustMakeDummyFile(t, repo, false).ID
 	s, err := repo.CreateStamp(context.TODO(), repository.CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})

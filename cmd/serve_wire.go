@@ -39,6 +39,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		counter.NewMessageCounter,
 		counter.NewUserCounter,
 		counter.NewChannelCounter,
+		counter.NewThreadCounter,
 		exevent.NewStampThrottler,
 		imaging.NewProcessor,
 		notification.NewService,
@@ -60,7 +61,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		provideQallRoomStateManager,
 		provideQallSoundboard,
 		wire.Struct(new(service.Services), "*"),
-		wire.Struct(new(Server), "*"),
+		wire.Struct(new(Server), "L", "SS", "Router", "Hub", "Repo"),
 		wire.Bind(new(repository.ChannelRepository), new(repository.Repository)),
 		wire.Bind(new(repository.FileRepository), new(repository.Repository)),
 	)
