@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/color"
 	"image/png"
 	"io"
 	"testing"
@@ -152,6 +154,76 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, thumb.Bounds().Size().X, thumbs[0].Width)
 			assert.EqualValues(t, thumb.Bounds().Size().Y, thumbs[0].Height)
 		}
+	})
+
+	t.Run("video with generated thumbnail", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+		data := []byte("video data")
+		thumbnail := image.NewRGBA(image.Rect(0, 0, 16, 16))
+		thumbnail.Set(0, 0, color.RGBA{R: 0xff, A: 0xff})
+		ip.EXPECT().VideoThumbnail(gomock.Any()).Return(thumbnail, nil)
+
+		fs.EXPECT().SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/png", model.FileTypeThumbnail).
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
+				_, err := png.Decode(src)
+				return err
+			})
+		fs.EXPECT().SaveByKey(gomock.Any(), gomock.Any(), "video.mp4", "video/mp4", model.FileTypeUserFile).
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
+				actual, err := io.ReadAll(src)
+				assert.Equal(t, data, actual)
+				return err
+			})
+		repo.EXPECT().SaveFileMeta(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) error {
+				meta.CreatedAt = time.Now()
+				return nil
+			})
+
+		result, err := fm.Save(context.Background(), SaveArgs{
+			FileName: "video.mp4", FileSize: int64(len(data)), MimeType: "video/mp4",
+			FileType: model.FileTypeUserFile, Src: bytes.NewReader(data),
+		})
+		require.NoError(t, err)
+		require.Len(t, result.GetThumbnails(), 1)
+		assert.Equal(t, model.ThumbnailTypeImage, result.GetThumbnails()[0].Type)
+		assert.Equal(t, 16, result.GetThumbnails()[0].Width)
+		assert.Equal(t, 16, result.GetThumbnails()[0].Height)
+	})
+
+	t.Run("video thumbnail generation failure does not fail upload", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+		data := []byte("invalid video data")
+		ip.EXPECT().VideoThumbnail(gomock.Any()).Return(nil, errMock)
+
+		fs.EXPECT().SaveByKey(gomock.Any(), gomock.Any(), "video.mp4", "video/mp4", model.FileTypeUserFile).
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
+				actual, err := io.ReadAll(src)
+				assert.Equal(t, data, actual)
+				return err
+			})
+		repo.EXPECT().SaveFileMeta(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) error {
+				meta.CreatedAt = time.Now()
+				return nil
+			})
+
+		result, err := fm.Save(context.Background(), SaveArgs{
+			FileName: "video.mp4", FileSize: int64(len(data)), MimeType: "video/mp4",
+			FileType: model.FileTypeUserFile, Src: bytes.NewReader(data),
+		})
+		require.NoError(t, err)
+		assert.Empty(t, result.GetThumbnails())
 	})
 
 	t.Run("image with generating thumbnail (io.ReadSeeker)", func(t *testing.T) {

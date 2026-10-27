@@ -6,8 +6,10 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"image"
 	"image/png"
 	"io"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
@@ -47,7 +49,7 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip 
 	}, nil
 }
 
-func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
+func (m *managerImpl) canGenerateImageThumbnail(mimeType string) bool {
 	switch mimeType {
 	case "image/jpeg", "image/png", "image/gif", "image/webp":
 		return true
@@ -62,6 +64,25 @@ func (m *managerImpl) canGenerateWaveform(mimeType string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func (m *managerImpl) canGenerateVideoThumbnail(mimeType string) bool {
+	return len(mimeType) > len("video/") && strings.HasPrefix(mimeType, "video/")
+}
+
+func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
+	return m.canGenerateImageThumbnail(mimeType) || m.canGenerateVideoThumbnail(mimeType)
+}
+
+func (m *managerImpl) generateThumbnail(src io.ReadSeeker, mimeType string) (image.Image, error) {
+	switch {
+	case m.canGenerateImageThumbnail(mimeType):
+		return m.ip.Thumbnail(src)
+	case m.canGenerateVideoThumbnail(mimeType):
+		return m.ip.VideoThumbnail(src)
+	default:
+		return nil, nil
 	}
 }
 
@@ -108,14 +129,14 @@ func (m *managerImpl) Save(ctx context.Context, args SaveArgs) (model.File, erro
 		}
 		args.Src = src
 
-		thumb, err := m.ip.Thumbnail(src)
+		thumb, err := m.generateThumbnail(src, args.MimeType)
 		if err != nil {
 			m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 		} else {
 			args.Thumbnail = thumb
 		}
 
-		// ストリームを先頭に戻す
+		// サムネイル生成の成否にかかわらず原本を保存できるよう、ストリームを先頭に戻す。
 		if _, err := src.Seek(0, io.SeekStart); err != nil {
 			return nil, fmt.Errorf("failed to seek src stream: %w", err)
 		}

@@ -81,6 +81,21 @@ func (mr *MockProcessorMockRecorder) Thumbnail(src interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Thumbnail", reflect.TypeOf((*MockProcessor)(nil).Thumbnail), src)
 }
 
+// VideoThumbnail mocks base method.
+func (m *MockProcessor) VideoThumbnail(src io.Reader) (image.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VideoThumbnail", src)
+	ret0, _ := ret[0].(image.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VideoThumbnail indicates an expected call of VideoThumbnail.
+func (mr *MockProcessorMockRecorder) VideoThumbnail(src interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VideoThumbnail", reflect.TypeOf((*MockProcessor)(nil).VideoThumbnail), src)
+}
+
 // WaveformMp3 mocks base method.
 func (m *MockProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	m.ctrl.T.Helper()

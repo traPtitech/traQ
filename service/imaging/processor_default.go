@@ -43,6 +43,13 @@ func (p *defaultProcessor) Thumbnail(src io.ReadSeeker) (image.Image, error) {
 	return p.Fit(src, p.c.ThumbnailMaxSize.X, p.c.ThumbnailMaxSize.Y)
 }
 
+func (p *defaultProcessor) VideoThumbnail(src io.Reader) (image.Image, error) {
+	_ = p.sp.Acquire(context.Background(), 1)
+	defer p.sp.Release(1)
+
+	return generateVideoThumbnail(src)
+}
+
 func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, error) {
 	_ = p.sp.Acquire(context.Background(), 1)
 	defer p.sp.Release(1)
