@@ -498,10 +498,16 @@ func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, pare
 		return nil, ErrInvalidParentChannel
 	}
 
+	m.T.RLock()
+	defer m.T.RUnlock()
+
 	// 親チャンネルが存在しなければスレッド作成できない
-	parentChannel, err := m.GetChannel(ctx, parentChannelID)
+	parentChannel, err := m.R.GetChannel(ctx, parentChannelID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrChannelNotFound
+		}
+		return nil, fmt.Errorf("failed to GetChannel: %w", err)
 	}
 	// 親チャンネルがスレッドならスレッド作成できない
 	if parentChannel.IsThread() {

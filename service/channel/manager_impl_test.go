@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -406,15 +407,16 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 	t.Parallel()
 	mockErr := errors.New("database unavailable")
 	cases := []struct {
-		name          string
-		parent        uuid.UUID
-		messageErr    error
-		parentType    model.ChannelType
-		parentErr     error
-		duplicateName bool
-		childErr      error
-		createErr     error
-		wantErr       error
+		name           string
+		parent         uuid.UUID
+		messageErr     error
+		parentType     model.ChannelType
+		parentErr      error
+		parentArchived bool
+		duplicateName  bool
+		childErr       error
+		createErr      error
+		wantErr        error
 	}{
 		{name: "success", parent: cA},
 		{name: "parent message not found", messageErr: repository.ErrNotFound, wantErr: ErrParentMessageNotFound},
@@ -422,6 +424,8 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 		{name: "root parent", wantErr: ErrInvalidParentChannel},
 		{name: "parent channel not found", parent: cNotFound, parentErr: repository.ErrNotFound, wantErr: ErrChannelNotFound},
 		{name: "parent lookup failure", parent: cNotFound, parentErr: mockErr, wantErr: mockErr},
+		{name: "cached parent missing in DB", parent: cA, parentErr: repository.ErrNotFound, wantErr: ErrChannelNotFound},
+		{name: "cached parent archived in DB", parent: cA, parentArchived: true, wantErr: ErrChannelArchived},
 		{name: "thread parent outside tree", parent: cNotFound, parentType: model.ChannelTypeThread, wantErr: ErrChannelThreadParent},
 		{name: "DM parent", parent: cNotFound, parentType: model.ChannelTypeDM, wantErr: ErrInvalidParentChannel},
 		{name: "archived parent", parent: cABB, wantErr: ErrChannelArchived},
@@ -448,18 +452,22 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 					} else {
 						messages.EXPECT().GetMessageByID(gomock.Any(), mid).Return(parentMessage, nil)
 					}
-					if tt.messageErr == nil && tt.parent == cNotFound {
+					if tt.messageErr == nil && tt.parent != uuid.Nil {
 						if tt.parentErr != nil {
 							channels.EXPECT().GetChannel(gomock.Any(), tt.parent).Return(nil, tt.parentErr)
 						} else {
-							channels.EXPECT().GetChannel(gomock.Any(), tt.parent).Return(&model.Channel{ID: tt.parent, Type: tt.parentType, IsVisible: true}, nil)
+							parentType := tt.parentType
+							if parentType == "" {
+								parentType = model.ChannelTypePublic
+							}
+							channels.EXPECT().GetChannel(gomock.Any(), tt.parent).Return(&model.Channel{ID: tt.parent, Type: parentType, IsVisible: !tt.parentArchived && tt.parent != cABB && tt.parent != cABBC}, nil)
 						}
 					}
-					if tt.parent == cA && tt.messageErr == nil {
+					if tt.parent == cA && tt.messageErr == nil && tt.parentErr == nil && !tt.parentArchived {
 						channels.EXPECT().IsChildPresent(gomock.Any(), "thread", tt.parent).Return(tt.duplicateName, tt.childErr)
 					}
 					var created *model.Channel
-					if tt.parent == cA && !tt.duplicateName && tt.childErr == nil && tt.messageErr == nil {
+					if tt.parent == cA && !tt.duplicateName && tt.childErr == nil && tt.messageErr == nil && tt.parentErr == nil && !tt.parentArchived {
 						args := model.Channel{Name: "thread", ParentID: tt.parent, CreatorID: uid, UpdaterID: uid, IsVisible: true}
 						call := channels.EXPECT().CreateThread(gomock.Any(), args, model.Thread{MessageID: mid})
 						if tt.createErr != nil {
@@ -485,6 +493,119 @@ func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestManagerImpl_CreateThreadChannelSerializesWithArchiving(t *testing.T) {
+	t.Parallel()
+	for _, archiveFirst := range []bool{true, false} {
+		t.Run(fmt.Sprintf("archive first=%t", archiveFirst), func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			channels := mock_repository.NewMockChannelRepository(ctrl)
+			messages := mock_repository.NewMockMessageRepository(ctrl)
+			cm := initCM(t, channelTestRepository{ChannelRepository: channels, MessageRepository: messages})
+			ctx := context.Background()
+			mid, uid := mustGenerateUUID(), mustGenerateUUID()
+			parentRead := make(chan struct{})
+			messageRead := make(chan struct{})
+			inserting := make(chan struct{})
+			archiving := make(chan struct{})
+			proceed := make(chan struct{})
+			defer func() {
+				select {
+				case <-proceed:
+				default:
+					close(proceed)
+				}
+			}()
+			var archived atomic.Bool
+			messages.EXPECT().GetMessageByID(gomock.Any(), mid).DoAndReturn(func(context.Context, uuid.UUID) (*model.Message, error) {
+				close(messageRead)
+				return &model.Message{ID: mid, ChannelID: cA}, nil
+			})
+			channels.EXPECT().GetChannel(gomock.Any(), cA).DoAndReturn(func(context.Context, uuid.UUID) (*model.Channel, error) {
+				// The parent must be read while archiving is excluded, without a nested Tree lock.
+				if cm.T.TryLock() {
+					cm.T.Unlock()
+					t.Error("parent lookup did not hold the Tree read lock")
+				}
+				close(parentRead)
+				return &model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: !archived.Load()}, nil
+			})
+			channels.EXPECT().ArchiveChannels(gomock.Any(), gomock.Any()).DoAndReturn(func(context.Context, []uuid.UUID) ([]*model.Channel, error) {
+				close(archiving)
+				if archiveFirst {
+					<-proceed
+				}
+				archived.Store(true)
+				return []*model.Channel{{ID: cA, Type: model.ChannelTypePublic, IsVisible: false}}, nil
+			})
+			channels.EXPECT().RecordChannelEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			if !archiveFirst {
+				channels.EXPECT().IsChildPresent(gomock.Any(), "thread", cA).Return(false, nil)
+				channels.EXPECT().CreateThread(gomock.Any(), gomock.Any(), model.Thread{MessageID: mid}).DoAndReturn(func(_ context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
+					if cm.T.TryLock() {
+						cm.T.Unlock()
+						t.Error("thread insert did not hold the Tree read lock")
+					}
+					close(inserting)
+					<-proceed
+					ch.ID = mustGenerateUUID()
+					th.ChannelID, th.Channel = ch.ID, &ch
+					return &th, nil
+				})
+			}
+			wait := func(signal <-chan struct{}) {
+				t.Helper()
+				select {
+				case <-signal:
+				case <-time.After(5 * time.Second):
+					t.Fatal("operation blocked, possibly on a nested Tree read lock")
+				}
+			}
+			createDone, archiveDone := make(chan error, 1), make(chan error, 1)
+			create := func() { _, err := cm.CreateThreadChannel(ctx, "thread", mid, uid); createDone <- err }
+			archive := func() { archiveDone <- cm.ArchiveChannel(ctx, cA, uid) }
+			if archiveFirst {
+				go archive()
+				wait(archiving)
+				go create()
+				wait(messageRead)
+				select {
+				case <-parentRead:
+					t.Error("parent lookup ran before archiving finished")
+				case <-time.After(50 * time.Millisecond):
+				}
+			} else {
+				go create()
+				wait(inserting)
+				go archive()
+				select {
+				case <-archiving:
+					t.Error("archiving ran before thread insertion finished")
+				case <-time.After(50 * time.Millisecond):
+				}
+			}
+			close(proceed)
+			select {
+			case err := <-createDone:
+				if archiveFirst {
+					require.ErrorIs(t, err, ErrChannelArchived)
+				} else {
+					require.NoError(t, err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatal("thread creation did not finish")
+			}
+			select {
+			case err := <-archiveDone:
+				require.NoError(t, err)
+			case <-time.After(5 * time.Second):
+				t.Fatal("archiving did not finish")
+			}
+			cm.Wait()
 		})
 	}
 }
