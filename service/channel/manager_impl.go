@@ -2,6 +2,7 @@ package channel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -23,7 +24,7 @@ var (
 )
 
 type managerImpl struct {
-	R repository.ChannelRepository
+	R repository.Repository
 	L *zap.Logger
 	T *treeImpl
 	P sync.WaitGroup
@@ -31,7 +32,7 @@ type managerImpl struct {
 	MaxChannelDepth int
 }
 
-func InitChannelManager(repo repository.ChannelRepository, logger *zap.Logger) (Manager, error) {
+func InitChannelManager(repo repository.Repository, logger *zap.Logger) (Manager, error) {
 	channels, err := repo.GetPublicChannels(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to init channel.Manager: %w", err)
@@ -482,58 +483,86 @@ func (m *managerImpl) GetDMChannelMapping(ctx context.Context, userID uuid.UUID)
 	return result, nil
 }
 
-func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+func (m *managerImpl) CreateThreadChannel(ctx context.Context, name string, parentMessageID, creatorID uuid.UUID) (*model.Thread, error) {
+	parentMessage, err := m.R.GetMessageByID(ctx, parentMessageID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrParentMessageNotFound
+		}
+		return nil, fmt.Errorf("failed to GetMessageByID: %w", err)
+	}
+	parentChannelID := parentMessage.ChannelID
+
+	// ルートチャンネルの下にスレッドは作れない
+	if parentChannelID == pubChannelRootUUID {
+		return nil, ErrInvalidParentChannel
+	}
+
 	m.T.RLock()
 	defer m.T.RUnlock()
 
-	// ルートチャンネルの下にスレッドは作れない
-	if parent == pubChannelRootUUID {
-		return nil, ErrInvalidParentChannel
-	}
-
 	// 親チャンネルが存在しなければスレッド作成できない
-	if !m.T.isChannelPresent(parent) {
-		return nil, ErrInvalidParentChannel
+	parentChannel, err := m.R.GetChannel(ctx, parentChannelID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrChannelNotFound
+		}
+		return nil, fmt.Errorf("failed to GetChannel: %w", err)
 	}
 	// 親チャンネルがスレッドならスレッド作成できない
-	if m.T.isThreadChannel(parent) {
+	if parentChannel.IsThread() {
 		return nil, ErrChannelThreadParent
 	}
+	if !parentChannel.IsPublic() {
+		return nil, ErrInvalidParentChannel
+	}
 	// 親チャンネルがアーカイブされているならスレッド作成できない
-	if m.T.isArchivedChannel(parent) {
+	if parentChannel.IsArchived() {
 		return nil, ErrChannelArchived
 	}
 
 	// 既にある子チャンネル名と重複する名付けはできない
-	ok, err := m.R.IsChildPresent(ctx, name, parent)
-
+	ok, err := m.R.IsChildPresent(ctx, name, parentChannelID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+		return nil, fmt.Errorf("failed to IsChildPresent: %w", err)
 	}
-
 	if ok {
 		return nil, ErrChannelNameConflicts
 	}
 
 	// チャンネル作成
-	ch, err := m.R.CreateChannel(ctx, model.Channel{
+	th, err := m.R.CreateThread(ctx, model.Channel{
 		Name:      name,
-		ParentID:  parent,
+		ParentID:  parentChannelID,
 		CreatorID: creatorID,
 		UpdaterID: creatorID,
 		IsForced:  false,
 		IsVisible: true,
-	}, nil, model.ChannelTypeThread)
+	}, model.Thread{
+		MessageID: parentMessageID,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return nil, ErrThreadConflicts
+		}
+		return nil, fmt.Errorf("failed to CreateThread: %w", err)
 	}
+	th.Message = parentMessage
+	ch := th.Channel
+
 	// ロギング
 	m.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
 		"userId":    ch.CreatorID,
 		"channelId": ch.ID,
 	}, ch.CreatedAt)
-	m.L.Info(fmt.Sprintf("channel #%s was created", m.T.getChannelPath(ch.ID)), zap.Stringer("cid", ch.ID))
-	return ch, nil
+	m.L.Info("thread was created",
+		zap.Stringer("cid", ch.ID),
+		zap.String("name", ch.Name),
+		zap.Stringer("parent_channel_id", parentChannelID),
+		zap.Stringer("parent_message_id", parentMessageID),
+	)
+
+	return th, nil
 }
 
 func (m *managerImpl) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
@@ -560,6 +589,14 @@ func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, cha
 
 func (m *managerImpl) IsPublicChannel(_ context.Context, id uuid.UUID) bool {
 	return m.T.IsChannelPresent(id)
+}
+
+func (m *managerImpl) IsThreadChannel(ctx context.Context, id uuid.UUID) (bool, error) {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	return ch.IsThread(), nil
 }
 
 func (m *managerImpl) Wait() {

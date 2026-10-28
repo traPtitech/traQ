@@ -481,12 +481,6 @@ func (ct *treeImpl) IsArchivedChannel(id uuid.UUID) bool {
 	return ct.isArchivedChannel(id)
 }
 
-func (ct *treeImpl) IsThreadChannel(id uuid.UUID) bool {
-	ct.RLock()
-	defer ct.RUnlock()
-	return ct.isThreadChannel(id)
-}
-
 func (ct *treeImpl) isArchivedChannel(id uuid.UUID) bool {
 	n, ok := ct.nodes[id]
 	if !ok {
@@ -495,16 +489,6 @@ func (ct *treeImpl) isArchivedChannel(id uuid.UUID) bool {
 	n.RLock()
 	defer n.RUnlock()
 	return n.archived
-}
-
-func (ct *treeImpl) isThreadChannel(id uuid.UUID) bool {
-	n, ok := ct.nodes[id]
-	if !ok {
-		return false
-	}
-	n.RLock()
-	defer n.RUnlock()
-	return n.thread
 }
 
 // MarshalJSON implements json.Marshaler interface
