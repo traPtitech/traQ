@@ -591,7 +591,6 @@ func TestGormRepository_CreateThread(t *testing.T) {
 		repo, _, _, user, parent := setupWithUserAndChannel(t, common, false)
 		ctx := context.Background()
 
-		message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
 		channelArgs := func(name string) model.Channel {
 			return model.Channel{
 				Name:      name,
@@ -602,8 +601,7 @@ func TestGormRepository_CreateThread(t *testing.T) {
 			}
 		}
 		name := "thread"
-		messageID := message.ID
-		messageID = uuid.Must(uuid.NewV7())
+		messageID := uuid.Must(uuid.NewV7())
 
 		th, err := repo.CreateThread(ctx, channelArgs(name), model.Thread{MessageID: messageID})
 		require.Error(t, err)

@@ -452,11 +452,10 @@ func TestHandlers_CreateThreads(t *testing.T) {
 
 	t.Run("parent message deleted", func(t *testing.T) {
 		t.Parallel()
-		mid := uuid.Must(uuid.NewV7())
 
 		parent := env.CreateChannel(t, rand)
 		msg := env.CreateMessage(t, user.GetID(), parent.ID, "deleted parent")
-		mid = msg.GetID()
+		mid := msg.GetID()
 		env.DeleteMessage(t, mid)
 
 		env.R(t).POST(path).
@@ -486,10 +485,9 @@ func TestHandlers_CreateThreads(t *testing.T) {
 
 	t.Run("reject DM parent", func(t *testing.T) {
 		t.Parallel()
-		parent := env.CreateChannel(t, rand)
 
 		other := env.CreateUser(t, rand)
-		parent = env.CreateDMChannel(t, user.GetID(), other.GetID())
+		parent := env.CreateDMChannel(t, user.GetID(), other.GetID())
 		msg := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
 
 		env.R(t).POST(path).
