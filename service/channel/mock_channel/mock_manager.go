@@ -82,10 +82,10 @@ func (mr *MockManagerMockRecorder) CreatePublicChannel(ctx, name, parent, creato
 }
 
 // CreateThreadChannel mocks base method.
-func (m *MockManager) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+func (m *MockManager) CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Thread, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateThreadChannel", ctx, name, parent, creatorID)
-	ret0, _ := ret[0].(*model.Channel)
+	ret0, _ := ret[0].(*model.Thread)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -227,6 +227,21 @@ func (m *MockManager) IsPublicChannel(ctx context.Context, id uuid.UUID) bool {
 func (mr *MockManagerMockRecorder) IsPublicChannel(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPublicChannel", reflect.TypeOf((*MockManager)(nil).IsPublicChannel), ctx, id)
+}
+
+// IsThreadChannel mocks base method.
+func (m *MockManager) IsThreadChannel(ctx context.Context, id uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsThreadChannel", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsThreadChannel indicates an expected call of IsThreadChannel.
+func (mr *MockManagerMockRecorder) IsThreadChannel(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsThreadChannel", reflect.TypeOf((*MockManager)(nil).IsThreadChannel), ctx, id)
 }
 
 // PublicChannelTree mocks base method.

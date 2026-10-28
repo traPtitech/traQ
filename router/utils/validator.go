@@ -71,28 +71,33 @@ var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value any) e
 		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
 
-	ct := cm.PublicChannelTree(ctx)
-
+	var id uuid.UUID
 	switch v := value.(type) {
 	case nil:
 		return nil
 	case uuid.UUID:
-		if ct.IsThreadChannel(v) {
-			return errors.New(errMessage)
-		}
+		id = v
 	case optional.Of[uuid.UUID]:
-		if v.Valid && ct.IsThreadChannel(v.V) {
-			return errors.New(errMessage)
+		if !v.Valid {
+			return nil
 		}
+		id = v.V
 	case string:
-		if ct.IsThreadChannel(uuid.FromStringOrNil(v)) {
-			return errors.New(errMessage)
-		}
+		id = uuid.FromStringOrNil(v)
 	case []byte:
-		if ct.IsThreadChannel(uuid.FromBytesOrNil(v)) {
+		id = uuid.FromBytesOrNil(v)
+	default:
+		return errors.New(errMessage)
+	}
+
+	isThread, err := cm.IsThreadChannel(ctx, id)
+	if err != nil {
+		if errors.Is(err, channel.ErrChannelNotFound) {
 			return errors.New(errMessage)
 		}
-	default:
+		return vd.NewInternalError(err)
+	}
+	if isThread {
 		return errors.New(errMessage)
 	}
 	return nil

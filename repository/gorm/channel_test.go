@@ -418,3 +418,124 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		}
 	})
 }
+
+func TestGormRepository_CreateThread(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name     string
+		conflict string
+	}{
+		{name: "success"},
+		{name: "duplicate public channel name", conflict: "channel"},
+		{name: "duplicate thread name", conflict: "thread"},
+		{name: "duplicate parent message rolls back channel", conflict: "message"},
+		{name: "missing parent message rolls back channel", conflict: "missing"},
+		{name: "concurrent parent message conflict", conflict: "concurrent"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo, _, _, user, parent := setupWithUserAndChannel(t, common, false)
+			ctx := context.Background()
+			message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
+			channelArgs := func(name string) model.Channel {
+				return model.Channel{Name: name, ParentID: parent.ID, CreatorID: user.GetID(), UpdaterID: user.GetID(), IsVisible: true}
+			}
+			name := "thread"
+			messageID := message.ID
+			var existingChildren int64
+			switch tt.conflict {
+			case "channel":
+				_, err := repo.CreateChannel(ctx, channelArgs(name), nil, model.ChannelTypePublic)
+				require.NoError(t, err)
+				existingChildren = 1
+			case "thread", "message":
+				_, err := repo.CreateThread(ctx, channelArgs(name), model.Thread{MessageID: messageID})
+				require.NoError(t, err)
+				existingChildren = 1
+				if tt.conflict == "thread" {
+					messageID = mustMakeMessage(t, repo, user.GetID(), parent.ID).ID
+				} else {
+					name = "different-thread"
+				}
+			case "missing":
+				messageID = uuid.Must(uuid.NewV7())
+			}
+			if tt.conflict == "concurrent" {
+				start := make(chan struct{})
+				results := make(chan error, 2)
+				for i := range 2 {
+					go func() {
+						<-start
+						_, err := repo.CreateThread(ctx, channelArgs(fmt.Sprintf("thread-%d", i)), model.Thread{MessageID: messageID})
+						results <- err
+					}()
+				}
+				close(start)
+				var successes, conflicts int
+				for range 2 {
+					err := <-results
+					if err == nil {
+						successes++
+					} else {
+						require.ErrorIs(t, err, repository.ErrAlreadyExists)
+						conflicts++
+					}
+				}
+				assert.Equal(t, 1, successes)
+				assert.Equal(t, 1, conflicts)
+				existingChildren = 1
+			} else {
+				th, err := repo.CreateThread(ctx, channelArgs(name), model.Thread{MessageID: messageID})
+				if tt.conflict == "" {
+					require.NoError(t, err)
+					require.NotNil(t, th)
+					require.NotNil(t, th.Channel)
+					ch := th.Channel
+					assert.NotEqual(t, uuid.Nil, ch.ID)
+					assert.Equal(t, model.ChannelTypeThread, ch.Type)
+					assert.Equal(t, parent.ID, ch.ParentID)
+					assert.Equal(t, user.GetID(), ch.CreatorID)
+					assert.Equal(t, user.GetID(), ch.UpdaterID)
+					assert.Equal(t, ch.ID, th.ChannelID)
+					assert.Equal(t, messageID, th.MessageID)
+					storedChannel, err := repo.GetChannel(ctx, ch.ID)
+					require.NoError(t, err)
+					assert.Equal(t, name, storedChannel.Name)
+					assert.Equal(t, model.ChannelTypeThread, storedChannel.Type)
+					var storedThread model.Thread
+					require.NoError(t, getDB(repo).First(&storedThread, "channel_id = ?", ch.ID).Error)
+					assert.Equal(t, messageID, storedThread.MessageID)
+					threads, err := repo.GetThreadChannels(ctx, repository.GetThreadChannelQuery{
+						ChannelID: parent.ID, Limit: 20, Sort: repository.ThreadChannelSortCreatedAtDesc,
+					})
+					require.NoError(t, err)
+					require.Len(t, threads, 1)
+					assert.Equal(t, ch.ID, threads[0].ChannelID)
+					assert.Equal(t, messageID, threads[0].MessageID)
+					require.NotNil(t, threads[0].Channel)
+					assert.Equal(t, name, threads[0].Channel.Name)
+					existingChildren = 1
+				} else {
+					if tt.conflict == "missing" {
+						require.Error(t, err)
+						assert.NotErrorIs(t, err, repository.ErrAlreadyExists)
+					} else {
+						require.ErrorIs(t, err, repository.ErrAlreadyExists)
+					}
+					assert.Nil(t, th)
+				}
+			}
+			var children, threads int64
+			require.NoError(t, getDB(repo).Model(&model.Channel{}).Where("parent_id = ?", parent.ID).Count(&children).Error)
+			assert.Equal(t, existingChildren, children)
+			require.NoError(t, getDB(repo).Model(&model.Thread{}).
+				Joins("JOIN channels ON channels.id = threads.channel_id").
+				Where("channels.parent_id = ?", parent.ID).Count(&threads).Error)
+			expectedThreads := existingChildren
+			if tt.conflict == "channel" {
+				expectedThreads = 0
+			}
+			assert.Equal(t, expectedThreads, threads)
+		})
+	}
+}

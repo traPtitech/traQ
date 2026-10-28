@@ -40,6 +40,16 @@ type Thread struct {
 	Name            string    `json:"name"`
 }
 
+func formatThreadChannel(thread *model.Thread) *Thread {
+	return &Thread{
+		ID:              thread.ChannelID,
+		ParentChannelID: thread.Channel.ParentID,
+		ParentMessageID: thread.MessageID,
+		Archived:        thread.Channel.IsArchived(),
+		Name:            thread.Channel.Name,
+	}
+}
+
 func formatThreadChannels(thread []*model.Thread) []*Thread {
 	threads := make([]*Thread, len(thread))
 	for i, t := range thread {

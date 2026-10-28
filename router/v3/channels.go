@@ -76,13 +76,14 @@ func (r PostChannelRequest) Validate() error {
 
 // PostThreadRequest POST /threads リクエストボディ
 type PostThreadRequest struct {
-	Name   string    `json:"name"`
-	Parent uuid.UUID `json:"parent"`
+	Name            string    `json:"name"`
+	ParentMessageID uuid.UUID `json:"parentMessageId"`
 }
 
 func (r PostThreadRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.ThreadNameRuleRequired...),
+		vd.Field(&r.ParentMessageID, validator.NotNilUUID),
 	)
 }
 
@@ -127,7 +128,7 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.CreateThreadChannel(ctx, req.Name, req.Parent, userID)
+	th, err := h.ChannelManager.CreateThreadChannel(ctx, req.Name, req.ParentMessageID, userID)
 	if err != nil {
 		switch err {
 		case channel.ErrChannelArchived:
@@ -142,12 +143,18 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 			return herror.BadRequest("channel depth limit exceeded")
 		case channel.ErrChannelNameConflicts:
 			return herror.Conflict("channel name conflicts")
+		case channel.ErrParentMessageNotFound:
+			return herror.NotFound("parent message is not found")
+		case channel.ErrThreadConflicts:
+			return herror.Conflict("thread already exists for this message or channel name conflicts")
+		case channel.ErrChannelNotFound:
+			return herror.NotFound("parent channel not found")
 		default:
 			return herror.InternalServerError(err)
 		}
 	}
 
-	return c.JSON(http.StatusCreated, formatChannel(ch, make([]uuid.UUID, 0)))
+	return c.JSON(http.StatusCreated, formatThreadChannel(th))
 }
 
 // PatchThreadChannel Patch /threads/{channelId}

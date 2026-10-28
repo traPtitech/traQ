@@ -107,6 +107,10 @@ type ChannelRepository interface {
 	//
 	// channelType が model.ChannelTypeDM の場合、privateMembersに1人または2人のユーザーが入っている必要があります。
 	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, channelType model.ChannelType) (*model.Channel, error)
+	// CreateThread スレッドを作成します
+	//
+	// チャンネル名または親メッセージが重複する場合、ErrAlreadyExistsを返します
+	CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。

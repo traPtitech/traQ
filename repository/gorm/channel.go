@@ -104,6 +104,41 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	return &ch, nil
 }
 
+func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
+	arr := []interface{}{&ch, &th}
+
+	ch.ID = uuid.Must(uuid.NewV7())
+	th.ChannelID = ch.ID
+	ch.Type = model.ChannelTypeThread
+	ch.DeletedAt = gorm.DeletedAt{}
+
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, v := range arr {
+			if err := tx.Create(v).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
+		return nil, err
+	}
+
+	repo.hub.Publish(hub.Message{
+		Name: event.ThreadCreated,
+		Fields: hub.Fields{
+			"channel_id": ch.ID,
+			"thread":     &ch,
+		},
+	})
+	th.Channel = &ch
+	return &th, nil
+}
+
 // UpdateChannel implements ChannelRepository interface.
 func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
