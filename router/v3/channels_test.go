@@ -2,7 +2,6 @@ package v3
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -391,7 +390,10 @@ func TestHandlers_CreateThreads(t *testing.T) {
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
-		env.R(t).POST(path).WithJSON(&PostThreadRequest{Name: "thread", ParentMessageID: uuid.Must(uuid.NewV7())}).Expect().Status(http.StatusUnauthorized)
+		env.R(t).POST(path).
+			WithJSON(&PostThreadRequest{Name: "thread", ParentMessageID: uuid.Must(uuid.NewV7())}).
+			Expect().
+			Status(http.StatusUnauthorized)
 	})
 
 	for _, name := range []string{"日本語スレッド", "thread"} {
@@ -399,93 +401,175 @@ func TestHandlers_CreateThreads(t *testing.T) {
 			t.Parallel()
 			parent := env.CreateChannel(t, rand)
 			parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
-			obj := env.R(t).POST(path).WithCookie(session.CookieName, commonSession).
+
+			obj := env.R(t).POST(path).
+				WithCookie(session.CookieName, commonSession).
 				WithJSON(&PostThreadRequest{Name: name, ParentMessageID: parentMessage.GetID()}).
-				Expect().Status(http.StatusCreated).JSON().Object()
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
+
 			obj.Value("parentChannelId").String().IsEqual(parent.ID.String())
 			obj.Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
 			obj.Value("archived").Boolean().IsFalse()
 			obj.Value("name").String().IsEqual(name)
+
 			id, err := uuid.FromString(obj.Value("id").String().Raw())
 			require.NoError(t, err)
+
 			ch, err := env.CM.GetChannel(ctx, id)
 			require.NoError(t, err)
 			assert.Equal(t, parent.ID, ch.ParentID)
 			assert.Equal(t, model.ChannelTypeThread, ch.Type)
+
 			var stored model.Thread
 			require.NoError(t, env.DB.First(&stored, "channel_id = ?", id).Error)
 			assert.Equal(t, parentMessage.GetID(), stored.MessageID)
+
 			list := env.R(t).GET("/api/v3/channels/{channelId}/threads", parent.ID).
-				WithCookie(session.CookieName, commonSession).Expect().Status(http.StatusOK).JSON().Array()
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array()
 			list.Length().IsEqual(1)
 			list.Value(0).Object().Value("id").String().IsEqual(id.String())
 			list.Value(0).Object().Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
 		})
 	}
 
-	for _, deleted := range []bool{false, true} {
-		t.Run(fmt.Sprintf("parent message missing/deleted=%t", deleted), func(t *testing.T) {
-			t.Parallel()
-			mid := uuid.Must(uuid.NewV7())
-			if deleted {
-				parent := env.CreateChannel(t, rand)
-				msg := env.CreateMessage(t, user.GetID(), parent.ID, "deleted parent")
-				mid = msg.GetID()
-				env.DeleteMessage(t, mid)
-			}
-			env.R(t).POST(path).WithCookie(session.CookieName, commonSession).
-				WithJSON(&PostThreadRequest{Name: "thread", ParentMessageID: mid}).Expect().Status(http.StatusNotFound)
-		})
-	}
+	t.Run("parent message not found", func(t *testing.T) {
+		t.Parallel()
+		mid := uuid.Must(uuid.NewV7())
 
-	for _, kind := range []string{"thread", "DM", "archived"} {
-		t.Run("reject parent/"+kind, func(t *testing.T) {
-			t.Parallel()
-			parent := env.CreateChannel(t, rand)
-			switch kind {
-			case "thread":
-				rootMessage := env.CreateMessage(t, user.GetID(), parent.ID, "root")
-				th, err := env.CM.CreateThreadChannel(ctx, "first-thread", rootMessage.GetID(), user.GetID())
-				require.NoError(t, err)
-				parent = th.Channel
-			case "DM":
-				other := env.CreateUser(t, rand)
-				parent = env.CreateDMChannel(t, user.GetID(), other.GetID())
-			}
-			msg := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
-			if kind == "archived" {
-				require.NoError(t, env.CM.ArchiveChannel(ctx, parent.ID, user.GetID()))
-			}
-			env.R(t).POST(path).WithCookie(session.CookieName, commonSession).
-				WithJSON(&PostThreadRequest{Name: "nested-thread", ParentMessageID: msg.GetID()}).Expect().Status(http.StatusBadRequest)
-		})
-	}
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "thread", ParentMessageID: mid}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
 
-	for _, conflict := range []string{"message", "channel name", "thread name"} {
-		t.Run("conflict/"+conflict, func(t *testing.T) {
-			t.Parallel()
-			parent := env.CreateChannel(t, rand)
-			firstMessage := env.CreateMessage(t, user.GetID(), parent.ID, "first")
-			nextMessage := env.CreateMessage(t, user.GetID(), parent.ID, "next")
-			name := "first-thread"
-			if conflict == "channel name" {
-				_, err := env.CM.CreatePublicChannel(ctx, name, parent.ID, user.GetID())
-				require.NoError(t, err)
-			} else {
-				_, err := env.CM.CreateThreadChannel(ctx, name, firstMessage.GetID(), user.GetID())
-				require.NoError(t, err)
-			}
-			if conflict == "message" {
-				name = "different-name"
-				nextMessage = firstMessage
-			}
-			env.R(t).POST(path).WithCookie(session.CookieName, commonSession).
-				WithJSON(&PostThreadRequest{Name: name, ParentMessageID: nextMessage.GetID()}).Expect().Status(http.StatusConflict)
-			var count int64
-			require.NoError(t, env.DB.Model(&model.Channel{}).Where("parent_id = ?", parent.ID).Count(&count).Error)
-			assert.EqualValues(t, 1, count)
-		})
-	}
+	t.Run("parent message deleted", func(t *testing.T) {
+		t.Parallel()
+		mid := uuid.Must(uuid.NewV7())
+
+		parent := env.CreateChannel(t, rand)
+		msg := env.CreateMessage(t, user.GetID(), parent.ID, "deleted parent")
+		mid = msg.GetID()
+		env.DeleteMessage(t, mid)
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "thread", ParentMessageID: mid}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("reject thread parent", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+
+		rootMessage := env.CreateMessage(t, user.GetID(), parent.ID, "root")
+
+		th, err := env.CM.CreateThreadChannel(ctx, "first-thread", rootMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+		parent = th.Channel
+		msg := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "nested-thread", ParentMessageID: msg.GetID()}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("reject DM parent", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+
+		other := env.CreateUser(t, rand)
+		parent = env.CreateDMChannel(t, user.GetID(), other.GetID())
+		msg := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "nested-thread", ParentMessageID: msg.GetID()}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("reject archived parent", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+
+		msg := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		require.NoError(t, env.CM.ArchiveChannel(ctx, parent.ID, user.GetID()))
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "nested-thread", ParentMessageID: msg.GetID()}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("conflict/message", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		firstMessage := env.CreateMessage(t, user.GetID(), parent.ID, "first")
+		name := "first-thread"
+
+		_, err := env.CM.CreateThreadChannel(ctx, name, firstMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: "different-name", ParentMessageID: firstMessage.GetID()}).
+			Expect().
+			Status(http.StatusConflict)
+		var count int64
+		require.NoError(t, env.DB.Model(&model.Channel{}).Where("parent_id = ?", parent.ID).Count(&count).Error)
+		assert.EqualValues(t, 1, count)
+	})
+
+	t.Run("conflict/channel name", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		nextMessage := env.CreateMessage(t, user.GetID(), parent.ID, "next")
+		name := "first-thread"
+
+		_, err := env.CM.CreatePublicChannel(ctx, name, parent.ID, user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: name, ParentMessageID: nextMessage.GetID()}).
+			Expect().
+			Status(http.StatusConflict)
+		var count int64
+		require.NoError(t, env.DB.Model(&model.Channel{}).Where("parent_id = ?", parent.ID).Count(&count).Error)
+		assert.EqualValues(t, 1, count)
+	})
+
+	t.Run("conflict/thread name", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		firstMessage := env.CreateMessage(t, user.GetID(), parent.ID, "first")
+		nextMessage := env.CreateMessage(t, user.GetID(), parent.ID, "next")
+		name := "first-thread"
+
+		_, err := env.CM.CreateThreadChannel(ctx, name, firstMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostThreadRequest{Name: name, ParentMessageID: nextMessage.GetID()}).
+			Expect().
+			Status(http.StatusConflict)
+		var count int64
+		require.NoError(t, env.DB.Model(&model.Channel{}).Where("parent_id = ?", parent.ID).Count(&count).Error)
+		assert.EqualValues(t, 1, count)
+	})
 }
 
 func TestHandlers_GetChannel(t *testing.T) {
