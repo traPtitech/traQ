@@ -12,16 +12,19 @@ import (
 )
 
 var (
-	ErrChannelNotFound      = errors.New("channel not found")
-	ErrChannelNameConflicts = errors.New("channel name conflicts")
-	ErrInvalidChannelName   = errors.New("invalid channel name")
-	ErrInvalidChannelPath   = errors.New("invalid channel path")
-	ErrInvalidParentChannel = errors.New("invalid parent channel")
-	ErrTooDeepChannel       = errors.New("too deep channel")
-	ErrChannelArchived      = errors.New("channel archived")
-	ErrForcedNotification   = errors.New("forced notification channel")
-	ErrInvalidChannel       = errors.New("invalid channel")
-	ErrChannelThreadParent  = errors.New("parent channel is a thread channel")
+	ErrChannelNotFound       = errors.New("channel not found")
+	ErrChannelNameConflicts  = errors.New("channel name conflicts")
+	ErrInvalidChannelName    = errors.New("invalid channel name")
+	ErrInvalidChannelPath    = errors.New("invalid channel path")
+	ErrInvalidChannelType    = errors.New("invalid channel type")
+	ErrInvalidParentChannel  = errors.New("invalid parent channel")
+	ErrTooDeepChannel        = errors.New("too deep channel")
+	ErrChannelArchived       = errors.New("channel archived")
+	ErrForcedNotification    = errors.New("forced notification channel")
+	ErrInvalidChannel        = errors.New("invalid channel")
+	ErrChannelThreadParent   = errors.New("parent channel is a thread channel")
+	ErrParentMessageNotFound = errors.New("parent message not found")
+	ErrThreadConflicts       = errors.New("thread conflict")
 )
 
 type Manager interface {
@@ -41,10 +44,13 @@ type Manager interface {
 	GetDMChannelMembers(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetDMChannelMapping(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
 
-	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Channel, error)
+	CreateThreadChannel(ctx context.Context, name string, parent, creatorID uuid.UUID) (*model.Thread, error)
+	GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error)
+	UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error
 
 	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
 	IsPublicChannel(ctx context.Context, id uuid.UUID) bool
+	IsThreadChannel(ctx context.Context, id uuid.UUID) (bool, error)
 
 	// Wait マネージャーの処理の完了を待ちます
 	Wait()

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/repository/mock_repository"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
@@ -40,9 +42,21 @@ func mustGenerateUUID(version ...int) uuid.UUID { // デフォルトがv7
 	}
 }
 
+// Channel and message operations use mocks; other methods remain unimplemented.
+type channelTestRepository struct {
+	testutils.EmptyTestRepository
+	repository.ChannelRepository
+	repository.MessageRepository
+}
+
 func initCM(t *testing.T, repo repository.ChannelRepository) *managerImpl {
+	t.Helper()
+	fullRepo, ok := repo.(repository.Repository)
+	if !ok {
+		fullRepo = channelTestRepository{ChannelRepository: repo}
+	}
 	return &managerImpl{
-		R:               repo,
+		R:               fullRepo,
 		L:               zap.NewNop(),
 		T:               makeTestChannelTree(t),
 		MaxChannelDepth: 5,
@@ -63,7 +77,7 @@ func TestInitChannelManager(t *testing.T) {
 			Return(nil, mockErr).
 			Times(1)
 
-		_, err := InitChannelManager(repo, zap.NewNop())
+		_, err := InitChannelManager(channelTestRepository{ChannelRepository: repo}, zap.NewNop())
 		if assert.Error(t, err) {
 			assert.Equal(t, mockErr, errors.Unwrap(err))
 		}
@@ -83,7 +97,7 @@ func TestInitChannelManager(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		_, err := InitChannelManager(repo, zap.NewNop())
+		_, err := InitChannelManager(channelTestRepository{ChannelRepository: repo}, zap.NewNop())
 		assert.Error(t, err)
 	})
 
@@ -97,7 +111,7 @@ func TestInitChannelManager(t *testing.T) {
 			Return([]*model.Channel{}, nil).
 			Times(1)
 
-		m, err := InitChannelManager(repo, zap.NewNop())
+		m, err := InitChannelManager(channelTestRepository{ChannelRepository: repo}, zap.NewNop())
 		if assert.NoError(t, err) {
 			assert.NotNil(t, m)
 		}
@@ -317,21 +331,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 		}
 	})
 
-	t.Run("Thread Name confricts repository error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		mockErr := errors.New("mock error")
-		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockErr).AnyTimes()
-
-		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
-		}
-	})
-
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
@@ -407,192 +406,989 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 func TestManagerImpl_CreateThreadChannel(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ErrInvalidParentChannel", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+	for _, version := range []int{4, 7} {
+		t.Run(fmt.Sprintf("UUIDv%d", version), func(t *testing.T) {
+			t.Parallel()
 
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "b", Parent: cNotFound},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
-		}
+			t.Run("parent message not found", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(nil, repository.ErrNotFound)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrParentMessageNotFound)
+				assert.Nil(t, th)
+			})
+
+			t.Run("message lookup failure", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				mockErr := errors.New("database unavailable")
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(nil, mockErr)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, mockErr)
+				assert.Nil(t, th)
+			})
+
+			t.Run("root parent", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: uuid.Nil}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrInvalidParentChannel)
+				assert.Nil(t, th)
+			})
+
+			t.Run("parent channel not found", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cNotFound}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cNotFound).
+					Return(nil, repository.ErrNotFound)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelNotFound)
+				assert.Nil(t, th)
+			})
+
+			t.Run("parent lookup failure", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				mockErr := errors.New("database unavailable")
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cNotFound}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cNotFound).
+					Return(nil, mockErr)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, mockErr)
+				assert.Nil(t, th)
+			})
+
+			t.Run("cached parent missing in DB", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(nil, repository.ErrNotFound)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelNotFound)
+				assert.Nil(t, th)
+			})
+
+			t.Run("cached parent archived in DB", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: false}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelArchived)
+				assert.Nil(t, th)
+			})
+
+			t.Run("thread parent outside tree", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cNotFound}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cNotFound).
+					Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeThread, IsVisible: true}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelThreadParent)
+				assert.Nil(t, th)
+			})
+
+			t.Run("DM parent", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cNotFound}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cNotFound).
+					Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeDM, IsVisible: true}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrInvalidParentChannel)
+				assert.Nil(t, th)
+			})
+
+			t.Run("archived parent", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cABB}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cABB).
+					Return(&model.Channel{ID: cABB, Type: model.ChannelTypePublic, IsVisible: false}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelArchived)
+				assert.Nil(t, th)
+			})
+
+			t.Run("archived descendant", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cABBC}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cABBC).
+					Return(&model.Channel{ID: cABBC, Type: model.ChannelTypePublic, IsVisible: false}, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelArchived)
+				assert.Nil(t, th)
+			})
+
+			t.Run("duplicate name", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil)
+
+				channels.EXPECT().
+					IsChildPresent(gomock.Any(), "thread", cA).
+					Return(true, nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrChannelNameConflicts)
+				assert.Nil(t, th)
+			})
+
+			t.Run("name lookup failure", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				mockErr := errors.New("database unavailable")
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil)
+
+				channels.EXPECT().
+					IsChildPresent(gomock.Any(), "thread", cA).
+					Return(false, mockErr)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, mockErr)
+				assert.Nil(t, th)
+			})
+
+			t.Run("database conflict", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil)
+
+				channels.EXPECT().
+					IsChildPresent(gomock.Any(), "thread", cA).
+					Return(false, nil)
+				args := model.Channel{Name: "thread", ParentID: cA, CreatorID: uid, UpdaterID: uid, IsVisible: true}
+
+				channels.EXPECT().
+					CreateThread(gomock.Any(), args, model.Thread{MessageID: mid}).
+					Return(nil, repository.ErrAlreadyExists)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, ErrThreadConflicts)
+				assert.Nil(t, th)
+			})
+
+			t.Run("create failure", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				mockErr := errors.New("database unavailable")
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil)
+
+				channels.EXPECT().
+					IsChildPresent(gomock.Any(), "thread", cA).
+					Return(false, nil)
+				args := model.Channel{Name: "thread", ParentID: cA, CreatorID: uid, UpdaterID: uid, IsVisible: true}
+
+				channels.EXPECT().
+					CreateThread(gomock.Any(), args, model.Thread{MessageID: mid}).
+					Return(nil, mockErr)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				require.ErrorIs(t, err, mockErr)
+				assert.Nil(t, th)
+			})
+
+			t.Run("success", func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				channels := mock_repository.NewMockChannelRepository(ctrl)
+				messages := mock_repository.NewMockMessageRepository(ctrl)
+				cm := initCM(t, channelTestRepository{
+					ChannelRepository: channels,
+					MessageRepository: messages,
+				})
+
+				mid, uid := mustGenerateUUID(version), mustGenerateUUID(version)
+				ctx := context.Background()
+
+				parentMessage := &model.Message{ID: mid, ChannelID: cA}
+
+				messages.EXPECT().
+					GetMessageByID(gomock.Any(), mid).
+					Return(parentMessage, nil)
+
+				channels.EXPECT().
+					GetChannel(gomock.Any(), cA).
+					Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil)
+
+				channels.EXPECT().
+					IsChildPresent(gomock.Any(), "thread", cA).
+					Return(false, nil)
+				args := model.Channel{Name: "thread", ParentID: cA, CreatorID: uid, UpdaterID: uid, IsVisible: true}
+				created := &model.Channel{
+					ID: mustGenerateUUID(version), Name: "thread", ParentID: cA,
+					CreatorID: uid, UpdaterID: uid, Type: model.ChannelTypeThread,
+					IsVisible: true, CreatedAt: time.Now(),
+				}
+
+				channels.EXPECT().
+					CreateThread(gomock.Any(), args, model.Thread{MessageID: mid}).
+					Return(&model.Thread{ChannelID: created.ID, MessageID: mid, Channel: created}, nil)
+
+				channels.EXPECT().
+					RecordChannelEvent(gomock.Any(), cA, model.ChannelEventChildCreated,
+						model.ChannelEventDetail{"userId": uid, "channelId": created.ID}, created.CreatedAt).
+					Return(nil)
+
+				th, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+				cm.Wait()
+				require.NoError(t, err)
+				require.NotNil(t, th)
+				assert.Equal(t, created.ID, th.ChannelID)
+				assert.Equal(t, mid, th.MessageID)
+				assert.Same(t, created, th.Channel)
+				assert.Same(t, parentMessage, th.Message)
+			})
+		})
+	}
+}
+
+func TestManagerImpl_CreateThreadChannelArchiveFirst(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	channels := mock_repository.NewMockChannelRepository(ctrl)
+	messages := mock_repository.NewMockMessageRepository(ctrl)
+	cm := initCM(t, channelTestRepository{
+		ChannelRepository: channels,
+		MessageRepository: messages,
 	})
 
-	t.Run("RootParentChannel", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
+	ctx := context.Background()
 
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "b", Parent: pubChannelRootUUID},
+	mid, uid := mustGenerateUUID(), mustGenerateUUID()
+	parentRead := make(chan struct{})
+	messageRead := make(chan struct{})
+	archiving := make(chan struct{})
+	proceed := make(chan struct{})
+	defer func() {
+		select {
+		case <-proceed:
+		default:
+			close(proceed)
 		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrInvalidParentChannel.Error())
+	}()
+	var archived atomic.Bool
+
+	messages.EXPECT().
+		GetMessageByID(gomock.Any(), mid).
+		DoAndReturn(func(context.Context, uuid.UUID) (*model.Message, error) {
+			close(messageRead)
+			return &model.Message{ID: mid, ChannelID: cA}, nil
+		})
+
+	channels.EXPECT().
+		GetChannel(gomock.Any(), cA).
+		DoAndReturn(func(context.Context, uuid.UUID) (*model.Channel, error) {
+			// The parent must be read while archiving is excluded, without a nested Tree lock.
+			if cm.T.TryLock() {
+				cm.T.Unlock()
+				t.Error("parent lookup did not hold the Tree read lock")
+			}
+			close(parentRead)
+			return &model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: !archived.Load()}, nil
+		})
+
+	channels.EXPECT().
+		ArchiveChannels(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(context.Context, []uuid.UUID) ([]*model.Channel, error) {
+			close(archiving)
+			<-proceed
+
+			archived.Store(true)
+			return []*model.Channel{{ID: cA, Type: model.ChannelTypePublic, IsVisible: false}}, nil
+		})
+
+	channels.EXPECT().
+		RecordChannelEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+
+	wait := func(signal <-chan struct{}) {
+		t.Helper()
+		select {
+		case <-signal:
+		case <-time.After(5 * time.Second):
+			t.Fatal("operation blocked, possibly on a nested Tree read lock")
 		}
+	}
+	createDone, archiveDone := make(chan error, 1), make(chan error, 1)
+	create := func() {
+		_, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+		createDone <- err
+	}
+	archive := func() {
+		archiveDone <- cm.ArchiveChannel(ctx, cA, uid)
+	}
+
+	go archive()
+	wait(archiving)
+	go create()
+	wait(messageRead)
+	select {
+	case <-parentRead:
+		t.Error("parent lookup ran before archiving finished")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	close(proceed)
+	select {
+	case err := <-createDone:
+		require.ErrorIs(t, err, ErrChannelArchived)
+	case <-time.After(5 * time.Second):
+		t.Fatal("thread creation did not finish")
+	}
+	select {
+	case err := <-archiveDone:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("archiving did not finish")
+	}
+	cm.Wait()
+}
+
+func TestManagerImpl_CreateThreadChannelCreateFirst(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	channels := mock_repository.NewMockChannelRepository(ctrl)
+	messages := mock_repository.NewMockMessageRepository(ctrl)
+	cm := initCM(t, channelTestRepository{
+		ChannelRepository: channels,
+		MessageRepository: messages,
 	})
 
-	t.Run("ErrThreadNameConflicts", func(t *testing.T) {
+	ctx := context.Background()
+
+	mid, uid := mustGenerateUUID(), mustGenerateUUID()
+	inserting := make(chan struct{})
+	archiving := make(chan struct{})
+	proceed := make(chan struct{})
+	defer func() {
+		select {
+		case <-proceed:
+		default:
+			close(proceed)
+		}
+	}()
+
+	messages.EXPECT().
+		GetMessageByID(gomock.Any(), mid).
+		Return(&model.Message{ID: mid, ChannelID: cA}, nil)
+
+	channels.EXPECT().
+		GetChannel(gomock.Any(), cA).
+		DoAndReturn(func(context.Context, uuid.UUID) (*model.Channel, error) {
+			// The parent must be read while archiving is excluded, without a nested Tree lock.
+			if cm.T.TryLock() {
+				cm.T.Unlock()
+				t.Error("parent lookup did not hold the Tree read lock")
+			}
+
+			return &model.Channel{ID: cA, Type: model.ChannelTypePublic, IsVisible: true}, nil
+		})
+
+	channels.EXPECT().
+		ArchiveChannels(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(context.Context, []uuid.UUID) ([]*model.Channel, error) {
+			close(archiving)
+
+			return []*model.Channel{{ID: cA, Type: model.ChannelTypePublic, IsVisible: false}}, nil
+		})
+
+	channels.EXPECT().
+		RecordChannelEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+
+	channels.EXPECT().
+		IsChildPresent(gomock.Any(), "thread", cA).
+		Return(false, nil)
+
+	channels.EXPECT().
+		CreateThread(gomock.Any(), gomock.Any(), model.Thread{MessageID: mid}).
+		DoAndReturn(func(_ context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
+			if cm.T.TryLock() {
+				cm.T.Unlock()
+				t.Error("thread insert did not hold the Tree read lock")
+			}
+			close(inserting)
+			<-proceed
+			ch.ID = mustGenerateUUID()
+			th.ChannelID, th.Channel = ch.ID, &ch
+			return &th, nil
+		})
+
+	wait := func(signal <-chan struct{}) {
+		t.Helper()
+		select {
+		case <-signal:
+		case <-time.After(5 * time.Second):
+			t.Fatal("operation blocked, possibly on a nested Tree read lock")
+		}
+	}
+	createDone, archiveDone := make(chan error, 1), make(chan error, 1)
+	create := func() {
+		_, err := cm.CreateThreadChannel(ctx, "thread", mid, uid)
+		createDone <- err
+	}
+	archive := func() {
+		archiveDone <- cm.ArchiveChannel(ctx, cA, uid)
+	}
+
+	go create()
+	wait(inserting)
+	go archive()
+	select {
+	case <-archiving:
+		t.Error("archiving ran before thread insertion finished")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	close(proceed)
+	select {
+	case err := <-createDone:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("thread creation did not finish")
+	}
+	select {
+	case err := <-archiveDone:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("archiving did not finish")
+	}
+	cm.Wait()
+}
+
+func TestManagerImpl_IsThreadChannel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("public in tree", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)
 
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "l", Parent: cEK},
-		}
-		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
-		}
+		got, err := cm.IsThreadChannel(context.Background(), cA)
+		require.NoError(t, err)
+		assert.Equal(t, false, got)
 	})
 
-	t.Run("ErrChannelArchived", func(t *testing.T) {
+	t.Run("thread outside tree", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)
 
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "a", Parent: cABB},
-			{Name: "a", Parent: cABBC},
-		}
-		for _, c := range cases {
-			_, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrChannelArchived.Error())
-		}
-	})
-
-	t.Run("ErrChannelThreadParent", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-		_, err := cm.CreateThreadChannel(context.TODO(), "a", cEKL, uuid.Nil)
-		assert.EqualError(t, err, ErrChannelThreadParent.Error())
-
-	})
-
-	t.Run("repository error", func(t *testing.T) {
-		t.Parallel()
-		ctrl := gomock.NewController(t)
-		repo := mock_repository.NewMockChannelRepository(ctrl)
-		cm := initCM(t, repo)
-
-		mockErr := errors.New("mock error")
 		repo.EXPECT().
-			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, mockErr).
-			AnyTimes()
+			GetChannel(gomock.Any(), cNotFound).
+			Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeThread}, nil)
 
-		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
+		got, err := cm.IsThreadChannel(context.Background(), cNotFound)
+		require.NoError(t, err)
+		assert.Equal(t, true, got)
+	})
 
-		_, err := cm.CreateThreadChannel(context.TODO(), "test", cEK, uuid.Nil)
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+	t.Run("DM", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cNotFound).
+			Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeDM}, nil)
+
+		got, err := cm.IsThreadChannel(context.Background(), cNotFound)
+		require.NoError(t, err)
+		assert.Equal(t, false, got)
+	})
+
+	t.Run("missing", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cNotFound).
+			Return(nil, repository.ErrNotFound)
+
+		got, err := cm.IsThreadChannel(context.Background(), cNotFound)
+		require.ErrorIs(t, err, ErrChannelNotFound)
+		assert.Equal(t, false, got)
+	})
+
+	t.Run("database failure", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+
+		mockErr := errors.New("database unavailable")
+
+		repo.EXPECT().
+			GetChannel(gomock.Any(), cNotFound).
+			Return(nil, mockErr)
+
+		got, err := cm.IsThreadChannel(context.Background(), cNotFound)
+		require.ErrorIs(t, err, mockErr)
+		assert.Equal(t, false, got)
+	})
+}
+
+func TestManagerImpl_GetThreadChannels(t *testing.T) {
+	t.Parallel()
+
+	query := repository.GetThreadChannelQuery{
+		Archived:  false,
+		Limit:     20,
+		Offset:    0,
+		Sort:      repository.ThreadChannelSortCreatedAtDesc,
+		ChannelID: cEK,
+	}
+
+	t.Run("query parameters", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name  string
+			query repository.GetThreadChannelQuery
+		}{
+			{
+				name: "limit",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     10,
+					Offset:    0,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+			{
+				name: "offset",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     20,
+					Offset:    10,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+			{
+				name: "sort",
+				query: repository.GetThreadChannelQuery{
+					Archived:  false,
+					Limit:     20,
+					Offset:    0,
+					Sort:      repository.ThreadChannelSortCreatedAtDesc,
+					ChannelID: cEK,
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				ctrl := gomock.NewController(t)
+				repo := mock_repository.NewMockChannelRepository(ctrl)
+				cm := initCM(t, repo)
+
+				thread := []*model.Thread{
+					{
+						ChannelID: cEKL,
+						MessageID: uuid.Must(uuid.NewV7()),
+					},
+				}
+
+				repo.EXPECT().
+					GetThreadChannels(gomock.Any(), tt.query).
+					Return(thread, nil).
+					Times(1)
+
+				actual, err := cm.GetThreadChannels(context.TODO(), tt.query)
+
+				if assert.NoError(t, err) {
+					assert.Equal(t, thread, actual)
+				}
+			})
 		}
 	})
 
-	t.Run("thread name confricts repository error", func(t *testing.T) {
+	t.Run("archived=false", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		query := repository.GetThreadChannelQuery{
+			Archived:  false,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
+
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
+		}
+	})
+
+	t.Run("archived=true", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		mockErr := errors.New("mock error")
-		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockErr).AnyTimes()
+		query := repository.GetThreadChannelQuery{
+			Archived:  true,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
 
-		_, err := cm.CreateThreadChannel(context.TODO(), "l", cEK, uuid.Nil)
-		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
+		}
+	})
+
+	t.Run("ChannelID", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		query := repository.GetThreadChannelQuery{
+			Archived:  false,
+			Limit:     20,
+			Offset:    0,
+			Sort:      repository.ThreadChannelSortCreatedAtDesc,
+			ChannelID: cEK,
+		}
+
+		thread := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+			},
+		}
+
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread, nil).
+			Times(1)
+
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread, actual)
 		}
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
 
-		cases := []struct {
-			Name    string
-			Parent  uuid.UUID
-			Creator uuid.UUID
-		}{
-			{Name: "test1", Parent: cA, Creator: cAB},
-			{Name: "test2", Parent: cA, Creator: cABC},
-			{Name: "test2", Parent: cEFGJ, Creator: cABCD},
+		thread1 := []*model.Thread{
+			{
+				ChannelID: cEKL,
+				MessageID: uuid.Must(uuid.NewV7()),
+				Channel: &model.Channel{
+					ID:        cEKL,
+					Name:      "a",
+					ParentID:  cEK,
+					IsForced:  false,
+					Type:      model.ChannelTypeThread,
+					IsVisible: true,
+				},
+			},
 		}
 
-		for _, uuidVersion := range []int{4, 7} {
-			t.Run(fmt.Sprintf("UUIDv%d", uuidVersion), func(t *testing.T) {
-				t.Parallel()
-				for i, c := range cases {
-					t.Run(strconv.Itoa(i), func(t *testing.T) {
-						ctrl := gomock.NewController(t)
-						repo := mock_repository.NewMockChannelRepository(ctrl)
-						cm := initCM(t, repo)
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(thread1, nil).
+			Times(1)
 
-						cid := mustGenerateUUID(uuidVersion)
-						createdAt := time.Now()
-						expected := &model.Channel{
-							ID:         cid,
-							Name:       c.Name,
-							ParentID:   c.Parent,
-							CreatorID:  c.Creator,
-							UpdaterID:  c.Creator,
-							Type:       model.ChannelTypeThread,
-							IsForced:   false,
-							IsVisible:  true,
-							CreatedAt:  createdAt,
-							UpdatedAt:  createdAt,
-							DeletedAt:  gorm.DeletedAt{},
-							ChildrenID: make([]uuid.UUID, 0),
-						}
-
-						repo.EXPECT().
-							CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypeThread).
-							Return(expected, nil).
-							AnyTimes()
-
-						if c.Parent != uuid.Nil {
-							repo.EXPECT().
-								IsChildPresent(context.TODO(), c.Name, c.Parent).
-								Return(false, nil).
-								AnyTimes()
-							repo.EXPECT().
-								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
-									"userId":    c.Creator,
-									"channelId": cid,
-								}), createdAt).
-								Return(nil).
-								Times(1)
-						}
-
-						ch, err := cm.CreateThreadChannel(context.TODO(), c.Name, c.Parent, c.Creator)
-						cm.P.Wait()
-						if assert.NoError(t, err) {
-							assert.Equal(t, expected, ch)
-						}
-					})
-				}
-			})
+		actual, err := cm.GetThreadChannels(context.TODO(), query)
+		if assert.NoError(t, err) {
+			assert.Equal(t, thread1, actual)
 		}
+	})
+
+	t.Run("error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+		repo.EXPECT().
+			GetThreadChannels(gomock.Any(), query).
+			Return(nil, errors.New("test error")).
+			Times(1)
+
+		_, err := cm.GetThreadChannels(context.TODO(), query)
+		assert.EqualError(t, err, "test error")
 	})
 }
 

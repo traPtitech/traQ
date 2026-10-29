@@ -28,6 +28,13 @@ type UpdateChannelArgs struct {
 	Parent             optional.Of[uuid.UUID]
 }
 
+// UpdateChannelArgs スレッド情報更新引数
+type UpdateThreadArgs struct {
+	UpdaterID  uuid.UUID
+	Name       optional.Of[string]
+	Visibility optional.Of[bool]
+}
+
 // ChannelEventsQuery GetChannelEvents用クエリ
 type ChannelEventsQuery struct {
 	Channel   uuid.UUID
@@ -37,6 +44,22 @@ type ChannelEventsQuery struct {
 	Limit     int
 	Offset    int
 	Asc       bool
+}
+
+// GetThreadChannelQuery GetThreadChannel用クエリ
+type ThreadChannelSort string
+
+const (
+	ThreadChannelSortCreatedAtAsc  ThreadChannelSort = "createdAt"
+	ThreadChannelSortCreatedAtDesc ThreadChannelSort = "-createdAt"
+)
+
+type GetThreadChannelQuery struct {
+	Archived  bool
+	Limit     int
+	Offset    int
+	Sort      ThreadChannelSort
+	ChannelID uuid.UUID
 }
 
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
@@ -84,6 +107,10 @@ type ChannelRepository interface {
 	//
 	// channelType が model.ChannelTypeDM の場合、privateMembersに1人または2人のユーザーが入っている必要があります。
 	CreateChannel(ctx context.Context, ch model.Channel, privateMembers set.UUID, channelType model.ChannelType) (*model.Channel, error)
+	// CreateThread スレッドを作成します
+	//
+	// チャンネル名または親メッセージが重複する場合、ErrAlreadyExistsを返します
+	CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
@@ -98,6 +125,8 @@ type ChannelRepository interface {
 	//
 	// 親メッセージとの関連が存在しない場合、ErrNotFoundを返します。
 	GetThread(ctx context.Context, channelID uuid.UUID) (*model.Thread, error)
+	// GetThreadChannels 指定したクエリのスレッド一覧を取得します。
+	GetThreadChannels(ctx context.Context, query GetThreadChannelQuery) ([]*model.Thread, error)
 	// GetDirectMessageChannel 指定したユーザー間のDMチャンネル取得します
 	//
 	// 存在しなかった場合、ErrNotFoundを返します。

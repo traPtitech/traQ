@@ -2,6 +2,7 @@ package v3
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,13 +76,14 @@ func (r PostChannelRequest) Validate() error {
 
 // PostThreadRequest POST /threads リクエストボディ
 type PostThreadRequest struct {
-	Name   string    `json:"name"`
-	Parent uuid.UUID `json:"parent"`
+	Name            string    `json:"name"`
+	ParentMessageID uuid.UUID `json:"parentMessageId"`
 }
 
 func (r PostThreadRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.ThreadNameRuleRequired...),
+		vd.Field(&r.ParentMessageID, validator.NotNilUUID),
 	)
 }
 
@@ -126,7 +128,7 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 		return err
 	}
 
-	ch, err := h.ChannelManager.CreateThreadChannel(ctx, req.Name, req.Parent, userID)
+	th, err := h.ChannelManager.CreateThreadChannel(ctx, req.Name, req.ParentMessageID, userID)
 	if err != nil {
 		switch err {
 		case channel.ErrChannelArchived:
@@ -141,12 +143,63 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 			return herror.BadRequest("channel depth limit exceeded")
 		case channel.ErrChannelNameConflicts:
 			return herror.Conflict("channel name conflicts")
+		case channel.ErrParentMessageNotFound:
+			return herror.NotFound("parent message is not found")
+		case channel.ErrThreadConflicts:
+			return herror.Conflict("thread already exists for this message or channel name conflicts")
+		case channel.ErrChannelNotFound:
+			return herror.NotFound("parent channel not found")
 		default:
 			return herror.InternalServerError(err)
 		}
 	}
 
-	return c.JSON(http.StatusCreated, formatChannel(ch, make([]uuid.UUID, 0)))
+	return c.JSON(http.StatusCreated, formatThreadChannel(th))
+}
+
+// PatchThreadChannel Patch /threads/{channelId}
+type PatchThreadRequest struct {
+	Name     optional.Of[string] `json:"name"`
+	Archived optional.Of[bool]   `json:"archived"`
+}
+
+func (r PatchThreadRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.RequiredIfValid),
+	)
+}
+
+func (h *Handlers) EditThread(c *echo.Context) error {
+	ctx := c.Request().Context()
+	userID := getRequestUserID(c)
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PatchThreadRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+	visibility := optional.Of[bool]{
+		V:     !req.Archived.V,
+		Valid: req.Archived.Valid,
+	}
+	args := repository.UpdateThreadArgs{
+		UpdaterID:  userID,
+		Name:       req.Name,
+		Visibility: visibility,
+	}
+	if err := h.ChannelManager.UpdateThread(ctx, channelID, args); err != nil {
+		switch err {
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
+		case channel.ErrInvalidChannelType:
+			return herror.Conflict("invalid channel type")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetChannel GET /channels/:channelID
@@ -479,4 +532,68 @@ func (h *Handlers) GetChannelPath(c *echo.Context) error {
 	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, channelID)
 
 	return c.JSON(http.StatusOK, map[string]any{"path": channelPath})
+}
+
+type getThreadChannelQuery struct {
+	Archived bool   `query:"archived"`
+	Limit    int    `query:"limit"`
+	Offset   int    `query:"offset"`
+	Sort     string `query:"sort"`
+}
+
+func (q *getThreadChannelQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	if q.Sort == "" {
+		q.Sort = string(repository.ThreadChannelSortCreatedAtDesc)
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+func (q *getThreadChannelQuery) convert(cid uuid.UUID) (repository.GetThreadChannelQuery, error) {
+	var sort repository.ThreadChannelSort
+
+	switch q.Sort {
+	case string(repository.ThreadChannelSortCreatedAtAsc):
+		sort = repository.ThreadChannelSortCreatedAtAsc
+	case string(repository.ThreadChannelSortCreatedAtDesc):
+		sort = repository.ThreadChannelSortCreatedAtDesc
+	default:
+		return repository.GetThreadChannelQuery{}, fmt.Errorf("invalid sort parameter")
+	}
+
+	return repository.GetThreadChannelQuery{
+		Archived:  q.Archived,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Sort:      sort,
+		ChannelID: cid,
+	}, nil
+}
+
+func (h *Handlers) GetThreadChannels(c *echo.Context) error {
+	ctx := c.Request().Context()
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	var req getThreadChannelQuery
+	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
+		return herror.BadRequest("channel must be public")
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+	reqConverted, err := req.convert(channelID)
+	if err != nil {
+		return herror.BadRequest(err.Error())
+	}
+
+	channelThreads, err := h.ChannelManager.GetThreadChannels(ctx, reqConverted)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatThreadChannels(channelThreads))
 }

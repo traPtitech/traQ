@@ -56,6 +56,8 @@ type Handlers struct {
 }
 
 type Config struct {
+	Origin string
+
 	Version  string
 	Revision string
 
@@ -212,11 +214,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.GET("/bots", h.GetChannelBots, requires(permission.GetChannel))
 				apiChannelsCID.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 				apiChannelsCID.GET("/path", h.GetChannelPath, requires(permission.GetChannel))
+				apiChannelsCID.GET("/threads", h.GetThreadChannels, requires(permission.GetChannel))
 			}
 		}
 		apiThreads := api.Group("/threads")
 		{
 			apiThreads.POST("", h.CreateThreads, requires(permission.CreateChannel))
+			apiThreads.PATCH("/:channelID", h.EditThread, requires(permission.EditThread))
 		}
 		apiMessages := api.Group("/messages")
 		{
@@ -419,6 +423,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	apiNoAuth := e.Group("/v3")
 	{
+		apiNoAuth.GET("/meta", h.GetMeta)
 		apiNoAuth.GET("/version", h.GetVersion)
 		apiNoAuth.GET("/jwks", h.GetJWKS)
 		if h.AllowSignUp {
