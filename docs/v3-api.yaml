@@ -3728,7 +3728,6 @@ paths:
         スレッドを作成します。
         指定したメッセージにすでにスレッドが作成されている場合はエラーになります。
         スレッドを作成するチャンネルの、既存の子チャンネルおよびスレッドと重複する名前で作成しようとした場合はエラーになります。
-        channelIdにはPublicチャンネルのIDのみを指定することができます。
   /threads/{channelId}:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -6317,10 +6316,13 @@ components:
         name:
           type: string
           description: スレッド名
-        parent:
+        parentMessageId:
           type: string
           format: uuid
           description: 親メッセージのUUID
+      required:
+        - name
+        - parentMessageId
     PatchThreadRequest:
       title: PatchThreadRequest
       type: object

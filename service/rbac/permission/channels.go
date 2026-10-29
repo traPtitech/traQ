@@ -7,6 +7,8 @@ const (
 	GetChannel = Permission("get_channel")
 	// EditChannel チャンネル情報変更権限
 	EditChannel = Permission("edit_channel")
+	// EditThread スレッド情報編集権限
+	EditThread = Permission("edit_thread")
 	// DeleteChannel チャンネル削除権限
 	DeleteChannel = Permission("delete_channel")
 	// ChangeParentChannel 親チャンネル変更権限

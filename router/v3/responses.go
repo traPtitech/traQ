@@ -32,6 +32,38 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	}
 }
 
+type Thread struct {
+	ID              uuid.UUID `json:"id"`
+	ParentChannelID uuid.UUID `json:"parentChannelId"`
+	ParentMessageID uuid.UUID `json:"parentMessageId"`
+	Archived        bool      `json:"archived"`
+	Name            string    `json:"name"`
+}
+
+func formatThreadChannel(thread *model.Thread) *Thread {
+	return &Thread{
+		ID:              thread.ChannelID,
+		ParentChannelID: thread.Channel.ParentID,
+		ParentMessageID: thread.MessageID,
+		Archived:        thread.Channel.IsArchived(),
+		Name:            thread.Channel.Name,
+	}
+}
+
+func formatThreadChannels(thread []*model.Thread) []*Thread {
+	threads := make([]*Thread, len(thread))
+	for i, t := range thread {
+		threads[i] = &Thread{
+			ID:              t.ChannelID,
+			ParentChannelID: t.Channel.ParentID,
+			ParentMessageID: t.MessageID,
+			Archived:        t.Channel.IsArchived(),
+			Name:            t.Channel.Name,
+		}
+	}
+	return threads
+}
+
 type DMChannel struct {
 	ID     uuid.UUID `json:"id"`
 	UserID uuid.UUID `json:"userId"`
@@ -294,6 +326,11 @@ type Message struct {
 }
 
 func formatMessage(m *model.Message) *Message {
+	thread := m.Thread
+	threadID := optional.Of[uuid.UUID]{}
+	if thread != nil {
+		threadID = optional.From(thread.ChannelID)
+	}
 	return &Message{
 		ID:        m.ID,
 		UserID:    m.UserID,
@@ -303,6 +340,7 @@ func formatMessage(m *model.Message) *Message {
 		UpdatedAt: m.UpdatedAt,
 		Pinned:    m.Pin != nil,
 		Stamps:    m.Stamps,
+		ThreadID:  threadID,
 	}
 }
 

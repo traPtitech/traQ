@@ -50,6 +50,10 @@ func TestManager_Get(t *testing.T) {
 			UpdatedAt: time.Now(),
 			Stamps:    []model.MessageStamp{},
 			Pin:       nil,
+			Thread: &model.Thread{
+				ChannelID: uuid.NewV3(uuid.Nil, "c2"),
+				MessageID: uuid.NewV3(uuid.Nil, "m2"),
+			},
 		}
 		repo.MockMessageRepository.
 			EXPECT().
