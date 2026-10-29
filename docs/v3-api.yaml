@@ -409,6 +409,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
+        "400":
+          description: |-
+            Bad Request
+            指定したチャンネルがこの操作に対応していない場合に返されます。
         "404":
           description: |-
             Not Found
@@ -426,7 +430,9 @@ paths:
             No Content
             チャンネルトピックが編集されました
         "400":
-          description: Bad Request
+          description: |-
+            Bad Request
+            指定したチャンネルがこの操作に対応していない場合などに返されます。
         "404":
           description: |-
             Not Found
@@ -3610,7 +3616,9 @@ paths:
         "204":
           description: No Content
         "400":
-          description: Bad Request
+          description: |-
+            Bad Request
+            指定したチャンネルがこの操作に対応していない場合などに返されます。
         "403":
           description: Forbidden
         "404":
