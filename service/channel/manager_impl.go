@@ -574,17 +574,30 @@ func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, cha
 		return true, nil // 公開チャンネルは全員アクセス可能
 	}
 
-	// DMチャンネル
-	members, err := m.R.GetPrivateChannelMemberIDs(ctx, channelID)
+	// DMチャンネルかどうかを判定し、DMチャンネルならそのDMチャンネルにアクセス可能なユーザーか判定する
+	channel, err := m.GetChannel(ctx, channelID)
 	if err != nil {
+		if errors.Is(err, ErrChannelNotFound) {
+			return false, nil
+		}
+
 		return false, fmt.Errorf("failed to IsChannelAccessibleToUser: %w", err)
 	}
-	for _, id := range members {
-		if id == userID {
-			return true, nil
+
+	if channel.IsDMChannel() {
+		members, err := m.R.GetPrivateChannelMemberIDs(ctx, channelID)
+		if err != nil {
+			return false, fmt.Errorf("failed to IsChannelAccessibleToUser: %w", err)
+		}
+		for _, id := range members {
+			if id == userID {
+				return true, nil
+			}
 		}
 	}
-	return false, nil
+
+	//スレッドチャンネルは全員アクセス可能
+	return channel.IsThread(), nil
 }
 
 func (m *managerImpl) IsPublicChannel(_ context.Context, id uuid.UUID) bool {

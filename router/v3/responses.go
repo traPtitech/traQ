@@ -327,6 +327,11 @@ type Message struct {
 }
 
 func formatMessage(m *model.Message) *Message {
+	thread := m.Thread
+	threadID := optional.Of[uuid.UUID]{}
+	if thread != nil {
+		threadID = optional.From(thread.ChannelID)
+	}
 	return &Message{
 		ID:        m.ID,
 		UserID:    m.UserID,
@@ -336,6 +341,7 @@ func formatMessage(m *model.Message) *Message {
 		UpdatedAt: m.UpdatedAt,
 		Pinned:    m.Pin != nil,
 		Stamps:    m.Stamps,
+		ThreadID:  threadID,
 	}
 }
 
