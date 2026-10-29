@@ -1376,13 +1376,13 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 			AnyTimes()
 
 		repo.EXPECT().
-			GetChannel(gomock.Any(),cA).
-			Return(&model.Channel{ID: cA, Type:model.ChannelTypePublic},nil).
+			GetChannel(gomock.Any(), cA).
+			Return(&model.Channel{ID: cA, Type: model.ChannelTypePublic}, nil).
 			AnyTimes()
-		
+
 		repo.EXPECT().
-			GetChannel(gomock.Any(),cABB).
-			Return(&model.Channel{ID: cABB, Type:model.ChannelTypePublic},nil).
+			GetChannel(gomock.Any(), cABB).
+			Return(&model.Channel{ID: cABB, Type: model.ChannelTypePublic}, nil).
 			AnyTimes()
 
 		repo.EXPECT().
@@ -1465,7 +1465,7 @@ func TestManagerImpl_IsChannelAccessibleToUser(t *testing.T) {
 		mockErr := errors.New("mock error")
 		repo.EXPECT().
 			GetChannel(gomock.Any(), gomock.Any()).
-			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM},nil).
+			Return(&model.Channel{ID: cid1, Type: model.ChannelTypeDM}, nil).
 			Times(1)
 
 		repo.EXPECT().
