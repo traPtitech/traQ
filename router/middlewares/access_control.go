@@ -202,16 +202,16 @@ func CheckChannelAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 	}
 }
 
-//BlockThread Threadアクセス権限を管理するミドルウェア
-func BlockThread(cm channel.Manager) echo.MiddlewareFunc {
+// BlockThread Threadアクセス権限を管理するミドルウェア
+func BlockThread() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
 
 			// スレッドにおけるアクセス権確認
-			if ch.IsThread(){
+			if ch.IsThread() {
 				return herror.BadRequest("この操作はスレッドからは行えません。")
-			} 
+			}
 
 			return next(c)
 		}
