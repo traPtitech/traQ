@@ -248,6 +248,18 @@ func (repo *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*m
 	return &ch, nil
 }
 
+// GetThread implements ChannelRepository interface.
+func (repo *Repository) GetThread(ctx context.Context, channelID uuid.UUID) (*model.Thread, error) {
+	if channelID == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	var thread model.Thread
+	if err := repo.db.WithContext(ctx).First(&thread, &model.Thread{ChannelID: channelID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return &thread, nil
+}
+
 // GetThreadChannels implements ChannelRepository interface.
 func (repo *Repository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	threads := make([]*model.Thread, 0)
