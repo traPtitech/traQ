@@ -226,10 +226,10 @@ func (m *MockChannelRepository) GetThread(ctx context.Context, channelID uuid.UU
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetThread", ctx, channelID)
 	ret0, _ := ret[0].(*model.Thread)
-  ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
-  
+
 // GetThreadChannels mocks base method.
 func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	m.ctrl.T.Helper()

@@ -620,26 +620,22 @@ func TestHandlers_GetChannel(t *testing.T) {
 			t.Parallel()
 			parent := env.CreateChannel(t, rand)
 			parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, rand)
-			thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parent.ID, user.GetID())
+			thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parentMessage.GetID(), user.GetID())
 			require.NoError(t, err)
-			require.NoError(t, env.DB.Create(&model.Thread{
-				ChannelID: thread.ID,
-				MessageID: parentMessage.GetID(),
-			}).Error)
 			if tt.deleteParent {
 				env.DeleteMessage(t, parentMessage.GetID())
 			}
 
-			obj := env.R(t).GET(path, thread.ID.String()).
+			obj := env.R(t).GET(path, thread.ChannelID.String()).
 				WithCookie(session.CookieName, commonSession).
 				Expect().
 				Status(http.StatusOK).
 				JSON().
 				Object()
 
-			channelEquals(t, thread, obj)
+			channelEquals(t, thread.Channel, obj)
 			obj.Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
-			env.R(t).GET(path, thread.ID.String()).
+			env.R(t).GET(path, thread.ChannelID.String()).
 				Expect().
 				Status(http.StatusUnauthorized)
 		})
