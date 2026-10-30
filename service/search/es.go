@@ -152,25 +152,30 @@ func esMessageMapping() m {
 		"hasAudio": m{
 			"type": "boolean",
 		},
-		"imageVector": m{
-			"type": "nested",
-			"properties": m{
-				"jobId": m{
-					"type": "keyword",
-				},
-				"fileId": m{
-					"type": "keyword",
-				},
-				"vector": m{
-					"type":       "dense_vector",
-					"dims":       EmbeddingDimension,
-					"index":      true,
-					"similarity": "cosine",
-				},
+		"imageVector": esImageVectorMapping(),
+	}
+	return m{"properties": properties}
+}
+
+// esImageVectorMapping 画像ベクトル用のマッピング
+func esImageVectorMapping() m {
+	return m{
+		"type": "nested",
+		"properties": m{
+			"jobId": m{
+				"type": "keyword",
+			},
+			"fileId": m{
+				"type": "keyword",
+			},
+			"vector": m{
+				"type":       "dense_vector",
+				"dims":       EmbeddingDimension,
+				"index":      true,
+				"similarity": "cosine",
 			},
 		},
 	}
-	return m{"properties": properties}
 }
 
 // esSetting Indexに追加するsetting情報
@@ -273,6 +278,24 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 			return nil, fmt.Errorf("failed to create Elasticsearch index: StatusCode: %v, ResponseBody: %v", createIndexRes.StatusCode, createIndexRes.Body)
 		}
 		defer createIndexRes.Body.Close()
+	} else {
+		// 既存のindexには画像検索用のマッピングが無い可能性があるため追加する
+		reqBody, err := json.Marshal(m{"properties": m{"imageVector": esImageVectorMapping()}})
+		if err != nil {
+			return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
+		}
+
+		putMappingRes, err := client.Indices.PutMapping(
+			[]string{getIndexName(esMessageIndex)},
+			bytes.NewReader(reqBody),
+			client.Indices.PutMapping.WithContext(context.Background()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to update Elasticsearch index mapping: %w", err)
+		}
+		if putMappingRes.IsError() {
+			logger.Warn("failed to update Elasticsearch index mapping", zap.String("response", putMappingRes.String()))
+		}
+		putMappingRes.Body.Close()
 	}
 
 	imageClient := NewImageSearchClient(config.ImageSearch, logger)
@@ -493,10 +516,10 @@ func (e *esEngine) doTextSearch(ctx context.Context, musts []searchQuery, sort s
 	return e.parseResultFromResponse(ctx, res)
 }
 
-// doHybridSearch RRFによるハイブリッド検索（テキスト + ベクトル）を実行する
+// doHybridSearch テキスト検索とknn検索をスコア加算で統合するハイブリッド検索を実行する
 func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
-	// RRF (Reciprocal Rank Fusion) を使ったハイブリッド検索
-	// ページング時は from+size 分のランキング結果が必要になる
+	// queryとknnの結果はORで統合され、両方にマッチした場合はスコアが加算される
+	// ページング時は from+size 分の結果が必要になる
 	windowSize := limit + offset
 	if windowSize < 1 || windowSize > 10000 {
 		return e.doTextSearch(ctx, musts, sort, limit, offset)
@@ -527,9 +550,12 @@ func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, quer
 		"query_vector":   queryVector,
 		"k":              windowSize,
 		"num_candidates": numCandidates,
-		"nested": m{
-			"path": "imageVector",
-		},
+	}
+	if e.imageConfig.KnnBoost > 0 {
+		knnQuery["boost"] = e.imageConfig.KnnBoost
+	}
+	if e.imageConfig.KnnSimilarity > 0 {
+		knnQuery["similarity"] = e.imageConfig.KnnSimilarity
 	}
 	if len(filters) > 0 {
 		knnQuery["filter"] = searchQuery{"bool": boolQuery{Must: filters}}
@@ -538,13 +564,8 @@ func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, quer
 	hybridBody := m{
 		"query": textQuery.Query,
 		"knn":   knnQuery,
-		"rank": m{
-			"rrf": m{
-				"rank_window_size": windowSize,
-			},
-		},
-		"size": limit,
-		"from": offset,
+		"size":  limit,
+		"from":  offset,
 	}
 
 	b, err := json.Marshal(hybridBody)

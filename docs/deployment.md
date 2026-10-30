@@ -102,6 +102,10 @@ imageSearch:
   jobPollInterval: 10
   # (optional) Maximum wait time for an image embedding job in seconds. Default: 21600 (6 hours)
   jobTimeout: 21600
+  # (optional) Weight applied to the kNN score in hybrid search. Default: 5
+  knnBoost: 5
+  # (optional) Minimum similarity required for kNN search. 0 or less disables the threshold. Default: 0.2
+  knnSimilarity: 0.2
 
 # Storage settings for uploaded files.
 storage:

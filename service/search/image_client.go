@@ -43,6 +43,10 @@ type ImageSearchConfig struct {
 	JobPollInterval time.Duration
 	// JobTimeout 画像ジョブの完了待ち上限
 	JobTimeout time.Duration
+	// KnnBoost ハイブリッド検索でknnスコアに掛ける重み
+	KnnBoost float64
+	// KnnSimilarity knn検索で要求する最小類似度 (0以下で無効)
+	KnnSimilarity float64
 }
 
 // ImageJobStatus embedding-serverの画像埋め込みジョブ状態

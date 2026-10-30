@@ -113,6 +113,10 @@ type Config struct {
 		JobPollInterval int `mapstructure:"jobPollInterval" yaml:"jobPollInterval"`
 		// JobTimeout 画像ジョブの完了待ち上限秒数 (default: 21600 = 6時間)
 		JobTimeout int `mapstructure:"jobTimeout" yaml:"jobTimeout"`
+		// KnnBoost ハイブリッド検索でknnスコアに掛ける重み (default: 5)
+		KnnBoost float64 `mapstructure:"knnBoost" yaml:"knnBoost"`
+		// KnnSimilarity knn検索で要求する最小類似度. 0以下で無効 (default: 0.2)
+		KnnSimilarity float64 `mapstructure:"knnSimilarity" yaml:"knnSimilarity"`
 	} `mapstructure:"imageSearch" yaml:"imageSearch"`
 
 	// Storage ファイルストレージ設定
@@ -312,6 +316,8 @@ func init() {
 	viper.SetDefault("imageSearch.textTimeout", 5)
 	viper.SetDefault("imageSearch.jobPollInterval", 10)
 	viper.SetDefault("imageSearch.jobTimeout", 21600)
+	viper.SetDefault("imageSearch.knnBoost", 5.0)
+	viper.SetDefault("imageSearch.knnSimilarity", 0.2)
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -517,6 +523,8 @@ func provideESEngineConfig(c *Config) search.ESEngineConfig {
 			TextTimeout:     time.Duration(c.ImageSearch.TextTimeout) * time.Second,
 			JobPollInterval: time.Duration(c.ImageSearch.JobPollInterval) * time.Second,
 			JobTimeout:      time.Duration(c.ImageSearch.JobTimeout) * time.Second,
+			KnnBoost:        c.ImageSearch.KnnBoost,
+			KnnSimilarity:   c.ImageSearch.KnnSimilarity,
 		},
 	}
 }
