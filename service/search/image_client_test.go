@@ -71,7 +71,7 @@ func TestImageSearchClient_EmbedTextRetriesOn503(t *testing.T) {
 	t.Parallel()
 
 	var calls int32
-	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	client, _ := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		if atomic.AddInt32(&calls, 1) == 1 {
 			w.Header().Set("Retry-After", "0")
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -91,7 +91,7 @@ func TestImageSearchClient_EmbedTextRetriesOn503(t *testing.T) {
 func TestImageSearchClient_EmbedTextReturnsErrorOn504(t *testing.T) {
 	t.Parallel()
 
-	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	client, _ := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusGatewayTimeout)
 	})
 
