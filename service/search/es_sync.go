@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -35,6 +37,9 @@ var embeddableImageMIMETypes = map[string]struct{}{
 	"image/jpeg": {},
 	"image/webp": {},
 }
+
+// errESDocumentMissing ES上でメッセージのドキュメントが既に削除されていることを表す
+var errESDocumentMissing = errors.New("message document is missing in ES")
 
 type attributes struct {
 	To             []uuid.UUID
@@ -497,13 +502,15 @@ func (e *esEngine) reconcileImageJobs(ctx context.Context) error {
 		case ImageJobCompleted:
 			if err := e.completeImageJob(ctx, job.JobID, vector); err != nil {
 				e.l.Warn("failed to complete image job", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			} else {
+				continue
 			}
-			continue
 		case ImageJobFailed:
 			if err := e.failImageJob(ctx, job.JobID); err != nil {
 				e.l.Warn("failed to mark image job as failed", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			} else {
+				continue
 			}
-			continue
 		case ImageJobProcessing:
 			if job.Status != model.ImageEmbeddingJobProcessing {
 				if err := e.repo.UpdateImageEmbeddingJobStatus(ctx, job.JobID, model.ImageEmbeddingJobProcessing); err != nil {
@@ -574,6 +581,14 @@ func (e *esEngine) completeImageJob(ctx context.Context, jobID uuid.UUID, vector
 		return nil
 	}
 	if err := e.applyImageVector(ctx, job, vector); err != nil {
+		if errors.Is(err, errESDocumentMissing) {
+			// メッセージが既に削除されている場合はESへの反映をスキップしてジョブを完了とする
+			e.l.Info("message document already deleted, skipping image vector update",
+				zap.Stringer("messageID", job.MessageID),
+				zap.Stringer("fileID", job.FileID),
+				zap.Stringer("jobID", job.JobID))
+			return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobCompleted)
+		}
 		return err
 	}
 	return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobCompleted)
@@ -625,7 +640,11 @@ if (!found) {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return fmt.Errorf("ES update error for message %s: %s", job.MessageID, res.String())
+		body, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
+		if res.StatusCode == http.StatusNotFound && isESDocumentMissingError(body) {
+			return errESDocumentMissing
+		}
+		return fmt.Errorf("ES update error for message %s: [%d] %s", job.MessageID, res.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	e.l.Info("updated image data for message",
@@ -633,6 +652,16 @@ if (!found) {
 		zap.Stringer("fileID", job.FileID),
 		zap.Stringer("jobID", job.JobID))
 	return nil
+}
+
+// isESDocumentMissingError ESのエラーレスポンスがdocument_missing_exceptionかどうかを返す
+func isESDocumentMissingError(body []byte) bool {
+	var res struct {
+		Error struct {
+			Type string `json:"type"`
+		} `json:"error"`
+	}
+	return json.Unmarshal(body, &res) == nil && res.Error.Type == "document_missing_exception"
 }
 
 // getIndexedImageFileIDs ESに登録済みの画像ファイルIDをメッセージごとに取得する
