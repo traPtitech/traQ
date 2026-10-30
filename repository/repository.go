@@ -22,4 +22,5 @@ type Repository interface {
 	ClipRepository
 	OgpCacheRepository
 	SoundboardRepository
+	ImageEmbeddingJobRepository
 }

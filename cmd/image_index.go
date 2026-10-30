@@ -20,16 +20,18 @@ const imageIndexBatchSize = 100
 // imageIndexCommand 画像インデックス再作成コマンド
 func imageIndexCommand() *cobra.Command {
 	var clearIndex bool
+	var retryFailed bool
 
 	cmd := cobra.Command{
 		Use:   "image-index",
-		Short: "Reindex image OCR/embedding data for Elasticsearch",
+		Short: "Reindex image embedding data for Elasticsearch",
 		Long: `Process messages with image attachments and update Elasticsearch index
-with OCR text and embedding vectors.
+with embedding vectors.
 
 Only messages that have not yet been processed are targeted.
 Use --clear to remove existing image index data before processing,
-which is useful when the embedding model has been changed.`,
+which is useful when the embedding model has been changed.
+Use --retry-failed to retry images whose previous jobs failed.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()
@@ -74,6 +76,9 @@ which is useful when the embedding model has been changed.`,
 
 			// Search Engine
 			esConfig := provideESEngineConfig(&c)
+			if esConfig.ImageSearch.URL == "" {
+				logger.Fatal("image search is not configured: imageSearch.url is empty")
+			}
 			searchEngine, err := search.NewESEngine(mm, cm, repo, fs, logger, esConfig)
 			if err != nil {
 				logger.Fatal("failed to initialize search engine", zap.Error(err))
@@ -91,7 +96,7 @@ which is useful when the embedding model has been changed.`,
 			}
 
 			// ESから未処理のメッセージIDを取得
-			unprocessedIDs, err := searchEngine.GetUnprocessedImageMessageIDs(ctx)
+			unprocessedIDs, err := searchEngine.GetUnprocessedImageMessageIDs(ctx, retryFailed)
 			if err != nil {
 				logger.Fatal("failed to get unprocessed message IDs", zap.Error(err))
 			}
@@ -131,6 +136,7 @@ which is useful when the embedding model has been changed.`,
 	}
 
 	cmd.Flags().BoolVar(&clearIndex, "clear", false, "Clear existing image index data before processing (use when embedding model has changed)")
+	cmd.Flags().BoolVar(&retryFailed, "retry-failed", false, "Retry images whose previous embedding jobs failed")
 
 	return &cmd
 }
@@ -139,8 +145,8 @@ which is useful when the embedding model has been changed.`,
 func imageIndexClearCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "image-index-clear",
-		Short: "Clear image OCR/embedding data from Elasticsearch index",
-		Long:  "Remove imageText and imageVector fields from all documents. Run image-index afterwards to re-process.",
+		Short: "Clear image embedding data from Elasticsearch index",
+		Long:  "Remove imageVector fields from all documents and delete image embedding jobs. Run image-index afterwards to re-process.",
 		Run: func(_ *cobra.Command, _ []string) {
 			logger, gormLogger := getCLILoggers()
 			defer logger.Sync()

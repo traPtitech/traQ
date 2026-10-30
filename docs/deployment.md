@@ -87,6 +87,22 @@ es:
   username: elastic
   password: password
 
+# (optional) Image search settings.
+# Requires an embedding-server instance: https://github.com/traP-jp/embedding-server
+imageSearch:
+  # Base URL of the embedding server. Leave empty to disable image search.
+  url: https://embedding.example.com
+  # API key for the embedding server.
+  apiKey: apiKey
+  # Public HTTPS URL that receives image embedding job notifications.
+  webhookUrl: https://example.com/api/v3/search/image-webhook
+  # (optional) Timeout for synchronous text embedding in seconds. Default: 5
+  textTimeout: 5
+  # (optional) Polling interval for image embedding jobs in seconds. Default: 10
+  jobPollInterval: 10
+  # (optional) Maximum wait time for an image embedding job in seconds. Default: 21600 (6 hours)
+  jobTimeout: 21600
+
 # Storage settings for uploaded files.
 storage:
   # Storage type.
@@ -424,7 +440,7 @@ services:
       retries: 60
 
   es:
-    image: ghcr.io/traptitech/es-with-sudachi:8.8.1-3.1.0
+    image: ghcr.io/traptitech/es-with-sudachi:8.17.10-3.5.0
     container_name: traq-es
     restart: always
     environment:

@@ -424,6 +424,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
 		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
+		apiNoAuth.POST("/search/image-webhook", h.ImageSearchWebhook, bodyLimit(1))
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)

@@ -14,7 +14,6 @@ import (
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
@@ -46,19 +45,22 @@ type ESEngineConfig struct {
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client      *elasticsearch.Client
-	mm          message.Manager
-	cm          channel.Manager
-	repo        repository.Repository
-	fs          storage.FileStorage
-	imageClient ImageSearchClient
-	imageConfig ImageSearchConfig
-	l           *zap.Logger
-	done        chan<- struct{}
+	client           *elasticsearch.Client
+	mm               message.Manager
+	cm               channel.Manager
+	repo             repository.Repository
+	fs               storage.FileStorage
+	imageClient      ImageSearchClient
+	imageConfig      ImageSearchConfig
+	lastImageCleanup time.Time
+	l                *zap.Logger
+	done             chan<- struct{}
 }
 
 // esImageVector 画像ごとのEmbeddingベクトル
 type esImageVector struct {
+	JobID  string    `json:"jobId"`
+	FileID string    `json:"fileId"`
 	Vector []float64 `json:"vector"`
 }
 
@@ -79,7 +81,6 @@ type esMessageDoc struct {
 	HasImage       bool            `json:"hasImage"`
 	HasVideo       bool            `json:"hasVideo"`
 	HasAudio       bool            `json:"hasAudio"`
-	ImageText      string          `json:"imageText,omitempty"`
 	ImageVectors   []esImageVector `json:"imageVector,omitempty"`
 }
 
@@ -95,12 +96,6 @@ type esMessageDocUpdate struct {
 	HasAudio       bool        `json:"hasAudio"`
 }
 
-// esImageDocUpdate 画像処理結果によるインデックスの部分更新
-type esImageDocUpdate struct {
-	ImageText    string          `json:"imageText,omitempty"`
-	ImageVectors []esImageVector `json:"imageVector,omitempty"`
-}
-
 type esCreateIndexBody struct {
 	Mappings m `json:"mappings"`
 	Settings m `json:"settings"`
@@ -109,8 +104,7 @@ type esCreateIndexBody struct {
 type m map[string]any
 
 // esMessageMapping Elasticsearchに入るメッセージのマッピングを生成する
-// vectorDimension が 0 の場合は画像ベクトル関連フィールドを含めない
-func esMessageMapping(vectorDimension int) m {
+func esMessageMapping() m {
 	properties := m{
 		"userId": m{
 			"type": "keyword",
@@ -157,21 +151,23 @@ func esMessageMapping(vectorDimension int) m {
 		"hasAudio": m{
 			"type": "boolean",
 		},
-		"imageText": m{
-			"type":     "text",
-			"analyzer": "sudachi_analyzer",
-		},
-	}
-	if vectorDimension > 0 {
-		properties["imageVector"] = m{
+		"imageVector": m{
 			"type": "nested",
 			"properties": m{
+				"jobId": m{
+					"type": "keyword",
+				},
+				"fileId": m{
+					"type": "keyword",
+				},
 				"vector": m{
-					"type": "dense_vector",
-					"dims": vectorDimension,
+					"type":       "dense_vector",
+					"dims":       EmbeddingDimension,
+					"index":      true,
+					"similarity": "cosine",
 				},
 			},
-		}
+		},
 	}
 	return m{"properties": properties}
 }
@@ -258,7 +254,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
 		reqBody, err := json.Marshal(esCreateIndexBody{
-			Mappings: esMessageMapping(config.ImageSearch.VectorDimension),
+			Mappings: esMessageMapping(),
 			Settings: esSetting,
 		})
 		if err != nil {
@@ -346,7 +342,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	if q.Word.Valid {
 		body := simpleQueryString{
 			Query:           q.Word.V,
-			Fields:          []string{"text", "imageText"},
+			Fields:          []string{"text"},
 			DefaultOperator: "AND",
 		}
 
@@ -445,11 +441,8 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	sort := q.GetSortKey()
 
 	// ベクトル検索が可能かチェックし、ハイブリッド検索を試みる
-	if q.Word.Valid && e.imageClient.Available() && e.imageConfig.VectorDimension > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), e.imageConfig.Timeout)
-		defer cancel()
-
-		queryVector, err := e.imageClient.EmbedText(ctx, q.Word.V)
+	if q.Word.Valid && e.imageClient.Available() {
+		queryVector, err := e.imageClient.EmbedText(context.Background(), q.Word.V)
 		if err == nil && queryVector != nil {
 			return e.doHybridSearch(musts, queryVector, sort, limit, offset)
 		}
@@ -494,25 +487,52 @@ func (e *esEngine) doTextSearch(musts []searchQuery, sort string, limit, offset 
 // doHybridSearch RRFによるハイブリッド検索（テキスト + ベクトル）を実行する
 func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
 	// RRF (Reciprocal Rank Fusion) を使ったハイブリッド検索
+	// ページング時は from+size 分のランキング結果が必要になる
+	windowSize := limit + offset
+	if windowSize < 1 || windowSize > 10000 {
+		return e.doTextSearch(musts, sort, limit, offset)
+	}
+
 	// テキスト検索クエリ
 	textQuery := newSearchBody(musts)
 
+	// knnにもテキスト検索以外のフィルタを適用する（公開範囲外のメッセージを除外するため）
+	filters := make([]searchQuery, 0, len(musts))
+	for _, q := range musts {
+		if _, ok := q["simple_query_string"]; ok {
+			continue
+		}
+		filters = append(filters, q)
+	}
+
 	// knnクエリ（nested field用）
+	numCandidates := windowSize * 2
+	if numCandidates < 100 {
+		numCandidates = 100
+	}
+	if numCandidates > 10000 {
+		numCandidates = 10000
+	}
 	knnQuery := m{
 		"field":          "imageVector.vector",
 		"query_vector":   queryVector,
-		"k":              limit + offset,
-		"num_candidates": 100,
+		"k":              windowSize,
+		"num_candidates": numCandidates,
 		"nested": m{
 			"path": "imageVector",
 		},
+	}
+	if len(filters) > 0 {
+		knnQuery["filter"] = searchQuery{"bool": boolQuery{Must: filters}}
 	}
 
 	hybridBody := m{
 		"query": textQuery.Query,
 		"knn":   knnQuery,
 		"rank": m{
-			"rrf": m{},
+			"rrf": m{
+				"rank_window_size": windowSize,
+			},
 		},
 		"size": limit,
 		"from": offset,
@@ -547,11 +567,6 @@ func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, so
 
 	e.l.Debug("hybrid search result", zap.Reflect("hits", res.Hits))
 	return e.parseResultFromResponse(res)
-}
-
-// generateImageURL ファイルの署名付きURLを生成する
-func (e *esEngine) generateImageURL(fileID uuid.UUID) (string, error) {
-	return e.fs.GenerateAccessURL(fileID.String(), model.FileTypeUserFile)
 }
 
 func (e *esEngine) Available() bool {

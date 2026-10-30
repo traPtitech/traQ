@@ -33,10 +33,14 @@ func (n *nullEngine) ProcessImagesForMessages(context.Context, []*model.Message)
 	return ErrServiceUnavailable
 }
 
-func (n *nullEngine) GetUnprocessedImageMessageIDs(context.Context) ([]uuid.UUID, error) {
+func (n *nullEngine) GetUnprocessedImageMessageIDs(context.Context, bool) ([]uuid.UUID, error) {
 	return nil, ErrServiceUnavailable
 }
 
 func (n *nullEngine) ClearImageIndex(context.Context) error {
+	return ErrServiceUnavailable
+}
+
+func (n *nullEngine) HandleImageWebhook(context.Context, uuid.UUID) error {
 	return ErrServiceUnavailable
 }

@@ -32,9 +32,11 @@ type Engine interface {
 	// ProcessImagesForMessages バッチ用: 指定メッセージの画像を処理してインデックスを更新します
 	ProcessImagesForMessages(ctx context.Context, messages []*model.Message) error
 	// GetUnprocessedImageMessageIDs 画像付きだがインデックス未処理のメッセージIDを取得します
-	GetUnprocessedImageMessageIDs(ctx context.Context) ([]uuid.UUID, error)
-	// ClearImageIndex 全メッセージの画像インデックスデータ(imageText, imageVector)をクリアします
+	GetUnprocessedImageMessageIDs(ctx context.Context, retryFailed bool) ([]uuid.UUID, error)
+	// ClearImageIndex 全メッセージの画像インデックスデータと画像埋め込みジョブをクリアします
 	ClearImageIndex(ctx context.Context) error
+	// HandleImageWebhook embedding-serverからの画像埋め込みジョブ通知を処理します
+	HandleImageWebhook(ctx context.Context, jobID uuid.UUID) error
 }
 
 // Query 検索クエリ
