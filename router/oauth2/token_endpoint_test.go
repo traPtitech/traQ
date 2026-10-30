@@ -865,6 +865,16 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, env.Repository.SaveClient(context.TODO(), clientConf))
+	loopbackClient := &model.OAuth2Client{
+		ID:           random2.AlphaNumeric(36),
+		Name:         "loopback client",
+		Confidential: false,
+		CreatorID:    creatorID,
+		Secret:       random2.AlphaNumeric(36),
+		RedirectURI:  "http://127.0.0.1/callback",
+		Scopes:       scopesReadWrite,
+	}
+	require.NoError(t, env.Repository.SaveClient(context.TODO(), loopbackClient))
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
@@ -890,6 +900,32 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 
 		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("Success with arbitrary loopback redirect port", func(t *testing.T) {
+		t.Parallel()
+		authorize := &model.OAuth2Authorize{
+			Code:           random2.AlphaNumeric(36),
+			ClientID:       loopbackClient.ID,
+			UserID:         user.GetID(),
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			RedirectURI:    "http://127.0.0.1:49152/callback",
+			Scopes:         scopesRead,
+			OriginalScopes: scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
+
+		e := env.R(t)
+		res := e.POST("/oauth2/token").
+			WithFormField("grant_type", grantTypeAuthorizationCode).
+			WithFormField("code", authorize.Code).
+			WithFormField("redirect_uri", authorize.RedirectURI).
+			WithFormField("client_id", loopbackClient.ID).
+			Expect()
+
+		res.Status(http.StatusOK)
+		res.JSON().Object().Value("access_token").String().NotEmpty()
 	})
 
 	t.Run("Success with confidential client Basic Auth", func(t *testing.T) {
@@ -1265,6 +1301,32 @@ func runTokenEndpointAuthorizationCodeTests(t *testing.T, useUUIDv4 bool) {
 
 		_, err := env.Repository.GetAuthorize(context.TODO(), authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("Invalid Grant (different loopback redirect port)", func(t *testing.T) {
+		t.Parallel()
+		authorize := &model.OAuth2Authorize{
+			Code:           random2.AlphaNumeric(36),
+			ClientID:       loopbackClient.ID,
+			UserID:         user.GetID(),
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			RedirectURI:    "http://127.0.0.1:49152/callback",
+			Scopes:         scopesRead,
+			OriginalScopes: scopesRead,
+		}
+		require.NoError(t, env.Repository.SaveAuthorize(context.TODO(), authorize))
+
+		e := env.R(t)
+		res := e.POST("/oauth2/token").
+			WithFormField("grant_type", grantTypeAuthorizationCode).
+			WithFormField("code", authorize.Code).
+			WithFormField("redirect_uri", "http://127.0.0.1:49153/callback").
+			WithFormField("client_id", loopbackClient.ID).
+			Expect()
+
+		res.Status(http.StatusUnauthorized)
+		res.JSON().Object().Value("error").IsEqual(errInvalidGrant)
 	})
 
 	t.Run("Invalid Grant (unexpected redirect)", func(t *testing.T) {

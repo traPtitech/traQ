@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -16,9 +17,13 @@ var requestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 // RequestCounter prometheus metrics用リクエストカウンター
 func RequestCounter() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) (err error) {
+		return func(c *echo.Context) (err error) {
 			err = next(c)
-			requestCounter.WithLabelValues(strconv.Itoa(c.Response().Status), c.Request().Method).Inc()
+			status := http.StatusOK
+			if res, uerr := echo.UnwrapResponse(c.Response()); uerr == nil {
+				status = res.Status
+			}
+			requestCounter.WithLabelValues(strconv.Itoa(status), c.Request().Method).Inc()
 			return err
 		}
 	}

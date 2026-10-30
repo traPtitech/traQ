@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -421,7 +421,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": 111, "newPassword": false}).
+			WithJSON(map[string]any{"password": 111, "newPassword": false}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -431,7 +431,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "a"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "a"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -441,7 +441,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": "アイウエオ"}).
+			WithJSON(map[string]any{"password": "test", "newPassword": "アイウエオ"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -451,7 +451,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "test", "newPassword": strings.Repeat("a", 33)}).
+			WithJSON(map[string]any{"password": "test", "newPassword": strings.Repeat("a", 33)}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -461,7 +461,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := env.R(t)
 		e.PUT(path).
 			WithCookie(session.CookieName, s).
-			WithJSON(echo.Map{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
+			WithJSON(map[string]any{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -474,7 +474,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		newPass := strings.Repeat("a", 20)
 		e.PUT(path).
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			WithJSON(echo.Map{"password": "!test_test@test-", "newPassword": newPass}).
+			WithJSON(map[string]any{"password": "!test_test@test-", "newPassword": newPass}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -879,6 +879,26 @@ func TestHandlers_GetUser(t *testing.T) {
 		obj.Value("groups").Array().Length().IsEqual(0)
 		obj.Value("bio").String().IsEmpty()
 		obj.Value("homeChannel").IsNull()
+	})
+
+	t.Run("last online update", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		e := env.R(t)
+
+		// Warm the same profile cache used by the user detail endpoint.
+		e.GET(path, user.GetID()).WithCookie(session.CookieName, s).
+			Expect().Status(http.StatusOK).JSON().Object().Value("lastOnline").IsNull()
+
+		lastOnline := time.Date(2026, 9, 24, 10, 15, 0, 123456000, time.UTC)
+		require.NoError(t, env.Repository.UpdateUser(t.Context(), user.GetID(), repository.UpdateUserArgs{
+			LastOnline: optional.From(lastOnline),
+		}))
+
+		e.GET(path, user.GetID()).WithCookie(session.CookieName, s).
+			Expect().Status(http.StatusOK).JSON().Object().Value("lastOnline").String().
+			IsEqual(lastOnline.Format(time.RFC3339Nano))
 	})
 }
 

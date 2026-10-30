@@ -3,7 +3,7 @@ package v3
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -56,6 +56,8 @@ type Handlers struct {
 }
 
 type Config struct {
+	Origin string
+
 	Version  string
 	Revision string
 
@@ -308,6 +310,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiGroupsGID.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
 				apiGroupsGID.PATCH("", h.EditUserGroup, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 				apiGroupsGID.DELETE("", h.DeleteUserGroup, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
+				apiGroupsGID.PUT("/icon", h.PutUserGroupIcon, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
@@ -415,6 +418,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	apiNoAuth := e.Group("/v3")
 	{
+		apiNoAuth.GET("/meta", h.GetMeta)
 		apiNoAuth.GET("/version", h.GetVersion)
 		apiNoAuth.GET("/jwks", h.GetJWKS)
 		if h.AllowSignUp {
@@ -433,6 +437,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 }
 
 // L ロガーを返します
-func (h *Handlers) L(c echo.Context) *zap.Logger {
+func (h *Handlers) L(c *echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

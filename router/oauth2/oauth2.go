@@ -3,7 +3,7 @@ package oauth2
 import (
 	"errors"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -90,6 +90,6 @@ func (h *Handler) splitAndValidateScope(str string) (model.AccessScopes, error) 
 }
 
 // L ロガーを返します
-func (h *Handler) L(c echo.Context) *zap.Logger {
+func (h *Handler) L(c *echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

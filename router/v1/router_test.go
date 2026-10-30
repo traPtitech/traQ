@@ -29,7 +29,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
@@ -66,8 +66,7 @@ func TestMain(m *testing.M) {
 		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), env.ImageProcessor, zap.NewNop())
 
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(env.Repository, env.ChannelManager))
 
@@ -127,7 +126,7 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 
 func (env *Env) generateSession(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	sess, err := env.SessStore.IssueSession(userID, nil)
+	sess, err := env.SessStore.IssueSession(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	return sess.Token()
 }

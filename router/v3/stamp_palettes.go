@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -16,7 +16,7 @@ import (
 )
 
 // GetStampPalettes GET /stamp-palettes
-func (h *Handlers) GetStampPalettes(c echo.Context) error {
+func (h *Handlers) GetStampPalettes(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	palettes, err := h.Repo.GetStampPalettes(c.Request().Context(), userID)
@@ -47,7 +47,7 @@ func (r CreateStampPaletteRequest) Validate() error {
 }
 
 // CreateStampPalette POST /stamp-palettes
-func (h *Handlers) CreateStampPalette(c echo.Context) error {
+func (h *Handlers) CreateStampPalette(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req CreateStampPaletteRequest
@@ -88,7 +88,7 @@ func (r PatchStampPaletteRequest) Validate() error {
 }
 
 // EditStampPalette PATCH /stamp-palettes/:paletteID
-func (h *Handlers) EditStampPalette(c echo.Context) error {
+func (h *Handlers) EditStampPalette(c *echo.Context) error {
 	user := getRequestUser(c)
 	stampPalette := getParamStampPalette(c)
 
@@ -120,12 +120,12 @@ func (h *Handlers) EditStampPalette(c echo.Context) error {
 }
 
 // GetStampPalette GET /stamp-palette/:paletteID
-func (h *Handlers) GetStampPalette(c echo.Context) error {
+func (h *Handlers) GetStampPalette(c *echo.Context) error {
 	return c.JSON(http.StatusOK, formatStampPalette(getParamStampPalette(c)))
 }
 
 // DeleteStampPalette DELETE /stamp-palette/:paletteID
-func (h *Handlers) DeleteStampPalette(c echo.Context) error {
+func (h *Handlers) DeleteStampPalette(c *echo.Context) error {
 	user := getRequestUser(c)
 	stampPalette := getParamStampPalette(c)
 

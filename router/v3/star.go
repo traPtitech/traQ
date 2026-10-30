@@ -7,7 +7,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -17,7 +17,7 @@ import (
 )
 
 // GetMyStars GET /users/me/stars
-func (h *Handlers) GetMyStars(c echo.Context) error {
+func (h *Handlers) GetMyStars(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	stars, err := h.Repo.GetStaredChannels(c.Request().Context(), userID)
@@ -41,7 +41,7 @@ func (r PostStarRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // PostStar POST /users/me/stars
-func (h *Handlers) PostStar(c echo.Context) error {
+func (h *Handlers) PostStar(c *echo.Context) error {
 	var req PostStarRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -55,7 +55,7 @@ func (h *Handlers) PostStar(c echo.Context) error {
 }
 
 // RemoveMyStar DELETE /users/me/stars/:channelID
-func (h *Handlers) RemoveMyStar(c echo.Context) error {
+func (h *Handlers) RemoveMyStar(c *echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 

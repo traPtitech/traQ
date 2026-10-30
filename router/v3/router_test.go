@@ -13,7 +13,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -127,8 +127,7 @@ func TestMain(m *testing.M) {
 
 		// テスト用サーバー作成
 		e := echo.New()
-		e.HideBanner = true
-		e.HidePort = true
+		e.JSONSerializer = extension.JSONSerializer{}
 		e.HTTPErrorHandler = extension.ErrorHandler(l)
 		e.Use(extension.Wrap(repo, env.CM))
 
@@ -201,7 +200,7 @@ func Setup(t *testing.T, server string) *Env {
 // S 指定ユーザーのAPIセッショントークンを発行
 func (env *Env) S(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	s, err := env.SessStore.IssueSession(userID, nil)
+	s, err := env.SessStore.IssueSession(context.TODO(), userID, nil)
 	require.NoError(t, err)
 	return s.Token()
 }
@@ -349,7 +348,8 @@ func (env *Env) MakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
 func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model.Stamp {
 	t.Helper()
 	if name == rand {
-		name = random.AlphaNumeric(20)
+		// スタンプ名は禁止されている "0x" で始まらないようにする
+		name = "stamp_" + random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creator, uuid.Nil)
 	s, err := env.Repository.CreateStamp(context.TODO(), repository.CreateStampArgs{

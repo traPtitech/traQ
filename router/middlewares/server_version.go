@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/router/consts"
 )
@@ -9,7 +9,7 @@ import (
 // ServerVersion X-TRAQ-VERSIONレスポンスヘッダーを追加するミドルウェア
 func ServerVersion(version string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			c.Response().Header().Set(consts.HeaderVersion, version)
 			return next(c)
 		}

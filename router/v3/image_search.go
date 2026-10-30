@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -16,7 +16,7 @@ type imageSearchWebhookRequest struct {
 }
 
 // ImageSearchWebhook POST /search/image-webhook
-func (h *Handlers) ImageSearchWebhook(c echo.Context) error {
+func (h *Handlers) ImageSearchWebhook(c *echo.Context) error {
 	var req imageSearchWebhookRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err

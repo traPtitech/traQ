@@ -7,21 +7,20 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/jwt"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/tracing"
 	"github.com/traPtitech/traQ/utils/twemoji"
 )
 
@@ -38,6 +37,17 @@ func serveCommand() *cobra.Command {
 			defer logger.Sync()
 
 			logger.Info(fmt.Sprintf("traQ %s (revision %s)", Version, Revision))
+
+			// OpenTelemetry Tracing
+			shutdownTracer, err := tracing.InitTracer(context.Background(), "traQ")
+			if err != nil {
+				logger.Fatal("failed to initialize tracer", zap.Error(err))
+			}
+			defer func() {
+				if err := shutdownTracer(context.Background()); err != nil {
+					logger.Error("failed to shutdown tracer", zap.Error(err))
+				}
+			}()
 
 			// Stackdriver Profiler
 			if c.GCP.Stackdriver.Profiler.Enabled {
@@ -148,8 +158,11 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
+			serveCtx, serveCancel := context.WithCancel(context.Background())
+			server.routerCancel = serveCancel
+			server.routerStopped = make(chan struct{})
 			go func() {
-				if err := server.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
+				if err := server.Start(serveCtx, fmt.Sprintf(":%d", c.Port), time.Duration(c.ShutdownTimeout)*time.Second); err != nil {
 					logger.Info("shutting down the server")
 				}
 			}()
@@ -174,33 +187,50 @@ func serveCommand() *cobra.Command {
 }
 
 type Server struct {
-	L      *zap.Logger
-	SS     *service.Services
-	Router *echo.Echo
-	Hub    *hub.Hub
-	Repo   repository.Repository
+	L             *zap.Logger
+	SS            *service.Services
+	Router        *echo.Echo
+	Hub           *hub.Hub
+	Repo          repository.Repository
+	routerCancel  context.CancelFunc
+	routerStopped chan struct{}
 }
 
-func (s *Server) Start(address string) error {
-	go func() {
-		// TODO 適切なパッケージに移動させる
-		sub := s.Hub.Subscribe(10, event.UserOffline)
-		for ev := range sub.Receiver {
-			userID := ev.Fields["user_id"].(uuid.UUID)
-			datetime := ev.Fields["datetime"].(time.Time)
-			_ = s.Repo.UpdateUser(context.Background(), userID, repository.UpdateUserArgs{LastOnline: optional.From(datetime)})
-		}
-	}()
+func (s *Server) Start(ctx context.Context, address string, gracefulTimeout time.Duration) error {
 	s.SS.StampThrottler.Start()
-	return s.Router.Start(address)
+
+	if s.routerStopped == nil {
+		s.routerStopped = make(chan struct{})
+	}
+	defer close(s.routerStopped)
+	sc := echo.StartConfig{
+		Address:         address,
+		HideBanner:      true,
+		HidePort:        true,
+		GracefulTimeout: gracefulTimeout,
+	}
+	return sc.Start(ctx, s.Router)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	originalCtx := ctx
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-		err := s.Router.Shutdown(ctx)
+		if s.routerCancel != nil {
+			s.routerCancel()
+		}
+		if s.routerStopped != nil {
+			select {
+			case <-s.routerStopped:
+				s.L.Info("Router shutdown")
+				return nil
+			case <-originalCtx.Done():
+				s.L.Warn("Router shutdown timed out", zap.Error(originalCtx.Err()))
+				return originalCtx.Err()
+			}
+		}
 		s.L.Info("Router shutdown")
-		return err
+		return nil
 	})
 	eg.Go(func() error {
 		err := s.SS.WS.Close()

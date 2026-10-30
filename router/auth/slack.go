@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	json "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	slackOAuth2 "golang.org/x/oauth2/slack"
@@ -115,11 +115,11 @@ func NewSlackProvider(repo repository.Repository, fm file.Manager, logger *zap.L
 	}
 }
 
-func (p *SlackProvider) LoginHandler(c echo.Context) error {
+func (p *SlackProvider) LoginHandler(c *echo.Context) error {
 	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
-func (p *SlackProvider) CallbackHandler(c echo.Context) error {
+func (p *SlackProvider) CallbackHandler(c *echo.Context) error {
 	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 

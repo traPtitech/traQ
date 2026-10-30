@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -27,7 +28,7 @@ import (
 )
 
 // GetWebhooks GET /webhooks
-func (h *Handlers) GetWebhooks(c echo.Context) error {
+func (h *Handlers) GetWebhooks(c *echo.Context) error {
 	user := getRequestUser(c)
 
 	var (
@@ -47,7 +48,7 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 }
 
 // GetWebhookIcon GET /webhooks/:webhookID/icon
-func (h *Handlers) GetWebhookIcon(c echo.Context) error {
+func (h *Handlers) GetWebhookIcon(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	// ユーザー取得
@@ -60,7 +61,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 }
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
-func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
+func (h *Handlers) ChangeWebhookIcon(c *echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamWebhook(c).GetBotUserID())
 }
 
@@ -82,7 +83,7 @@ func (r PostWebhooksRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // CreateWebhook POST /webhooks
-func (h *Handlers) CreateWebhook(c echo.Context) error {
+func (h *Handlers) CreateWebhook(c *echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostWebhooksRequest
@@ -109,7 +110,7 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 }
 
 // GetWebhook GET /webhooks/:webhookID
-func (h *Handlers) GetWebhook(c echo.Context) error {
+func (h *Handlers) GetWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
@@ -134,7 +135,7 @@ func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 }
 
 // EditWebhook PATCH /webhooks/:webhookID
-func (h *Handlers) EditWebhook(c echo.Context) error {
+func (h *Handlers) EditWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	var req PatchWebhookRequest
@@ -161,7 +162,7 @@ func (h *Handlers) EditWebhook(c echo.Context) error {
 }
 
 // PostWebhook POST /webhooks/:webhookID
-func (h *Handlers) PostWebhook(c echo.Context) error {
+func (h *Handlers) PostWebhook(c *echo.Context) error {
 	ctx := c.Request().Context()
 	w := getParamWebhook(c)
 	channelID := w.GetChannelID()
@@ -171,7 +172,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	case echo.MIMETextPlain, strings.ToLower(echo.MIMETextPlainCharsetUTF8):
 		break
 	default:
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, http.StatusText(http.StatusUnsupportedMediaType))
 	}
 
 	body, err := io.ReadAll(c.Request().Body)
@@ -226,7 +227,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 }
 
 // DeleteWebhook DELETE /webhooks/:webhookID
-func (h *Handlers) DeleteWebhook(c echo.Context) error {
+func (h *Handlers) DeleteWebhook(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	if err := h.Repo.DeleteWebhook(c.Request().Context(), w.GetID()); err != nil {
@@ -237,7 +238,7 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 }
 
 // GetWebhookMessages GET /webhooks/:webhookID/messages
-func (h *Handlers) GetWebhookMessages(c echo.Context) error {
+func (h *Handlers) GetWebhookMessages(c *echo.Context) error {
 	w := getParamWebhook(c)
 
 	var req MessagesQuery
@@ -249,7 +250,7 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 }
 
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
-func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
+func (h *Handlers) DeleteWebhookMessage(c *echo.Context) error {
 	w := getParamWebhook(c)
 	m := getParamMessage(c)
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
@@ -257,8 +258,13 @@ func (h *Handlers) DeleteWebhookMessage(c echo.Context) error {
 	messageUserID := m.GetUserID()
 
 	if botUserID == messageUserID {
-		if err := h.Repo.DeleteMessage(c.Request().Context(), messageID); err != nil {
-			return herror.InternalServerError(err)
+		if err := h.MessageManager.Delete(c.Request().Context(), messageID); err != nil {
+			switch {
+			case errors.Is(err, message.ErrChannelArchived):
+				return herror.BadRequest("the channel of this message has been archived")
+			default:
+				return herror.InternalServerError(err)
+			}
 		}
 	} else {
 		return herror.Forbidden("you are not allowed to delete this message")

@@ -156,13 +156,8 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if err := vd.Validate(stamp.Name, validator.StampNameRuleRequired...); err != nil {
-			return repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
-		}
-		// 名前重複チェック
-		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
-			return err
-		} else if exists {
-			return repository.ErrAlreadyExists
+			//エラーに応じたレスポンス
+			return repository.ArgError("name", err.Error())
 		}
 		// ファイル存在チェック
 		if stamp.FileID == uuid.Nil {
@@ -174,7 +169,11 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 			return repository.ArgError("fileID", "fileID's file is not found")
 		}
 
-		return tx.Create(stamp).Error
+		err := tx.Create(stamp).Error
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return repository.ErrAlreadyExists
+		}
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -207,18 +206,7 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 
 		if args.Name.Valid && s.Name != args.Name.V {
 			if err := vd.Validate(args.Name.V, validator.StampNameRuleRequired...); err != nil {
-				return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
-			}
-
-			// 重複チェックで名前が一致するレコードを取得
-			var existingStamp model.Stamp
-			if err := tx.Where("name = ?", args.Name.V).First(&existingStamp).Error; err != nil {
-				if !errors.Is(err, gorm.ErrRecordNotFound) {
-					return err
-				}
-			} else if existingStamp.ID != s.ID {
-				// 名前が一致する他のレコードが存在し、IDも異なる場合はエラーを返す
-				return repository.ErrAlreadyExists
+				return repository.ArgError("args.Name", err.Error())
 			}
 			changes["name"] = args.Name.V
 		}
@@ -240,7 +228,11 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 		}
 
 		if len(changes) > 0 {
-			return tx.Model(&s).Updates(changes).Error
+			err := tx.Model(&s).Updates(changes).Error
+			if gormutil.IsMySQLDuplicatedRecordErr(err) {
+				return repository.ErrAlreadyExists
+			}
+			return err
 		}
 		return nil
 	})
@@ -401,7 +393,7 @@ func (r *stampRepository) GetStampStats(ctx context.Context, stampID uuid.UUID) 
 	}
 
 	if ok, err := gormutil.
-		RecordExists(r.db.WithContext(ctx), &model.MessageStamp{StampID: stampID}); err != nil {
+		RecordExists(r.db.WithContext(ctx), &model.Stamp{ID: stampID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, repository.ErrNotFound
@@ -410,7 +402,7 @@ func (r *stampRepository) GetStampStats(ctx context.Context, stampID uuid.UUID) 
 	if err := r.db.WithContext(ctx).
 		Unscoped().
 		Model(&model.MessageStamp{}).
-		Select("COUNT(stamp_id) AS count", "SUM(count) AS total_count").
+		Select("COUNT(stamp_id) AS count", "COALESCE(SUM(count), 0) AS total_count").
 		Where(&model.MessageStamp{StampID: stampID}).
 		Find(&stats).
 		Error; err != nil {

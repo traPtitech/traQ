@@ -12,6 +12,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
@@ -334,7 +335,7 @@ type termQueryParameter struct {
 	Value any `json:"value,omitempty"`
 }
 
-func (e *esEngine) Do(q *Query) (Result, error) {
+func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
 	var musts []searchQuery
@@ -389,18 +390,25 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if len(q.From) > 0 {
-		orQueries := make([]searchQuery, 0, len(q.From))
-		for _, fromID := range q.From {
-			orQueries = append(orQueries, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: fromID}}})
+		fromIDs := lo.Uniq(q.From)
+		groupMembers, err := e.repo.GetUserGroupMemberIDs(ctx, fromIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user group members for from: %w", err)
+		}
+		userIDs := make([]uuid.UUID, 0, len(q.From))
+		for _, fromID := range fromIDs {
+			if members, ok := groupMembers[fromID]; ok {
+				userIDs = append(userIDs, members...)
+			} else {
+				userIDs = append(userIDs, fromID)
+			}
 		}
 
-		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
-		if len(q.From) == 1 {
-			// OR検索が不要
-			sq = orQueries[0]
+		if len(userIDs) == 0 {
+			musts = append(musts, searchQuery{"match_none": m{}})
+		} else {
+			musts = append(musts, searchQuery{"terms": m{"userId": lo.Uniq(userIDs)}})
 		}
-
-		musts = append(musts, sq)
 	}
 
 	if q.Citation.Valid {
@@ -429,7 +437,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"term": termQuery{"hasAudio": termQueryParameter{Value: q.HasAudio}}})
 	}
 
-	limit, offset := 20, 0
+	limit, offset := DefaultLimit, 0
 	if q.Limit.Valid {
 		limit = q.Limit.V
 	}
@@ -442,24 +450,25 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	// ベクトル検索が可能かチェックし、ハイブリッド検索を試みる
 	if q.Word.Valid && e.imageClient.Available() {
-		queryVector, err := e.imageClient.EmbedText(context.Background(), q.Word.V)
+		queryVector, err := e.imageClient.EmbedText(ctx, q.Word.V)
 		if err == nil && queryVector != nil {
-			return e.doHybridSearch(musts, queryVector, sort, limit, offset)
+			return e.doHybridSearch(ctx, musts, queryVector, sort, limit, offset)
 		}
 		e.l.Debug("falling back to text-only search", zap.Error(err))
 	}
 
-	return e.doTextSearch(musts, sort, limit, offset)
+	return e.doTextSearch(ctx, musts, sort, limit, offset)
 }
 
 // doTextSearch 通常のテキスト検索を実行する
-func (e *esEngine) doTextSearch(musts []searchQuery, sort string, limit, offset int) (Result, error) {
+func (e *esEngine) doTextSearch(ctx context.Context, musts []searchQuery, sort string, limit, offset int) (Result, error) {
 	b, err := json.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
 	}
 
 	sr, err := e.client.Search(
+		e.client.Search.WithContext(ctx),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithBody(bytes.NewBuffer(b)),
 		e.client.Search.WithSort(sort),
@@ -481,16 +490,16 @@ func (e *esEngine) doTextSearch(musts []searchQuery, sort string, limit, offset 
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultFromResponse(res)
+	return e.parseResultFromResponse(ctx, res)
 }
 
 // doHybridSearch RRFによるハイブリッド検索（テキスト + ベクトル）を実行する
-func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
+func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
 	// RRF (Reciprocal Rank Fusion) を使ったハイブリッド検索
 	// ページング時は from+size 分のランキング結果が必要になる
 	windowSize := limit + offset
 	if windowSize < 1 || windowSize > 10000 {
-		return e.doTextSearch(musts, sort, limit, offset)
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
 	}
 
 	// テキスト検索クエリ
@@ -550,12 +559,12 @@ func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, so
 	if err != nil {
 		// ハイブリッド検索に失敗した場合はテキスト検索にフォールバック
 		e.l.Warn("hybrid search failed, falling back to text search", zap.Error(err))
-		return e.doTextSearch(musts, sort, limit, offset)
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
 	}
 	if sr.IsError() {
 		e.l.Warn("hybrid search returned error, falling back to text search")
 		sr.Body.Close()
-		return e.doTextSearch(musts, sort, limit, offset)
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
 	}
 	defer sr.Body.Close()
 
@@ -566,7 +575,7 @@ func (e *esEngine) doHybridSearch(musts []searchQuery, queryVector []float64, so
 	}
 
 	e.l.Debug("hybrid search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultFromResponse(res)
+	return e.parseResultFromResponse(ctx, res)
 }
 
 func (e *esEngine) Available() bool {

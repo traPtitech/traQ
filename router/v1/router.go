@@ -24,7 +24,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	mutil "github.com/traPtitech/traQ/utils/message"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 var json = jsonIter.ConfigFastest
@@ -56,7 +56,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 
-	gone := func(_ echo.Context) error {
+	gone := func(_ *echo.Context) error {
 		return herror.HTTPError(http.StatusGone, "This API has been deleted. Please migrate to v3 or newer API.")
 	}
 
@@ -330,15 +330,15 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 	}
 }
 
-func getStampFromContext(c echo.Context) *model.Stamp {
+func getStampFromContext(c *echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
 }
 
-func getFileFromContext(c echo.Context) model.File {
+func getFileFromContext(c *echo.Context) model.File {
 	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 // L ロガーを返します
-func (h *Handlers) L(c echo.Context) *zap.Logger {
+func (h *Handlers) L(c *echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

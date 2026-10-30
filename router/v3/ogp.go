@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -14,7 +14,7 @@ import (
 type CacheHitState int
 
 // GetOgp GET /ogp?url={url}
-func (h *Handlers) GetOgp(c echo.Context) error {
+func (h *Handlers) GetOgp(c *echo.Context) error {
 	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
 	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return herror.BadRequest("invalid url")
@@ -28,14 +28,16 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 
 	if res == nil {
 		return c.JSON(http.StatusOK, model.Ogp{
-			Type: "empty",
+			Type:   "empty",
+			Images: []model.OgpMedia{},
+			Videos: []model.OgpMedia{},
 		})
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
 // DeleteOgpCache DELETE /ogp/cache?url={url}
-func (h *Handlers) DeleteOgpCache(c echo.Context) error {
+func (h *Handlers) DeleteOgpCache(c *echo.Context) error {
 	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
 	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return herror.BadRequest("invalid url")
