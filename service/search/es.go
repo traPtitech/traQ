@@ -320,8 +320,13 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 type searchQuery m
 
+// esSearchSourceExcludes 検索結果で不要な大きなフィールドを_sourceから除外する
+// imageVectorには4096次元のベクトルが含まれるため、ログやレスポンスを肥大化させないようにする
+var esSearchSourceExcludes = m{"excludes": []string{"imageVector"}}
+
 type searchBody struct {
-	Query searchQuery `json:"query,omitempty"`
+	Query  searchQuery `json:"query,omitempty"`
+	Source m           `json:"_source,omitempty"`
 }
 
 func newSearchBody(andQueries []searchQuery) searchBody {
@@ -331,6 +336,7 @@ func newSearchBody(andQueries []searchQuery) searchBody {
 				Must: andQueries,
 			},
 		},
+		Source: esSearchSourceExcludes,
 	}
 }
 
@@ -562,10 +568,11 @@ func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, quer
 	}
 
 	hybridBody := m{
-		"query": textQuery.Query,
-		"knn":   knnQuery,
-		"size":  limit,
-		"from":  offset,
+		"query":   textQuery.Query,
+		"knn":     knnQuery,
+		"size":    limit,
+		"from":    offset,
+		"_source": esSearchSourceExcludes,
 	}
 
 	b, err := json.Marshal(hybridBody)

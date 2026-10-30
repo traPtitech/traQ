@@ -114,7 +114,7 @@ func TestESEngine_Do_From(t *testing.T) {
 					wantFrom = fmt.Sprintf(`,{"terms":{"userId":%s}}`, usersJSON)
 				}
 			}
-			assert.JSONEq(t, fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"isPublic":{"value":true}}}%s]}}}`, wantFrom), requestBody)
+			assert.JSONEq(t, fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"isPublic":{"value":true}}}%s]}},"_source":{"excludes":["imageVector"]}}`, wantFrom), requestBody)
 			if len(tc.from) == 0 {
 				assert.Zero(t, repo.calls)
 			} else {
@@ -261,7 +261,8 @@ func TestESEngine_Do_HybridSearch(t *testing.T) {
 			"filter": {"bool": {"must": [{"term": {"isPublic": {"value": true}}}]}}
 		},
 		"size": 10,
-		"from": 20
+		"from": 20,
+		"_source": {"excludes": ["imageVector"]}
 	}`, requestBody)
 }
 
