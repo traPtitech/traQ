@@ -206,7 +206,7 @@ paths:
           name: sort
           schema:
             type: string
-            default: "-createdAt"
+            default: createdAt
             enum:
               - createdAt
               - "-createdAt"
@@ -282,7 +282,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostMessageRequest"
+              $ref: "#/components/schemas/PutMessageRequest"
       tags:
         - message
       operationId: editMessage
@@ -305,7 +305,7 @@ paths:
       description: |-
         指定したメッセージを削除します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
-        アーカイブされているチャンネルのメッセージを編集することは出来ません。
+        アーカイブされているチャンネルのメッセージを削除することは出来ません。
   "/messages/{messageId}/pin":
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -807,8 +807,6 @@ paths:
           description: Bad Request
         "409":
           description: Conflict
-        "413":
-          description: Request Entity Too Large
       description: スタンプを新規作成します。
       requestBody:
         content:
@@ -817,7 +815,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
+                contentType: "image/png, image/jpeg, image/gif"
         description: ""
       operationId: createStamp
       tags:
@@ -1099,8 +1097,6 @@ paths:
           description: |-
             Not Found
             ユーザーグループが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserGroupIcon
       requestBody:
         content:
@@ -1653,11 +1649,11 @@ paths:
           name: X-TRAQ-Channel-Id
           description: 投稿先のチャンネルID(変更する場合)
         - schema:
-            type: integer
-            default: 0
+            type: boolean
+            default: false
           in: query
           name: embed
-          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+          description: メンション・チャンネルリンクを自動埋め込みするか
       requestBody:
         content:
           text/plain:
@@ -1752,8 +1748,6 @@ paths:
           description: |-
             Not Found
             Webhookが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeWebhookIcon
       requestBody:
         content:
@@ -1811,8 +1805,6 @@ paths:
           description: |-
             Not Found
             ユーザーが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeUserIcon
       requestBody:
         content:
@@ -1863,8 +1855,6 @@ paths:
             変更されました。
         "400":
           description: Bad Request
-        "413":
-          description: Request Entity Too Large
       description: 自分のアイコン画像を変更します。
       operationId: changeMyIcon
       requestBody:
@@ -1998,7 +1988,7 @@ paths:
         description: ""
       description: |-
         ユーザーを登録します。
-        管理者権限が必要です。
+        公開サインアップが無効の場合は、管理者権限が必要です。
     get:
       summary: ユーザーのリストを取得
       responses:
@@ -2555,7 +2545,7 @@ paths:
 
         `viewstate:{チャンネルID}:{閲覧状態}`
         + チャンネルID: 対象のチャンネルID
-        + 閲覧状態: `none`, `monitoring`, `editing`
+        + 閲覧状態: `none`, `stale_viewing`, `monitoring`, `editing`
 
         最初の`viewstate`コマンドを送る前、または`viewstate:null`, `viewstate:`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。
 
@@ -3259,8 +3249,6 @@ paths:
           description: |-
             Not Found
             BOTが見つかりません。
-        "413":
-          description: Request Entity Too Large
       operationId: changeBotIcon
       requestBody:
         content:
@@ -4040,8 +4028,6 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
-        "413":
-          description: Request Entity Too Large
       tags:
         - stamp
       description: 指定したスタンプの画像を変更します。
@@ -4055,7 +4041,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+                  description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
               required:
                 - file
         description: ""
@@ -4176,7 +4162,7 @@ paths:
                 $ref: "#/components/schemas/OAuth2Token"
         "400":
           description: トークン発行に失敗しました。
-        "403":
+        "401":
           description: トークン発行に失敗しました。
       summary: OAuth2 トークンエンドポイント
   /oauth2/authorize/decide:
@@ -4210,6 +4196,7 @@ paths:
       parameters:
         - name: response_type
           in: query
+          required: true
           schema:
             $ref: "#/components/schemas/OAuth2ResponseType"
         - name: client_id
@@ -4285,7 +4272,6 @@ paths:
       tags:
         - oauth2
       requestBody:
-        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -4463,7 +4449,7 @@ paths:
   /users/me/settings/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
-      description: メッセージ引用通知の設定情報を変更します。
+      description: メッセージ引用通知の設定情報を取得します。
       operationId: getMyNotifyCitation
       tags:
         - me
@@ -4524,8 +4510,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/qallEndpointResponse"
-        "404":
-          description: Not Found
         "500":
           description: Internal Server Error
   /qall/token:
@@ -4931,6 +4915,22 @@ components:
         - topic
         - name
         - children
+    PutMessageRequest:
+      title: PutMessageRequest
+      type: object
+      description: メッセージ編集リクエスト
+      properties:
+        content:
+          type: string
+          description: メッセージ本文
+          minLength: 1
+          maxLength: 10000
+        embed:
+          type: boolean
+          default: false
+          description: メンション・チャンネルリンクを自動埋め込みするか
+      required:
+        - content
     PostMessageRequest:
       title: PostMessageRequest
       type: object
@@ -5034,7 +5034,7 @@ components:
         topic:
           type: string
           description: トピック
-          maxLength: 200
+          maxLength: 500
       required:
         - topic
     ChannelViewer:
@@ -5226,8 +5226,6 @@ components:
           format: int32
           minimum: 1
           maximum: 100
-      required:
-        - count
     Stamp:
       title: Stamp
       type: object
@@ -5280,7 +5278,7 @@ components:
         file:
           type: string
           format: binary
-          description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+          description: "スタンプ画像(1MiBまでのpng, jpeg, gif)"
       required:
         - name
         - file
@@ -5666,8 +5664,6 @@ components:
           description: グループタイプ
       required:
         - name
-        - description
-        - type
     MyUserDetail:
       title: MyUserDetail
       type: object
@@ -5704,7 +5700,7 @@ components:
         twitterId:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         name:
           type: string
           pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
@@ -5798,7 +5794,7 @@ components:
           type: array
           description: タグリスト
           items:
-            $ref: "#/components/schemas/UserTag"
+            type: string
         last_online:
           type: string
           description: 最終オンライン日時
@@ -5807,7 +5803,7 @@ components:
         twitter_id:
           type: string
           description: Twitter ID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         display_name:
           type: string
           description: ユーザー表示名
@@ -5836,7 +5832,6 @@ components:
         - bio
         - groups
         - tags
-        - updated_at
         - last_online
         - twitter_id
         - display_name
@@ -6020,7 +6015,6 @@ components:
         - name
         - description
         - channelId
-        - secret
     PutUserIconRequest:
       title: PutUserIconRequest
       type: object
@@ -6029,7 +6023,7 @@ components:
         file:
           type: string
           format: binary
-          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
+          description: "アイコン画像(2MiB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
       required:
         - file
     PutMyPasswordRequest:
@@ -6039,7 +6033,7 @@ components:
       properties:
         password:
           type: string
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
           description: 現在のパスワード
         newPassword:
           type: string
@@ -6060,7 +6054,7 @@ components:
           description: 新しい表示名
         twitterId:
           type: string
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
           description: TwitterID
         bio:
           type: string
@@ -6095,7 +6089,7 @@ components:
         twitterId:
           type: string
           description: TwitterID
-          pattern: "^[a-zA-Z0-9_]{1,15}$"
+          pattern: "^[a-zA-Z0-9_]{0,15}$"
         state:
           $ref: "#/components/schemas/UserAccountState"
         role:
@@ -6145,7 +6139,6 @@ components:
           nullable: true
       required:
         - name
-        - parent
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
@@ -6236,7 +6229,6 @@ components:
         - count
         - noticeable
         - since
-        - until
         - updatedAt
         - oldestMessageId
     PostLoginRequest:
@@ -6247,11 +6239,11 @@ components:
         name:
           type: string
           description: ユーザー名
-          pattern: "^([a-zA-Z0-9_-]{1,32}|Webhook#[a-zA-Z0-9_-]{22})$"
+          pattern: "^[a-zA-Z0-9_-]{1,32}$"
         password:
           type: string
           description: パスワード
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          minLength: 1
       required:
         - name
         - password
@@ -6282,7 +6274,7 @@ components:
           format: uuid
         clientId:
           type: string
-          description: OAuth2クライアントUUID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         scopes:
           type: array
           description: スコープ
@@ -6315,7 +6307,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         name:
           type: string
           description: クライアント名
@@ -6376,7 +6368,7 @@ components:
       properties:
         id:
           type: string
-          description: クライアントUUID
+          description: OAuth2 クライアント ID (36 文字の英数字)
         developerId:
           type: string
           description: クライアント開発者UUID
@@ -6653,7 +6645,6 @@ components:
         - endpoint
         - privileged
         - channels
-        - bio
     BotEventLog:
       title: BotEventLog
       type: object
@@ -6713,10 +6704,10 @@ components:
         name:
           type: string
           description: |-
-            BOTユーザーID
-            自動的に接頭辞"BOT_"が付与されます
-          maxLength: 16
-          pattern: "^[a-zA-Z0-9_-]{1,16}$"
+            BOT ユーザー名の接頭辞 BOT_ を除く部分 (1〜20 文字)
+            接頭辞 BOT_ は自動的に付与されます。
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_-]{1,20}$"
         displayName:
           type: string
           maxLength: 32
@@ -6897,7 +6888,6 @@ components:
           maxLength: 1000
       required:
         - name
-        - description
     PostClipFolderMessageRequest:
       title: PostClipFolderMessageRequest
       type: object
@@ -6921,7 +6911,6 @@ components:
           description: クリップした日時
           format: date-time
       required:
-        - folderId
         - message
         - clippedAt
     ChannelEvent:
@@ -7295,7 +7284,6 @@ components:
       required:
         - stamps
         - name
-        - description
     PatchStampPaletteRequest:
       title: PatchStampPaletteRequest
       type: object
@@ -7482,6 +7470,7 @@ components:
       type: object
       required:
         - client_id
+        - response_type
       properties:
         response_type:
           $ref: "#/components/schemas/OAuth2ResponseType"
@@ -7504,18 +7493,15 @@ components:
     OAuth2Prompt:
       type: string
       enum:
+        - ""
         - none
     OAuth2ResponseType:
       type: string
       enum:
         - code
-        - token
-        - none
     OAuth2Revoke:
       title: OAuth2Revoke
       type: object
-      required:
-        - token
       description: POST /oauth2/revoke 用リクエストボディ
       properties:
         token:
@@ -8152,7 +8138,7 @@ components:
       name: clientId
       in: path
       required: true
-      description: OAuth2クライアントUUID
+      description: OAuth2 クライアント ID (36 文字の英数字)
       schema:
         type: string
     tokenIdInPath:
@@ -8239,7 +8225,7 @@ components:
       name: limit
       schema:
         type: integer
-        minimum: 1
+        minimum: 0
         maximum: 200
       description: 取得する件数
       example: 50
@@ -8280,11 +8266,8 @@ components:
       name: order
       schema:
         type: string
-        enum:
-          - asc
-          - desc
         default: desc
-      description: 昇順か降順か
+      description: ascなら昇順、それ以外は降順
     channelIdInPath:
       name: channelId
       in: path
@@ -8367,5 +8350,6 @@ tags:
   - name: qall
     description: Qall API
 security:
+  - cookieAuth: []
   - OAuth2: []
   - bearerAuth: []
