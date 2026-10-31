@@ -725,15 +725,34 @@ paths:
           description: |-
             No Content
             スタンプを消すことができました。
+        "400":
+          description: Bad Request
+        "403":
+          description: |-
+            Forbidden
+            スタンプを削除する権限がありません。
         "404":
           description: |-
             Not Found
             メッセージ、またはスタンプが見つかりません。
       operationId: removeMessageStamp
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          in: query
+          name: userIds
+          description: |-
+            スタンプを削除する対象のユーザーIDです。
+            未指定の場合は、自分が押したスタンプを削除します。
+            自分のユーザーIDのみを指定する場合は、通常ユーザーもBotも利用できます。
+            他のユーザーIDを指定できるのはBotのみで、自分のメッセージに対してのみ利用できます。
       tags:
         - message
         - stamp
-      description: 指定したメッセージから指定した自身が押したスタンプを削除します。
+      description: 指定したメッセージから指定したユーザーの指定したスタンプを削除します。
   "/stamps/{stampId}":
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
