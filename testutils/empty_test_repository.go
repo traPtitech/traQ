@@ -25,4 +25,5 @@ type EmptyTestRepository struct {
 	repository.ClipRepository
 	repository.OgpCacheRepository
 	repository.SoundboardRepository
+	repository.ImageEmbeddingJobRepository
 }

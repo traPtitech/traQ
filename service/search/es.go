@@ -18,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/storage"
 )
 
 const (
@@ -39,35 +40,49 @@ type ESEngineConfig struct {
 	Username string
 	// Password ESのパスワード
 	Password string
+	// ImageSearch 画像検索設定
+	ImageSearch ImageSearchConfig
 }
 
 // esEngine search.Engine 実装
 type esEngine struct {
-	client *elasticsearch.Client
-	mm     message.Manager
-	cm     channel.Manager
-	repo   repository.Repository
-	l      *zap.Logger
-	done   chan<- struct{}
+	client           *elasticsearch.Client
+	mm               message.Manager
+	cm               channel.Manager
+	repo             repository.Repository
+	fs               storage.FileStorage
+	imageClient      ImageSearchClient
+	imageConfig      ImageSearchConfig
+	lastImageCleanup time.Time
+	l                *zap.Logger
+	done             chan<- struct{}
+}
+
+// esImageVector 画像ごとのEmbeddingベクトル
+type esImageVector struct {
+	JobID  string    `json:"jobId"`
+	FileID string    `json:"fileId"`
+	Vector []float64 `json:"vector"`
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
 type esMessageDoc struct {
-	ID             uuid.UUID   `json:"-"`
-	UserID         uuid.UUID   `json:"userId"`
-	ChannelID      uuid.UUID   `json:"channelId"`
-	IsPublic       bool        `json:"isPublic"`
-	Bot            bool        `json:"bot"`
-	Text           string      `json:"text"`
-	CreatedAt      time.Time   `json:"createdAt"`
-	UpdatedAt      time.Time   `json:"updatedAt"`
-	To             []uuid.UUID `json:"to"`
-	Citation       []uuid.UUID `json:"citation"`
-	HasURL         bool        `json:"hasURL"`
-	HasAttachments bool        `json:"hasAttachments"`
-	HasImage       bool        `json:"hasImage"`
-	HasVideo       bool        `json:"hasVideo"`
-	HasAudio       bool        `json:"hasAudio"`
+	ID             uuid.UUID       `json:"-"`
+	UserID         uuid.UUID       `json:"userId"`
+	ChannelID      uuid.UUID       `json:"channelId"`
+	IsPublic       bool            `json:"isPublic"`
+	Bot            bool            `json:"bot"`
+	Text           string          `json:"text"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	To             []uuid.UUID     `json:"to"`
+	Citation       []uuid.UUID     `json:"citation"`
+	HasURL         bool            `json:"hasURL"`
+	HasAttachments bool            `json:"hasAttachments"`
+	HasImage       bool            `json:"hasImage"`
+	HasVideo       bool            `json:"hasVideo"`
+	HasAudio       bool            `json:"hasAudio"`
+	ImageVectors   []esImageVector `json:"imageVector,omitempty"`
 }
 
 // esMessageDocUpdate Update用 Elasticsearchに入るメッセージの部分的な情報
@@ -89,10 +104,9 @@ type esCreateIndexBody struct {
 
 type m map[string]any
 
-// esMapping Elasticsearchに入るメッセージの情報
-// esMessageDoc と同じにする
-var esMapping = m{
-	"properties": m{
+// esMessageMapping Elasticsearchに入るメッセージのマッピングを生成する
+func esMessageMapping() m {
+	properties := m{
 		"userId": m{
 			"type": "keyword",
 		},
@@ -138,7 +152,30 @@ var esMapping = m{
 		"hasAudio": m{
 			"type": "boolean",
 		},
-	},
+		"imageVector": esImageVectorMapping(),
+	}
+	return m{"properties": properties}
+}
+
+// esImageVectorMapping 画像ベクトル用のマッピング
+func esImageVectorMapping() m {
+	return m{
+		"type": "nested",
+		"properties": m{
+			"jobId": m{
+				"type": "keyword",
+			},
+			"fileId": m{
+				"type": "keyword",
+			},
+			"vector": m{
+				"type":       "dense_vector",
+				"dims":       EmbeddingDimension,
+				"index":      true,
+				"similarity": "cosine",
+			},
+		},
+	}
 }
 
 // esSetting Indexに追加するsetting情報
@@ -174,7 +211,7 @@ var esSetting = m{
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// esクライアント作成
 	client, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses: []string{config.URL},
@@ -223,7 +260,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
 		reqBody, err := json.Marshal(esCreateIndexBody{
-			Mappings: esMapping,
+			Mappings: esMessageMapping(),
 			Settings: esSetting,
 		})
 		if err != nil {
@@ -241,16 +278,39 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 			return nil, fmt.Errorf("failed to create Elasticsearch index: StatusCode: %v, ResponseBody: %v", createIndexRes.StatusCode, createIndexRes.Body)
 		}
 		defer createIndexRes.Body.Close()
+	} else {
+		// 既存のindexには画像検索用のマッピングが無い可能性があるため追加する
+		reqBody, err := json.Marshal(m{"properties": m{"imageVector": esImageVectorMapping()}})
+		if err != nil {
+			return nil, fmt.Errorf("failed to init Elasticsearch: %w", err)
+		}
+
+		putMappingRes, err := client.Indices.PutMapping(
+			[]string{getIndexName(esMessageIndex)},
+			bytes.NewReader(reqBody),
+			client.Indices.PutMapping.WithContext(context.Background()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to update Elasticsearch index mapping: %w", err)
+		}
+		if putMappingRes.IsError() {
+			logger.Warn("failed to update Elasticsearch index mapping", zap.String("response", putMappingRes.String()))
+		}
+		putMappingRes.Body.Close()
 	}
+
+	imageClient := NewImageSearchClient(config.ImageSearch, logger)
 
 	done := make(chan struct{})
 	engine := &esEngine{
-		client: client,
-		mm:     mm,
-		cm:     cm,
-		repo:   repo,
-		l:      logger.Named("search"),
-		done:   done,
+		client:      client,
+		mm:          mm,
+		cm:          cm,
+		repo:        repo,
+		fs:          fs,
+		imageClient: imageClient,
+		imageConfig: config.ImageSearch,
+		l:           logger.Named("search"),
+		done:        done,
 	}
 
 	go engine.syncLoop(done)
@@ -260,8 +320,13 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 type searchQuery m
 
+// esSearchSourceExcludes 検索結果で不要な大きなフィールドを_sourceから除外する
+// imageVectorには4096次元のベクトルが含まれるため、ログやレスポンスを肥大化させないようにする
+var esSearchSourceExcludes = m{"excludes": []string{"imageVector"}}
+
 type searchBody struct {
-	Query searchQuery `json:"query,omitempty"`
+	Query  searchQuery `json:"query,omitempty"`
+	Source m           `json:"_source,omitempty"`
 }
 
 func newSearchBody(andQueries []searchQuery) searchBody {
@@ -271,6 +336,7 @@ func newSearchBody(andQueries []searchQuery) searchBody {
 				Must: andQueries,
 			},
 		},
+		Source: esSearchSourceExcludes,
 	}
 }
 
@@ -411,6 +477,20 @@ func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
+	// ベクトル検索が可能かチェックし、ハイブリッド検索を試みる
+	if q.Word.Valid && e.imageClient.Available() {
+		queryVector, err := e.imageClient.EmbedText(ctx, q.Word.V)
+		if err == nil && queryVector != nil {
+			return e.doHybridSearch(ctx, musts, queryVector, sort, limit, offset)
+		}
+		e.l.Debug("falling back to text-only search", zap.Error(err))
+	}
+
+	return e.doTextSearch(ctx, musts, sort, limit, offset)
+}
+
+// doTextSearch 通常のテキスト検索を実行する
+func (e *esEngine) doTextSearch(ctx context.Context, musts []searchQuery, sort string, limit, offset int) (Result, error) {
 	b, err := json.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
@@ -439,6 +519,90 @@ func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
+	return e.parseResultFromResponse(ctx, res)
+}
+
+// doHybridSearch テキスト検索とknn検索をスコア加算で統合するハイブリッド検索を実行する
+func (e *esEngine) doHybridSearch(ctx context.Context, musts []searchQuery, queryVector []float64, sort string, limit, offset int) (Result, error) {
+	// queryとknnの結果はORで統合され、両方にマッチした場合はスコアが加算される
+	// ページング時は from+size 分の結果が必要になる
+	windowSize := limit + offset
+	if windowSize < 1 || windowSize > 10000 {
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
+	}
+
+	// テキスト検索クエリ
+	textQuery := newSearchBody(musts)
+
+	// knnにもテキスト検索以外のフィルタを適用する（公開範囲外のメッセージを除外するため）
+	filters := make([]searchQuery, 0, len(musts))
+	for _, q := range musts {
+		if _, ok := q["simple_query_string"]; ok {
+			continue
+		}
+		filters = append(filters, q)
+	}
+
+	// knnクエリ（nested field用）
+	numCandidates := windowSize * 2
+	if numCandidates < 100 {
+		numCandidates = 100
+	}
+	if numCandidates > 10000 {
+		numCandidates = 10000
+	}
+	knnQuery := m{
+		"field":          "imageVector.vector",
+		"query_vector":   queryVector,
+		"k":              windowSize,
+		"num_candidates": numCandidates,
+	}
+	if e.imageConfig.KnnBoost > 0 {
+		knnQuery["boost"] = e.imageConfig.KnnBoost
+	}
+	if e.imageConfig.KnnSimilarity > 0 {
+		knnQuery["similarity"] = e.imageConfig.KnnSimilarity
+	}
+	if len(filters) > 0 {
+		knnQuery["filter"] = searchQuery{"bool": boolQuery{Must: filters}}
+	}
+
+	hybridBody := m{
+		"query":   textQuery.Query,
+		"knn":     knnQuery,
+		"size":    limit,
+		"from":    offset,
+		"_source": esSearchSourceExcludes,
+	}
+
+	b, err := json.Marshal(hybridBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal hybrid search query: %w", err)
+	}
+
+	sr, err := e.client.Search(
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithBody(bytes.NewBuffer(b)),
+	)
+	if err != nil {
+		// ハイブリッド検索に失敗した場合はテキスト検索にフォールバック
+		e.l.Warn("hybrid search failed, falling back to text search", zap.Error(err))
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
+	}
+	if sr.IsError() {
+		e.l.Warn("hybrid search returned error, falling back to text search")
+		sr.Body.Close()
+		return e.doTextSearch(ctx, musts, sort, limit, offset)
+	}
+	defer sr.Body.Close()
+
+	var res esSearchResponse
+	err = json.NewDecoder(sr.Body).Decode(&res)
+	if err != nil {
+		return nil, err
+	}
+
+	e.l.Debug("hybrid search result", zap.Reflect("hits", res.Hits))
 	return e.parseResultFromResponse(ctx, res)
 }
 

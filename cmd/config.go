@@ -99,6 +99,26 @@ type Config struct {
 		Password string `mapstructure:"password" yaml:"password"`
 	} `mapstructure:"es" yaml:"es"`
 
+	// ImageSearch 画像検索用外部サーバー設定
+	ImageSearch struct {
+		// URL 外部サーバーのURL (default: "" = 無効)
+		URL string `mapstructure:"url" yaml:"url"`
+		// APIKey 公開APIキー
+		APIKey string `mapstructure:"apiKey" yaml:"apiKey"`
+		// WebhookURL ジョブ完了通知を受け取るURL (default: "" = 通知なし)
+		WebhookURL string `mapstructure:"webhookUrl" yaml:"webhookUrl"`
+		// TextTimeout テキスト埋め込みのタイムアウト秒数 (default: 5)
+		TextTimeout int `mapstructure:"textTimeout" yaml:"textTimeout"`
+		// JobPollInterval 画像ジョブのポーリング間隔秒数 (default: 10)
+		JobPollInterval int `mapstructure:"jobPollInterval" yaml:"jobPollInterval"`
+		// JobTimeout 画像ジョブの完了待ち上限秒数 (default: 21600 = 6時間)
+		JobTimeout int `mapstructure:"jobTimeout" yaml:"jobTimeout"`
+		// KnnBoost ハイブリッド検索でknnスコアに掛ける重み (default: 5)
+		KnnBoost float64 `mapstructure:"knnBoost" yaml:"knnBoost"`
+		// KnnSimilarity knn検索で要求する最小類似度. 0以下で無効 (default: 0.2)
+		KnnSimilarity float64 `mapstructure:"knnSimilarity" yaml:"knnSimilarity"`
+	} `mapstructure:"imageSearch" yaml:"imageSearch"`
+
 	// Storage ファイルストレージ設定
 	Storage struct {
 		// Type ストレージタイプ (default: local)
@@ -290,6 +310,14 @@ func init() {
 	viper.SetDefault("es.url", "")
 	viper.SetDefault("es.username", "elastic")
 	viper.SetDefault("es.password", "password")
+	viper.SetDefault("imageSearch.url", "")
+	viper.SetDefault("imageSearch.apiKey", "")
+	viper.SetDefault("imageSearch.webhookUrl", "")
+	viper.SetDefault("imageSearch.textTimeout", 5)
+	viper.SetDefault("imageSearch.jobPollInterval", 10)
+	viper.SetDefault("imageSearch.jobTimeout", 21600)
+	viper.SetDefault("imageSearch.knnBoost", 5.0)
+	viper.SetDefault("imageSearch.knnSimilarity", 0.2)
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -468,9 +496,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(mm, cm, repo, logger, config)
+		return search.NewESEngine(mm, cm, repo, fs, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
@@ -488,6 +516,16 @@ func provideESEngineConfig(c *Config) search.ESEngineConfig {
 		URL:      c.ES.URL,
 		Username: c.ES.Username,
 		Password: c.ES.Password,
+		ImageSearch: search.ImageSearchConfig{
+			URL:             c.ImageSearch.URL,
+			APIKey:          c.ImageSearch.APIKey,
+			WebhookURL:      c.ImageSearch.WebhookURL,
+			TextTimeout:     time.Duration(c.ImageSearch.TextTimeout) * time.Second,
+			JobPollInterval: time.Duration(c.ImageSearch.JobPollInterval) * time.Second,
+			JobTimeout:      time.Duration(c.ImageSearch.JobTimeout) * time.Second,
+			KnnBoost:        c.ImageSearch.KnnBoost,
+			KnnSimilarity:   c.ImageSearch.KnnSimilarity,
+		},
 	}
 }
 

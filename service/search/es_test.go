@@ -20,6 +20,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 func TestESEngine_Do_From(t *testing.T) {
@@ -113,7 +114,7 @@ func TestESEngine_Do_From(t *testing.T) {
 					wantFrom = fmt.Sprintf(`,{"terms":{"userId":%s}}`, usersJSON)
 				}
 			}
-			assert.JSONEq(t, fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"isPublic":{"value":true}}}%s]}}}`, wantFrom), requestBody)
+			assert.JSONEq(t, fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"isPublic":{"value":true}}}%s]}},"_source":{"excludes":["imageVector"]}}`, wantFrom), requestBody)
 			if len(tc.from) == 0 {
 				assert.Zero(t, repo.calls)
 			} else {
@@ -202,6 +203,69 @@ func TestESEngine_Do_Context(t *testing.T) {
 	}
 }
 
+func TestESEngine_Do_HybridSearch(t *testing.T) {
+	t.Parallel()
+
+	var requestBody string
+	client, err := elasticsearch.NewClient(elasticsearch.Config{
+		Transport: searchTestTransport(func(req *http.Request) (*http.Response, error) {
+			assert.Equal(t, "/traq_message/_search", req.URL.Path)
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
+			}
+			requestBody = string(body)
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0},"hits":[]}}`)),
+			}, nil
+		}),
+	})
+	require.NoError(t, err)
+	engine := &esEngine{
+		client: client,
+		repo:   &searchTestRepository{},
+		mm:     &searchTestMessageManager{},
+		l:      zap.NewNop(),
+		imageClient: &searchTestImageClient{
+			available: true,
+			vector:    []float64{0.1, 0.2, 0.3},
+		},
+		imageConfig: ImageSearchConfig{
+			KnnBoost:      5,
+			KnnSimilarity: 0.2,
+		},
+	}
+	query := &Query{
+		Word:   optional.From("cat"),
+		Limit:  optional.From(10),
+		Offset: optional.From(20),
+	}
+
+	_, err = engine.Do(context.Background(), query)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{
+		"query": {"bool": {"must": [
+			{"simple_query_string": {"query": "cat", "fields": ["text"], "default_operator": "AND"}},
+			{"term": {"isPublic": {"value": true}}}
+		]}},
+		"knn": {
+			"field": "imageVector.vector",
+			"query_vector": [0.1, 0.2, 0.3],
+			"k": 30,
+			"num_candidates": 100,
+			"boost": 5,
+			"similarity": 0.2,
+			"filter": {"bool": {"must": [{"term": {"isPublic": {"value": true}}}]}}
+		},
+		"size": 10,
+		"from": 20,
+		"_source": {"excludes": ["imageVector"]}
+	}`, requestBody)
+}
+
 type searchTestRepository struct {
 	repository.Repository
 	groups       map[uuid.UUID]*model.UserGroup
@@ -245,6 +309,27 @@ func (m *searchTestMessageManager) GetIn(ctx context.Context, _ []uuid.UUID) ([]
 		m.beforeGet()
 	}
 	return nil, ctx.Err()
+}
+
+type searchTestImageClient struct {
+	available bool
+	vector    []float64
+}
+
+func (c *searchTestImageClient) EmbedText(context.Context, string) ([]float64, error) {
+	return c.vector, nil
+}
+
+func (c *searchTestImageClient) SubmitImageJob(context.Context, string, string, io.Reader, string) (uuid.UUID, error) {
+	return uuid.Nil, ErrImageSearchUnavailable
+}
+
+func (c *searchTestImageClient) GetJob(context.Context, uuid.UUID) (ImageJobStatus, []float64, error) {
+	return "", nil, ErrImageSearchUnavailable
+}
+
+func (c *searchTestImageClient) Available() bool {
+	return c.available
 }
 
 type searchTestTransport func(*http.Request) (*http.Response, error)

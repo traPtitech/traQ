@@ -11,12 +11,16 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // ErrServiceUnavailable エラー 現在検索サービスが利用できません
 var ErrServiceUnavailable = errors.New("search service is unavailable")
+
+// ErrImageSearchUnavailable エラー 画像検索サービスが利用できません
+var ErrImageSearchUnavailable = errors.New("image search service is unavailable")
 
 // Engine 検索エンジンインターフェイス
 type Engine interface {
@@ -26,6 +30,14 @@ type Engine interface {
 	Available() bool
 	// Close 検索サービスを終了します
 	Close() error
+	// ProcessImagesForMessages バッチ用: 指定メッセージの画像を処理してインデックスを更新します
+	ProcessImagesForMessages(ctx context.Context, messages []*model.Message) error
+	// GetUnprocessedImageMessageIDs 画像付きだがインデックス未処理のメッセージIDを取得します
+	GetUnprocessedImageMessageIDs(ctx context.Context, retryFailed bool) ([]uuid.UUID, error)
+	// ClearImageIndex 全メッセージの画像インデックスデータと画像埋め込みジョブをクリアします
+	ClearImageIndex(ctx context.Context) error
+	// HandleImageWebhook embedding-serverからの画像埋め込みジョブ通知を処理します
+	HandleImageWebhook(ctx context.Context, jobID uuid.UUID) error
 }
 
 // Query 検索クエリ
