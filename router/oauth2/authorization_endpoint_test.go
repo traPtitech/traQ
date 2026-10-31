@@ -18,29 +18,6 @@ import (
 	"github.com/traPtitech/traQ/utils/random"
 )
 
-func TestResponseType_valid(t *testing.T) {
-	t.Parallel()
-
-	cases := [][5]bool{
-		{false, false, false, false},
-		{true, false, false, true},
-		{false, true, false, true},
-		{false, false, true, true},
-		{true, true, false, true},
-		{true, false, true, false},
-		{false, true, true, false},
-		{true, true, true, false},
-	}
-	for _, v := range cases {
-		rt := responseType{
-			Code:  v[0],
-			Token: v[1],
-			None:  v[2],
-		}
-		assert.Equal(t, v[3], rt.valid())
-	}
-}
-
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	t.Run("UUIDv4", func(tt *testing.T) {

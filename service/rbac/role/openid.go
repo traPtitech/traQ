@@ -7,4 +7,6 @@ import (
 // OpenID OIDC専用ロール
 const OpenID = "openid"
 
-var openIDPerms []permission.Permission
+var openIDPerms = []permission.Permission{
+	permission.GetOIDCUserInfo,
+}

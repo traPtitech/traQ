@@ -32,6 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/oidc"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
@@ -147,6 +148,7 @@ func TestMain(m *testing.M) {
 			FileManager:    env.FM,
 			Logger:         l,
 			Imaging:        env.IP,
+			OIDC:           oidc.NewOIDCService(repo, "https://example.com", r),
 			Config: Config{
 				Version:         "version",
 				Revision:        "revision",
