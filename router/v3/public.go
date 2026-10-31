@@ -2,6 +2,7 @@ package v3
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/labstack/echo/v5"
@@ -26,6 +27,7 @@ func (h *Handlers) GetVersion(c *echo.Context) error {
 	for p := range h.EnabledExternalAccountProviders {
 		extLogins = append(extLogins, p)
 	}
+	slices.Sort(extLogins)
 	return c.JSON(http.StatusOK, map[string]any{
 		"version":  h.Version,
 		"revision": h.Revision,

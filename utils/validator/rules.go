@@ -40,6 +40,13 @@ var UserNameRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, UserNameRule...)
 
+// MessageNonceRule メッセージ投稿の任意nonceのバリデーションルール
+var MessageNonceRule = []vd.Rule{
+	RequiredIfValid,
+	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),
+	vd.RuneLength(1, 32),
+}
+
 // BotUserNameRule BOTユーザー名バリデーションルール
 var BotUserNameRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),

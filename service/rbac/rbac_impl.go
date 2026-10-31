@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/traPtitech/traQ/model"
@@ -113,7 +114,9 @@ func (r *rbacImpl) reload() error {
 
 func (r *rbacImpl) GetGrantedPermissions(roleName string) []permission.Permission {
 	if roleName == role.Admin {
-		return permission.List
+		perms := slices.Clone(permission.List)
+		slices.Sort(perms)
+		return perms
 	}
 	r.rolesMutex.RLock()
 	ro, ok := r.roles[roleName]

@@ -2,6 +2,7 @@ package rbac_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -130,6 +131,14 @@ func Test_rbacImpl_GetGrantedPermissions(t *testing.T) {
 	t.Parallel()
 
 	r := setup(t)
+
+	t.Run("admin", func(t *testing.T) {
+		t.Parallel()
+
+		perms := r.GetGrantedPermissions(role.Admin)
+		assert.True(t, slices.IsSorted(perms))
+		assert.ElementsMatch(t, permission.List, perms)
+	})
 
 	t.Run("non existent", func(t *testing.T) {
 		t.Parallel()

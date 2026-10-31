@@ -419,6 +419,23 @@ func (h *Handlers) EditUser(c *echo.Context) error {
 		return err
 	}
 
+	if req.Role.Valid {
+		roles, err := h.Repo.GetAllUserRoles(c.Request().Context())
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		assignable := false
+		for _, r := range roles {
+			if r.Name == req.Role.V && role.IsAssignableToHuman(r) {
+				assignable = true
+				break
+			}
+		}
+		if !assignable {
+			return herror.BadRequest("invalid user role")
+		}
+	}
+
 	args := repository.UpdateUserArgs{
 		DisplayName: req.DisplayName,
 		TwitterID:   req.TwitterID,

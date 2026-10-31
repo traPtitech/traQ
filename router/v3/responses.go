@@ -215,6 +215,13 @@ type BotTokens struct {
 	AccessTokenRevoked bool   `json:"accessTokenRevoked"`
 }
 
+// RoomParticipantUpdateResult 参加者の発言権限更新結果
+type RoomParticipantUpdateResult struct {
+	ParticipantID string `json:"participantId"`
+	Status        string `json:"status"`
+	Error         string `json:"error,omitempty"`
+}
+
 type BotDetail struct {
 	ID              uuid.UUID           `json:"id"`
 	BotUserID       uuid.UUID           `json:"botUserId"`

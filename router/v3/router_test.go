@@ -36,6 +36,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/utils/gormzap"
+	mutil "github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -142,6 +143,7 @@ func TestMain(m *testing.M) {
 			SessStore:      env.SessStore,
 			ChannelManager: env.CM,
 			MessageManager: env.MM,
+			NonceManager:   mutil.NewNonceManager(),
 			FileManager:    env.FM,
 			Logger:         l,
 			Imaging:        env.IP,

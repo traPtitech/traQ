@@ -48,7 +48,7 @@ func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
 
 	mimeType := uploadedFile.Header.Get(echo.HeaderContentType)
 	soundName := c.FormValue("name")
-	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
+	creatorID := getRequestUserID(c)
 	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
 
 	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
@@ -128,9 +128,7 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 
 	info, err := ingressClient.CreateIngress(ctx, ingReq)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": fmt.Sprintf("failed to create ingress: %v", err),
-		})
+		return herror.InternalServerError(err)
 	}
 
 	resp := struct {
@@ -281,22 +279,22 @@ func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 		}
 	}
 
-	response := make([]map[string]string, 0)
+	response := make([]RoomParticipantUpdateResult, 0, len(succeedUsers)+len(failedUsers))
 
 	// Add successful participants
-	for _, id := range succeedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "success",
+	for _, userID := range succeedUsers {
+		response = append(response, RoomParticipantUpdateResult{
+			ParticipantID: userID,
+			Status:        "success",
 		})
 	}
 
 	// Add failed participants
-	for _, id := range failedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "failed",
-			"error":         failedUsers[id],
+	for userID, errorMessage := range failedUsers {
+		response = append(response, RoomParticipantUpdateResult{
+			ParticipantID: userID,
+			Status:        "failed",
+			Error:         errorMessage,
 		})
 	}
 
