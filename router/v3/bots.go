@@ -323,7 +323,7 @@ type PostBotActionJoinRequest struct {
 
 func (r PostBotActionJoinRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicChannelID), // 公開チャンネルのみ許可
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicOrThreadChannelID),
 	)
 }
 
