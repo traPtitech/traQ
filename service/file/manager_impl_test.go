@@ -415,6 +415,69 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, "image/svg+xml", thumbs[0].Mime)
 		}
 	})
+	t.Run("audio with generating waveform (m4a, io.ReadSeeker)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+
+		data := []byte("test text file")
+		hash := "7e6d5d7ae4965bfecc6d818f76eb832b"
+		args := SaveArgs{
+			FileName:  "dummy.m4a",
+			FileSize:  int64(len(data)),
+			MimeType:  "audio/m4a",
+			FileType:  model.FileTypeUserFile,
+			ChannelID: optional.From(uuid.NewV3(uuid.Nil, "c")),
+			Src:       bytes.NewReader(data),
+		}
+		waveform := bytes.NewBufferString("dummy svg file")
+
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
+			Do(func(src io.Reader, _, _, _ string, _ model.FileType) {
+				_, _ = io.Copy(io.Discard, src)
+			}).
+			Return(nil).
+			Times(1)
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
+			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
+				_, _ = io.Copy(io.Discard, src)
+				return nil
+			}).
+			Times(1)
+		repo.EXPECT().
+			SaveFileMeta(gomock.Any(), gomock.Any(), []*model.FileACLEntry{{UserID: uuid.Nil, Allow: true}}).
+			Do(func(_ context.Context, meta *model.FileMeta, _ []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Return(nil).
+			Times(1)
+		ip.EXPECT().
+			WaveformM4a(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(src io.ReadSeeker, _, _ int) { _, _ = io.Copy(io.Discard, src) }).
+			Return(waveform, nil).
+			Times(1)
+
+		result, err := fm.Save(context.TODO(), args)
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, result.GetID())
+			assert.EqualValues(t, args.FileName, result.GetFileName())
+			assert.EqualValues(t, args.FileSize, result.GetFileSize())
+			assert.EqualValues(t, args.MimeType, result.GetMIMEType())
+			assert.EqualValues(t, args.FileType, result.GetFileType())
+			assert.EqualValues(t, args.ChannelID, result.GetUploadChannelID())
+			assert.EqualValues(t, args.CreatorID, result.GetCreatorID())
+			assert.EqualValues(t, hash, result.GetMD5Hash())
+			assert.EqualValues(t, false, result.IsAnimatedImage())
+			assert.NotEmpty(t, result.GetCreatedAt())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeWaveform, thumbs[0].Type)
+			assert.EqualValues(t, "image/svg+xml", thumbs[0].Mime)
+		}
+	})
 }
 
 func TestManagerImpl_Get(t *testing.T) {
