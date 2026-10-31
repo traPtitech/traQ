@@ -77,7 +77,7 @@ func (r PostWebhooksRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(1, 1000)),
-		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicChannelID),
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicOrThreadChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
 	)
 }
@@ -128,7 +128,7 @@ func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.Name, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, validator.RequiredIfValid, vd.RuneLength(1, 1000)),
-		vd.Field(&r.ChannelID, validator.NotNilUUID, utils.IsPublicChannelID),
+		vd.Field(&r.ChannelID, validator.NotNilUUID, utils.IsPublicOrThreadChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
 		vd.Field(&r.OwnerID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 	)

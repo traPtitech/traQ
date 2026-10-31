@@ -29,79 +29,59 @@ func NewRequestValidateContext(c *echo.Context) context.Context {
 }
 
 // IsPublicChannelID 公開チャンネルのUUIDである
-var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
-	const errMessage = "invalid channel id"
-
-	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
-	if !ok {
-		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
-	}
-
-	switch v := value.(type) {
-	case nil:
-		return nil
-	case uuid.UUID:
-		if !cm.IsPublicChannel(ctx, v) {
-			return errors.New(errMessage)
-		}
-	case optional.Of[uuid.UUID]:
-		if v.Valid && !cm.IsPublicChannel(ctx, v.V) {
-			return errors.New(errMessage)
-		}
-	case string:
-		if !cm.IsPublicChannel(ctx, uuid.FromStringOrNil(v)) {
-			return errors.New(errMessage)
-		}
-	case []byte:
-		if !cm.IsPublicChannel(ctx, uuid.FromBytesOrNil(v)) {
-			return errors.New(errMessage)
-		}
-	default:
-		return errors.New(errMessage)
-	}
-	return nil
+var IsPublicChannelID = channelIDRule(func(ctx context.Context, cm channel.Manager, id uuid.UUID) (bool, error) {
+	return cm.IsPublicChannel(ctx, id), nil
 })
 
-// IsNotThreadChannelID スレッドチャンネルのUUIDでない
-var IsNotThreadChannelID = vd.WithContext(func(ctx context.Context, value any) error {
-	const errMessage = "invalid channel id"
-
-	cm, ok := ctx.Value(cmctxKey).(channel.Manager)
-	if !ok {
-		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
+// IsPublicOrThreadChannelID 公開チャンネルまたはスレッドチャンネルのUUIDである
+var IsPublicOrThreadChannelID = channelIDRule(func(ctx context.Context, cm channel.Manager, id uuid.UUID) (bool, error) {
+	if cm.IsPublicChannel(ctx, id) {
+		return true, nil
 	}
+	return cm.IsThreadChannel(ctx, id)
+})
 
-	var id uuid.UUID
-	switch v := value.(type) {
-	case nil:
-		return nil
-	case uuid.UUID:
-		id = v
-	case optional.Of[uuid.UUID]:
-		if !v.Valid {
+func channelIDRule(check func(context.Context, channel.Manager, uuid.UUID) (bool, error)) vd.Rule {
+	return vd.WithContext(func(ctx context.Context, value any) error {
+		const errMessage = "invalid channel id"
+
+		cm, ok := ctx.Value(cmctxKey).(channel.Manager)
+		if !ok {
+			return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
+		}
+
+		var id uuid.UUID
+		switch v := value.(type) {
+		case nil:
 			return nil
-		}
-		id = v.V
-	case string:
-		id = uuid.FromStringOrNil(v)
-	case []byte:
-		id = uuid.FromBytesOrNil(v)
-	default:
-		return errors.New(errMessage)
-	}
-
-	isThread, err := cm.IsThreadChannel(ctx, id)
-	if err != nil {
-		if errors.Is(err, channel.ErrChannelNotFound) {
+		case uuid.UUID:
+			id = v
+		case optional.Of[uuid.UUID]:
+			if !v.Valid {
+				return nil
+			}
+			id = v.V
+		case string:
+			id = uuid.FromStringOrNil(v)
+		case []byte:
+			id = uuid.FromBytesOrNil(v)
+		default:
 			return errors.New(errMessage)
 		}
-		return vd.NewInternalError(err)
-	}
-	if isThread {
-		return errors.New(errMessage)
-	}
-	return nil
-})
+
+		valid, err := check(ctx, cm, id)
+		if err != nil {
+			if errors.Is(err, channel.ErrChannelNotFound) {
+				return errors.New(errMessage)
+			}
+			return vd.NewInternalError(err)
+		}
+		if !valid {
+			return errors.New(errMessage)
+		}
+		return nil
+	})
+}
 
 // IsActiveHumanUserID アカウントが有効な一般ユーザーのUUIDである
 var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
