@@ -22,6 +22,7 @@ import (
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/ogp"
 	rbac2 "github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/unread"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
@@ -42,6 +43,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		exevent.NewStampThrottler,
 		imaging.NewProcessor,
 		notification.NewService,
+		unread.NewService,
 		ogp.NewServiceImpl,
 		rbac2.New,
 		viewer.NewManager,

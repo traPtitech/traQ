@@ -439,11 +439,6 @@ func (h *Handlers) EditUser(c *echo.Context) error {
 		if err := h.SessStore.RevokeSessionsByUserID(c.Request().Context(), userID); err != nil {
 			return herror.InternalServerError(err)
 		}
-		// 2. 未読を削除（重いので一時的にコメントアウトしている; Hubのイベント経由などで非同期処理にすべき）
-		// （DeleteUnreadsByUserIDなんてメソッドは無いので生やすこと）
-		// 	if err := h.Repo.DeleteUnreadsByUserID(userID); err != nil {
-		// 		return herror.InternalServerError(err)
-		// 	}
 	}
 
 	return c.NoContent(http.StatusNoContent)

@@ -204,6 +204,21 @@ func (mr *MockMessageRepositoryMockRecorder) GetUserUnreadChannels(ctx, userID i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserUnreadChannels", reflect.TypeOf((*MockMessageRepository)(nil).GetUserUnreadChannels), ctx, userID)
 }
 
+// DeleteDeactivatedUserUnreads mocks base method.
+func (m *MockMessageRepository) DeleteDeactivatedUserUnreads(ctx context.Context, limit int) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDeactivatedUserUnreads", ctx, limit)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDeactivatedUserUnreads indicates an expected call of DeleteDeactivatedUserUnreads.
+func (mr *MockMessageRepositoryMockRecorder) DeleteDeactivatedUserUnreads(ctx, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDeactivatedUserUnreads", reflect.TypeOf((*MockMessageRepository)(nil).DeleteDeactivatedUserUnreads), ctx, limit)
+}
+
 // RemoveStampFromMessage mocks base method.
 func (m *MockMessageRepository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
