@@ -1556,8 +1556,16 @@ paths:
                 description: チャンネル購読状態の配列
                 items:
                   $ref: "#/components/schemas/UserSubscribeState"
+              example:
+                - channelId: "550e8400-e29b-41d4-a716-446655440000"
+                  level: 1
+                - channelId: "550e8400-e29b-41d4-a716-446655440001"
+                  level: 2
       operationId: getMyChannelSubscriptions
-      description: 自身のチャンネル購読状態を取得します。
+      description: |-
+        自身のチャンネル購読状態を取得します。
+
+        購読レベルが0のチャンネルは返しません。
   "/users/me/subscriptions/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1590,6 +1598,8 @@ paths:
       description: |-
         自身の指定したチャンネルの購読レベルを設定します。
 
+        `level`に`0`を指定すると購読を解除します。
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
   /users/me/thread-subscription-defaults:
     get:
@@ -1609,9 +1619,9 @@ paths:
                   $ref: "#/components/schemas/UserThreadSubscriptionDefault"
       operationId: getMyThreadSubscriptionDefaults
       description: |-
-        自身の、チャンネルごとのスレッドのデフォルト購読設定を取得します。
+        チャンネルごとの、自分のスレッドのデフォルト購読設定を取得します。
 
-        明示的に設定されたチャンネルのみ返します。配列に含まれないチャンネルでは、そのチャンネル自身の購読レベルを継承します。
+        継承（-1）のチャンネルは返しません。省略されたチャンネルでは、そのチャンネルに対する自分の購読レベルを継承します。
   "/users/me/thread-subscription-defaults/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1641,7 +1651,7 @@ paths:
       description: |-
         指定したチャンネル内のスレッドに適用する、自分のデフォルト購読レベルを設定します。
 
-        `level`に`-1`を指定すると、そのチャンネルに対する自分の購読レベルを継承します。
+        `level`に`-1`を指定すると設定を解除し、そのチャンネルに対する自分の購読レベルを継承します。
 
         channelIdにはPublicチャンネルのIDのみを指定することができます。
   /webhooks:
@@ -6101,7 +6111,13 @@ components:
           description: チャンネルUUID
           format: uuid
         level:
-          $ref: "#/components/schemas/ChannelSubscribeLevel"
+          allOf:
+            - $ref: "#/components/schemas/ChannelSubscribeLevel"
+          description: 購読レベル。0のチャンネルは取得結果に含まれません。
+          enum:
+            - 1
+            - 2
+          example: 1
       required:
         - channelId
         - level
