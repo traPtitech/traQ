@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
@@ -878,6 +879,26 @@ func TestHandlers_GetUser(t *testing.T) {
 		obj.Value("groups").Array().Length().IsEqual(0)
 		obj.Value("bio").String().IsEmpty()
 		obj.Value("homeChannel").IsNull()
+	})
+
+	t.Run("last online update", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		e := env.R(t)
+
+		// Warm the same profile cache used by the user detail endpoint.
+		e.GET(path, user.GetID()).WithCookie(session.CookieName, s).
+			Expect().Status(http.StatusOK).JSON().Object().Value("lastOnline").IsNull()
+
+		lastOnline := time.Date(2026, 9, 24, 10, 15, 0, 123456000, time.UTC)
+		require.NoError(t, env.Repository.UpdateUser(t.Context(), user.GetID(), repository.UpdateUserArgs{
+			LastOnline: optional.From(lastOnline),
+		}))
+
+		e.GET(path, user.GetID()).WithCookie(session.CookieName, s).
+			Expect().Status(http.StatusOK).JSON().Object().Value("lastOnline").String().
+			IsEqual(lastOnline.Format(time.RFC3339Nano))
 	})
 }
 

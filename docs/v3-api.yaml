@@ -19,6 +19,8 @@ servers:
 x-traq-codegen-schemas:
   description: HTTPエンドポイントから参照されていないが、クライアントがWebSocketイベントの型を生成するために使用するコンポーネント
   schemas:
+    UserOfflineEvent:
+      $ref: "#/components/schemas/UserOfflineEvent"
     QallRoomStateChangedEvent:
       $ref: "#/components/schemas/QallRoomStateChangedEvent"
     QallSoundboardItemCreatedEvent:
@@ -134,7 +136,7 @@ paths:
               format: uuid
           in: query
           name: to
-          description: メンションされたユーザー
+          description: メンションされたユーザーまたはグループの UUID
         - schema:
             type: array
             items:
@@ -142,7 +144,8 @@ paths:
               format: uuid
           in: query
           name: from
-          description: メッセージを投稿したユーザー
+          description: |
+            メッセージを投稿したユーザーの UUID またはそのユーザーが所属するユーザーグループの UUID
         - schema:
             type: string
             format: uuid
@@ -183,16 +186,22 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
           in: query
           name: limit
-          description: 検索結果から取得するメッセージの最大件数
+          description: |-
+            検索結果から取得するメッセージの最大件数
+            limitとoffsetの合計は10000以下である必要があります
         - schema:
             type: integer
             minimum: 0
-            maximum: 9900
+            maximum: 9999
+            default: 0
           in: query
           name: offset
-          description: 検索結果から取得するメッセージのオフセット
+          description: |-
+            検索結果から取得するメッセージのオフセット
+            limitとoffsetの合計は10000以下である必要があります (limitを省略した場合は20として計算されます)
         - in: query
           name: sort
           schema:
@@ -227,7 +236,9 @@ paths:
                   - totalHits
                   - hits
         "400":
-          description: Bad Request
+          description: |-
+            Bad Request
+            limitとoffsetの合計が10000を超えている場合などに返されます。
         "503":
           description: search service is currently unavailable
   "/messages/{messageId}":
@@ -393,6 +404,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
+        "400":
+          description: |-
+            Bad Request
+            Publicチャンネルではありません。
         "404":
           description: |-
             Not Found
@@ -2370,6 +2385,21 @@ paths:
                   $ref: "#/components/schemas/UnreadChannel"
       operationId: getMyUnreadChannels
       description: 自分が現在未読のチャンネルの未読情報を取得します。
+  /meta:
+    get:
+      summary: メタ情報を取得
+      tags:
+        - public
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+      operationId: getMeta
+      description: 初期化に必要な公開情報を取得します。
   /version:
     get:
       summary: バージョンを取得
@@ -2627,11 +2657,12 @@ paths:
         + `id`: オンラインになったユーザーのId
 
         ### `USER_OFFLINE`
-        ユーザーがオフラインになった。
+        ユーザーの最後の接続の切断またはタイムアウトをサーバーが検出し、オフラインになった。
 
         対象: 全員
 
         + `id`: オフラインになったユーザーのId
+        + `last_online`: 最後の接続の切断をサーバーが検出した日時
 
         ### `USER_GROUP_CREATED`
         ユーザーグループが作成された
@@ -3813,7 +3844,9 @@ paths:
       - $ref: "#/components/parameters/messageIdInPath"
     delete:
       summary: Webhookの投稿メッセージを削除
-      description: 指定されたWebhookが投稿したメッセージを削除します。
+      description: |-
+        指定されたWebhookが投稿したメッセージを削除します。
+        アーカイブされているチャンネルのメッセージを削除することはできません。
       tags:
         - webhook
       operationId: DeleteWebhookMessage
@@ -3822,6 +3855,10 @@ paths:
           description: |-
             No Content
             正常に削除できました。
+        "400":
+          description: |-
+            Bad Request
+            チャンネルがアーカイブされています。
         "403":
           description: |-
             Forbidden
@@ -4191,7 +4228,9 @@ paths:
       tags:
         - oauth2
       operationId: getOAuth2Authorize
-      description: OAuth2 認可エンドポイント
+      description: |-
+        OAuth2 認可エンドポイント
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       parameters:
         - name: response_type
           in: query
@@ -4242,7 +4281,9 @@ paths:
       tags:
         - oauth2
       operationId: postOAuth2Authorize
-      description: OAuth2 認可エンドポイント
+      description: |-
+        OAuth2 認可エンドポイント
+        リダイレクト先がhttp(s)以外の場合は、S256のPKCEが必須で、prompt=noneは使用できません。
       requestBody:
         required: true
         content:
@@ -4636,7 +4677,7 @@ paths:
     post:
       summary: LiveKit Webhook受信
       description: >
-        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。  
+        LiveKit側で設定したWebhookから呼び出されるエンドポイントです。
         参加者の入室・退出などのイベントを受け取り、サーバ内で処理を行います。
       operationId: liveKitWebhook
       tags:
@@ -4659,7 +4700,7 @@ paths:
     get:
       summary: サウンドボード用の音声一覧を取得
       description: >
-        DBに保存されたサウンドボード情報を取得します。  
+        DBに保存されたサウンドボード情報を取得します。
         各アイテムには soundId, soundName, stampId が含まれます。
       operationId: getSoundboardList
       tags:
@@ -4677,8 +4718,8 @@ paths:
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
       description: >
-        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。  
-        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。  
+        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
+        クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
       operationId: postSoundboard
       tags:
@@ -4705,8 +4746,8 @@ paths:
     post:
       summary: アップロード済み音声を LiveKit ルームで再生
       description: >
-        S3上にある音声ファイルの署名付きURLを生成し、  
-        Ingressを介して指定ルームに音声を流します。    
+        S3上にある音声ファイルの署名付きURLを生成し、
+        Ingressを介して指定ルームに音声を流します。
         該当ルームに参加しているユーザであれば再生可能とします。
       operationId: postSoundboardPlay
       tags:
@@ -4747,6 +4788,7 @@ components:
             read: 読み取りスコープ
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
+            qall: Qall利用スコープ
     bearerAuth:
       type: http
       scheme: bearer
@@ -5398,7 +5440,7 @@ components:
           pattern: "^[a-zA-Z0-9_]{0,15}$"
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         updatedAt:
@@ -5680,7 +5722,7 @@ components:
           description: 更新日時
         lastOnline:
           type: string
-          description: 最終オンライン日時
+          description: 最後の接続の切断をサーバーが検出した日時
           format: date-time
           nullable: true
         twitterId:
@@ -6289,6 +6331,7 @@ components:
         - read
         - write
         - manage_bot
+        - qall
     OAuth2Client:
       title: OAuth2Client
       type: object
@@ -6341,7 +6384,7 @@ components:
           maxLength: 1000
         callbackUrl:
           type: string
-          description: コールバックURL
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         developerId:
           type: string
@@ -6407,7 +6450,7 @@ components:
           description: クライアント名
         callbackUrl:
           type: string
-          description: コールバックURL
+          description: コールバックURL (URL、またはcom.example.app:/callbackのようなリバースドメイン形式のスキームのURI)
           format: uri
         scopes:
           type: array
@@ -7105,6 +7148,23 @@ components:
       required:
         - userId
         - channelId
+    UserOfflineEvent:
+      title: UserOfflineEvent
+      type: object
+      description: USER_OFFLINEイベントのbody
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: オフラインになったユーザーのId
+        last_online:
+          type: string
+          format: date-time
+          description: 最後の接続の切断をサーバーが検出した日時
+          example: "2026-09-24T10:15:00.123456Z"
+      required:
+        - id
+        - last_online
     QallRoomStateChangedEvent:
       title: QallRoomStateChangedEvent
       type: object
@@ -7697,6 +7757,18 @@ components:
         - CreateClipFolder
         - EditClipFolder
         - DeleteClipFolder
+    Meta:
+      title: Meta
+      type: object
+      description: 初期化に必要な公開情報
+      properties:
+        canonicalOrigin:
+          type: string
+          format: uri
+          description: 共有リンクなどの生成に用いる正規の公開オリジン
+          example: "https://q.trap.jp"
+      required:
+        - canonicalOrigin
     Version:
       title: Version
       type: object

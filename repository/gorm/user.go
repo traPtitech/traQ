@@ -299,6 +299,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, args repo
 		return nil // パスワードのみの変更の時はUserUpdatedイベントを発生させない
 	}
 	if args.LastOnline.Valid && count == 1 {
+		r.forgetCache(id)
 		return nil // 最終オンライン日時のみの更新の時はUserUpdatedイベントを発生させない
 	}
 	if !changed {

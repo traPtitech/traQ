@@ -145,6 +145,41 @@ func (repo *Repository) GetUserGroup(ctx context.Context, id uuid.UUID) (*model.
 	return &g, nil
 }
 
+// GetUserGroupMemberIDs implements UserGroupRepository interface.
+func (repo *Repository) GetUserGroupMemberIDs(ctx context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
+	members := make(map[uuid.UUID][]uuid.UUID)
+
+	if len(groupIDs) == 0 {
+		return members, nil
+	}
+
+	var rows []struct {
+		GroupID uuid.UUID
+		UserID  uuid.NullUUID
+	}
+
+	if err := repo.db.WithContext(ctx).
+		Table("user_groups AS g").
+		Select("g.id AS group_id, m.user_id").
+		Joins("LEFT JOIN user_group_members AS m ON m.group_id = g.id").
+		Where("g.id IN ?", groupIDs).
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		if _, ok := members[row.GroupID]; !ok {
+			members[row.GroupID] = []uuid.UUID{}
+		}
+
+		if row.UserID.Valid {
+			members[row.GroupID] = append(members[row.GroupID], row.UserID.UUID)
+		}
+	}
+
+	return members, nil
+}
+
 // GetUserGroupByName implements UserGroupRepository interface.
 func (repo *Repository) GetUserGroupByName(ctx context.Context, name string) (*model.UserGroup, error) {
 	if len(name) == 0 {

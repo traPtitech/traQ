@@ -120,13 +120,18 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		// リサイズ
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
 		if err != nil {
-			if errors.Is(err, imaging.ErrInvalidImageSrc) {
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
+				return uuid.Nil, herror.BadRequest(tooLargeImage)
+			default:
+				// 予期しないエラー
+				return uuid.Nil, herror.InternalServerError(err)
 			}
-			// 予期しないエラー
-			return uuid.Nil, herror.InternalServerError(err)
 		}
+
 
 		args.Src = b
 		args.FileSize = b.Size()

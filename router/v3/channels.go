@@ -130,6 +130,10 @@ func (h *Handlers) EditChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
+	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
+		return herror.BadRequest("channel must be public")
+	}
+
 	var req PatchChannelRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -200,7 +204,12 @@ func (h *Handlers) GetChannelStats(c *echo.Context) error {
 
 // GetChannelTopic GET /channels/:channelID/topic
 func (h *Handlers) GetChannelTopic(c *echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]any{"topic": getParamChannel(c).Topic})
+	ctx := c.Request().Context()
+	ch := getParamChannel(c)
+	if !h.ChannelManager.IsPublicChannel(ctx, ch.ID) {
+		return herror.BadRequest("channel must be public")
+	}
+	return c.JSON(http.StatusOK, map[string]any{"topic": ch.Topic})
 }
 
 // PutChannelTopicRequest PUT /channels/:channelID/topic リクエストボディ
@@ -218,6 +227,10 @@ func (r PutChannelTopicRequest) Validate() error {
 func (h *Handlers) EditChannelTopic(c *echo.Context) error {
 	ctx := c.Request().Context()
 	ch := getParamChannel(c)
+
+	if !h.ChannelManager.IsPublicChannel(ctx, ch.ID) {
+		return herror.BadRequest("channel must be public")
+	}
 
 	var req PutChannelTopicRequest
 	if err := bindAndValidate(c, &req); err != nil {

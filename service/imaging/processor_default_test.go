@@ -3,6 +3,8 @@ package imaging
 import (
 	"bytes"
 	"image"
+	"image/color"
+	"image/gif"
 	"image/png"
 	"io"
 	"os"
@@ -140,6 +142,35 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 		},
 	}
 
+	test = append(test, []struct {
+		name   string
+		file   string
+		reader io.Reader
+		want   []byte
+		err    error
+	}{
+		{
+			name:   "too large (論理画面が巨大)",
+			reader: bytes.NewReader(mustEncodeGIF(t, 65535, 65535, 1, 0)),
+			err:    ErrPixelLimitExceeded,
+		},
+		{
+			name:   "too large (フレーム数が多すぎる)",
+			reader: bytes.NewReader(mustEncodeGIF(t, 500, 500, 500*500*maxGIFTotalPixelsMultiplier/(500*500)+1, 0)),
+			err:    ErrPixelLimitExceeded,
+		},
+		{
+			name:   "too large (画素数は小さいがフレーム数が上限を超える)",
+			reader: bytes.NewReader(mustEncodeGIF(t, 1, 1, maxGIFFrames+1, 0)),
+			err:    ErrPixelLimitExceeded,
+		},
+		{
+			name:   "invalid (論理画面の高さが0)",
+			reader: bytes.NewReader(mustEncodeGIF(t, 500, 0, 1, 0)),
+			err:    ErrInvalidImageSrc,
+		},
+	}...)
+
 	for _, tt := range test {
 		tt := tt
 
@@ -160,4 +191,43 @@ func TestProcessorDefault_FitAnimationGIF(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestProcessorDefault_FitAnimationGIF_BackgroundIndexOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	processor, _ := setup()
+	// グローバルカラーテーブル(2色)の範囲外を指す背景色インデックス
+	src := mustEncodeGIF(t, 500, 500, 2, 200)
+	actual, err := processor.FitAnimationGIF(bytes.NewReader(src), 256, 256)
+	require.NoError(t, err)
+	g, err := gif.DecodeAll(actual)
+	require.NoError(t, err)
+	assert.Equal(t, 256, g.Config.Width)
+	assert.Equal(t, 256, g.Config.Height)
+	assert.Len(t, g.Image, 2)
+}
+
+// mustEncodeGIF 論理画面サイズが width x height で、1x1のフレームを frames 枚持つGIFを生成します
+func mustEncodeGIF(t *testing.T, width, height, frames int, backgroundIndex byte) []byte {
+	t.Helper()
+
+	palette := color.Palette{color.Black, color.White}
+	g := &gif.GIF{
+		Config: image.Config{
+			ColorModel: palette,
+			Width:      width,
+			Height:     height,
+		},
+		BackgroundIndex: backgroundIndex,
+	}
+	for range frames {
+		g.Image = append(g.Image, image.NewPaletted(image.Rect(0, 0, 1, min(1, height)), palette))
+		g.Delay = append(g.Delay, 0)
+		g.Disposal = append(g.Disposal, gif.DisposalBackground)
+	}
+
+	buf := new(bytes.Buffer)
+	require.NoError(t, gif.EncodeAll(buf, g))
+	return buf.Bytes()
 }

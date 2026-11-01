@@ -348,7 +348,8 @@ func (env *Env) MakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
 func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model.Stamp {
 	t.Helper()
 	if name == rand {
-		name = random.AlphaNumeric(20)
+		// スタンプ名は禁止されている "0x" で始まらないようにする
+		name = "stamp_" + random.AlphaNumeric(20)
 	}
 	f := env.CreateFile(t, creator, uuid.Nil)
 	s, err := env.Repository.CreateStamp(context.TODO(), repository.CreateStampArgs{

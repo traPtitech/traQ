@@ -63,7 +63,7 @@ func (h *Handlers) SearchMessages(c *echo.Context) error {
 	}
 
 	// 仮置き
-	r, err := h.SearchEngine.Do(&q)
+	r, err := h.SearchEngine.Do(ctx, &q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

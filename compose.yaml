@@ -48,7 +48,7 @@ services:
       - backend
 
   mysql:
-    image: mariadb:10.11.19@sha256:7f22313fc130a377a44999965bcb0a08dd5b21e8502824c1b864f792f9bc66ab
+    image: mariadb:10.11.19@sha256:d769e37960821dfdcf096954f6e7ac89f747e116c1bba98e48edd265dfc7deae
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -87,7 +87,7 @@ services:
       retries: 60
 
   adminer:
-    image: adminer:6.0.1@sha256:51262b555d9e8ac3e1fa197eec41a3f47d05aea5520ac2ccc78a03ffc7d39b3a
+    image: adminer:6.2.0@sha256:400af848ac3f57938abde4867677df1b195674d232c8896a27d111d04b9c088c
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql
@@ -98,14 +98,14 @@ services:
       - "3001:8080"
 
   botdebugger:
-    image: golang:1.27.1-alpine@sha256:8a5910f31396cd4d89662f56c68b3ae31d374308270a1c3bd96672ee5ed43414
+    image: golang:1.27.3-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb
     restart: always
     volumes:
       - ./dev/bin:/app
     command: go run /app/bot_debugger.go -p 80
 
   s3:
-    image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
+    image: rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2
     restart: always
     ports:
       - "9000:9000"
