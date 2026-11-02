@@ -144,6 +144,21 @@ func (usc *UserSubscribeChannel) GetLevel() ChannelSubscribeLevel {
 	}
 }
 
+// UserThreadSubscriptionDefault ユーザー・親チャンネルごとのスレッドのデフォルト購読設定
+type UserThreadSubscriptionDefault struct {
+	UserID    uuid.UUID             `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID             `gorm:"type:char(36);not null;primaryKey"`
+	Level     ChannelSubscribeLevel `gorm:"type:tinyint;not null"`
+
+	User    User    `gorm:"constraint:user_thread_subscription_defaults_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:user_thread_subscription_defaults_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName UserThreadSubscriptionDefault構造体のテーブル名
+func (*UserThreadSubscriptionDefault) TableName() string {
+	return "user_thread_subscription_defaults"
+}
+
 // DMChannelMapping ダイレクトメッセージチャンネルとユーザーのマッピング
 type DMChannelMapping struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`

@@ -17,7 +17,17 @@ func (*vThread1Thread) TableName() string {
 	return "threads"
 }
 
-// vThread1 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads テーブル追加
+type vThread1UserThreadSubscriptionDefault struct {
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	Level     int       `gorm:"type:tinyint;not null"`
+}
+
+func (*vThread1UserThreadSubscriptionDefault) TableName() string {
+	return "user_thread_subscription_defaults"
+}
+
+// vThread1 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads・user_thread_subscription_defaults テーブル追加
 func vThread1() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "thread1",
@@ -60,11 +70,13 @@ func vThread1() *gormigrate.Migration {
 				return err
 			}
 
-			if err := db.AutoMigrate(&vThread1Thread{}); err != nil {
+			if err := db.AutoMigrate(&vThread1Thread{}, &vThread1UserThreadSubscriptionDefault{}); err != nil {
 				return err
 			}
 
 			foreignKeys := [][6]string{
+				{"user_thread_subscription_defaults", "user_thread_subscription_defaults_user_id_users_id_foreign", "user_id", "users(id)", "CASCADE", "CASCADE"},
+				{"user_thread_subscription_defaults", "user_thread_subscription_defaults_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 				{"threads", "threads_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 				{"threads", "threads_message_id_messages_id_foreign", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 			}
@@ -77,6 +89,10 @@ func vThread1() *gormigrate.Migration {
 			return nil
 		},
 		Rollback: func(db *gorm.DB) error {
+			if err := db.Migrator().DropTable("user_thread_subscription_defaults"); err != nil {
+				return err
+			}
+
 			foreignKeys := []string{
 				"threads_channel_id_channels_id_foreign",
 				"threads_message_id_messages_id_foreign",
