@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -471,6 +472,40 @@ func (repo *Repository) GetChannelSubscriptions(ctx context.Context, query repos
 	result := make([]*model.UserSubscribeChannel, 0)
 	err := tx.Find(&result).Error
 	return result, err
+}
+
+// GetThreadSubscriptionDefaults implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscriptionDefaults(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscriptionDefault, error) {
+	if userID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+	result := make([]*model.UserThreadSubscriptionDefault, 0)
+	err := repo.db.WithContext(ctx).Where("user_id = ?", userID).Find(&result).Error
+	return result, err
+}
+
+// SetThreadSubscriptionDefault implements ChannelRepository interface.
+func (repo *Repository) SetThreadSubscriptionDefault(ctx context.Context, userID, channelID uuid.UUID, level int) error {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	if level < -1 || level > 2 {
+		return repository.ArgError("level", "level must be between -1 and 2")
+	}
+	setting := model.UserThreadSubscriptionDefault{
+		UserID:    userID,
+		ChannelID: channelID,
+		Level:     model.ChannelSubscribeLevel(level),
+	}
+	tx := repo.db.WithContext(ctx)
+	if level == -1 {
+		return tx.Delete(&setting).Error
+	}
+
+	return tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"level"}),
+	}).Create(&setting).Error
 }
 
 // GetChannelEvents implements ChannelRepository interface.

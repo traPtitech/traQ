@@ -511,6 +511,65 @@ func (h *Handlers) SetChannelSubscribeLevel(c *echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// GetMyThreadSubscriptionDefaults GET /users/me/thread-subscription-defaults
+func (h *Handlers) GetMyThreadSubscriptionDefaults(c *echo.Context) error {
+	settings, err := h.Repo.GetThreadSubscriptionDefaults(c.Request().Context(), getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type response struct {
+		ChannelID uuid.UUID `json:"channelId"`
+		Level     int       `json:"level"`
+	}
+	result := make([]response, len(settings))
+	for i, setting := range settings {
+		result[i] = response{ChannelID: setting.ChannelID, Level: setting.Level.Int()}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ChannelID.String() < result[j].ChannelID.String() })
+
+	return extension.ServeJSONWithETag(c, result)
+}
+
+// PutThreadSubscriptionDefaultRequest PUT /users/me/thread-subscription-defaults/:channelID リクエストボディ
+type PutThreadSubscriptionDefaultRequest struct {
+	Level optional.Of[int] `json:"level"`
+}
+
+func (r PutThreadSubscriptionDefaultRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Level, vd.NotNil, vd.Min(-1), vd.Max(2)),
+	)
+}
+
+// SetMyThreadSubscriptionDefault PUT /users/me/thread-subscription-defaults/:channelID
+func (h *Handlers) SetMyThreadSubscriptionDefault(c *echo.Context) error {
+	ctx := c.Request().Context()
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PutThreadSubscriptionDefaultRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	ch, err := h.ChannelManager.GetChannel(ctx, channelID)
+	if err != nil {
+		if err == channel.ErrChannelNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	}
+
+	if !ch.IsPublic() {
+		return herror.BadRequest("channel must be public")
+	}
+
+	if err := h.Repo.SetThreadSubscriptionDefault(ctx, getRequestUserID(c), ch.ID, req.Level.V); err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetUserStats GET /users/me/:userID/stats
 func (h *Handlers) GetUserStats(c *echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
