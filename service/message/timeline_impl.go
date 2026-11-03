@@ -26,6 +26,12 @@ func (t *timeline) Query() TimelineQuery {
 func (t *timeline) Records() []Message {
 	arr := make([]Message, len(t.records))
 	for i, record := range t.records {
+		if t.preloaded {
+			record.ThreadID = optional.Of[uuid.UUID]{}
+			if record.Thread != nil {
+				record.ThreadID = optional.From(record.Thread.ChannelID)
+			}
+		}
 		arr[i] = &timelineMessage{Model: record, preloaded: t.preloaded}
 	}
 	return arr
@@ -89,7 +95,7 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		object
 		Pinned   bool                   `json:"pinned"`
 		Stamps   []model.MessageStamp   `json:"stamps"`
-		ThreadID optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		ThreadID optional.Of[uuid.UUID] `json:"threadId"`
 	}
 	var v interface{}
 	if m.preloaded {
@@ -102,8 +108,9 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 				CreatedAt: m.Model.CreatedAt,
 				UpdatedAt: m.Model.UpdatedAt,
 			},
-			Pinned: m.Model.Pin != nil,
-			Stamps: m.Model.Stamps,
+			Pinned:   m.Model.Pin != nil,
+			Stamps:   m.Model.Stamps,
+			ThreadID: m.Model.ThreadID,
 		}
 	} else {
 		v = &object{

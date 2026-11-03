@@ -5,17 +5,20 @@ import (
 
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // Message データベースに格納するmessageの構造体
 type Message struct {
-	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
-	UserID    uuid.UUID      `gorm:"type:char(36);not null;"`
-	ChannelID uuid.UUID      `gorm:"type:char(36);not null;index:idx_messages_channel_id_deleted_at_created_at,priority:1"`
-	Text      string         `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	CreatedAt time.Time      `gorm:"precision:6;index;index:idx_messages_channel_id_deleted_at_created_at,priority:3;index:idx_messages_deleted_at_created_at,priority:2"`
-	UpdatedAt time.Time      `gorm:"precision:6;index:idx_messages_deleted_at_updated_at,priority:2"`
-	DeletedAt gorm.DeletedAt `gorm:"precision:6;index:idx_messages_channel_id_deleted_at_created_at,priority:2;index:idx_messages_deleted_at_created_at,priority:1;index:idx_messages_deleted_at_updated_at,priority:1"`
+	ID        uuid.UUID              `gorm:"type:char(36);not null;primaryKey"`
+	UserID    uuid.UUID              `gorm:"type:char(36);not null;"`
+	ChannelID uuid.UUID              `gorm:"type:char(36);not null;index:idx_messages_channel_id_deleted_at_created_at,priority:1"`
+	Text      string                 `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	CreatedAt time.Time              `gorm:"precision:6;index;index:idx_messages_channel_id_deleted_at_created_at,priority:3;index:idx_messages_deleted_at_created_at,priority:2"`
+	UpdatedAt time.Time              `gorm:"precision:6;index:idx_messages_deleted_at_updated_at,priority:2"`
+	DeletedAt gorm.DeletedAt         `gorm:"precision:6;index:idx_messages_channel_id_deleted_at_created_at,priority:2;index:idx_messages_deleted_at_created_at,priority:1;index:idx_messages_deleted_at_updated_at,priority:1"`
+	ThreadID  optional.Of[uuid.UUID] `gorm:"-"`
 
 	User    *User          `gorm:"constraint:messages_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Channel *Channel       `gorm:"constraint:messages_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
