@@ -2,6 +2,7 @@ package message
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -71,6 +72,13 @@ func TestManager_Get(t *testing.T) {
 			assert.EqualValues(t, msg.UpdatedAt, result.GetUpdatedAt())
 			assert.EqualValues(t, msg.Pin, result.GetPin())
 			assert.EqualValues(t, msg.Stamps, result.GetStamps())
+			data, err := json.Marshal(result)
+			if assert.NoError(t, err) {
+				var response map[string]interface{}
+				if assert.NoError(t, json.Unmarshal(data, &response)) {
+					assert.EqualValues(t, msg.Thread.ChannelID.String(), response["threadId"])
+				}
+			}
 		}
 
 		// キャッシュからもう一度

@@ -46,7 +46,7 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 				}
 				return nil, fmt.Errorf("failed to GetMessageByID: %w", err)
 			}
-			return &message{Model: m}, nil
+			return newMessage(m), nil
 		}, cacheTTL, cacheTTL*2, sc.With2QBackend(cacheSize)),
 	}, nil
 }
@@ -70,7 +70,7 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 		return nil, err
 	}
 	ret := utils.Map(messages, func(m *model.Message) Message {
-		return &message{Model: m}
+		return newMessage(m)
 	})
 	return ret, nil
 }
@@ -133,7 +133,7 @@ func (m *manager) create(ctx context.Context, channelID, userID uuid.UUID, conte
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateMessage: %w", err)
 	}
-	return &message{Model: msg}, nil
+	return newMessage(msg), nil
 }
 
 func (m *manager) Edit(ctx context.Context, id uuid.UUID, content string) error {

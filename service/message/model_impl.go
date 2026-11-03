@@ -21,6 +21,14 @@ type message struct {
 	sync.RWMutex
 }
 
+func newMessage(m *model.Message) *message {
+	m.ThreadID = optional.Of[uuid.UUID]{}
+	if m.Thread != nil {
+		m.ThreadID = optional.From(m.Thread.ChannelID)
+	}
+	return &message{Model: m}
+}
+
 func (m *message) GetID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
@@ -127,11 +135,7 @@ func (m *message) GetPin() *model.Pin {
 func (m *message) GetThreadID() optional.Of[uuid.UUID] {
 	m.RLock()
 	defer m.RUnlock()
-	thread := m.Model.Thread
-	if thread == nil {
-		return optional.Of[uuid.UUID]{}
-	}
-	return optional.From(thread.ChannelID)
+	return m.Model.ThreadID
 }
 
 func (m *message) MarshalJSON() ([]byte, error) {
@@ -147,7 +151,6 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		ThreadID  optional.Of[uuid.UUID] `json:"threadId"`
 	}
 	stamps := m.GetStamps()
-	threadID := m.GetThreadID()
 	m.RLock()
 	v := &obj{
 		ID:        m.Model.ID,
@@ -158,7 +161,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		UpdatedAt: m.Model.UpdatedAt,
 		Pinned:    m.Model.Pin != nil,
 		Stamps:    stamps,
-		ThreadID:  threadID,
+		ThreadID:  m.Model.ThreadID,
 	}
 	m.RUnlock()
 	return jsonIter.ConfigFastest.Marshal(v)
