@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/profiler v0.7.1
 	firebase.google.com/go/v4 v4.20.0
 	github.com/HugoSmits86/nativewebp v1.3.0
-	github.com/MicahParks/jwkset v0.11.3
+	github.com/MicahParks/jwkset v0.11.4
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-sdk-go-v2 v1.47.5
 	github.com/aws/aws-sdk-go-v2/config v1.33.13
@@ -59,7 +59,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
-	github.com/zitadel/oidc/v3 v3.51.16
+	github.com/zitadel/oidc/v3 v3.51.17
 	go.opentelemetry.io/contrib/exporters/autoexport v0.72.0
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0

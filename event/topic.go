@@ -201,6 +201,7 @@ const (
 	// StampUpdated スタンプが更新された
 	// 	Fields:
 	// 		stamp_id: uuid.UUID
+	// 		stamp: *model.Stamp
 	StampUpdated = "stamp.updated"
 	// StampDeleted スタンプが削除された
 	// 	Fields:
