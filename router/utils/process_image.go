@@ -132,7 +132,6 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 			}
 		}
 
-
 		args.Src = b
 		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImageGIF
