@@ -89,10 +89,14 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		object
 		Pinned   bool                   `json:"pinned"`
 		Stamps   []model.MessageStamp   `json:"stamps"`
-		ThreadID optional.Of[uuid.UUID] `json:"threadId"` // TODO
+		ThreadID optional.Of[uuid.UUID] `json:"threadId"`
 	}
 	var v interface{}
 	if m.preloaded {
+		threadID := optional.Of[uuid.UUID]{}
+		if m.Model.Thread != nil {
+			threadID = optional.From(m.Model.Thread.ChannelID)
+		}
 		v = &objectWithPreload{
 			object: object{
 				ID:        m.Model.ID,
@@ -102,8 +106,9 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 				CreatedAt: m.Model.CreatedAt,
 				UpdatedAt: m.Model.UpdatedAt,
 			},
-			Pinned: m.Model.Pin != nil,
-			Stamps: m.Model.Stamps,
+			Pinned:   m.Model.Pin != nil,
+			Stamps:   m.Model.Stamps,
+			ThreadID: threadID,
 		}
 	} else {
 		v = &object{
