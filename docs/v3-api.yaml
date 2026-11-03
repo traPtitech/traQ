@@ -1556,8 +1556,16 @@ paths:
                 description: チャンネル購読状態の配列
                 items:
                   $ref: "#/components/schemas/UserSubscribeState"
+              example:
+                - channelId: "550e8400-e29b-41d4-a716-446655440000"
+                  level: 1
+                - channelId: "550e8400-e29b-41d4-a716-446655440001"
+                  level: 2
       operationId: getMyChannelSubscriptions
-      description: 自身のチャンネル購読状態を取得します。
+      description: |-
+        自身のチャンネル購読状態を取得します。
+
+        購読レベルが0のチャンネルは返しません。
   "/users/me/subscriptions/{channelId}":
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1590,7 +1598,62 @@ paths:
       description: |-
         自身の指定したチャンネルの購読レベルを設定します。
 
+        `level`に`0`を指定すると購読を解除します。
+
         channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
+  /users/me/thread-subscription-defaults:
+    get:
+      summary: 自分のスレッドのデフォルト購読設定を取得
+      tags:
+        - me
+        - notification
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: チャンネルごとのスレッドのデフォルト購読設定の配列
+                items:
+                  $ref: "#/components/schemas/UserThreadSubscriptionDefault"
+      operationId: getMyThreadSubscriptionDefaults
+      description: |-
+        チャンネルごとの、自分のスレッドのデフォルト購読設定を取得します。
+
+        継承（-1）のチャンネルは返しません。省略されたチャンネルでは、そのチャンネルに対する自分の購読レベルを継承します。
+  "/users/me/thread-subscription-defaults/{channelId}":
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    put:
+      summary: スレッドのデフォルト購読設定を変更
+      responses:
+        "204":
+          description: |-
+            No Content
+            変更されました。
+        "400":
+          description: Bad Request
+        "404":
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
+      tags:
+        - me
+        - notification
+      operationId: setMyThreadSubscriptionDefault
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutThreadSubscriptionDefaultRequest"
+      description: |-
+        指定したチャンネル内のスレッドに適用する、自分のデフォルト購読レベルを設定します。
+
+        `level`に`-1`を指定すると設定を解除し、そのチャンネルに対する自分の購読レベルを継承します。
+
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -6048,7 +6111,13 @@ components:
           description: チャンネルUUID
           format: uuid
         level:
-          $ref: "#/components/schemas/ChannelSubscribeLevel"
+          allOf:
+            - $ref: "#/components/schemas/ChannelSubscribeLevel"
+          description: 購読レベル。0のチャンネルは取得結果に含まれません。
+          enum:
+            - 1
+            - 2
+          example: 1
       required:
         - channelId
         - level
@@ -6079,6 +6148,53 @@ components:
       properties:
         level:
           $ref: "#/components/schemas/ChannelSubscribeLevel"
+      required:
+        - level
+    UserThreadSubscriptionDefault:
+      title: UserThreadSubscriptionDefault
+      type: object
+      description: ユーザーの、チャンネルごとのスレッドのデフォルト購読設定
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: スレッドの親となるPublicチャンネルのUUID
+        level:
+          $ref: "#/components/schemas/ChannelSubscribeLevel"
+      required:
+        - channelId
+        - level
+    ThreadSubscriptionDefaultLevel:
+      title: ThreadSubscriptionDefaultLevel
+      type: integer
+      description: |-
+        スレッドのデフォルト購読レベル
+        -1：親チャンネルの購読レベルを継承
+        0：無し
+        1：未読管理
+        2：未読管理+通知
+      enum:
+        - -1
+        - 0
+        - 1
+        - 2
+      x-enum-varnames:
+        - inherit
+        - none
+        - subscribed
+        - notified
+      x-enum-descriptions:
+        - 親チャンネルの購読レベルを継承
+        - 無し
+        - 未読管理
+        - 未読管理+通知
+    PutThreadSubscriptionDefaultRequest:
+      title: PutThreadSubscriptionDefaultRequest
+      type: object
+      description: スレッドのデフォルト購読設定変更リクエスト
+      properties:
+        level:
+          $ref: "#/components/schemas/ThreadSubscriptionDefaultLevel"
       required:
         - level
     Webhook:
