@@ -293,5 +293,5 @@ func (repo *Repository) GetMessageClips(ctx context.Context, userID, messageID u
 }
 
 func clipPreloads(db *gorm.DB) *gorm.DB {
-	return db.Preload("Message").Preload("Message.Stamps").Preload("Message.Pin")
+	return db.Preload("Message").Preload("Message.Stamps").Preload("Message.Pin").Preload("Message.Thread")
 }
