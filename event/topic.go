@@ -163,7 +163,6 @@ const (
 	// 		updater_id: uuid.UUID
 	ChannelTopicUpdated = "channel.topic.updated"
 	// ChannelDeleted チャンネルが削除された
-	// 現在このトピックを発行している箇所はない (購読側の定義のみ存在する)
 	// 	Fields:
 	// 		channel_id: uuid.UUID
 	// 		private: bool
