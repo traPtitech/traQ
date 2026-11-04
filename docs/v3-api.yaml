@@ -1701,6 +1701,7 @@ paths:
               $ref: "#/components/schemas/PostWebhookRequest"
       description: |-
         Webhookを新規作成します。
+        投稿先には公開チャンネルまたはスレッドを指定できます。
         `secret`が空文字の場合、insecureウェブフックが作成されます。
   "/webhooks/{webhookId}":
     parameters:
@@ -1800,7 +1801,9 @@ paths:
               $ref: "#/components/schemas/PatchWebhookRequest"
       tags:
         - webhook
-      description: 指定したWebhookの情報を変更します。
+      description: |-
+        指定したWebhookの情報を変更します。
+        投稿先には公開チャンネルまたはスレッドを指定できます。
   "/webhooks/{webhookId}/icon":
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -2429,6 +2432,7 @@ paths:
               $ref: "#/components/schemas/PostStarRequest"
       description: |-
         指定したチャンネルをスターチャンネルに追加します。
+        対象は公開チャンネルのみです。
         スター済みのチャンネルIDを指定した場合、204を返します。
         不正なチャンネルIDを指定した場合、400を返します。
   "/users/me/stars/{channelId}":
@@ -3561,6 +3565,7 @@ paths:
             BOTが見つかりません。
       description: |-
         指定したBOTを指定したチャンネルに参加させます。
+        参加先には公開チャンネルまたはスレッドを指定できます。
         チャンネルに参加したBOTは、そのチャンネルの各種イベントを受け取るようになります。
         対象のBOTの管理権限が必要です。
       operationId: letBotJoinChannel
