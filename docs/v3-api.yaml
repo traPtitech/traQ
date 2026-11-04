@@ -2634,7 +2634,7 @@ paths:
 
         + `view_states`: 変化したWSセッションを含めた、該当ユーザーの変更後の状態(配列)
           + `key`: WSセッションの識別子
-          + `channel_id`: 閲覧しているチャンネルId
+          + `channelId`: 閲覧しているチャンネルId
           + `state`: 閲覧状態
 
         ### `USER_ONLINE`
@@ -2878,8 +2878,7 @@ paths:
 
         対象: 全員
 
-        + `room_id`: 変更されたルームのId
-        + `state`: 変更後のルーム状態
+        + `roomStates`: 変更後のルーム状態(配列)
           + `roomId`: ルームのID
           + `participants`: ルーム内の参加者(配列)
             + `identity`: ユーザーID_RandomUUID
@@ -7200,32 +7199,32 @@ components:
       type: object
       description: Qallのサウンドボードアイテムが作成された
       properties:
-        soundId:
+        sound_id:
           type: string
           format: uuid
           description: 作成されたサウンドボードアイテムのId
         name:
           type: string
           description: 作成されたサウンドボードアイテムの名前
-        creatorId:
+        creator_id:
           type: string
           format: uuid
           description: 作成者のId
       required:
-        - soundId
+        - sound_id
         - name
-        - creatorId
+        - creator_id
     QallSoundboardItemDeletedEvent:
       title: QallSoundboardItemDeletedEvent
       type: object
       description: Qallのサウンドボードアイテムが削除された
       properties:
-        soundId:
+        sound_id:
           type: string
           format: uuid
           description: 削除されたサウンドボードアイテムのId
       required:
-        - soundId
+        - sound_id
     StampPalette:
       title: StampPalette
       type: object
