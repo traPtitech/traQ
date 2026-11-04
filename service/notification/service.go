@@ -17,7 +17,6 @@ import (
 const notificationBufferSize = 200
 
 type messageWriter interface {
-	WriteMessage(string, any, ws.TargetFunc)
 	WriteTypedMessage(ws.TypedMessage, ws.TargetFunc)
 }
 

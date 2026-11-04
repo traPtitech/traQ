@@ -31,11 +31,8 @@ func (ns *Service) startPresenceNotifications() {
 }
 
 func userOnlineHandler(ns *Service, ev hub.Message) {
-	ns.messageWriter.WriteMessage(
-		"USER_ONLINE",
-		map[string]any{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
+	ns.messageWriter.WriteTypedMessage(
+		ws.UserOnline{ID: ev.Fields["user_id"].(uuid.UUID)},
 		ws.TargetAll(),
 	)
 }
@@ -52,11 +49,10 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 		ns.logger.Error("failed to persist last online time", zap.Error(err), zap.Stringer("userId", userID))
 	}
 
-	ns.messageWriter.WriteMessage(
-		"USER_OFFLINE",
-		map[string]any{
-			"id":          userID,
-			"last_online": lastOnline,
+	ns.messageWriter.WriteTypedMessage(
+		ws.UserOffline{
+			ID:         userID,
+			LastOnline: lastOnline,
 		},
 		ws.TargetAll(),
 	)
