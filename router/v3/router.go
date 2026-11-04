@@ -85,7 +85,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
@@ -94,7 +94,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.ChannelManager)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.ChannelManager)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
@@ -219,7 +218,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiMessages := api.Group("/messages")
 		{
 			apiMessages.GET("", h.SearchMessages, requires(permission.GetMessage))
-			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
+			apiMessagesMID := apiMessages.Group("/:messageID")
 			{
 				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))
 				apiMessagesMID.PUT("", h.EditMessage, bodyLimit(100), requires(permission.EditMessage))
@@ -295,7 +294,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
 				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
-				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages/:messageID", requires(permission.GetWebhook), retrieve.MessageID(), requiresMessageAccessPerm)
+				apiWebhooksWIDMessage := apiWebhooksWID.Group("/messages/:messageID", requires(permission.GetWebhook))
 				{
 					apiWebhooksWIDMessage.DELETE("", h.DeleteWebhookMessage, requires(permission.GetMessage))
 				}

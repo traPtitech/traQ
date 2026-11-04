@@ -9,20 +9,18 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
-	"github.com/traPtitech/traQ/service/message"
 )
 
 // ParamRetriever リクエストパスパラメータで指定された各種エンティティをrepositoryから取得するミドルウェア
 type ParamRetriever struct {
 	repo repository.Repository
 	cm   channel.Manager
-	mm   message.Manager
 	fm   file.Manager
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager, mm message.Manager) *ParamRetriever {
-	return &ParamRetriever{repo: repo, cm: cm, fm: fm, mm: mm}
+func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager) *ParamRetriever {
+	return &ParamRetriever{repo: repo, cm: cm, fm: fm}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c *echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -84,8 +82,6 @@ func (pr *ParamRetriever) error(err error) error {
 			return herror.NotFound()
 		case file.ErrNotFound:
 			return herror.NotFound()
-		case message.ErrNotFound:
-			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -95,13 +91,6 @@ func (pr *ParamRetriever) error(err error) error {
 func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetUserGroup(c.Request().Context(), v)
-	})
-}
-
-// MessageID リクエストURLの`messageID`パラメータからMessageを取り出す
-func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamMessageID, consts.KeyParamMessage, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.mm.Get(c.Request().Context(), v)
 	})
 }
 

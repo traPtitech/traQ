@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -84,9 +85,35 @@ func getParamChannel(c *echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
 }
 
-// getParamMessage URLの:messageIDに対応するMessageを取得
-func getParamMessage(c *echo.Context) message.Message {
-	return c.Get(consts.KeyParamMessage).(message.Message)
+// getAccessibleMessage URLの:messageIDに対応するMessageを取得し、リクエストユーザーがアクセス可能かを確認する
+//
+// メッセージが存在しない場合と、メッセージのチャンネルにアクセスできない場合はどちらも404を返す。
+// :messageIDを扱うハンドラは、IDしか使わない場合でもアクセス権確認のために必ずこれを呼ぶこと。
+func (h *Handlers) getAccessibleMessage(c *echo.Context) (message.Message, error) {
+	ctx := c.Request().Context()
+
+	id, err := uuid.FromString(c.Param(consts.ParamMessageID))
+	if err != nil || id == uuid.Nil {
+		return nil, herror.NotFound()
+	}
+
+	m, err := h.MessageManager.Get(ctx, id)
+	if err != nil {
+		if errors.Is(err, message.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), m.GetChannelID())
+	if err != nil {
+		return nil, herror.InternalServerError(err)
+	}
+	if !ok {
+		return nil, herror.NotFound()
+	}
+
+	return m, nil
 }
 
 // getParamGroup URLの:groupIDに対応するUserGroupを取得
