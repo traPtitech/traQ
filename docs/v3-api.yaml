@@ -3814,6 +3814,8 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+        "409":
+          description: 同じ親チャンネル内で名前が重複しています。
       operationId: editThread
       tags:
         - channel

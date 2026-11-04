@@ -313,6 +313,9 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 		Visibility: args.Visibility,
 	})
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return ErrChannelNameConflicts
+		}
 		return fmt.Errorf("failed to UpdateThread: %w", err)
 	}
 

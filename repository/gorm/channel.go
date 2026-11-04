@@ -223,6 +223,9 @@ func (repo *Repository) UpdateThread(ctx context.Context, channelID uuid.UUID, a
 		return tx.First(&ch, &model.Channel{ID: channelID}).Error
 	})
 	if err != nil {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
 		return nil, err
 	}
 

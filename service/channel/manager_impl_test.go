@@ -1659,6 +1659,18 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 func TestManagerImpl_UpdateThread(t *testing.T) {
 	t.Parallel()
 
+	t.Run("ErrChannelNameConflicts", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		args := repository.UpdateThreadArgs{Name: optional.From("duplicate")}
+		repo.EXPECT().UpdateThread(gomock.Any(), cEKL, args).
+			Return(nil, repository.ErrAlreadyExists)
+
+		err := cm.UpdateThread(context.Background(), cEKL, args)
+		require.ErrorIs(t, err, ErrChannelNameConflicts)
+	})
+
 	t.Run("unarchive with archived parent", func(t *testing.T) {
 		t.Parallel()
 		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))

@@ -233,7 +233,7 @@ func TestGormRepository_UpdateThread(t *testing.T) {
 			UpdaterID: user.GetID(),
 			Name:      optional.From("sibling"),
 		})
-		require.Error(t, err)
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
 		stored, err := repo.GetChannel(ctx, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Equal(t, "thread", stored.Name)

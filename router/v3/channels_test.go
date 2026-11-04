@@ -801,6 +801,87 @@ func TestHandlers_EditChannel(t *testing.T) {
 	})
 }
 
+func TestHandlers_EditThread(t *testing.T) {
+	t.Parallel()
+	const path = "/api/v3/threads/{channelId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	userSession := env.S(t, user.GetID())
+	ctx := context.Background()
+
+	t.Run("duplicate public channel name", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		thread, err := env.CM.CreateThreadChannel(ctx, "thread", parentMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+		env.CreateSubchannel(t, parent, "sibling")
+
+		env.R(t).PATCH(path, thread.ChannelID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchThreadRequest{Name: optional.From("sibling")}).
+			Expect().
+			Status(http.StatusConflict)
+
+		stored, err := env.CM.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, "thread", stored.Name)
+	})
+
+	t.Run("duplicate thread name", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		thread, err := env.CM.CreateThreadChannel(ctx, "thread", parentMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+		siblingMessage := env.CreateMessage(t, user.GetID(), parent.ID, "sibling")
+		_, err = env.CM.CreateThreadChannel(ctx, "sibling", siblingMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).PATCH(path, thread.ChannelID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchThreadRequest{Name: optional.From("sibling")}).
+			Expect().
+			Status(http.StatusConflict)
+
+		stored, err := env.CM.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, "thread", stored.Name)
+	})
+
+	t.Run("same name", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		thread, err := env.CM.CreateThreadChannel(ctx, "thread", parentMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).PATCH(path, thread.ChannelID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchThreadRequest{Name: optional.From("thread")}).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("rename", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		thread, err := env.CM.CreateThreadChannel(ctx, "thread", parentMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+
+		env.R(t).PATCH(path, thread.ChannelID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchThreadRequest{Name: optional.From("renamed")}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		stored, err := env.CM.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, "renamed", stored.Name)
+	})
+}
+
 func TestHandlers_GetChannelStats(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/channels/{channelId}/stats"
