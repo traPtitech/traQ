@@ -2,21 +2,355 @@
 
 package ws
 
-import "github.com/gofrs/uuid"
+import (
+	"time"
 
-// Ping is the PING WebSocket message.
-type Ping struct{}
+	"github.com/gofrs/uuid"
+)
 
-func (m Ping) asMessage() *message {
-	return makeMessage("PING", nil)
+type ChannelBody struct {
+	DMUserID *uuid.UUID `json:"dm_user_id,omitempty"`
+	ID       uuid.UUID  `json:"id"`
 }
 
-// MessageCreated is the MESSAGE_CREATED WebSocket message.
+type ChannelCreated ChannelBody
+
+type ChannelDeleted ChannelBody
+
+type ChannelStared IdBody
+
+type ChannelSubscribersChanged IdBody
+
+type ChannelUnstared IdBody
+
+type ChannelUpdated ChannelBody
+
+type ChannelViewer struct {
+	State     string    `json:"state"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	UserID    uuid.UUID `json:"userId"`
+}
+
+type ChannelViewersChanged struct {
+	ID      uuid.UUID       `json:"id"`
+	Viewers []ChannelViewer `json:"viewers"`
+}
+
+type ClipFolderCreated IdBody
+
+type ClipFolderDeleted IdBody
+
+type ClipFolderMessageAdded ClipFolderMessageBody
+
+type ClipFolderMessageBody struct {
+	FolderID  uuid.UUID `json:"folder_id"`
+	MessageID uuid.UUID `json:"message_id"`
+}
+
+type ClipFolderMessageDeleted ClipFolderMessageBody
+
+type ClipFolderUpdated IdBody
+
+type Error string
+
+type IdBody struct {
+	ID uuid.UUID `json:"id"`
+}
+
 type MessageCreated struct {
 	ID       uuid.UUID `json:"id"`
 	IsCiting bool      `json:"is_citing"`
 }
 
+type MessageDeleted IdBody
+
+type MessagePinBody struct {
+	ChannelID uuid.UUID `json:"channel_id"`
+	MessageID uuid.UUID `json:"message_id"`
+}
+
+type MessagePinned MessagePinBody
+
+type MessageRead IdBody
+
+type MessageStamped struct {
+	Count     int       `json:"count"`
+	CreatedAt time.Time `json:"created_at"`
+	MessageID uuid.UUID `json:"message_id"`
+	StampID   uuid.UUID `json:"stamp_id"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+type MessageUnpinned MessagePinBody
+
+type MessageUnstamped struct {
+	MessageID uuid.UUID `json:"message_id"`
+	StampID   uuid.UUID `json:"stamp_id"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+type MessageUpdated IdBody
+
+type MyChannelViewState struct {
+	ChannelID uuid.UUID `json:"channelId"`
+	Key       string    `json:"key"`
+	State     string    `json:"state"`
+}
+
+type Ping struct{}
+
+type QallRoomStateChanged QallRoomStateChangedEvent
+
+type QallRoomStateChangedEvent struct {
+	RoomStates []QallRoomStateChangedEventRoomStatesItem `json:"roomStates"`
+}
+
+type QallRoomStateChangedEventRoomStatesItem struct {
+	IsWebinar    bool                                                      `json:"isWebinar"`
+	Metadata     *string                                                   `json:"metadata,omitempty"`
+	Participants []QallRoomStateChangedEventRoomStatesItemParticipantsItem `json:"participants"`
+	RoomID       uuid.UUID                                                 `json:"roomId"`
+}
+
+type QallRoomStateChangedEventRoomStatesItemParticipantsItem struct {
+	Attributes *map[string]string `json:"attributes,omitempty"`
+	CanPublish bool               `json:"canPublish"`
+	Identity   string             `json:"identity"`
+	JoinedAt   time.Time          `json:"joinedAt"`
+	Name       string             `json:"name"`
+}
+
+type QallSoundboardItemCreated QallSoundboardItemCreatedEvent
+
+type QallSoundboardItemCreatedEvent struct {
+	CreatorID uuid.UUID `json:"creator_id"`
+	Name      string    `json:"name"`
+	SoundID   uuid.UUID `json:"sound_id"`
+}
+
+type QallSoundboardItemDeleted QallSoundboardItemDeletedEvent
+
+type QallSoundboardItemDeletedEvent struct {
+	SoundID uuid.UUID `json:"sound_id"`
+}
+
+type StampCreated IdBody
+
+type StampDeleted IdBody
+
+type StampPaletteCreated IdBody
+
+type StampPaletteDeleted IdBody
+
+type StampPaletteUpdated IdBody
+
+type StampUpdated IdBody
+
+type UserGroupCreated IdBody
+
+type UserGroupDeleted IdBody
+
+type UserGroupUpdated IdBody
+
+type UserIconUpdated IdBody
+
+type UserJoined IdBody
+
+type UserOffline UserOfflineEvent
+
+type UserOfflineEvent struct {
+	ID         uuid.UUID `json:"id"`
+	LastOnline time.Time `json:"last_online"`
+}
+
+type UserOnline IdBody
+
+type UserTagsUpdated struct {
+	ID    uuid.UUID `json:"id"`
+	TagID uuid.UUID `json:"tag_id"`
+}
+
+type UserUpdated IdBody
+
+type UserViewStateChanged struct {
+	ViewStates []MyChannelViewState `json:"view_states"`
+}
+
+type UserWebRTCStateChanged struct {
+	ChannelID uuid.UUID       `json:"channel_id"`
+	Sessions  []WebRTCSession `json:"sessions"`
+	UserID    uuid.UUID       `json:"user_id"`
+}
+
+type WebRTCSession struct {
+	SessionID string `json:"sessionId"`
+	State     string `json:"state"`
+}
+
+func (m ChannelCreated) asMessage() *message {
+	return makeMessage("CHANNEL_CREATED", m)
+}
+
+func (m ChannelDeleted) asMessage() *message {
+	return makeMessage("CHANNEL_DELETED", m)
+}
+
+func (m ChannelStared) asMessage() *message {
+	return makeMessage("CHANNEL_STARED", m)
+}
+
+func (m ChannelSubscribersChanged) asMessage() *message {
+	return makeMessage("CHANNEL_SUBSCRIBERS_CHANGED", m)
+}
+
+func (m ChannelUnstared) asMessage() *message {
+	return makeMessage("CHANNEL_UNSTARED", m)
+}
+
+func (m ChannelUpdated) asMessage() *message {
+	return makeMessage("CHANNEL_UPDATED", m)
+}
+
+func (m ChannelViewersChanged) asMessage() *message {
+	return makeMessage("CHANNEL_VIEWERS_CHANGED", m)
+}
+
+func (m ClipFolderCreated) asMessage() *message {
+	return makeMessage("CLIP_FOLDER_CREATED", m)
+}
+
+func (m ClipFolderDeleted) asMessage() *message {
+	return makeMessage("CLIP_FOLDER_DELETED", m)
+}
+
+func (m ClipFolderMessageAdded) asMessage() *message {
+	return makeMessage("CLIP_FOLDER_MESSAGE_ADDED", m)
+}
+
+func (m ClipFolderMessageDeleted) asMessage() *message {
+	return makeMessage("CLIP_FOLDER_MESSAGE_DELETED", m)
+}
+
+func (m ClipFolderUpdated) asMessage() *message {
+	return makeMessage("CLIP_FOLDER_UPDATED", m)
+}
+
+func (m Error) asMessage() *message {
+	return makeMessage("ERROR", m)
+}
+
 func (m MessageCreated) asMessage() *message {
 	return makeMessage("MESSAGE_CREATED", m)
+}
+
+func (m MessageDeleted) asMessage() *message {
+	return makeMessage("MESSAGE_DELETED", m)
+}
+
+func (m MessagePinned) asMessage() *message {
+	return makeMessage("MESSAGE_PINNED", m)
+}
+
+func (m MessageRead) asMessage() *message {
+	return makeMessage("MESSAGE_READ", m)
+}
+
+func (m MessageStamped) asMessage() *message {
+	return makeMessage("MESSAGE_STAMPED", m)
+}
+
+func (m MessageUnpinned) asMessage() *message {
+	return makeMessage("MESSAGE_UNPINNED", m)
+}
+
+func (m MessageUnstamped) asMessage() *message {
+	return makeMessage("MESSAGE_UNSTAMPED", m)
+}
+
+func (m MessageUpdated) asMessage() *message {
+	return makeMessage("MESSAGE_UPDATED", m)
+}
+
+func (m Ping) asMessage() *message {
+	return makeMessage("PING", nil)
+}
+
+func (m QallRoomStateChanged) asMessage() *message {
+	return makeMessage("QALL_ROOM_STATE_CHANGED", m)
+}
+
+func (m QallSoundboardItemCreated) asMessage() *message {
+	return makeMessage("QALL_SOUNDBOARD_ITEM_CREATED", m)
+}
+
+func (m QallSoundboardItemDeleted) asMessage() *message {
+	return makeMessage("QALL_SOUNDBOARD_ITEM_DELETED", m)
+}
+
+func (m StampCreated) asMessage() *message {
+	return makeMessage("STAMP_CREATED", m)
+}
+
+func (m StampDeleted) asMessage() *message {
+	return makeMessage("STAMP_DELETED", m)
+}
+
+func (m StampPaletteCreated) asMessage() *message {
+	return makeMessage("STAMP_PALETTE_CREATED", m)
+}
+
+func (m StampPaletteDeleted) asMessage() *message {
+	return makeMessage("STAMP_PALETTE_DELETED", m)
+}
+
+func (m StampPaletteUpdated) asMessage() *message {
+	return makeMessage("STAMP_PALETTE_UPDATED", m)
+}
+
+func (m StampUpdated) asMessage() *message {
+	return makeMessage("STAMP_UPDATED", m)
+}
+
+func (m UserGroupCreated) asMessage() *message {
+	return makeMessage("USER_GROUP_CREATED", m)
+}
+
+func (m UserGroupDeleted) asMessage() *message {
+	return makeMessage("USER_GROUP_DELETED", m)
+}
+
+func (m UserGroupUpdated) asMessage() *message {
+	return makeMessage("USER_GROUP_UPDATED", m)
+}
+
+func (m UserIconUpdated) asMessage() *message {
+	return makeMessage("USER_ICON_UPDATED", m)
+}
+
+func (m UserJoined) asMessage() *message {
+	return makeMessage("USER_JOINED", m)
+}
+
+func (m UserOffline) asMessage() *message {
+	return makeMessage("USER_OFFLINE", m)
+}
+
+func (m UserOnline) asMessage() *message {
+	return makeMessage("USER_ONLINE", m)
+}
+
+func (m UserTagsUpdated) asMessage() *message {
+	return makeMessage("USER_TAGS_UPDATED", m)
+}
+
+func (m UserUpdated) asMessage() *message {
+	return makeMessage("USER_UPDATED", m)
+}
+
+func (m UserViewStateChanged) asMessage() *message {
+	return makeMessage("USER_VIEWSTATE_CHANGED", m)
+}
+
+func (m UserWebRTCStateChanged) asMessage() *message {
+	return makeMessage("USER_WEBRTC_STATE_CHANGED", m)
 }
