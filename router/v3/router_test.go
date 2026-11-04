@@ -308,6 +308,15 @@ func (env *Env) CreateSubchannel(t *testing.T, parent *model.Channel, name strin
 	return ch
 }
 
+// CreateThread 指定したチャンネルのメッセージからスレッドを作成します
+func (env *Env) CreateThread(t *testing.T, userID, channelID uuid.UUID) *model.Thread {
+	t.Helper()
+	parentMessage := env.CreateMessage(t, userID, channelID, rand)
+	thread, err := env.CM.CreateThreadChannel(context.TODO(), random.AlphaNumeric(20), parentMessage.GetID(), userID)
+	require.NoError(t, err)
+	return thread
+}
+
 // AddStar 指定したチャンネルをスターします
 func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
 	t.Helper()

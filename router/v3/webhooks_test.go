@@ -209,6 +209,23 @@ func TestHandlers_CreateWebhook(t *testing.T) {
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 	})
+
+	t.Run("success (thread)", func(t *testing.T) {
+		t.Parallel()
+		thread := env.CreateThread(t, user.GetID(), ch.ID)
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PostWebhooksRequest{
+				Name:        random2.SecureAlphaNumeric(20),
+				Description: "desc",
+				ChannelID:   thread.ChannelID,
+			}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object().
+			Value("channelId").String().IsEqual(thread.ChannelID.String())
+	})
 }
 
 func TestHandlers_GetWebhook(t *testing.T) {
@@ -303,6 +320,21 @@ func TestHandlers_EditWebhook(t *testing.T) {
 		wh, err := env.Repository.GetWebhook(context.TODO(), wh.GetID())
 		require.NoError(t, err)
 		assert.EqualValues(t, "po", wh.GetName())
+	})
+
+	t.Run("success (change destination to thread)", func(t *testing.T) {
+		t.Parallel()
+		thread := env.CreateThread(t, user.GetID(), ch.ID)
+		webhook := env.CreateWebhook(t, rand, user.GetID(), ch.ID)
+		env.R(t).PATCH(path, webhook.GetID()).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchWebhookRequest{ChannelID: optional.From(thread.ChannelID)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		updatedWebhook, err := env.Repository.GetWebhook(context.TODO(), webhook.GetID())
+		require.NoError(t, err)
+		assert.Equal(t, thread.ChannelID, updatedWebhook.GetChannelID())
 	})
 }
 
