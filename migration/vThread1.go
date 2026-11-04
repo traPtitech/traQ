@@ -8,17 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type v_thread1Thread struct {
+type vThread1Thread struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:idx_threads_message_id"`
 }
 
-func (*v_thread1Thread) TableName() string {
+func (*vThread1Thread) TableName() string {
 	return "threads"
 }
 
-// v_thread1 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads テーブル追加
-func v_thread1() *gormigrate.Migration {
+// vThread1 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads テーブル追加
+func vThread1() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "thread1",
 		Migrate: func(db *gorm.DB) error {
@@ -60,7 +60,7 @@ func v_thread1() *gormigrate.Migration {
 				return err
 			}
 
-			if err := db.AutoMigrate(&v_thread1Thread{}); err != nil {
+			if err := db.AutoMigrate(&vThread1Thread{}); err != nil {
 				return err
 			}
 
