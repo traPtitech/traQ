@@ -5,6 +5,11 @@ type rawMessage struct {
 	data []byte
 }
 
+// TypedMessage は OpenAPI から生成された送信用メッセージです。
+type TypedMessage interface {
+	asMessage() *message
+}
+
 type message struct {
 	Type string      `json:"type"`
 	Body interface{} `json:"body"`

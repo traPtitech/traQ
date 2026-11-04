@@ -41,6 +41,10 @@ func (w *presenceWriter) WriteMessage(typeName string, body any, _ ws.TargetFunc
 	w.messages = append(w.messages, presenceMessage{typeName, body})
 }
 
+func (*presenceWriter) WriteTypedMessage(ws.TypedMessage, ws.TargetFunc) {
+	panic("unexpected typed message in presence test")
+}
+
 func (w *presenceWriter) snapshot() []presenceMessage {
 	w.mu.Lock()
 	defer w.mu.Unlock()

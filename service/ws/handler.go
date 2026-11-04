@@ -130,7 +130,7 @@ Command:
 		// ping
 		_ = s.WriteMessage(&rawMessage{
 			t:    websocket.TextMessage,
-			data: makeMessage("PING", nil).toJSON(),
+			data: Ping{}.asMessage().toJSON(),
 		})
 
 	default:

@@ -112,15 +112,6 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
-	wsEventType := "MESSAGE_CREATED"
-	wsPayloadNotCited := map[string]interface{}{
-		"id":        m.ID,
-		"is_citing": false,
-	}
-	wsPayloadCited := map[string]interface{}{
-		"id":        m.ID,
-		"is_citing": true,
-	}
 
 	viewers := set.UUID{}       // バックグラウンドを含む対象チャンネル閲覧中のユーザー
 	notifiedUsers := set.UUID{} // チャンネル通知購読ユーザー
@@ -288,8 +279,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		)
 		targetFuncCited = ws.TargetUserSets(citedUsers)
 	}
-	go ns.messageWriter.WriteMessage(wsEventType, wsPayloadNotCited, targetFuncNotCited)
-	go ns.messageWriter.WriteMessage(wsEventType, wsPayloadCited, targetFuncCited)
+	go ns.messageWriter.WriteTypedMessage(ws.MessageCreated{ID: m.ID}, targetFuncNotCited)
+	go ns.messageWriter.WriteTypedMessage(ws.MessageCreated{ID: m.ID, IsCiting: true}, targetFuncCited)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
