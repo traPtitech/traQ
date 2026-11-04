@@ -1037,6 +1037,20 @@ func TestHandlers_LetBotJoinChannel(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 	})
+
+	t.Run("success (thread)", func(t *testing.T) {
+		t.Parallel()
+		thread := env.CreateThread(t, user1.GetID(), channel.ID)
+		env.R(t).POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: thread.ChannelID}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		channels, err := env.Repository.GetParticipatingChannelIDsByBot(context.TODO(), bot1.ID)
+		require.NoError(t, err)
+		require.Contains(t, channels, thread.ChannelID)
+	})
 }
 
 func TestHandlers_LetBotLeaveChannel(t *testing.T) {

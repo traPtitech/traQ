@@ -91,6 +91,20 @@ func TestHandlers_PostStar(t *testing.T) {
 		require.NoError(t, err)
 		assert.ElementsMatch(t, stars, []uuid.UUID{ch.ID})
 	})
+
+	t.Run("bad request (thread)", func(t *testing.T) {
+		t.Parallel()
+		thread := env.CreateThread(t, user.GetID(), ch.ID)
+		env.R(t).POST(path).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PostStarRequest{ChannelID: thread.ChannelID}).
+			Expect().
+			Status(http.StatusBadRequest)
+
+		stars, err := env.Repository.GetStaredChannels(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		assert.NotContains(t, stars, thread.ChannelID)
+	})
 }
 
 func TestHandlers_RemoveMyStar(t *testing.T) {
