@@ -7226,11 +7226,10 @@ components:
           $ref: "#/components/schemas/WebSocketPingType"
         body:
           description: 常に null
-          # OpenAPI 3.0 の nullable と not で null のみを許可する。
+          # boolean を基底型にすると、型生成でも null が文字列化されない。
           type: boolean
           nullable: true
-          not:
-            type: boolean
+          enum: [null]
     WebSocketError:
       type: object
       required: [type, body]
