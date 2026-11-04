@@ -809,6 +809,25 @@ func TestHandlers_EditThread(t *testing.T) {
 	userSession := env.S(t, user.GetID())
 	ctx := context.Background()
 
+	t.Run("archived parent", func(t *testing.T) {
+		t.Parallel()
+		parent := env.CreateChannel(t, rand)
+		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+		thread, err := env.CM.CreateThreadChannel(ctx, "thread", parentMessage.GetID(), user.GetID())
+		require.NoError(t, err)
+		require.NoError(t, env.CM.ArchiveChannel(ctx, parent.ID, user.GetID()))
+
+		env.R(t).PATCH(path, thread.ChannelID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchThreadRequest{Name: optional.From("renamed")}).
+			Expect().
+			Status(http.StatusBadRequest)
+
+		stored, err := env.CM.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, "thread", stored.Name)
+	})
+
 	t.Run("duplicate public channel name", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
