@@ -115,6 +115,10 @@ type ChannelRepository interface {
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	UpdateChannel(ctx context.Context, channelID uuid.UUID, args UpdateChannelArgs) (*model.Channel, error)
+	// UpdateThread 指定したチャンネルの情報を変更します
+	//
+	//存在しないチャンネルを指定した場合、ErrNotFoundを返します。
+	UpdateThread(ctx context.Context, channelID uuid.UUID, args UpdateThreadArgs) (*model.Channel, error)
 	// ArchiveChannels 指定したチャンネルをアーカイブします
 	ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([]*model.Channel, error)
 	// GetChannel 指定したチャンネルを取得します

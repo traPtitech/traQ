@@ -1656,6 +1656,166 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 	})
 }
 
+func TestManagerImpl_UpdateThread(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unarchive with archived parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = false
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.From(true),
+		}
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.ErrorIs(t, err, ErrInvalidParentChannel)
+	})
+
+	t.Run("unarchive with active parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = true
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.From(true),
+		}
+		repo.EXPECT().UpdateThread(gomock.Any(), cEKL, args).Return(thread, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cEKL, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.NoError(t, err)
+	})
+
+	t.Run("archive with archived parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = false
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.From(false),
+		}
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.ErrorIs(t, err, ErrInvalidParentChannel)
+	})
+
+	t.Run("archive with active parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = true
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.From(false),
+		}
+		repo.EXPECT().UpdateThread(gomock.Any(), cEKL, args).Return(thread, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cEKL, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.NoError(t, err)
+	})
+
+	t.Run("rename with archived parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = false
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.Of[bool]{},
+		}
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.ErrorIs(t, err, ErrInvalidParentChannel)
+	})
+
+	t.Run("rename with active parent", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		parent, err := cm.T.GetModel(cEK)
+		require.NoError(t, err)
+		parent.IsVisible = true
+		thread, err := cm.T.GetModel(cEKL)
+		require.NoError(t, err)
+		thread.IsVisible = false
+		cm.T.Lock()
+		cm.T.updateSingle(parent.ID, parent)
+		cm.T.updateSingle(thread.ID, thread)
+		cm.T.Unlock()
+
+		args := repository.UpdateThreadArgs{
+			UpdaterID:  mustGenerateUUID(),
+			Name:       optional.From("renamed"),
+			Visibility: optional.Of[bool]{},
+		}
+		repo.EXPECT().UpdateThread(gomock.Any(), cEKL, args).Return(thread, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cEKL, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+		err = cm.UpdateThread(context.Background(), cEKL, args)
+		require.NoError(t, err)
+	})
+}
+
 func TestManagerImpl_ChangeChannelSubscriptions(t *testing.T) {
 	t.Parallel()
 

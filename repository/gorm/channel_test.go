@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -63,6 +65,202 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGormRepository_UpdateThread(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rename", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		parent := mustMakeChannel(t, &repo, rand)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name:      "thread",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+			IsVisible: true,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		sub := repo.hub.Subscribe(8, event.ThreadUpdated, event.ChannelUpdated)
+		updated, err := repo.UpdateThread(ctx, thread.ChannelID, repository.UpdateThreadArgs{
+			UpdaterID: user.GetID(),
+			Name:      optional.From("renamed"),
+		})
+		require.NoError(t, err)
+		stored, err := repo.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, stored, updated)
+		assert.Equal(t, "renamed", stored.Name)
+
+		// Hub.Publishは同期的に配信するため、待機せずに確認できる。
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.ThreadUpdated, ev.Name)
+			assert.Equal(t, hub.Fields{"channel_id": thread.ChannelID}, ev.Fields)
+		default:
+			t.Fatal("THREAD_UPDATED was not published")
+		}
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+
+	t.Run("archive", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		parent := mustMakeChannel(t, &repo, rand)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name:      "thread",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+			IsVisible: true,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		sub := repo.hub.Subscribe(8, event.ThreadUpdated, event.ChannelUpdated)
+		updated, err := repo.UpdateThread(ctx, thread.ChannelID, repository.UpdateThreadArgs{
+			UpdaterID:  user.GetID(),
+			Visibility: optional.From(false),
+		})
+		require.NoError(t, err)
+		stored, err := repo.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, stored, updated)
+		assert.False(t, stored.IsVisible)
+
+		// Hub.Publishは同期的に配信するため、待機せずに確認できる。
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.ThreadUpdated, ev.Name)
+			assert.Equal(t, hub.Fields{"channel_id": thread.ChannelID}, ev.Fields)
+		default:
+			t.Fatal("THREAD_UPDATED was not published")
+		}
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		parent := mustMakeChannel(t, &repo, rand)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name:      "thread",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+			IsVisible: false,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		sub := repo.hub.Subscribe(8, event.ThreadUpdated, event.ChannelUpdated)
+		updated, err := repo.UpdateThread(ctx, thread.ChannelID, repository.UpdateThreadArgs{
+			UpdaterID:  user.GetID(),
+			Visibility: optional.From(true),
+		})
+		require.NoError(t, err)
+		stored, err := repo.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, stored, updated)
+		assert.True(t, stored.IsVisible)
+
+		// Hub.Publishは同期的に配信するため、待機せずに確認できる。
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.ThreadUpdated, ev.Name)
+			assert.Equal(t, hub.Fields{"channel_id": thread.ChannelID}, ev.Fields)
+		default:
+			t.Fatal("THREAD_UPDATED was not published")
+		}
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+
+	t.Run("duplicate name", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		parent := mustMakeChannel(t, &repo, rand)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name:      "thread",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+			IsVisible: true,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		_, err = repo.CreateChannel(ctx, model.Channel{
+			Name: "sibling", ParentID: parent.ID, IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		sub := repo.hub.Subscribe(8, event.ThreadUpdated, event.ChannelUpdated)
+		_, err = repo.UpdateThread(ctx, thread.ChannelID, repository.UpdateThreadArgs{
+			UpdaterID: user.GetID(),
+			Name:      optional.From("sibling"),
+		})
+		require.Error(t, err)
+		stored, err := repo.GetChannel(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		assert.Equal(t, "thread", stored.Name)
+		assert.True(t, stored.IsVisible)
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		base, _, _ := setup(t, common)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		sub := repo.hub.Subscribe(8, event.ThreadUpdated, event.ChannelUpdated)
+		_, err := repo.UpdateThread(context.Background(), mustGenerateUUID(false), repository.UpdateThreadArgs{})
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
 }
 
 func TestRepositoryImpl_GetChannel(t *testing.T) {

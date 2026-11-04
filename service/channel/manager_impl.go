@@ -285,6 +285,11 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 	m.T.Lock()
 	defer m.T.Unlock()
 
+	// 親チャンネルがアーカイブされている場合、スレッドは変更できない
+	if m.T.isArchivedChannel(ch.ParentID) {
+		return ErrInvalidParentChannel
+	}
+
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
 	if args.Visibility.Valid && ch.IsVisible != args.Visibility.V {
 		eventRecords[model.ChannelEventVisibilityChanged] = model.ChannelEventDetail{
@@ -302,13 +307,13 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 		}
 	}
 
-	_, err = m.R.UpdateChannel(ctx, id, repository.UpdateChannelArgs{
+	_, err = m.R.UpdateThread(ctx, id, repository.UpdateThreadArgs{
 		UpdaterID:  args.UpdaterID,
 		Name:       args.Name,
 		Visibility: args.Visibility,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to UpdateChannel: %w", err)
+		return fmt.Errorf("failed to UpdateThread: %w", err)
 	}
 
 	updated := time.Now()
