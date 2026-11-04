@@ -42,3 +42,23 @@ func TestWriteTypedMessageCreated(t *testing.T) {
 		require.JSONEq(t, want, string(frame.data))
 	}
 }
+
+func TestUnknownCommandSendsError(t *testing.T) {
+	t.Parallel()
+
+	session := newSession(uuid.Nil, nil, nil)
+	session.commandHandler("unknown")
+
+	require.Len(t, session.send, 1)
+	frame := <-session.send
+	require.Equal(t, websocket.TextMessage, frame.t)
+	require.JSONEq(t, `{"type":"ERROR","body":"unknown command: unknown"}`, string(frame.data))
+}
+
+func TestPublicChannelCreatedOmitsDMUserID(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.Must(uuid.FromString("7dd8e07f-7f5d-4331-9176-b56a4299768b"))
+	msg := ChannelCreated{ID: id}.asMessage()
+	require.JSONEq(t, `{"type":"CHANNEL_CREATED","body":{"id":"7dd8e07f-7f5d-4331-9176-b56a4299768b"}}`, string(msg.toJSON()))
+}
