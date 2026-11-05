@@ -8,19 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type v44Thread struct {
+type vThread1Thread struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:idx_threads_message_id"`
 }
 
-func (*v44Thread) TableName() string {
+func (*vThread1Thread) TableName() string {
 	return "threads"
 }
 
-// v44 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads テーブル追加
-func v44() *gormigrate.Migration {
+// vThread1 スレッド機能: channels.type 追加・is_public 削除・name を TEXT 化、threads テーブル追加
+func vThread1() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "44",
+		ID: "thread1",
 		Migrate: func(db *gorm.DB) error {
 			if err := db.Exec("ALTER TABLE channels ADD COLUMN type ENUM('public','dm','thread') NULL AFTER is_forced").Error; err != nil {
 				return err
@@ -60,7 +60,7 @@ func v44() *gormigrate.Migration {
 				return err
 			}
 
-			if err := db.AutoMigrate(&v44Thread{}); err != nil {
+			if err := db.AutoMigrate(&vThread1Thread{}); err != nil {
 				return err
 			}
 
