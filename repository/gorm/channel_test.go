@@ -70,7 +70,7 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 func TestGormRepository_UpdateThread(t *testing.T) {
 	t.Parallel()
 
-	t.Run("rename", func(t *testing.T) {
+	t.Run("success rename", func(t *testing.T) {
 		t.Parallel()
 		base, _, _, user := setupWithUser(t, common, false)
 		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
@@ -115,7 +115,7 @@ func TestGormRepository_UpdateThread(t *testing.T) {
 		}
 	})
 
-	t.Run("archive", func(t *testing.T) {
+	t.Run("success archive", func(t *testing.T) {
 		t.Parallel()
 		base, _, _, user := setupWithUser(t, common, false)
 		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
@@ -160,7 +160,7 @@ func TestGormRepository_UpdateThread(t *testing.T) {
 		}
 	})
 
-	t.Run("unarchive", func(t *testing.T) {
+	t.Run("success unarchive", func(t *testing.T) {
 		t.Parallel()
 		base, _, _, user := setupWithUser(t, common, false)
 		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
@@ -205,7 +205,7 @@ func TestGormRepository_UpdateThread(t *testing.T) {
 		}
 	})
 
-	t.Run("duplicate name", func(t *testing.T) {
+	t.Run("duplicate sibling channel name", func(t *testing.T) {
 		t.Parallel()
 		base, _, _, user := setupWithUser(t, common, false)
 		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
@@ -245,7 +245,7 @@ func TestGormRepository_UpdateThread(t *testing.T) {
 		}
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("channel not found", func(t *testing.T) {
 		t.Parallel()
 		base, _, _ := setup(t, common)
 		repo := *base.(*Repository)

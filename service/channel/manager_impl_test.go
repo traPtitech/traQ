@@ -1659,7 +1659,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 func TestManagerImpl_UpdateThread(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ErrChannelNameConflicts", func(t *testing.T) {
+	t.Run("duplicate name reported by repository", func(t *testing.T) {
 		t.Parallel()
 		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)
@@ -1696,7 +1696,7 @@ func TestManagerImpl_UpdateThread(t *testing.T) {
 		require.ErrorIs(t, err, ErrInvalidParentChannel)
 	})
 
-	t.Run("unarchive with active parent", func(t *testing.T) {
+	t.Run("success unarchive with active parent", func(t *testing.T) {
 		t.Parallel()
 		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)
@@ -1748,7 +1748,7 @@ func TestManagerImpl_UpdateThread(t *testing.T) {
 		require.ErrorIs(t, err, ErrInvalidParentChannel)
 	})
 
-	t.Run("archive with active parent", func(t *testing.T) {
+	t.Run("success archive with active parent", func(t *testing.T) {
 		t.Parallel()
 		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)
@@ -1800,7 +1800,7 @@ func TestManagerImpl_UpdateThread(t *testing.T) {
 		require.ErrorIs(t, err, ErrInvalidParentChannel)
 	})
 
-	t.Run("rename with active parent", func(t *testing.T) {
+	t.Run("success rename with active parent", func(t *testing.T) {
 		t.Parallel()
 		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
 		cm := initCM(t, repo)

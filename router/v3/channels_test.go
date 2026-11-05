@@ -809,7 +809,7 @@ func TestHandlers_EditThread(t *testing.T) {
 	userSession := env.S(t, user.GetID())
 	ctx := context.Background()
 
-	t.Run("archived parent", func(t *testing.T) {
+	t.Run("rename with archived parent", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
 		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
@@ -828,7 +828,7 @@ func TestHandlers_EditThread(t *testing.T) {
 		assert.Equal(t, "thread", stored.Name)
 	})
 
-	t.Run("duplicate public channel name", func(t *testing.T) {
+	t.Run("duplicate sibling public channel name", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
 		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
@@ -847,7 +847,7 @@ func TestHandlers_EditThread(t *testing.T) {
 		assert.Equal(t, "thread", stored.Name)
 	})
 
-	t.Run("duplicate thread name", func(t *testing.T) {
+	t.Run("duplicate sibling thread name", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
 		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
@@ -868,7 +868,7 @@ func TestHandlers_EditThread(t *testing.T) {
 		assert.Equal(t, "thread", stored.Name)
 	})
 
-	t.Run("same name", func(t *testing.T) {
+	t.Run("success rename to same name", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
 		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
@@ -882,7 +882,7 @@ func TestHandlers_EditThread(t *testing.T) {
 			Status(http.StatusNoContent)
 	})
 
-	t.Run("rename", func(t *testing.T) {
+	t.Run("success rename", func(t *testing.T) {
 		t.Parallel()
 		parent := env.CreateChannel(t, rand)
 		parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
