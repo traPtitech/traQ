@@ -597,6 +597,30 @@ func TestHandlers_GetClipFolderMessages(t *testing.T) {
 		first := obj.Value(0).Object()
 		messageEquals(t, m, first.Value("message").Object())
 		first.Value("clippedAt").String().NotEmpty()
+		first.Value("message").Object().Value("threadId").IsNull()
+	})
+
+	t.Run("with thread", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.TODO()
+		cf := env.CreateClipFolder(t, rand, rand, user1.GetID())
+		parentMessage := env.CreateMessage(t, user2.GetID(), c.ID, rand)
+		thread, err := env.CM.CreateThreadChannel(ctx, "clip-thread", parentMessage.GetID(), user2.GetID())
+		require.NoError(t, err)
+		_, err = env.Repository.AddClipFolderMessage(ctx, cf.ID, parentMessage.GetID())
+		require.NoError(t, err)
+
+		e := env.R(t)
+		obj := e.GET(path, cf.ID.String()).
+			WithCookie(session.CookieName, user1Session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+		obj.Value(0).Object().Value("message").Object().
+			Value("threadId").String().IsEqual(thread.ChannelID.String())
 	})
 }
 
