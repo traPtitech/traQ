@@ -606,28 +606,31 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampPaletteCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteCreatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
 
 func stampPaletteUpdatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteUpdatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
 
 func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
@@ -682,48 +685,53 @@ func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderCreatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderUpdatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderMessageDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderMessageDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_MESSAGE_DELETED",
 		map[string]interface{}{
-			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
-			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  p.ClipFolderID,
+			"message_id": p.ClipFolderMessageID,
 		},
 	)
 }
 
 func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderMessageAddedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_MESSAGE_ADDED",
 		map[string]interface{}{
-			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
-			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  p.ClipFolderID,
+			"message_id": p.ClipFolderMessageID,
 		},
 	)
 }

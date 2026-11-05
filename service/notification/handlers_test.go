@@ -110,6 +110,39 @@ func channelSubscribersChangedEvent(channelID uuid.UUID, subscriberIDs []uuid.UU
 	}}
 }
 
+func stampPaletteEvent(topic string, userID, paletteID uuid.UUID) hub.Message {
+	f := hub.Fields{
+		"user_id":          userID,
+		"stamp_palette_id": paletteID,
+	}
+	if topic == event.StampPaletteCreated {
+		f["stamp_palette"] = &model.StampPalette{ID: paletteID, CreatorID: userID}
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func clipFolderEvent(topic string, userID, folderID uuid.UUID) hub.Message {
+	folder := &model.ClipFolder{ID: folderID, OwnerID: userID}
+	f := hub.Fields{
+		"user_id":        userID,
+		"clip_folder_id": folderID,
+		"clip_folder":    folder,
+	}
+	if topic == event.ClipFolderUpdated {
+		f["old_clip_folder"] = folder
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func clipFolderMessageEvent(topic string, userID, folderID, messageID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"user_id":                userID,
+		"clip_folder_id":         folderID,
+		"clip_folder_message_id": messageID,
+		"clip_folder_message":    &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID},
+	}}
+}
+
 func channelCreatedEvent(ch *model.Channel) hub.Message {
 	return hub.Message{Name: event.ChannelCreated, Fields: hub.Fields{
 		"channel_id": ch.ID,
@@ -772,6 +805,93 @@ func TestChannelSubscribersChangedNotification(t *testing.T) {
 			fakeSession{key: "subscriber", userID: subscriber},
 			fakeSession{key: "other", userID: newID()}))
 	})
+}
+
+// ---- STAMP_PALETTE_* ----
+
+// TestStampPaletteNotification スタンプパレットの作成・更新・削除時の Notification が正しく動いているかをテストする
+func TestStampPaletteNotification(t *testing.T) {
+	cases := map[string]string{
+		event.StampPaletteCreated: "STAMP_PALETTE_CREATED",
+		event.StampPaletteUpdated: "STAMP_PALETTE_UPDATED",
+		event.StampPaletteDeleted: "STAMP_PALETTE_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, paletteID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(stampPaletteEvent(topic, userID, paletteID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+paletteID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// ---- CLIP_FOLDER_* ----
+
+// TestClipFolderNotification クリップフォルダーの作成・更新・削除時の Notification が正しく動いているかをテストする
+func TestClipFolderNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ClipFolderCreated: "CLIP_FOLDER_CREATED",
+		event.ClipFolderUpdated: "CLIP_FOLDER_UPDATED",
+		event.ClipFolderDeleted: "CLIP_FOLDER_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, folderID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(clipFolderEvent(topic, userID, folderID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+folderID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// TestClipFolderMessageNotification クリップフォルダーへのメッセージの追加・除外時の Notification が正しく動いているかをテストする
+func TestClipFolderMessageNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ClipFolderMessageAdded:   "CLIP_FOLDER_MESSAGE_ADDED",
+		event.ClipFolderMessageDeleted: "CLIP_FOLDER_MESSAGE_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, folderID, messageID := newID(), newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(clipFolderMessageEvent(topic, userID, folderID, messageID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"folder_id":"`+folderID.String()+`","message_id":"`+messageID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
 }
 
 // ---- 複数トピックを 1 つの WS イベントにまとめるもの ----
