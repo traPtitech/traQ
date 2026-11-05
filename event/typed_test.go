@@ -272,7 +272,7 @@ func TestPayloadFieldsConcurrent(t *testing.T) {
 }
 
 // definedPayloads event package で定義している全てのペイロード型。
-// ペイロード型を追加したらここにも追加すること。
+// Test で型が規約を満たしているかを確認するため、ペイロード型を追加したらここにも追加すること。
 // interface 型のフィールドはゼロ値 (nil) だとデコードできないため、値を入れて登録すること。
 var definedPayloads = []Payload{
 	StampCreatedPayload{},

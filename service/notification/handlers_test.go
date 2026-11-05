@@ -636,6 +636,7 @@ func TestUserJoinedNotification(t *testing.T) {
 
 // ---- STAMP_CREATED / STAMP_UPDATED / STAMP_DELETED ----
 
+// TestStampNotification スタンプ作成・更新・削除時の Notification が正しく動いているかをテストする
 func TestStampNotification(t *testing.T) {
 	cases := []struct {
 		typeName  string
