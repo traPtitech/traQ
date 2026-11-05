@@ -278,8 +278,11 @@ func (m *managerImpl) UpdateThread(ctx context.Context, id uuid.UUID, args repos
 	}
 
 	_, err = m.GetChannel(ctx, ch.ParentID)
+	if errors.Is(err, ErrChannelNotFound) {
+	    return ErrInvalidParentChannel
+	}
 	if err != nil {
-		return fmt.Errorf("failed to UpdateThread: %w", err)
+	    return fmt.Errorf("failed to UpdateThread: %w", err)
 	}
 
 	m.T.Lock()
