@@ -170,6 +170,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeSubscriptions.GET("", h.GetMyChannelSubscriptions, requires(permission.GetChannelSubscription))
 					apiUsersMeSubscriptions.PUT("/:channelID", h.SetChannelSubscribeLevel, requires(permission.EditChannelSubscription))
 				}
+				apiUsersMeThreadSubscriptions := apiUsersMe.Group("/thread-subscriptions", blockBot)
+				{
+					apiUsersMeThreadSubscriptions.GET("", h.GetMyThreadSubscriptions, requires(permission.GetChannelSubscription))
+					apiUsersMeThreadSubscriptions.GET("/:channelID", h.GetMyThreadSubscription, requires(permission.GetChannelSubscription))
+					apiUsersMeThreadSubscriptions.PUT("/:channelID", h.SetMyThreadSubscription, requires(permission.EditChannelSubscription))
+				}
 				apiUsersMeSessions := apiUsersMe.Group("/sessions", blockBot)
 				{
 					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))

@@ -1165,6 +1165,482 @@ func TestHandlers_SetChannelSubscribeLevel(t *testing.T) {
 	})
 }
 
+func TestHandlers_GetMyThreadSubscriptions(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/users/me/thread-subscriptions"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	msg := env.CreateMessage(t, user.GetID(), ch.ID, "parent")
+	thread, err := env.CM.CreateThreadChannel(context.TODO(), "thread", msg.GetID(), user.GetID())
+	require.NoError(t, err)
+	s := env.S(t, user.GetID())
+	err = env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.Channel.ID, 0)
+	require.NoError(t, err)
+	err = env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 2)
+	require.NoError(t, err)
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+
+		first := obj.Value(0).Object()
+		first.Value("channelId").String().IsEqual(thread.Channel.ID.String())
+		first.Value("level").Number().IsEqual(0)
+	})
+
+	t.Run("success (empty)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(0)
+	})
+}
+
+func TestHandlers_GetMyThreadSubscription(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/users/me/thread-subscriptions/{channelId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	msg := env.CreateMessage(t, user.GetID(), ch.ID, "parent")
+	thread, err := env.CM.CreateThreadChannel(context.TODO(), "thread", msg.GetID(), user.GetID())
+	require.NoError(t, err)
+	s := env.S(t, user.GetID())
+	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
+	err = env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.Channel.ID, 0)
+	require.NoError(t, err)
+	err = env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 2)
+	require.NoError(t, err)
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, thread.Channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("channelId").String().IsEqual(thread.Channel.ID.String())
+		obj.Value("level").Number().IsEqual(0)
+	})
+
+	t.Run("success (inherit)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		e := env.R(t)
+		obj := e.GET(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("channelId").String().IsEqual(thread.Channel.ID.String())
+		obj.Value("level").Number().IsEqual(-1)
+	})
+
+	t.Run("bad request (public)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, ch.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (dm)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, dm.ID).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+}
+
+func TestPutThreadSubscriptionRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	type fields struct {
+		Level optional.Of[int]
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			"invalid (missing level)",
+			fields{},
+			true,
+		},
+		{
+			"invalid (below minimum)",
+			fields{Level: optional.From(-2)},
+			true,
+		},
+		{
+			"invalid (above maximum)",
+			fields{Level: optional.From(3)},
+			true,
+		},
+		{
+			"success (inherit)",
+			fields{Level: optional.From(-1)},
+			false,
+		},
+		{
+			"success (none)",
+			fields{Level: optional.From(0)},
+			false,
+		},
+		{
+			"success (mark)",
+			fields{Level: optional.From(1)},
+			false,
+		},
+		{
+			"success (notify)",
+			fields{Level: optional.From(2)},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := PutThreadSubscriptionRequest{
+				Level: tt.fields.Level,
+			}
+			if err := r.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandlers_SetMyThreadSubscription(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/users/me/thread-subscriptions/{channelId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	msg := env.CreateMessage(t, user.GetID(), ch.ID, "parent")
+	thread, err := env.CM.CreateThreadChannel(context.TODO(), "thread", msg.GetID(), user.GetID())
+	require.NoError(t, err)
+	s := env.S(t, user.GetID())
+	dm := env.CreateDMChannel(t, user.GetID(), user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request (invalid level)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(3)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (below minimum)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(-2)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (missing level)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (null level)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(map[string]any{"level": nil}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (public)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, ch.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(2)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (dm)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, dm.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(2)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PUT(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(2)}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(2)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			setting := settings[0]
+			assert.EqualValues(t, user.GetID(), setting.UserID)
+			assert.EqualValues(t, thread.Channel.ID, setting.ChannelID)
+			assert.EqualValues(t, 2, setting.Level)
+		}
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+
+	t.Run("success (none)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(0)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			setting := settings[0]
+			assert.EqualValues(t, user.GetID(), setting.UserID)
+			assert.EqualValues(t, thread.Channel.ID, setting.ChannelID)
+			assert.EqualValues(t, 0, setting.Level)
+		}
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+
+	t.Run("success (update)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.Channel.ID, 2)
+		require.NoError(t, err)
+		err = env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(1)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			setting := settings[0]
+			assert.EqualValues(t, user.GetID(), setting.UserID)
+			assert.EqualValues(t, thread.Channel.ID, setting.ChannelID)
+			assert.EqualValues(t, 1, setting.Level)
+		}
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+
+	t.Run("success (update to none)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.Channel.ID, 2)
+		require.NoError(t, err)
+		err = env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(0)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			setting := settings[0]
+			assert.EqualValues(t, user.GetID(), setting.UserID)
+			assert.EqualValues(t, thread.Channel.ID, setting.ChannelID)
+			assert.EqualValues(t, 0, setting.Level)
+		}
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+
+	t.Run("success (clear)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.Channel.ID, 2)
+		require.NoError(t, err)
+		err = env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(-1)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		assert.Empty(t, settings)
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+
+	t.Run("success (clear unset)", func(t *testing.T) {
+		t.Parallel()
+		user := env.CreateUser(t, rand)
+		user2 := env.CreateUser(t, rand)
+		s := env.S(t, user.GetID())
+		err := env.Repository.SetThreadSubscription(context.TODO(), user2.GetID(), thread.Channel.ID, 0)
+		require.NoError(t, err)
+
+		e := env.R(t)
+		e.PUT(path, thread.Channel.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PutThreadSubscriptionRequest{Level: optional.From(-1)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		settings, err := env.Repository.GetThreadSubscriptions(context.TODO(), user.GetID())
+		require.NoError(t, err)
+		assert.Empty(t, settings)
+
+		settings, err = env.Repository.GetThreadSubscriptions(context.TODO(), user2.GetID())
+		require.NoError(t, err)
+		if assert.Len(t, settings, 1) {
+			assert.EqualValues(t, 0, settings[0].Level)
+		}
+	})
+}
+
 func TestHandlers_GetUserStats(t *testing.T) {
 	t.Parallel()
 
