@@ -8,22 +8,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type v45UserThreadSubscriptionDefault struct {
+type vThread2UserThreadSubscriptionDefault struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Level     int       `gorm:"type:tinyint;not null"`
 }
 
-func (*v45UserThreadSubscriptionDefault) TableName() string {
+func (*vThread2UserThreadSubscriptionDefault) TableName() string {
 	return "user_thread_subscription_defaults"
 }
 
-// v45 スレッド機能: user_thread_subscription_defaults テーブル追加
-func v45() *gormigrate.Migration {
+// vThread2 スレッド機能: user_thread_subscription_defaults テーブル追加
+func vThread2() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "45",
+		ID: "thread2",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v45UserThreadSubscriptionDefault{}); err != nil {
+			if err := db.AutoMigrate(&vThread2UserThreadSubscriptionDefault{}); err != nil {
 				return err
 			}
 
