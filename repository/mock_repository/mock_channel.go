@@ -230,6 +230,12 @@ func (m *MockChannelRepository) GetThread(ctx context.Context, channelID uuid.UU
 	return ret0, ret1
 }
 
+// GetThread indicates an expected call of GetThread.
+func (mr *MockChannelRepositoryMockRecorder) GetThread(ctx, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThread", reflect.TypeOf((*MockChannelRepository)(nil).GetThread), ctx, channelID)
+}
+
 // GetThreadChannels mocks base method.
 func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query repository.GetThreadChannelQuery) ([]*model.Thread, error) {
 	m.ctrl.T.Helper()
@@ -237,12 +243,6 @@ func (m *MockChannelRepository) GetThreadChannels(ctx context.Context, query rep
 	ret0, _ := ret[0].([]*model.Thread)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
-}
-
-// GetThread indicates an expected call of GetThread.
-func (mr *MockChannelRepositoryMockRecorder) GetThread(ctx, channelID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThread", reflect.TypeOf((*MockChannelRepository)(nil).GetThread), ctx, channelID)
 }
 
 // GetThreadChannels indicates an expected call of GetThreadChannels.
@@ -293,4 +293,19 @@ func (m *MockChannelRepository) UpdateChannel(ctx context.Context, channelID uui
 func (mr *MockChannelRepositoryMockRecorder) UpdateChannel(ctx, channelID, args interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockChannelRepository)(nil).UpdateChannel), ctx, channelID, args)
+}
+
+// UpdateThread mocks base method.
+func (m *MockChannelRepository) UpdateThread(ctx context.Context, channelID uuid.UUID, args repository.UpdateThreadArgs) (*model.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateThread", ctx, channelID, args)
+	ret0, _ := ret[0].(*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateThread indicates an expected call of UpdateThread.
+func (mr *MockChannelRepositoryMockRecorder) UpdateThread(ctx, channelID, args interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateThread", reflect.TypeOf((*MockChannelRepository)(nil).UpdateThread), ctx, channelID, args)
 }

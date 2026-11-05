@@ -197,6 +197,47 @@ func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, 
 	return &ch, nil
 }
 
+// UpdateThread implements ChannelRepository interface.
+func (repo *Repository) UpdateThread(ctx context.Context, channelID uuid.UUID, args repository.UpdateThreadArgs) (*model.Channel, error) {
+	if channelID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+
+	var ch model.Channel
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		data := map[string]interface{}{"updater_id": args.UpdaterID}
+		if args.Visibility.Valid {
+			data["is_visible"] = args.Visibility.V
+		}
+		if args.Name.Valid {
+			data["name"] = args.Name.V
+		}
+
+		if err := tx.Model(&ch).Updates(data).Error; err != nil {
+			return err
+		}
+		return tx.First(&ch, &model.Channel{ID: channelID}).Error
+	})
+	if err != nil {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
+		return nil, err
+	}
+
+	repo.hub.Publish(hub.Message{
+		Name: event.ThreadUpdated,
+		Fields: hub.Fields{
+			"channel_id": channelID,
+		},
+	})
+	return &ch, nil
+}
+
 // ArchiveChannels implements ChannelRepository interface.
 func (repo *Repository) ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([]*model.Channel, error) {
 	var changed []*model.Channel

@@ -42,6 +42,7 @@ var handlerMap = map[string]eventHandler{
 	event.ChannelViewersChanged:     channelViewersChangedHandler,
 	event.ChannelSubscribersChanged: channelSubscribersChangedHandler,
 	event.ThreadCreated:             threadCreatedHandler,
+	event.ThreadUpdated:             threadUpdatedHandler,
 	event.UserCreated:               userCreatedHandler,
 	event.UserUpdated:               userUpdatedHandler,
 	event.UserIconUpdated:           userIconUpdatedHandler,
@@ -466,6 +467,10 @@ func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
 
 func threadCreatedHandler(ns *Service, ev hub.Message) {
 	threadHandler(ns, ev, "THREAD_CREATED")
+}
+
+func threadUpdatedHandler(ns *Service, ev hub.Message) {
+	threadHandler(ns, ev, "THREAD_UPDATED")
 }
 
 func userCreatedHandler(ns *Service, ev hub.Message) {

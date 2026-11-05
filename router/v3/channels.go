@@ -189,6 +189,8 @@ func (h *Handlers) EditThread(c *echo.Context) error {
 	}
 	if err := h.ChannelManager.UpdateThread(ctx, channelID, args); err != nil {
 		switch err {
+		case channel.ErrInvalidParentChannel:
+			return herror.BadRequest("invalid parent channel")
 		case channel.ErrInvalidChannelName:
 			return herror.BadRequest("invalid channel name")
 		case channel.ErrChannelNameConflicts:

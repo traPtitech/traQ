@@ -199,6 +199,11 @@ const (
 	// 		thread: *model.Channel
 	ThreadCreated = "thread.created"
 
+	// ThreadUpdated スレッドが更新された
+	// 	Fields:
+	// 		channel_id: uuid.UUID
+	ThreadUpdated = "thread.updated"
+
 	// StampCreated スタンプが作成された
 	// 	Fields:
 	// 		stamp_id: uuid.UUID

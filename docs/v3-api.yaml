@@ -2914,6 +2914,12 @@ paths:
 
         + `id`: 作成されたスレッドのId
 
+        ### `THREAD_UPDATED`
+        スレッドの情報が変更された。
+
+        対象: 全員
+
+        + `id`: 変更があったチャンネルのId
 
         ### `MESSAGE_CREATED`
         メッセージが投稿された。
@@ -3892,6 +3898,8 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+        "409":
+          description: 同じ親チャンネル内で名前が重複しています。
       operationId: editThread
       tags:
         - channel
