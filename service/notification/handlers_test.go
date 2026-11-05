@@ -32,10 +32,6 @@ import (
 	"github.com/traPtitech/traQ/utils/set"
 )
 
-// このファイルのテストは、hub のイベントを受けた notification が出力する
-// WS イベント (名前・JSON ボディ・配信対象) と FCM 送信を固定するためのもの。
-// イベント入力の組み立ては *Event 関数に集約しており、イベントの型付き化の際はそこだけを書き換える。
-
 const testOrigin = "https://example.com"
 
 // ---- 入力イベントの組み立て ----
@@ -229,9 +225,11 @@ func newID() uuid.UUID { return uuid.Must(uuid.NewV4()) }
 func startService(deps notificationDeps) (*hub.Hub, *recordingWriter) {
 	h := hub.New()
 	writer := &recordingWriter{}
-	var fcmClient fcm.Client = fcm.NewNullClient()
+	var fcmClient fcm.Client
 	if deps.fcm != nil {
 		fcmClient = deps.fcm
+	} else {
+		fcmClient = fcm.NewNullClient()
 	}
 	var cm channel.Manager
 	if deps.cm != nil {
@@ -251,8 +249,20 @@ func messagesOfType(messages []recordedMessage, typeName string) []recordedMessa
 	return res
 }
 
+// messagesByBody body ごとに 1 件ずつであることを確認し、body -> メッセージ の map を返す
+func messagesByBody(t *testing.T, messages []recordedMessage) map[string]recordedMessage {
+	t.Helper()
+	res := make(map[string]recordedMessage, len(messages))
+	for _, m := range messages {
+		require.NotContainsf(t, res, m.body, "duplicated body: %s", m.body)
+		res[m.body] = m
+	}
+	return res
+}
+
 // ---- MESSAGE_CREATED ----
 
+// TestMessageCreatedNotification メッセージ作成時の Notification が正しく動いているかをテストする
 func TestMessageCreatedNotification(t *testing.T) {
 	// viewer.Manager は GC 用の goroutine を常駐させるため、synctest のバブルの外で作る
 	vm := viewer.NewManager(hub.New())
@@ -300,16 +310,13 @@ func TestMessageCreatedNotification(t *testing.T) {
 			}
 			messages := messagesOfType(writer.snapshot(), "MESSAGE_CREATED")
 			require.Len(t, messages, 2)
-			for _, msg := range messages {
-				switch msg.body {
-				case `{"id":"` + m.ID.String() + `","is_citing":false}`:
-					assert.ElementsMatch(t, []string{"mark", "timeline"}, targetKeys(msg.target, sessions...))
-				case `{"id":"` + m.ID.String() + `","is_citing":true}`:
-					assert.Empty(t, targetKeys(msg.target, sessions...))
-				default:
-					t.Errorf("unexpected body: %s", msg.body)
-				}
-			}
+			byBody := messagesByBody(t, messages)
+			notCiting := `{"id":"` + m.ID.String() + `","is_citing":false}`
+			citing := `{"id":"` + m.ID.String() + `","is_citing":true}`
+			require.Contains(t, byBody, notCiting)
+			require.Contains(t, byBody, citing)
+			assert.ElementsMatch(t, []string{"mark", "timeline"}, targetKeys(byBody[notCiting].target, sessions...))
+			assert.Empty(t, targetKeys(byBody[citing].target, sessions...))
 
 			sends := fcmClient.snapshot()
 			require.Len(t, sends, 1)
@@ -362,16 +369,13 @@ func TestMessageCreatedNotification(t *testing.T) {
 			}
 			messages := messagesOfType(writer.snapshot(), "MESSAGE_CREATED")
 			require.Len(t, messages, 2)
-			for _, msg := range messages {
-				switch msg.body {
-				case `{"id":"` + m.ID.String() + `","is_citing":false}`:
-					assert.ElementsMatch(t, []string{"author", "peer"}, targetKeys(msg.target, sessions...))
-				case `{"id":"` + m.ID.String() + `","is_citing":true}`:
-					assert.Empty(t, targetKeys(msg.target, sessions...))
-				default:
-					t.Errorf("unexpected body: %s", msg.body)
-				}
-			}
+			byBody := messagesByBody(t, messages)
+			notCiting := `{"id":"` + m.ID.String() + `","is_citing":false}`
+			citing := `{"id":"` + m.ID.String() + `","is_citing":true}`
+			require.Contains(t, byBody, notCiting)
+			require.Contains(t, byBody, citing)
+			assert.ElementsMatch(t, []string{"author", "peer"}, targetKeys(byBody[notCiting].target, sessions...))
+			assert.Empty(t, targetKeys(byBody[citing].target, sessions...))
 
 			sends := fcmClient.snapshot()
 			require.Len(t, sends, 1)
@@ -385,6 +389,7 @@ func TestMessageCreatedNotification(t *testing.T) {
 
 // ---- MESSAGE_UPDATED / MESSAGE_DELETED ----
 
+// TestMessageUpdatedAndDeletedNotification メッセージ更新・削除時の Notification が正しく動いているかをテストする
 func TestMessageUpdatedAndDeletedNotification(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -456,6 +461,7 @@ func TestMessageUpdatedAndDeletedNotification(t *testing.T) {
 
 // ---- MESSAGE_STAMPED ----
 
+// TestMessageStampedNotification メッセージにスタンプが押されたときの Notification が正しく動いているかをテストする
 func TestMessageStampedNotification(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		chID, messageID, stampID, userID := newID(), newID(), newID(), newID()
@@ -487,6 +493,7 @@ func TestMessageStampedNotification(t *testing.T) {
 
 // ---- CHANNEL_CREATED ----
 
+// TestChannelCreatedNotification チャンネル作成時の Notification が正しく動いているかをテストする
 func TestChannelCreatedNotification(t *testing.T) {
 	t.Run("public channel", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
@@ -540,6 +547,7 @@ func TestChannelCreatedNotification(t *testing.T) {
 
 // ---- 複数トピックを 1 つの WS イベントにまとめるもの ----
 
+// TestUserTagsUpdatedNotification ユーザーのタグ変更時の Notification が正しく動いているかをテストする
 func TestUserTagsUpdatedNotification(t *testing.T) {
 	for _, topic := range []string{event.UserTagAdded, event.UserTagUpdated, event.UserTagRemoved} {
 		t.Run(topic, func(t *testing.T) {
@@ -561,6 +569,7 @@ func TestUserTagsUpdatedNotification(t *testing.T) {
 	}
 }
 
+// TestUserGroupUpdatedNotification ユーザーグループ変更時の Notification が正しく動いているかをテストする
 func TestUserGroupUpdatedNotification(t *testing.T) {
 	cases := map[string]func(groupID uuid.UUID) hub.Message{
 		event.UserGroupUpdated:     userGroupUpdatedEvent,
@@ -588,6 +597,7 @@ func TestUserGroupUpdatedNotification(t *testing.T) {
 
 // ---- USER_JOINED ----
 
+// TestUserJoinedNotification ユーザー作成時の Notification が正しく動いているかをテストする
 func TestUserJoinedNotification(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		u := &model.User{ID: newID(), Name: "newcomer"}
@@ -607,6 +617,7 @@ func TestUserJoinedNotification(t *testing.T) {
 
 // ---- QALL_ROOM_STATE_CHANGED ----
 
+// TestQallRoomStateChangedNotification Qall のルーム状態変更時の Notification が正しく動いているかをテストする
 func TestQallRoomStateChangedNotification(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		roomID := newID()
