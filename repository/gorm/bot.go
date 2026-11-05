@@ -71,12 +71,9 @@ func (repo *Repository) CreateBot(ctx context.Context, name, displayName, descri
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserCreated,
-		Fields: hub.Fields{
-			"user_id": u.ID,
-			"user":    u,
-		},
+	event.Publish(repo.hub, event.UserCreatedPayload{
+		UserID: u.ID,
+		User:   u,
 	})
 	repo.hub.Publish(hub.Message{
 		Name: event.BotCreated,
@@ -157,11 +154,8 @@ func (repo *Repository) UpdateBot(ctx context.Context, id uuid.UUID, args reposi
 	}
 
 	if userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": b.BotUserID,
-			},
+		event.Publish(repo.hub, event.UserUpdatedPayload{
+			UserID: b.BotUserID,
 		})
 	}
 	if updated || userUpdated {

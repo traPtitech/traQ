@@ -66,12 +66,9 @@ func (repo *Repository) CreateWebhook(ctx context.Context, name, description str
 		return nil, err
 	}
 	wb.BotUser = *u
-	repo.hub.Publish(hub.Message{
-		Name: event.UserCreated,
-		Fields: hub.Fields{
-			"user_id": u.ID,
-			"user":    u,
-		},
+	event.Publish(repo.hub, event.UserCreatedPayload{
+		UserID: u.ID,
+		User:   u,
 	})
 	repo.hub.Publish(hub.Message{
 		Name: event.WebhookCreated,
@@ -158,11 +155,8 @@ func (repo *Repository) UpdateWebhook(ctx context.Context, id uuid.UUID, args re
 		return err
 	}
 	if userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": w.BotUserID,
-			},
+		event.Publish(repo.hub, event.UserUpdatedPayload{
+			UserID: w.BotUserID,
 		})
 	}
 	if updated || userUpdated {

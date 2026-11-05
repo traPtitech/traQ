@@ -278,6 +278,10 @@ var definedPayloads = []Payload{
 	StampCreatedPayload{},
 	StampUpdatedPayload{},
 	StampDeletedPayload{},
+	UserCreatedPayload{},
+	UserUpdatedPayload{},
+	UserIconUpdatedPayload{},
+	UserActivatedPayload{},
 }
 
 // TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる

@@ -96,7 +96,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 		for e := range hub.Subscribe(1, event.UserCreated, event.UserUpdated, event.BotCreated, event.BotStateChanged, event.BotDeleted).Receiver {
 			switch e.Topic() {
 			case event.UserCreated:
-				createdUser := e.Fields["user"].(*model.User)
+				createdUser := event.MustPayload[event.UserCreatedPayload](e.Fields).User
 				if createdUser.Bot {
 					break
 				}
@@ -107,7 +107,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.userStatus[createdUser.ID] = model.UserAccountStatusActive
 
 			case event.UserUpdated:
-				userID := e.Fields["user_id"].(uuid.UUID)
+				userID := event.MustPayload[event.UserUpdatedPayload](e.Fields).UserID
 				var newStatusInInt int
 				db.Model(&model.User{}).Where("id = ?", userID).Select("status").First(&newStatusInInt)
 				newStatus := model.UserAccountStatus(newStatusInInt)

@@ -451,7 +451,7 @@ func userCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_JOINED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserCreatedPayload](ev.Fields).UserID,
 		},
 	)
 }
@@ -460,7 +460,7 @@ func userUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserUpdatedPayload](ev.Fields).UserID,
 		},
 	)
 }
@@ -469,7 +469,7 @@ func userIconUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_ICON_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserIconUpdatedPayload](ev.Fields).UserID,
 		},
 	)
 }

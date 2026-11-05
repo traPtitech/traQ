@@ -6,13 +6,13 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserActivated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	user := fields["user"].(model.UserInfo)
+	user := event.MustPayload[event.UserActivatedPayload](fields).User
 
 	bots, err := ctx.GetBots(botevent.UserActivated)
 	if err != nil {
