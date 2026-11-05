@@ -85,6 +85,31 @@ func messagePinEvent(topic string, messageID, channelID uuid.UUID) hub.Message {
 	}}
 }
 
+func channelPrivateEvent(topic string, ch *model.Channel) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"channel_id": ch.ID,
+		"private":    !ch.IsPublic,
+	}}
+}
+
+func channelUserEvent(topic string, userID, channelID uuid.UUID) hub.Message {
+	f := hub.Fields{
+		"user_id":    userID,
+		"channel_id": channelID,
+	}
+	if topic == event.ChannelRead {
+		f["read_messages_num"] = 1
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func channelSubscribersChangedEvent(channelID uuid.UUID, subscriberIDs []uuid.UUID) hub.Message {
+	return hub.Message{Name: event.ChannelSubscribersChanged, Fields: hub.Fields{
+		"channel_id":     channelID,
+		"subscriber_ids": subscriberIDs,
+	}}
+}
+
 func channelCreatedEvent(ch *model.Channel) hub.Message {
 	return hub.Message{Name: event.ChannelCreated, Fields: hub.Fields{
 		"channel_id": ch.ID,
@@ -644,6 +669,108 @@ func TestChannelCreatedNotification(t *testing.T) {
 				`{"dm_user_id":"` + u2.String() + `","id":"` + ch.ID.String() + `"}`: {"u1"},
 			}, got)
 		})
+	})
+}
+
+// ---- CHANNEL_UPDATED / CHANNEL_DELETED ----
+
+// TestChannelUpdatedAndDeletedNotification チャンネル更新・削除時の Notification が正しく動いているかをテストする
+func TestChannelUpdatedAndDeletedNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ChannelUpdated: "CHANNEL_UPDATED",
+		event.ChannelDeleted: "CHANNEL_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic+" public channel", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ch := &model.Channel{ID: newID(), IsPublic: true}
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(channelPrivateEvent(topic, ch))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+ch.ID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"a", "b"}, targetKeys(messages[0].target,
+					fakeSession{key: "a", userID: newID()}, fakeSession{key: "b", userID: newID()}))
+			})
+		})
+		t.Run(topic+" DM channel", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ch := &model.Channel{ID: newID(), IsPublic: false}
+				u := newID()
+				cm := mock_channel.NewMockManager(gomock.NewController(t))
+				cm.EXPECT().GetDMChannelMembers(gomock.Any(), ch.ID).Return([]uuid.UUID{u}, nil)
+
+				h, writer := startService(notificationDeps{cm: cm})
+				defer h.Close()
+				h.Publish(channelPrivateEvent(topic, ch))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+ch.ID.String()+`","dm_user_id":"`+u.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"u"}, targetKeys(messages[0].target,
+					fakeSession{key: "u", userID: u}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// ---- CHANNEL_STARED / CHANNEL_UNSTARED / MESSAGE_READ ----
+
+// TestChannelUserNotification チャンネルのスター・既読時の Notification が正しく動いているかをテストする
+func TestChannelUserNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ChannelStared:   "CHANNEL_STARED",
+		event.ChannelUnstared: "CHANNEL_UNSTARED",
+		event.ChannelRead:     "MESSAGE_READ",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, chID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(channelUserEvent(topic, userID, chID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+chID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID(), viewing: chID}))
+			})
+		})
+	}
+}
+
+// ---- CHANNEL_SUBSCRIBERS_CHANGED ----
+
+// TestChannelSubscribersChangedNotification チャンネルの購読者変更時の Notification が正しく動いているかをテストする
+func TestChannelSubscribersChangedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		chID, subscriber := newID(), newID()
+
+		h, writer := startService(notificationDeps{})
+		defer h.Close()
+		h.Publish(channelSubscribersChangedEvent(chID, []uuid.UUID{subscriber}))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "CHANNEL_SUBSCRIBERS_CHANGED", messages[0].typeName)
+		assert.JSONEq(t, `{"id":"`+chID.String()+`"}`, messages[0].body)
+		assert.ElementsMatch(t, []string{"viewer", "subscriber"}, targetKeys(messages[0].target,
+			fakeSession{key: "viewer", userID: newID(), viewing: chID},
+			fakeSession{key: "subscriber", userID: subscriber},
+			fakeSession{key: "other", userID: newID()}))
 	})
 }
 

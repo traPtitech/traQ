@@ -391,40 +391,46 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelCreatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_CREATED")
+	p := event.MustPayload[event.ChannelCreatedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_CREATED")
 }
 
 func channelUpdatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_UPDATED")
+	p := event.MustPayload[event.ChannelUpdatedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_UPDATED")
 }
 
 func channelDeletedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_DELETED")
+	p := event.MustPayload[event.ChannelDeletedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_DELETED")
 }
 
 func channelStaredHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelStaredPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CHANNEL_STARED",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
 
 func channelUnstaredHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelUnstaredPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CHANNEL_UNSTARED",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
 
 func channelReadHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelReadPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"MESSAGE_READ",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
@@ -441,8 +447,9 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["channel_id"].(uuid.UUID)
-	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
+	p := event.MustPayload[event.ChannelSubscribersChangedPayload](ev.Fields)
+	cid := p.ChannelID
+	uids := p.SubscriberIDs
 	ns.messageWriter.WriteMessage(
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
@@ -721,9 +728,7 @@ func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
 	)
 }
 
-func channelHandler(ns *Service, ev hub.Message, eventType string) {
-	cid := ev.Fields["channel_id"].(uuid.UUID)
-	private := ev.Fields["private"].(bool)
+func channelHandler(ns *Service, cid uuid.UUID, private bool, eventType string) {
 	if private {
 		members, err := ns.cm.GetDMChannelMembers(context.Background(), cid)
 		if err != nil {

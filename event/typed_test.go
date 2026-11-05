@@ -302,6 +302,14 @@ var definedPayloads = []Payload{
 	MessagePinnedPayload{},
 	MessageUnpinnedPayload{},
 	MessageCitedPayload{},
+	ChannelCreatedPayload{},
+	ChannelUpdatedPayload{},
+	ChannelTopicUpdatedPayload{},
+	ChannelDeletedPayload{},
+	ChannelReadPayload{},
+	ChannelStaredPayload{},
+	ChannelUnstaredPayload{},
+	ChannelSubscribersChangedPayload{},
 }
 
 // TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる

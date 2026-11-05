@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -435,13 +434,10 @@ func (repo *Repository) DeleteUnreadsByChannelID(ctx context.Context, channelID,
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelRead,
-			Fields: hub.Fields{
-				"channel_id":        channelID,
-				"user_id":           userID,
-				"read_messages_num": int(result.RowsAffected),
-			},
+		event.Publish(repo.hub, event.ChannelReadPayload{
+			ChannelID:       channelID,
+			UserID:          userID,
+			ReadMessagesNum: int(result.RowsAffected),
 		})
 	}
 	return nil
