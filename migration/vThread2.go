@@ -1,0 +1,50 @@
+package migration
+
+import (
+	"fmt"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+)
+
+type vThread2UserThreadSubscriptionDefault struct {
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	Level     int       `gorm:"type:tinyint;not null"`
+}
+
+func (*vThread2UserThreadSubscriptionDefault) TableName() string {
+	return "user_thread_subscription_defaults"
+}
+
+// vThread2 スレッド機能: user_thread_subscription_defaults テーブル追加
+func vThread2() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "thread2",
+		Migrate: func(db *gorm.DB) error {
+			if err := db.AutoMigrate(&vThread2UserThreadSubscriptionDefault{}); err != nil {
+				return err
+			}
+
+			foreignKeys := [][6]string{
+				{"user_thread_subscription_defaults", "user_thread_subscription_defaults_user_id_users_id_foreign", "user_id", "users(id)", "CASCADE", "CASCADE"},
+				{"user_thread_subscription_defaults", "user_thread_subscription_defaults_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+			}
+			for _, c := range foreignKeys {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s", c[0], c[1], c[2], c[3], c[4], c[5])).Error; err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+		Rollback: func(db *gorm.DB) error {
+			if err := db.Migrator().DropTable("user_thread_subscription_defaults"); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+}

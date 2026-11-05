@@ -57,6 +57,7 @@ func Migrations() []*gormigrate.Migration {
 		v43_2(),     // スタンプ名が"0x"で始まるときに、1文字目を"_"に変更。加えて、変更後に他のスタンプ名が一致する場合は_3などの接尾辞を追加。
 		v20261014(), // qallロールを追加
 		vThread1(),  // スレッド機能: channels.type 追加・threads テーブル追加
+		vThread2(),  // スレッド機能: user_thread_subscription_defaults テーブル追加
 	}
 }
 
@@ -89,6 +90,7 @@ func AllTables() []interface{} {
 		&model.FileMeta{},
 		&model.UsersPrivateChannel{},
 		&model.UserSubscribeChannel{},
+		&model.UserThreadSubscriptionDefault{},
 		&model.Tag{},
 		&model.ArchivedMessage{},
 		&model.ClipFolderMessage{},
