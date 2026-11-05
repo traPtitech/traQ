@@ -8,13 +8,14 @@ import (
 	jsonIter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func BotPingRequest(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	bot := fields["bot"].(*model.Bot)
+	bot := event.MustPayload[event.BotPingRequestPayload](fields).Bot
 
 	buf, err := jsonIter.ConfigFastest.Marshal(payload.MakePing(datetime))
 	if err != nil {

@@ -318,6 +318,16 @@ var definedPayloads = []Payload{
 	ClipFolderDeletedPayload{},
 	ClipFolderMessageDeletedPayload{},
 	ClipFolderMessageAddedPayload{},
+	WebhookCreatedPayload{},
+	WebhookUpdatedPayload{},
+	WebhookDeletedPayload{},
+	BotCreatedPayload{},
+	BotUpdatedPayload{},
+	BotDeletedPayload{},
+	BotStateChangedPayload{},
+	BotPingRequestPayload{},
+	BotJoinedPayload{},
+	BotLeftPayload{},
 }
 
 // TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる
