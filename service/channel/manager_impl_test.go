@@ -298,17 +298,13 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		cases := []struct {
-			Name   string
-			Parent uuid.UUID
-		}{
-			{Name: "a", Parent: cA},
-		}
-		for _, c := range cases {
-			repo.EXPECT().IsChildPresent(gomock.Any(), c.Name, c.Parent).Return(true, nil).Times(1)
-			_, err := cm.CreatePublicChannel(context.TODO(), c.Name, c.Parent, uuid.Nil)
-			assert.EqualError(t, err, ErrChannelNameConflicts.Error())
-		}
+		repo.EXPECT().
+			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), model.ChannelTypePublic).
+			Return(nil, fmt.Errorf("duplicate: %w", repository.ErrAlreadyExists)).
+			Times(1)
+
+		_, err := cm.CreatePublicChannel(context.TODO(), "a", cA, uuid.Nil)
+		require.ErrorIs(t, err, ErrChannelNameConflicts)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
@@ -322,8 +318,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 			CreateChannel(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil, mockErr).
 			AnyTimes()
-
-		repo.EXPECT().IsChildPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
 
 		_, err := cm.CreatePublicChannel(context.TODO(), "test", uuid.Nil, uuid.Nil)
 		if assert.Error(t, err) {
@@ -377,10 +371,6 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 							AnyTimes()
 
 						if c.Parent != uuid.Nil {
-							repo.EXPECT().
-								IsChildPresent(context.TODO(), c.Name, c.Parent).
-								Return(false, nil).
-								Times(1)
 							repo.EXPECT().
 								RecordChannelEvent(gomock.Any(), c.Parent, model.ChannelEventChildCreated, gomock.Eq(model.ChannelEventDetail{
 									"userId":    c.Creator,
@@ -1417,6 +1407,20 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		cm := initCM(t, repo)
 
 		err := cm.UpdateChannel(context.TODO(), cA, repository.UpdateChannelArgs{Name: optional.From("e")})
+		assert.EqualError(t, err, ErrChannelNameConflicts.Error())
+	})
+
+	t.Run("ErrChannelNameConflicts from repository", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			UpdateChannel(gomock.Any(), cA, gomock.Any()).
+			Return(nil, fmt.Errorf("duplicate: %w", repository.ErrAlreadyExists))
+
+		err := cm.UpdateChannel(context.TODO(), cA, repository.UpdateChannelArgs{Name: optional.From("new-name")})
 		assert.EqualError(t, err, ErrChannelNameConflicts.Error())
 	})
 

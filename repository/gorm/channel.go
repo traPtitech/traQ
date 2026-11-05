@@ -81,6 +81,9 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 		return nil
 	})
 	if err != nil {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
 		return nil, err
 	}
 	if channelType != model.ChannelTypeThread {
@@ -174,6 +177,9 @@ func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, 
 		return tx.First(&ch, &model.Channel{ID: channelID}).Error
 	})
 	if err != nil {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
 		return nil, err
 	}
 

@@ -16,6 +16,47 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
+func TestGormRepository_CreateChannel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("duplicate public channel name", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _ := setup(t, common)
+		parent := mustMakeChannel(t, repo, rand)
+		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:     "conflict",
+			ParentID: parent.ID,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		_, err = repo.CreateChannel(context.TODO(), model.Channel{
+			Name:     "conflict",
+			ParentID: parent.ID,
+		}, nil, model.ChannelTypePublic)
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+	})
+
+	t.Run("duplicate thread name", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _, user := setupWithUser(t, common, false)
+		parent := mustMakeChannel(t, repo, rand)
+		message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
+		_, err := repo.CreateThread(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		_, err = repo.CreateChannel(context.TODO(), model.Channel{
+			Name:     "conflict",
+			ParentID: parent.ID,
+		}, nil, model.ChannelTypePublic)
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+	})
+}
+
 func TestGormRepository_UpdateChannel(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common, false)
@@ -65,6 +106,128 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGormRepository_UpdateChannel_NameConflict(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rename conflicts with public channel", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _, user := setupWithUser(t, common, false)
+		parent := mustMakeChannel(t, repo, rand)
+		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		ch, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "original",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		_, err = repo.UpdateChannel(context.TODO(), ch.ID, repository.UpdateChannelArgs{
+			UpdaterID: user.GetID(),
+			Name:      optional.From("conflict"),
+		})
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+		stored, err := repo.GetChannel(context.TODO(), ch.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "original", stored.Name)
+		assert.Equal(t, parent.ID, stored.ParentID)
+	})
+
+	t.Run("rename conflicts with thread", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _, user := setupWithUser(t, common, false)
+		parent := mustMakeChannel(t, repo, rand)
+		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypeThread)
+		require.NoError(t, err)
+
+		ch, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "original",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		_, err = repo.UpdateChannel(context.TODO(), ch.ID, repository.UpdateChannelArgs{
+			UpdaterID: user.GetID(),
+			Name:      optional.From("conflict"),
+		})
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+		stored, err := repo.GetChannel(context.TODO(), ch.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "original", stored.Name)
+		assert.Equal(t, parent.ID, stored.ParentID)
+	})
+
+	t.Run("move conflicts with public channel", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _, user := setupWithUser(t, common, false)
+		parent := mustMakeChannel(t, repo, rand)
+		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		originalParent := mustMakeChannel(t, repo, rand)
+		ch, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  originalParent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		_, err = repo.UpdateChannel(context.TODO(), ch.ID, repository.UpdateChannelArgs{
+			UpdaterID: user.GetID(),
+			Parent:    optional.From(parent.ID),
+		})
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+		stored, err := repo.GetChannel(context.TODO(), ch.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "conflict", stored.Name)
+		assert.Equal(t, originalParent.ID, stored.ParentID)
+	})
+
+	t.Run("move conflicts with thread", func(t *testing.T) {
+		t.Parallel()
+		repo, _, _, user := setupWithUser(t, common, false)
+		parent := mustMakeChannel(t, repo, rand)
+		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  parent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypeThread)
+		require.NoError(t, err)
+
+		originalParent := mustMakeChannel(t, repo, rand)
+		ch, err := repo.CreateChannel(context.TODO(), model.Channel{
+			Name:      "conflict",
+			ParentID:  originalParent.ID,
+			IsVisible: true,
+		}, nil, model.ChannelTypePublic)
+		require.NoError(t, err)
+
+		_, err = repo.UpdateChannel(context.TODO(), ch.ID, repository.UpdateChannelArgs{
+			UpdaterID: user.GetID(),
+			Parent:    optional.From(parent.ID),
+		})
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+		stored, err := repo.GetChannel(context.TODO(), ch.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "conflict", stored.Name)
+		assert.Equal(t, originalParent.ID, stored.ParentID)
+	})
 }
 
 func TestGormRepository_UpdateThread(t *testing.T) {
