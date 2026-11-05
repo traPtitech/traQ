@@ -1563,7 +1563,7 @@ paths:
                   level: 2
       operationId: getMyChannelSubscriptions
       description: |-
-        自身のチャンネル購読状態を取得します。
+        自身のPublicチャンネルの購読状態を取得します。
 
         購読レベルが0のチャンネルは返しません。
   "/users/me/subscriptions/{channelId}":
@@ -1600,7 +1600,91 @@ paths:
 
         `level`に`0`を指定すると購読を解除します。
 
-        channelIdにはPublicチャンネル、ThreadチャンネルのIDを指定することができます。
+        channelIdにはPublicチャンネルのIDのみを指定することができます。
+  /users/me/thread-subscriptions:
+    get:
+      summary: 自分のスレッド購読設定を取得
+      tags:
+        - me
+        - notification
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: スレッド購読設定の配列
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/UserThreadSubscription"
+                    - type: object
+                      properties:
+                        level:
+                          type: integer
+                          enum: [0, 1, 2]
+      operationId: getMyThreadSubscriptions
+      description: |-
+        自身のスレッド購読設定を取得します。
+
+        継承（-1）のスレッドは返しません。省略されたスレッドでは、親チャンネルに対する自分のスレッドのデフォルト購読設定に従います。
+  "/users/me/thread-subscriptions/{channelId}":
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      summary: 自分のスレッド購読設定を取得
+      tags:
+        - me
+        - notification
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserThreadSubscription"
+        "400":
+          description: Bad Request
+        "404":
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
+      operationId: getMyThreadSubscription
+      description: |-
+        指定したスレッドに対する自分の購読設定を取得します。
+
+        `level`が`-1`の場合、親チャンネルに対する自分のスレッドのデフォルト購読設定に従います。
+
+        channelIdにはThreadチャンネルのIDのみを指定することができます。
+    put:
+      summary: スレッド購読設定を変更
+      responses:
+        "204":
+          description: |-
+            No Content
+            変更されました。
+        "400":
+          description: Bad Request
+        "404":
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
+      tags:
+        - me
+        - notification
+      operationId: setMyThreadSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutThreadSubscriptionRequest"
+      description: |-
+        指定したスレッドに対する自分の購読レベルを設定します。
+
+        `level`が`-1`の場合、親チャンネルに対する自分のスレッドのデフォルト購読設定に従います。
+
+        channelIdにはThreadチャンネルのIDのみを指定することができます。
   /users/me/thread-subscription-defaults:
     get:
       summary: 自分のスレッドのデフォルト購読設定を取得
@@ -6153,6 +6237,53 @@ components:
       properties:
         level:
           $ref: "#/components/schemas/ChannelSubscribeLevel"
+      required:
+        - level
+    UserThreadSubscription:
+      title: UserThreadSubscription
+      type: object
+      description: ユーザーのスレッド購読設定
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ThreadチャンネルのUUID
+        level:
+          $ref: "#/components/schemas/ThreadSubscribeLevel"
+      required:
+        - channelId
+        - level
+    ThreadSubscribeLevel:
+      title: ThreadSubscribeLevel
+      type: integer
+      description: |-
+        スレッド購読レベル
+        -1：親チャンネルのスレッドのデフォルト購読設定に従う
+        0：無し
+        1：未読管理
+        2：未読管理+通知
+      enum:
+        - -1
+        - 0
+        - 1
+        - 2
+      x-enum-varnames:
+        - inherit
+        - none
+        - subscribed
+        - notified
+      x-enum-descriptions:
+        - 親チャンネルのスレッドのデフォルト購読設定に従う
+        - 無し
+        - 未読管理
+        - 未読管理+通知
+    PutThreadSubscriptionRequest:
+      title: PutThreadSubscriptionRequest
+      type: object
+      description: スレッド購読設定変更リクエスト
+      properties:
+        level:
+          $ref: "#/components/schemas/ThreadSubscribeLevel"
       required:
         - level
     UserThreadSubscriptionDefault:
