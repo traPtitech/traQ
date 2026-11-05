@@ -293,6 +293,15 @@ var definedPayloads = []Payload{
 	UserGroupMemberRemovedPayload{},
 	UserGroupAdminAddedPayload{},
 	UserGroupAdminRemovedPayload{},
+	MessageCreatedPayload{},
+	MessageUpdatedPayload{},
+	MessageDeletedPayload{},
+	MessageUnreadPayload{},
+	MessageStampedPayload{},
+	MessageUnstampedPayload{},
+	MessagePinnedPayload{},
+	MessageUnpinnedPayload{},
+	MessageCitedPayload{},
 }
 
 // TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる

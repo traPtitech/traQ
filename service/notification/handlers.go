@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/traPtitech/traQ/utils/optional"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/set"
 )
 
@@ -91,8 +89,9 @@ func (ns *Service) startConcurrentNotifications() {
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
-	m := ev.Fields["message"].(*model.Message)
-	parsed := ev.Fields["parse_result"].(*message.ParseResult)
+	p := event.MustPayload[event.MessageCreatedPayload](ev.Fields)
+	m := p.Message
+	parsed := p.ParseResult
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
 	chTree := ns.cm.PublicChannelTree(context.Background())
@@ -298,10 +297,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["message"].(*model.Message).ChannelID
+	p := event.MustPayload[event.MessageUpdatedPayload](ev.Fields)
+	cid := p.Message.ChannelID
 	wsEventType := "MESSAGE_UPDATED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": p.MessageID,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -320,10 +320,11 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["message"].(*model.Message).ChannelID
+	p := event.MustPayload[event.MessageDeletedPayload](ev.Fields)
+	cid := p.Message.ChannelID
 	wsEventType := "MESSAGE_DELETED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": p.MessageID,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -342,45 +343,49 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessagePinnedPayload](ev.Fields)
+	channelViewerMulticast(ns, p.ChannelID,
 		"MESSAGE_PINNED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"channel_id": p.ChannelID,
 		},
 	)
 }
 
 func messageUnpinnedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageUnpinnedPayload](ev.Fields)
+	channelViewerMulticast(ns, p.ChannelID,
 		"MESSAGE_UNPINNED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"channel_id": p.ChannelID,
 		},
 	)
 }
 
 func messageStampedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageStampedPayload](ev.Fields)
+	messageViewerMulticast(ns, p.MessageID,
 		"MESSAGE_STAMPED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
-			"count":      ev.Fields["count"].(int),
-			"created_at": ev.Fields["created_at"].(time.Time),
+			"message_id": p.MessageID,
+			"user_id":    p.UserID,
+			"stamp_id":   p.StampID,
+			"count":      p.Count,
+			"created_at": p.CreatedAt,
 		},
 	)
 }
 
 func messageUnstampedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageUnstampedPayload](ev.Fields)
+	messageViewerMulticast(ns, p.MessageID,
 		"MESSAGE_UNSTAMPED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"user_id":    p.UserID,
+			"stamp_id":   p.StampID,
 		},
 	)
 }

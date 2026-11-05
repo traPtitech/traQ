@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -40,12 +39,9 @@ func (repo *Repository) PinMessage(ctx context.Context, messageID, userID uuid.U
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessagePinned,
-		Fields: hub.Fields{
-			"message_id": messageID,
-			"channel_id": m.ChannelID,
-		},
+	event.Publish(repo.hub, event.MessagePinnedPayload{
+		MessageID: messageID,
+		ChannelID: m.ChannelID,
 	})
 	return &p, err
 }
@@ -65,12 +61,9 @@ func (repo *Repository) UnpinMessage(ctx context.Context, messageID uuid.UUID) (
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageUnpinned,
-		Fields: hub.Fields{
-			"channel_id": pin.Message.ChannelID,
-			"message_id": messageID,
-		},
+	event.Publish(repo.hub, event.MessageUnpinnedPayload{
+		ChannelID: pin.Message.ChannelID,
+		MessageID: messageID,
 	})
 	return &pin, nil
 }

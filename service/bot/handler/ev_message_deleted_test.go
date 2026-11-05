@@ -57,7 +57,9 @@ func TestMessageDeleted(t *testing.T) {
 
 		expectMulticast(handlerCtx, botevent.MessageDeleted, payload.MakeMessageDeleted(et, m), []*model.Bot{b})
 		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
-			"message": m,
+			"message_id":      m.ID,
+			"message":         m,
+			"deleted_unreads": []*model.Unread{},
 		}))
 	})
 
@@ -84,7 +86,9 @@ func TestMessageDeleted(t *testing.T) {
 			AnyTimes()
 
 		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
-			"message": m,
+			"message_id":      m.ID,
+			"message":         m,
+			"deleted_unreads": []*model.Unread{},
 		}))
 	})
 
@@ -107,8 +111,9 @@ func TestMessageDeleted(t *testing.T) {
 
 		expectUnicast(handlerCtx, botevent.DirectMessageDeleted, payload.MakeDirectMessageDeleted(et, m), b)
 		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":      m.ID,
+			"message":         m,
+			"deleted_unreads": []*model.Unread{},
 		}))
 	})
 
@@ -130,8 +135,9 @@ func TestMessageDeleted(t *testing.T) {
 		et := time.Now()
 
 		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":      m.ID,
+			"message":         m,
+			"deleted_unreads": []*model.Unread{},
 		}))
 	})
 }

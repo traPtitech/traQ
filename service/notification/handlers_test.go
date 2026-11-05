@@ -70,6 +70,21 @@ func messageStampedEvent(messageID, stampID, userID uuid.UUID, count int, create
 	}}
 }
 
+func messageUnstampedEvent(messageID, stampID, userID uuid.UUID) hub.Message {
+	return hub.Message{Name: event.MessageUnstamped, Fields: hub.Fields{
+		"message_id": messageID,
+		"stamp_id":   stampID,
+		"user_id":    userID,
+	}}
+}
+
+func messagePinEvent(topic string, messageID, channelID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"message_id": messageID,
+		"channel_id": channelID,
+	}}
+}
+
 func channelCreatedEvent(ch *model.Channel) hub.Message {
 	return hub.Message{Name: event.ChannelCreated, Fields: hub.Fields{
 		"channel_id": ch.ID,
@@ -513,6 +528,69 @@ func TestMessageStampedNotification(t *testing.T) {
 		}
 		assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target, sessions...))
 	})
+}
+
+// TestMessageUnstampedNotification メッセージからスタンプが消されたときの Notification が正しく動いているかをテストする
+func TestMessageUnstampedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		chID, messageID, stampID, userID := newID(), newID(), newID(), newID()
+		mm := &fakeMessageManager{channels: map[uuid.UUID]uuid.UUID{messageID: chID}}
+
+		h, writer := startService(notificationDeps{mm: mm})
+		defer h.Close()
+		h.Publish(messageUnstampedEvent(messageID, stampID, userID))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "MESSAGE_UNSTAMPED", messages[0].typeName)
+		assert.JSONEq(t, `{
+			"message_id":"`+messageID.String()+`",
+			"user_id":"`+userID.String()+`",
+			"stamp_id":"`+stampID.String()+`"
+		}`, messages[0].body)
+		sessions := []fakeSession{
+			{key: "viewer", userID: newID(), viewing: chID},
+			{key: "timeline", userID: newID(), timeline: true},
+		}
+		assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target, sessions...))
+	})
+}
+
+// ---- MESSAGE_PINNED / MESSAGE_UNPINNED ----
+
+// TestMessagePinNotification メッセージのピン留め・解除時の Notification が正しく動いているかをテストする
+func TestMessagePinNotification(t *testing.T) {
+	cases := map[string]string{
+		event.MessagePinned:   "MESSAGE_PINNED",
+		event.MessageUnpinned: "MESSAGE_UNPINNED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				chID, messageID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(messagePinEvent(topic, messageID, chID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{
+					"message_id":"`+messageID.String()+`",
+					"channel_id":"`+chID.String()+`"
+				}`, messages[0].body)
+				sessions := []fakeSession{
+					{key: "viewer", userID: newID(), viewing: chID},
+					{key: "other", userID: newID(), viewing: newID()},
+					{key: "timeline", userID: newID(), timeline: true},
+				}
+				assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target, sessions...))
+			})
+		})
+	}
 }
 
 // ---- CHANNEL_CREATED ----

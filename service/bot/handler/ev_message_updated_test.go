@@ -70,8 +70,9 @@ func TestMessageUpdated(t *testing.T) {
 
 		expectMulticast(handlerCtx, botevent.MessageUpdated, payload.MakeMessageUpdated(et, m, mu, parsed), []*model.Bot{b})
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":  m.ID,
+			"old_message": m,
+			"message":     m,
 		}))
 	})
 
@@ -102,8 +103,9 @@ func TestMessageUpdated(t *testing.T) {
 			AnyTimes()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), event.MessageUpdated, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":  m.ID,
+			"old_message": m,
+			"message":     m,
 		}))
 	})
 
@@ -127,8 +129,9 @@ func TestMessageUpdated(t *testing.T) {
 
 		expectUnicast(handlerCtx, botevent.DirectMessageUpdated, payload.MakeDirectMessageUpdated(et, m, u, parsed), b)
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":  m.ID,
+			"old_message": m,
+			"message":     m,
 		}))
 	})
 
@@ -151,8 +154,9 @@ func TestMessageUpdated(t *testing.T) {
 		et := time.Now()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
+			"message_id":  m.ID,
+			"old_message": m,
+			"message":     m,
 		}))
 	})
 }
