@@ -107,15 +107,6 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		if len(m.T.getAscendantIDs(parent))+2 > m.MaxChannelDepth {
 			return nil, ErrTooDeepChannel
 		}
-
-		// 既にあるスレッド名と重複する名付けはできない
-		ok, err := m.R.IsChildPresent(ctx, name, parent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to CreateChannel: %w", err)
-		}
-		if ok {
-			return nil, ErrChannelNameConflicts
-		}
 	}
 
 	// チャンネル作成
@@ -128,6 +119,9 @@ func (m *managerImpl) CreatePublicChannel(ctx context.Context, name string, pare
 		IsVisible: true,
 	}, nil, model.ChannelTypePublic)
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return nil, ErrChannelNameConflicts
+		}
 		return nil, fmt.Errorf("failed to CreateChannel: %w", err)
 	}
 	m.T.add(ch)
@@ -252,6 +246,9 @@ func (m *managerImpl) UpdateChannel(ctx context.Context, id uuid.UUID, args repo
 
 	ch, err = m.R.UpdateChannel(ctx, id, args)
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			return ErrChannelNameConflicts
+		}
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}
 
