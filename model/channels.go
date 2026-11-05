@@ -159,6 +159,21 @@ func (*UserThreadSubscriptionDefault) TableName() string {
 	return "user_thread_subscription_defaults"
 }
 
+// UserThreadSubscription ユーザー・スレッドチャンネルごとの購読設定
+type UserThreadSubscription struct {
+	UserID    uuid.UUID             `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID             `gorm:"type:char(36);not null;primaryKey"`
+	Level     ChannelSubscribeLevel `gorm:"type:tinyint;not null"`
+
+	User    User    `gorm:"constraint:user_thread_subscriptions_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:user_thread_subscriptions_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName UserThreadSubscription構造体のテーブル名
+func (*UserThreadSubscription) TableName() string {
+	return "user_thread_subscriptions"
+}
+
 // DMChannelMapping ダイレクトメッセージチャンネルとユーザーのマッピング
 type DMChannelMapping struct {
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
