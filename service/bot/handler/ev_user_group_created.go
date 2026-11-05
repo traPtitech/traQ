@@ -6,13 +6,13 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserGroupCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	group := fields["group"].(*model.UserGroup)
+	group := event.MustPayload[event.UserGroupCreatedPayload](fields).Group
 	bots, err := ctx.GetBots(botevent.UserGroupCreated)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)

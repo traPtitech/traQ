@@ -92,7 +92,12 @@ func userGroupUpdatedEvent(groupID uuid.UUID) hub.Message {
 }
 
 func userGroupMemberAddedEvent(groupID, userID uuid.UUID) hub.Message {
-	return hub.Message{Name: event.UserGroupMemberAdded, Fields: hub.Fields{
+	return userGroupMemberEvent(event.UserGroupMemberAdded, groupID, userID)
+}
+
+// userGroupMemberEvent メンバー・管理者の追加・変更・削除のイベント (Fields は group_id と user_id)
+func userGroupMemberEvent(topic string, groupID, userID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
 		"group_id": groupID,
 		"user_id":  userID,
 	}}
@@ -593,6 +598,9 @@ func TestUserGroupUpdatedNotification(t *testing.T) {
 	cases := map[string]func(groupID uuid.UUID) hub.Message{
 		event.UserGroupUpdated:     userGroupUpdatedEvent,
 		event.UserGroupMemberAdded: func(groupID uuid.UUID) hub.Message { return userGroupMemberAddedEvent(groupID, newID()) },
+	}
+	for _, topic := range []string{event.UserGroupMemberUpdated, event.UserGroupMemberRemoved, event.UserGroupAdminAdded, event.UserGroupAdminRemoved} {
+		cases[topic] = func(groupID uuid.UUID) hub.Message { return userGroupMemberEvent(topic, groupID, newID()) }
 	}
 	for topic, makeEvent := range cases {
 		t.Run(topic, func(t *testing.T) {

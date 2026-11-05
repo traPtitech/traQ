@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
+	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserTagRemoved(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	userID := fields["user_id"].(uuid.UUID)
-	tagID := fields["tag_id"].(uuid.UUID)
+	p := event.MustPayload[event.UserTagRemovedPayload](fields)
+	userID := p.UserID
+	tagID := p.TagID
 
 	bot, err := ctx.GetBotByBotUserID(userID)
 	if err != nil {

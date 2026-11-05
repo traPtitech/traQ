@@ -499,11 +499,25 @@ func userViewStateChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func userTagUpdatedHandler(ns *Service, ev hub.Message) {
+	var userID, tagID uuid.UUID
+	switch ev.Name {
+	case event.UserTagAdded:
+		p := event.MustPayload[event.UserTagAddedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	case event.UserTagUpdated:
+		p := event.MustPayload[event.UserTagUpdatedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	case event.UserTagRemoved:
+		p := event.MustPayload[event.UserTagRemovedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	default:
+		panic("unexpected topic: " + ev.Name)
+	}
 	broadcast(ns,
 		"USER_TAGS_UPDATED",
 		map[string]interface{}{
-			"id":     ev.Fields["user_id"].(uuid.UUID),
-			"tag_id": ev.Fields["tag_id"].(uuid.UUID),
+			"id":     userID,
+			"tag_id": tagID,
 		},
 	)
 }
@@ -512,16 +526,33 @@ func userGroupCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_GROUP_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserGroupCreatedPayload](ev.Fields).GroupID,
 		},
 	)
 }
 
 func userGroupUpdatedHandler(ns *Service, ev hub.Message) {
+	var groupID uuid.UUID
+	switch ev.Name {
+	case event.UserGroupUpdated:
+		groupID = event.MustPayload[event.UserGroupUpdatedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberAdded:
+		groupID = event.MustPayload[event.UserGroupMemberAddedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberUpdated:
+		groupID = event.MustPayload[event.UserGroupMemberUpdatedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberRemoved:
+		groupID = event.MustPayload[event.UserGroupMemberRemovedPayload](ev.Fields).GroupID
+	case event.UserGroupAdminAdded:
+		groupID = event.MustPayload[event.UserGroupAdminAddedPayload](ev.Fields).GroupID
+	case event.UserGroupAdminRemoved:
+		groupID = event.MustPayload[event.UserGroupAdminRemovedPayload](ev.Fields).GroupID
+	default:
+		panic("unexpected topic: " + ev.Name)
+	}
 	broadcast(ns,
 		"USER_GROUP_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": groupID,
 		},
 	)
 }
@@ -530,7 +561,7 @@ func userGroupDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_GROUP_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserGroupDeletedPayload](ev.Fields).GroupID,
 		},
 	)
 }
