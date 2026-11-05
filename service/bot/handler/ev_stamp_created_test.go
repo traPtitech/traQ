@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
-	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
 	intevent "github.com/traPtitech/traQ/event"
@@ -48,8 +47,9 @@ func TestStampCreated(t *testing.T) {
 		et := time.Now()
 
 		expectMulticast(handlerCtx, event.StampCreated, payload.MakeStampCreated(et, stamp, user), []*model.Bot{b})
-		assert.NoError(t, StampCreated(handlerCtx, et, intevent.StampCreated, hub.Fields{
-			"stamp": stamp,
-		}))
+		assert.NoError(t, StampCreated(handlerCtx, et, intevent.StampCreated, intevent.FieldsOf(intevent.StampCreatedPayload{
+			StampID: stamp.ID,
+			Stamp:   stamp,
+		})))
 	})
 }

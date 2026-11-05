@@ -181,12 +181,9 @@ func (r *stampRepository) CreateStamp(ctx context.Context, args repository.Creat
 
 	r.purgeCache()
 
-	r.hub.Publish(hub.Message{
-		Name: event.StampCreated,
-		Fields: hub.Fields{
-			"stamp":    stamp,
-			"stamp_id": stamp.ID,
-		},
+	event.Publish(r.hub, event.StampCreatedPayload{
+		StampID: stamp.ID,
+		Stamp:   stamp,
 	})
 	return stamp, nil
 }
@@ -241,12 +238,9 @@ func (r *stampRepository) UpdateStamp(ctx context.Context, id uuid.UUID, args re
 	}
 	if len(changes) > 0 {
 		r.purgeCache()
-		r.hub.Publish(hub.Message{
-			Name: event.StampUpdated,
-			Fields: hub.Fields{
-				"stamp_id": id,
-				"stamp":    &s,
-			},
+		event.Publish(r.hub, event.StampUpdatedPayload{
+			StampID: id,
+			Stamp:   &s,
 		})
 	}
 	return nil
@@ -292,11 +286,8 @@ func (r *stampRepository) DeleteStamp(ctx context.Context, id uuid.UUID) (err er
 	}
 	if result.RowsAffected > 0 {
 		r.purgeCache()
-		r.hub.Publish(hub.Message{
-			Name: event.StampDeleted,
-			Fields: hub.Fields{
-				"stamp_id": id,
-			},
+		event.Publish(r.hub, event.StampDeletedPayload{
+			StampID: id,
 		})
 		return nil
 	}

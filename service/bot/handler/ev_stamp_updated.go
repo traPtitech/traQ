@@ -7,13 +7,14 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
+	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func StampUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	stamp := fields["stamp"].(*model.Stamp)
+	stamp := intevent.MustPayload[intevent.StampUpdatedPayload](fields).Stamp
 
 	bots, err := ctx.GetBots(event.StampUpdated)
 	if err != nil {

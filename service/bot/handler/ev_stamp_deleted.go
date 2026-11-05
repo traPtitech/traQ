@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
+	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func StampDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	stampID := fields["stamp_id"].(uuid.UUID)
+	stampID := intevent.MustPayload[intevent.StampDeletedPayload](fields).StampID
 	bots, err := ctx.GetBots(event.StampDeleted)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)

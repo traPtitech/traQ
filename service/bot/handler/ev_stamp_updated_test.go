@@ -84,7 +84,7 @@ func TestStampUpdated(t *testing.T) {
 				}
 			}
 
-			err := StampUpdated(handlerCtx, et, intevent.StampUpdated, hub.Fields{"stamp": stamp})
+			err := StampUpdated(handlerCtx, et, intevent.StampUpdated, hub.Fields{"stamp_id": stamp.ID, "stamp": stamp})
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 				assert.ErrorIs(t, err, testErr)

@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -268,4 +269,28 @@ func TestPayloadFieldsConcurrent(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// definedPayloads event package で定義している全てのペイロード型。
+// ペイロード型を追加したらここにも追加すること。
+// interface 型のフィールドはゼロ値 (nil) だとデコードできないため、値を入れて登録すること。
+var definedPayloads = []Payload{
+	StampCreatedPayload{},
+	StampUpdatedPayload{},
+	StampDeletedPayload{},
+}
+
+// TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる
+func TestDefinedPayloads(t *testing.T) {
+	t.Parallel()
+	for _, p := range definedPayloads {
+		t.Run(reflect.TypeOf(p).String(), func(t *testing.T) {
+			t.Parallel()
+			var f hub.Fields
+			require.NotPanics(t, func() { f = FieldsOf(p) })
+			v := reflect.New(reflect.TypeOf(p)).Elem()
+			require.NoError(t, decodeFields(v, f))
+			assert.Equal(t, p, v.Interface())
+		})
+	}
 }
