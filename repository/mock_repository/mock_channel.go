@@ -266,6 +266,36 @@ func (mr *MockChannelRepositoryMockRecorder) GetThreadSubscriptionDefaults(ctx, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadSubscriptionDefaults", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadSubscriptionDefaults), ctx, userID)
 }
 
+// GetThreadSubscription mocks base method.
+func (m *MockChannelRepository) GetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID) (*model.UserThreadSubscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadSubscription", ctx, userID, channelID)
+	ret0, _ := ret[0].(*model.UserThreadSubscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadSubscription indicates an expected call of GetThreadSubscription.
+func (mr *MockChannelRepositoryMockRecorder) GetThreadSubscription(ctx, userID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadSubscription", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadSubscription), ctx, userID, channelID)
+}
+
+// GetThreadSubscriptions mocks base method.
+func (m *MockChannelRepository) GetThreadSubscriptions(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadSubscriptions", ctx, userID)
+	ret0, _ := ret[0].([]*model.UserThreadSubscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadSubscriptions indicates an expected call of GetThreadSubscriptions.
+func (mr *MockChannelRepositoryMockRecorder) GetThreadSubscriptions(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadSubscriptions", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadSubscriptions), ctx, userID)
+}
+
 // IsChildPresent mocks base method.
 func (m *MockChannelRepository) IsChildPresent(ctx context.Context, name string, parent uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
@@ -307,6 +337,20 @@ func (m *MockChannelRepository) SetThreadSubscriptionDefault(ctx context.Context
 func (mr *MockChannelRepositoryMockRecorder) SetThreadSubscriptionDefault(ctx, userID, channelID, level interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetThreadSubscriptionDefault", reflect.TypeOf((*MockChannelRepository)(nil).SetThreadSubscriptionDefault), ctx, userID, channelID, level)
+}
+
+// SetThreadSubscription mocks base method.
+func (m *MockChannelRepository) SetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID, level int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetThreadSubscription", ctx, userID, channelID, level)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetThreadSubscription indicates an expected call of SetThreadSubscription.
+func (mr *MockChannelRepositoryMockRecorder) SetThreadSubscription(ctx, userID, channelID, level interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetThreadSubscription", reflect.TypeOf((*MockChannelRepository)(nil).SetThreadSubscription), ctx, userID, channelID, level)
 }
 
 // UpdateChannel mocks base method.

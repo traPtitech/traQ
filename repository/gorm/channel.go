@@ -535,7 +535,51 @@ func (repo *Repository) SetThreadSubscriptionDefault(ctx context.Context, userID
 	if level == -1 {
 		return tx.Delete(&setting).Error
 	}
+	return tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"level"}),
+	}).Create(&setting).Error
+}
 
+// GetThreadSubscriptions implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscriptions(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscription, error) {
+	if userID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+	result := make([]*model.UserThreadSubscription, 0)
+	err := repo.db.WithContext(ctx).Where("user_id = ?", userID).Find(&result).Error
+	return result, err
+}
+
+// GetThreadSubscription implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID) (*model.UserThreadSubscription, error) {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+	var result model.UserThreadSubscription
+	if err := repo.db.WithContext(ctx).Where("user_id = ? AND channel_id = ?", userID, channelID).First(&result).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return &result, nil
+}
+
+// SetThreadSubscription implements ChannelRepository interface.
+func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID, level int) error {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	if level < -1 || level > 2 {
+		return repository.ArgError("level", "level must be between -1 and 2")
+	}
+	setting := model.UserThreadSubscription{
+		UserID:    userID,
+		ChannelID: channelID,
+		Level:     model.ChannelSubscribeLevel(level),
+	}
+	tx := repo.db.WithContext(ctx)
+	if level == -1 {
+		return tx.Delete(&setting).Error
+	}
 	return tx.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"level"}),
