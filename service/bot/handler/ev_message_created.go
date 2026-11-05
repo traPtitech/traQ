@@ -11,7 +11,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -50,12 +50,12 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		if err != nil {
 			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 		}
-		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageCreated) {
+		if bot == nil || !bot.SubscribeEvents.Contains(botevent.DirectMessageCreated) {
 			return nil
 		}
 
 		if err := ctx.Unicast(
-			event.DirectMessageCreated,
+			botevent.DirectMessageCreated,
 			payload.MakeDirectMessageCreated(datetime, m, user, parsed),
 			bot,
 		); err != nil {
@@ -63,7 +63,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 	} else {
 		// 購読BOT
-		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageCreated)
+		bots, err := ctx.GetChannelBots(m.ChannelID, botevent.MessageCreated)
 		if err != nil {
 			return fmt.Errorf("failed to GetChannelBots: %w", err)
 		}
@@ -87,7 +87,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 			if b == nil {
 				continue
 			}
-			if b.SubscribeEvents.Contains(event.MentionMessageCreated) {
+			if b.SubscribeEvents.Contains(botevent.MentionMessageCreated) {
 				bots = append(bots, b)
 			}
 		}
@@ -98,7 +98,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		if err := ctx.Multicast(
-			event.MessageCreated,
+			botevent.MessageCreated,
 			payload.MakeMessageCreated(datetime, m, user, parsed),
 			bots,
 		); err != nil {

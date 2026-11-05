@@ -10,9 +10,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 )
@@ -23,7 +23,7 @@ func TestStampDeleted(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.StampDeleted.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.StampDeleted.String()}),
 		State:           model.BotActive,
 	}
 	testErr := errors.New("test error")
@@ -50,15 +50,15 @@ func TestStampDeleted(t *testing.T) {
 			if tt.noBots {
 				bots = nil
 			}
-			handlerCtx.EXPECT().GetBots(event.StampDeleted).Return(bots, tt.getBotsErr)
+			handlerCtx.EXPECT().GetBots(botevent.StampDeleted).Return(bots, tt.getBotsErr)
 			if !tt.noBots && tt.getBotsErr == nil {
-				handlerCtx.EXPECT().Multicast(event.StampDeleted, &payload.StampDeleted{
+				handlerCtx.EXPECT().Multicast(botevent.StampDeleted, &payload.StampDeleted{
 					Base: payload.Base{EventTime: et},
 					ID:   stampID,
 				}, bots).Return(tt.multicastErr)
 			}
 
-			err := StampDeleted(handlerCtx, et, intevent.StampDeleted, hub.Fields{"stamp_id": stampID})
+			err := StampDeleted(handlerCtx, et, event.StampDeleted, hub.Fields{"stamp_id": stampID})
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 				assert.ErrorIs(t, err, testErr)

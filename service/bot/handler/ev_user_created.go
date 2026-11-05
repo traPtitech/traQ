@@ -7,14 +7,14 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	user := fields["user"].(model.UserInfo)
 
-	bots, err := ctx.GetBots(event.UserCreated)
+	bots, err := ctx.GetBots(botevent.UserCreated)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
 	}
@@ -23,7 +23,7 @@ func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) e
 	}
 
 	if err := ctx.Multicast(
-		event.UserCreated,
+		botevent.UserCreated,
 		payload.MakeUserCreated(datetime, user),
 		bots,
 	); err != nil {

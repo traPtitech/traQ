@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -22,8 +22,8 @@ func TestMessageDeleted(t *testing.T) {
 		ID:        uuid.NewV3(uuid.Nil, "b"),
 		BotUserID: uuid.NewV3(uuid.Nil, "bu"),
 		SubscribeEvents: model.BotEventTypesFromArray([]string{
-			event.MessageDeleted.String(),
-			event.DirectMessageDeleted.String(),
+			botevent.MessageDeleted.String(),
+			botevent.DirectMessageDeleted.String(),
 		}),
 		State: model.BotActive,
 	}
@@ -51,12 +51,12 @@ func TestMessageDeleted(t *testing.T) {
 		et := time.Now()
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageDeleted).
+			GetChannelBots(m.ChannelID, botevent.MessageDeleted).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		expectMulticast(handlerCtx, event.MessageDeleted, payload.MakeMessageDeleted(et, m), []*model.Bot{b})
-		assert.NoError(t, MessageDeleted(handlerCtx, et, intevent.MessageDeleted, hub.Fields{
+		expectMulticast(handlerCtx, botevent.MessageDeleted, payload.MakeMessageDeleted(et, m), []*model.Bot{b})
+		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
 			"message": m,
 		}))
 	})
@@ -79,11 +79,11 @@ func TestMessageDeleted(t *testing.T) {
 		et := time.Now()
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageDeleted).
+			GetChannelBots(m.ChannelID, botevent.MessageDeleted).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		assert.NoError(t, MessageDeleted(handlerCtx, et, intevent.MessageDeleted, hub.Fields{
+		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
 			"message": m,
 		}))
 	})
@@ -105,8 +105,8 @@ func TestMessageDeleted(t *testing.T) {
 		}
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.DirectMessageDeleted, payload.MakeDirectMessageDeleted(et, m), b)
-		assert.NoError(t, MessageDeleted(handlerCtx, et, intevent.MessageDeleted, hub.Fields{
+		expectUnicast(handlerCtx, botevent.DirectMessageDeleted, payload.MakeDirectMessageDeleted(et, m), b)
+		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
 			"message_id": m.ID,
 			"message":    m,
 		}))
@@ -129,7 +129,7 @@ func TestMessageDeleted(t *testing.T) {
 		}
 		et := time.Now()
 
-		assert.NoError(t, MessageDeleted(handlerCtx, et, intevent.MessageDeleted, hub.Fields{
+		assert.NoError(t, MessageDeleted(handlerCtx, et, event.MessageDeleted, hub.Fields{
 			"message_id": m.ID,
 			"message":    m,
 		}))

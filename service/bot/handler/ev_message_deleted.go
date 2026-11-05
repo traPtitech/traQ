@@ -9,7 +9,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -39,19 +39,19 @@ func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		if err != nil {
 			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 		}
-		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageDeleted) {
+		if bot == nil || !bot.SubscribeEvents.Contains(botevent.DirectMessageDeleted) {
 			return nil
 		}
 
 		if err := ctx.Unicast(
-			event.DirectMessageDeleted,
+			botevent.DirectMessageDeleted,
 			payload.MakeDirectMessageDeleted(datetime, m),
 			bot,
 		); err != nil {
 			return fmt.Errorf("failed to unicast: %w", err)
 		}
 	} else {
-		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageDeleted)
+		bots, err := ctx.GetChannelBots(m.ChannelID, botevent.MessageDeleted)
 		if err != nil {
 			return fmt.Errorf("failed to GetChannelBots: %w", err)
 		}
@@ -62,7 +62,7 @@ func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		if err := ctx.Multicast(
-			event.MessageDeleted,
+			botevent.MessageDeleted,
 			payload.MakeMessageDeleted(datetime, m),
 			bots,
 		); err != nil {

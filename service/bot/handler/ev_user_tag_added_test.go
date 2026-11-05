@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 )
@@ -22,7 +22,7 @@ func TestUserTagAdded(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.TagAdded.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.TagAdded.String()}),
 		State:           model.BotActive,
 	}
 
@@ -40,8 +40,8 @@ func TestUserTagAdded(t *testing.T) {
 		registerTag(repo, tag)
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.TagAdded, payload.MakeTagAdded(et, tag), b)
-		assert.NoError(t, UserTagAdded(handlerCtx, et, intevent.UserTagAdded, hub.Fields{
+		expectUnicast(handlerCtx, botevent.TagAdded, payload.MakeTagAdded(et, tag), b)
+		assert.NoError(t, UserTagAdded(handlerCtx, et, event.UserTagAdded, hub.Fields{
 			"user_id": b.BotUserID,
 			"tag_id":  tag.ID,
 		}))
@@ -55,7 +55,7 @@ func TestUserTagAdded(t *testing.T) {
 		b := &model.Bot{
 			ID:              uuid.NewV3(uuid.Nil, "b"),
 			BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-			SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageCreated.String()}),
+			SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MessageCreated.String()}),
 			State:           model.BotActive,
 		}
 		registerBot(t, handlerCtx, b)
@@ -66,7 +66,7 @@ func TestUserTagAdded(t *testing.T) {
 		}
 		et := time.Now()
 
-		assert.NoError(t, UserTagAdded(handlerCtx, et, intevent.UserTagAdded, hub.Fields{
+		assert.NoError(t, UserTagAdded(handlerCtx, et, event.UserTagAdded, hub.Fields{
 			"user_id": b.BotUserID,
 			"tag_id":  tag.ID,
 		}))

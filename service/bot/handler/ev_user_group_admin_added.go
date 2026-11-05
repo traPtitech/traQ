@@ -8,14 +8,14 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserGroupAdminAdded(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	groupID := fields["group_id"].(uuid.UUID)
 	userID := fields["user_id"].(uuid.UUID)
-	bots, err := ctx.GetBots(event.UserGroupAdminAdded)
+	bots, err := ctx.GetBots(botevent.UserGroupAdminAdded)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
 	}
@@ -24,7 +24,7 @@ func UserGroupAdminAdded(ctx Context, datetime time.Time, _ string, fields hub.F
 	}
 
 	if err := ctx.Multicast(
-		event.UserGroupAdminAdded,
+		botevent.UserGroupAdminAdded,
 		payload.MakeUserGroupAdminAdded(datetime, groupID, userID),
 		bots,
 	); err != nil {
