@@ -65,7 +65,7 @@ func payloadFields(t reflect.Type) []payloadField {
 	return actual.([]payloadField)
 }
 
-// FieldsOf は Payload の各フィールドを、タグで指定したキー名で格納した hub.Fields を返す
+// FieldsOf は Payload の値を変換した hub.Fields を返す
 func FieldsOf(p Payload) hub.Fields {
 	v := reflect.ValueOf(p)
 	fields := payloadFields(v.Type())
@@ -81,7 +81,7 @@ func Publish(h *hub.Hub, p Payload) {
 	h.Publish(hub.Message{Name: p.TopicName(), Fields: FieldsOf(p)})
 }
 
-// MustPayload f から型 T のペイロードを組み立てる（失敗時に panic する）
+// MustPayload hub.Fields から型 T のペイロードを組み立てる（失敗時に panic する）
 func MustPayload[T Payload](f hub.Fields) T {
 	p, err := decodePayload[T](f)
 	if err != nil {
@@ -90,7 +90,7 @@ func MustPayload[T Payload](f hub.Fields) T {
 	return p
 }
 
-// PayloadOf f から型 T のペイロードを組み立てる
+// PayloadOf hub.Fields から型 T のペイロードを組み立てる
 func PayloadOf[T Payload](f hub.Fields) (T, bool) {
 	p, err := decodePayload[T](f)
 	if err != nil {
@@ -106,7 +106,7 @@ func decodePayload[T Payload](f hub.Fields) (T, error) {
 	return p, err
 }
 
-// decodeFields f の値を struct の値 v (設定可能であること) の各フィールドに設定する
+// decodeFields hub.Fields の値を struct の各フィールドに設定する
 func decodeFields(v reflect.Value, f hub.Fields) error {
 	t := v.Type()
 	for _, pf := range payloadFields(t) {
