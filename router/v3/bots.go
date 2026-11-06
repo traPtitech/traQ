@@ -275,6 +275,8 @@ func (h *Handlers) GetChannelBots(c *echo.Context) error {
 func (h *Handlers) ActivateBot(c *echo.Context) error {
 	b := getParamBot(c)
 
+	// NOTE: 規約 (event package のドキュメント) に反して router から発行している。
+	// 永続化を伴わない要求なので発行元にできる repository がなく、現状を維持している。
 	event.Publish(h.Hub, event.BotPingRequestPayload{
 		BotID: b.ID,
 		Bot:   b,

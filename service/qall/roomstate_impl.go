@@ -18,8 +18,11 @@ type Repository struct {
 	LiveKitHost string
 	APIKey      string
 	APISecret   string
-	RoomState   []RoomWithParticipants
-	Hub         *hub.Hub
+	// NOTE: RoomState はロックなしで読み書きしており、更新中のスライスをそのまま
+	// QallRoomStateChangedPayload として発行している。購読側が読む間に次の更新が走ると
+	// データ競合になりうる。型付きイベントへの移行では振る舞いを変えず、修正は別タスクとする。
+	RoomState []RoomWithParticipants
+	Hub       *hub.Hub
 }
 
 // GetState 現在のルーム状態を取得
