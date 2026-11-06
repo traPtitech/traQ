@@ -93,7 +93,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
-	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
@@ -378,7 +377,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
 			apiClipFolders.POST("", h.CreateClipFolder, requires(permission.CreateClipFolder))
-			apiClipFoldersFID := apiClipFolders.Group("/:folderID", retrieve.ClipFolderID(), requiresClipFolderAccessPerm)
+			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
 			{
 				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
 				apiClipFoldersFID.PATCH("", h.EditClipFolder, requires(permission.EditClipFolder))

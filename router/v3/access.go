@@ -120,3 +120,27 @@ func (h *Handlers) getAccessibleWebhook(c *echo.Context) (model.Webhook, error) 
 
 	return w, nil
 }
+
+// getAccessibleClipFolder URLの:folderIDに対応するClipFolderを取得し、リクエストユーザーがアクセス可能かを確認する
+//
+// クリップフォルダが存在しない場合は404、所有者以外のアクセスは403を返す。
+func (h *Handlers) getAccessibleClipFolder(c *echo.Context) (*model.ClipFolder, error) {
+	id, err := utils.ParseUUIDParam(c, consts.ParamClipFolderID)
+	if err != nil {
+		return nil, err
+	}
+
+	cf, err := h.Repo.GetClipFolder(c.Request().Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	if cf.OwnerID != getRequestUserID(c) {
+		return nil, herror.Forbidden()
+	}
+
+	return cf, nil
+}

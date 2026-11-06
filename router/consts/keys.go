@@ -10,7 +10,6 @@ const (
 	KeyParamUser          = "paramUser"
 	KeyParamClient        = "paramClient"
 	KeyParamBot           = "paramBot"
-	KeyParamClipFolder    = "paramClipFolder"
 	KeyRepo               = "_repo"
 	KeyChannelManager     = "_cm"
 )

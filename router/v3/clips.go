@@ -75,14 +75,21 @@ func (h *Handlers) GetClipFolders(c *echo.Context) error {
 
 // GetClipFolder GET /clip-folders/:folderID
 func (h *Handlers) GetClipFolder(c *echo.Context) error {
-	return c.JSON(http.StatusOK, formatClipFolder(getParamClipFolder(c)))
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, formatClipFolder(cf))
 }
 
 // DeleteClipFolder DELETE /clip-folders/:folderID
 func (h *Handlers) DeleteClipFolder(c *echo.Context) error {
-	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
 
-	if err := h.Repo.DeleteClipFolder(c.Request().Context(), folderID); err != nil {
+	if err := h.Repo.DeleteClipFolder(c.Request().Context(), cf.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -90,7 +97,10 @@ func (h *Handlers) DeleteClipFolder(c *echo.Context) error {
 
 // EditClipFolder PATCH /clip-folders/:folderID
 func (h *Handlers) EditClipFolder(c *echo.Context) error {
-	cf := getParamClipFolder(c)
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
 
 	var req UpdateClipFolderRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -110,7 +120,10 @@ type PostClipFolderMessageRequest struct {
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
 func (h *Handlers) PostClipFolderMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
-	cf := getParamClipFolder(c)
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
 	userID := getRequestUserID(c)
 
 	var req PostClipFolderMessageRequest
@@ -175,7 +188,10 @@ func (q *clipFolderMessageQuery) Validate() error {
 
 // GetClipFolderMessages GET /clip-folders/:folderID/messages
 func (h *Handlers) GetClipFolderMessages(c *echo.Context) error {
-	cf := getParamClipFolder(c)
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
 
 	var req clipFolderMessageQuery
 	if err := bindAndValidate(c, &req); err != nil {
@@ -194,9 +210,12 @@ func (h *Handlers) GetClipFolderMessages(c *echo.Context) error {
 
 // DeleteClipFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
 func (h *Handlers) DeleteClipFolderMessages(c *echo.Context) error {
+	cf, err := h.getAccessibleClipFolder(c)
+	if err != nil {
+		return err
+	}
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 
-	cf := getParamClipFolder(c)
 	if err := h.Repo.DeleteClipFolderMessage(c.Request().Context(), cf.ID, messageID); err != nil {
 		return herror.InternalServerError(err)
 	}

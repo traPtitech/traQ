@@ -90,11 +90,6 @@ func getParamAsUUID(c *echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
 }
 
-// getParamClipFolder URLの:folderIDに対応するClipFolderを取得
-func getParamClipFolder(c *echo.Context) *model.ClipFolder {
-	return c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
-}
-
 type MessagesQuery struct {
 	Limit     int                    `query:"limit"`
 	Offset    int                    `query:"offset"`
