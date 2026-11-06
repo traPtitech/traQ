@@ -186,3 +186,41 @@ func (h *Handlers) getAccessibleBot(c *echo.Context) (*model.Bot, error) {
 
 	return b, nil
 }
+
+// getUserGroup URLの:groupIDに対応するUserGroupを取得する
+//
+// アクセス権確認は行わない。グループが存在しない場合は404を返す。
+func (h *Handlers) getUserGroup(c *echo.Context) (*model.UserGroup, error) {
+	id, err := parseUUIDParam(c, consts.ParamGroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	g, err := h.Repo.GetUserGroup(c.Request().Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	return g, nil
+}
+
+// getAdministrableUserGroup URLの:groupIDに対応するUserGroupを取得し、リクエストユーザーが管理できるかを確認する
+//
+// グループが存在しない場合は404を返す。
+// グループの管理者、または全グループの管理権限を持つユーザーのみアクセスでき、それ以外は403を返す。
+func (h *Handlers) getAdministrableUserGroup(c *echo.Context) (*model.UserGroup, error) {
+	g, err := h.getUserGroup(c)
+	if err != nil {
+		return nil, err
+	}
+
+	user := getRequestUser(c)
+	if !g.IsAdmin(user.GetID()) && !h.RBAC.IsGranted(user.GetRole(), permission.AllUserGroupsAdmin) {
+		return nil, herror.Forbidden()
+	}
+
+	return g, nil
+}

@@ -97,22 +97,6 @@ func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	}
 }
 
-// CheckUserGroupAdminPerm UserGroup管理者権限を確認するミドルウェア
-func CheckUserGroupAdminPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
-
-			if !g.IsAdmin(user.GetID()) && !rbac.IsGranted(user.GetRole(), permission.AllUserGroupsAdmin) {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
 // CheckDeleteStampPerm スタンプ削除権限を確認するミドルウェア
 func CheckDeleteStampPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
