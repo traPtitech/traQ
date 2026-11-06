@@ -5,6 +5,10 @@ type rawMessage struct {
 	data []byte
 }
 
+type TypedMessage interface {
+	asMessage() *message
+}
+
 type message struct {
 	Type string      `json:"type"`
 	Body interface{} `json:"body"`

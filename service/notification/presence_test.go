@@ -25,23 +25,18 @@ import (
 	"github.com/traPtitech/traQ/testutils"
 )
 
-type presenceMessage struct {
-	typeName string
-	body     any
-}
-
 type presenceWriter struct {
 	mu       sync.Mutex
-	messages []presenceMessage
+	messages []ws.TypedMessage
 }
 
-func (w *presenceWriter) WriteMessage(typeName string, body any, _ ws.TargetFunc) {
+func (w *presenceWriter) WriteTypedMessage(msg ws.TypedMessage, _ ws.TargetFunc) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.messages = append(w.messages, presenceMessage{typeName, body})
+	w.messages = append(w.messages, msg)
 }
 
-func (w *presenceWriter) snapshot() []presenceMessage {
+func (w *presenceWriter) snapshot() []ws.TypedMessage {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	return slices.Clone(w.messages)
@@ -82,9 +77,9 @@ func TestPresenceNotificationsPersistBeforeDelivery(t *testing.T) {
 		synctest.Wait()
 		messages := writer.snapshot()
 		require.Len(t, messages, 2)
-		assert.Equal(t, "USER_OFFLINE", messages[0].typeName)
-		assert.Equal(t, "USER_ONLINE", messages[1].typeName)
-		payload, err := json.Marshal(messages[0].body)
+		assert.IsType(t, ws.UserOffline{}, messages[0])
+		assert.Equal(t, ws.UserOnline{ID: userID}, messages[1])
+		payload, err := json.Marshal(messages[0])
 		require.NoError(t, err)
 		assert.JSONEq(t, `{"id":"`+userID.String()+`","last_online":"2026-09-24T10:15:00.123456Z"}`, string(payload))
 	})
@@ -111,8 +106,8 @@ func TestPresenceNotificationsReportPersistenceFailure(t *testing.T) {
 		assert.Equal(t, 1, logs.FilterMessage("failed to persist last online time").Len())
 		messages := writer.snapshot()
 		require.Len(t, messages, 2, "a database failure must not stop presence delivery")
-		assert.Equal(t, "USER_OFFLINE", messages[0].typeName)
-		assert.Equal(t, "USER_ONLINE", messages[1].typeName)
+		assert.IsType(t, ws.UserOffline{}, messages[0])
+		assert.Equal(t, ws.UserOnline{ID: userID}, messages[1])
 	})
 }
 
@@ -157,7 +152,7 @@ func TestPresenceNotificationsContinueAfterPersistenceTimeout(t *testing.T) {
 		assert.Equal(t, context.DeadlineExceeded.Error(), entries[0].ContextMap()["error"])
 		messages := writer.snapshot()
 		require.Len(t, messages, 2, "a persistence timeout must not stop presence delivery")
-		assert.Equal(t, "USER_OFFLINE", messages[0].typeName)
-		assert.Equal(t, "USER_ONLINE", messages[1].typeName)
+		assert.IsType(t, ws.UserOffline{}, messages[0])
+		assert.Equal(t, ws.UserOnline{ID: userID}, messages[1])
 	})
 }

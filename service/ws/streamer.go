@@ -68,19 +68,19 @@ func (s *Streamer) IterateSessions(f func(session Session)) {
 	}
 }
 
-// WriteMessage 指定したセッションにメッセージを書き込みます
-func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFunc) {
-	m := &rawMessage{
+func (s *Streamer) WriteTypedMessage(m TypedMessage, targetFunc TargetFunc) {
+	msg := m.asMessage()
+	frame := &rawMessage{
 		t:    websocket.TextMessage,
-		data: makeMessage(t, body).toJSON(),
+		data: msg.toJSON(),
 	}
 	s.mu.RLock()
 	for session := range s.sessions {
 		if targetFunc(session) {
-			if err := session.WriteMessage(m); err != nil {
+			if err := session.WriteMessage(frame); err != nil {
 				if err == ErrBufferIsFull {
 					s.logger.Warn("Discard a message because the session's buffer is full.",
-						zap.String("type", t), zap.Any("body", body),
+						zap.String("type", msg.Type), zap.Any("body", msg.Body),
 						zap.Stringer("userID", session.userID))
 					continue
 				}
