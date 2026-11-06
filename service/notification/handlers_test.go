@@ -70,6 +70,79 @@ func messageStampedEvent(messageID, stampID, userID uuid.UUID, count int, create
 	}}
 }
 
+func messageUnstampedEvent(messageID, stampID, userID uuid.UUID) hub.Message {
+	return hub.Message{Name: event.MessageUnstamped, Fields: hub.Fields{
+		"message_id": messageID,
+		"stamp_id":   stampID,
+		"user_id":    userID,
+	}}
+}
+
+func messagePinEvent(topic string, messageID, channelID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"message_id": messageID,
+		"channel_id": channelID,
+	}}
+}
+
+func channelPrivateEvent(topic string, ch *model.Channel) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"channel_id": ch.ID,
+		"private":    !ch.IsPublic,
+	}}
+}
+
+func channelUserEvent(topic string, userID, channelID uuid.UUID) hub.Message {
+	f := hub.Fields{
+		"user_id":    userID,
+		"channel_id": channelID,
+	}
+	if topic == event.ChannelRead {
+		f["read_messages_num"] = 1
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func channelSubscribersChangedEvent(channelID uuid.UUID, subscriberIDs []uuid.UUID) hub.Message {
+	return hub.Message{Name: event.ChannelSubscribersChanged, Fields: hub.Fields{
+		"channel_id":     channelID,
+		"subscriber_ids": subscriberIDs,
+	}}
+}
+
+func stampPaletteEvent(topic string, userID, paletteID uuid.UUID) hub.Message {
+	f := hub.Fields{
+		"user_id":          userID,
+		"stamp_palette_id": paletteID,
+	}
+	if topic == event.StampPaletteCreated {
+		f["stamp_palette"] = &model.StampPalette{ID: paletteID, CreatorID: userID}
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func clipFolderEvent(topic string, userID, folderID uuid.UUID) hub.Message {
+	folder := &model.ClipFolder{ID: folderID, OwnerID: userID}
+	f := hub.Fields{
+		"user_id":        userID,
+		"clip_folder_id": folderID,
+		"clip_folder":    folder,
+	}
+	if topic == event.ClipFolderUpdated {
+		f["old_clip_folder"] = folder
+	}
+	return hub.Message{Name: topic, Fields: f}
+}
+
+func clipFolderMessageEvent(topic string, userID, folderID, messageID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
+		"user_id":                userID,
+		"clip_folder_id":         folderID,
+		"clip_folder_message_id": messageID,
+		"clip_folder_message":    &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID},
+	}}
+}
+
 func channelCreatedEvent(ch *model.Channel) hub.Message {
 	return hub.Message{Name: event.ChannelCreated, Fields: hub.Fields{
 		"channel_id": ch.ID,
@@ -92,7 +165,12 @@ func userGroupUpdatedEvent(groupID uuid.UUID) hub.Message {
 }
 
 func userGroupMemberAddedEvent(groupID, userID uuid.UUID) hub.Message {
-	return hub.Message{Name: event.UserGroupMemberAdded, Fields: hub.Fields{
+	return userGroupMemberEvent(event.UserGroupMemberAdded, groupID, userID)
+}
+
+// userGroupMemberEvent メンバー・管理者の追加・変更・削除のイベント (Fields は group_id と user_id)
+func userGroupMemberEvent(topic string, groupID, userID uuid.UUID) hub.Message {
+	return hub.Message{Name: topic, Fields: hub.Fields{
 		"group_id": groupID,
 		"user_id":  userID,
 	}}
@@ -510,6 +588,69 @@ func TestMessageStampedNotification(t *testing.T) {
 	})
 }
 
+// TestMessageUnstampedNotification メッセージからスタンプが消されたときの Notification が正しく動いているかをテストする
+func TestMessageUnstampedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		chID, messageID, stampID, userID := newID(), newID(), newID(), newID()
+		mm := &fakeMessageManager{channels: map[uuid.UUID]uuid.UUID{messageID: chID}}
+
+		h, writer := startService(notificationDeps{mm: mm})
+		defer h.Close()
+		h.Publish(messageUnstampedEvent(messageID, stampID, userID))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "MESSAGE_UNSTAMPED", messages[0].typeName)
+		assert.JSONEq(t, `{
+			"message_id":"`+messageID.String()+`",
+			"user_id":"`+userID.String()+`",
+			"stamp_id":"`+stampID.String()+`"
+		}`, messages[0].body)
+		sessions := []fakeSession{
+			{key: "viewer", userID: newID(), viewing: chID},
+			{key: "timeline", userID: newID(), timeline: true},
+		}
+		assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target, sessions...))
+	})
+}
+
+// ---- MESSAGE_PINNED / MESSAGE_UNPINNED ----
+
+// TestMessagePinNotification メッセージのピン留め・解除時の Notification が正しく動いているかをテストする
+func TestMessagePinNotification(t *testing.T) {
+	cases := map[string]string{
+		event.MessagePinned:   "MESSAGE_PINNED",
+		event.MessageUnpinned: "MESSAGE_UNPINNED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				chID, messageID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(messagePinEvent(topic, messageID, chID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{
+					"message_id":"`+messageID.String()+`",
+					"channel_id":"`+chID.String()+`"
+				}`, messages[0].body)
+				sessions := []fakeSession{
+					{key: "viewer", userID: newID(), viewing: chID},
+					{key: "other", userID: newID(), viewing: newID()},
+					{key: "timeline", userID: newID(), timeline: true},
+				}
+				assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target, sessions...))
+			})
+		})
+	}
+}
+
 // ---- CHANNEL_CREATED ----
 
 // TestChannelCreatedNotification チャンネル作成時の Notification が正しく動いているかをテストする
@@ -564,6 +705,195 @@ func TestChannelCreatedNotification(t *testing.T) {
 	})
 }
 
+// ---- CHANNEL_UPDATED / CHANNEL_DELETED ----
+
+// TestChannelUpdatedAndDeletedNotification チャンネル更新・削除時の Notification が正しく動いているかをテストする
+func TestChannelUpdatedAndDeletedNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ChannelUpdated: "CHANNEL_UPDATED",
+		event.ChannelDeleted: "CHANNEL_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic+" public channel", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ch := &model.Channel{ID: newID(), IsPublic: true}
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(channelPrivateEvent(topic, ch))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+ch.ID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"a", "b"}, targetKeys(messages[0].target,
+					fakeSession{key: "a", userID: newID()}, fakeSession{key: "b", userID: newID()}))
+			})
+		})
+		t.Run(topic+" DM channel", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ch := &model.Channel{ID: newID(), IsPublic: false}
+				u := newID()
+				cm := mock_channel.NewMockManager(gomock.NewController(t))
+				cm.EXPECT().GetDMChannelMembers(gomock.Any(), ch.ID).Return([]uuid.UUID{u}, nil)
+
+				h, writer := startService(notificationDeps{cm: cm})
+				defer h.Close()
+				h.Publish(channelPrivateEvent(topic, ch))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+ch.ID.String()+`","dm_user_id":"`+u.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"u"}, targetKeys(messages[0].target,
+					fakeSession{key: "u", userID: u}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// ---- CHANNEL_STARED / CHANNEL_UNSTARED / MESSAGE_READ ----
+
+// TestChannelUserNotification チャンネルのスター・既読時の Notification が正しく動いているかをテストする
+func TestChannelUserNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ChannelStared:   "CHANNEL_STARED",
+		event.ChannelUnstared: "CHANNEL_UNSTARED",
+		event.ChannelRead:     "MESSAGE_READ",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, chID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(channelUserEvent(topic, userID, chID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+chID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID(), viewing: chID}))
+			})
+		})
+	}
+}
+
+// ---- CHANNEL_SUBSCRIBERS_CHANGED ----
+
+// TestChannelSubscribersChangedNotification チャンネルの購読者変更時の Notification が正しく動いているかをテストする
+func TestChannelSubscribersChangedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		chID, subscriber := newID(), newID()
+
+		h, writer := startService(notificationDeps{})
+		defer h.Close()
+		h.Publish(channelSubscribersChangedEvent(chID, []uuid.UUID{subscriber}))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "CHANNEL_SUBSCRIBERS_CHANGED", messages[0].typeName)
+		assert.JSONEq(t, `{"id":"`+chID.String()+`"}`, messages[0].body)
+		assert.ElementsMatch(t, []string{"viewer", "subscriber"}, targetKeys(messages[0].target,
+			fakeSession{key: "viewer", userID: newID(), viewing: chID},
+			fakeSession{key: "subscriber", userID: subscriber},
+			fakeSession{key: "other", userID: newID()}))
+	})
+}
+
+// ---- STAMP_PALETTE_* ----
+
+// TestStampPaletteNotification スタンプパレットの作成・更新・削除時の Notification が正しく動いているかをテストする
+func TestStampPaletteNotification(t *testing.T) {
+	cases := map[string]string{
+		event.StampPaletteCreated: "STAMP_PALETTE_CREATED",
+		event.StampPaletteUpdated: "STAMP_PALETTE_UPDATED",
+		event.StampPaletteDeleted: "STAMP_PALETTE_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, paletteID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(stampPaletteEvent(topic, userID, paletteID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+paletteID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// ---- CLIP_FOLDER_* ----
+
+// TestClipFolderNotification クリップフォルダーの作成・更新・削除時の Notification が正しく動いているかをテストする
+func TestClipFolderNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ClipFolderCreated: "CLIP_FOLDER_CREATED",
+		event.ClipFolderUpdated: "CLIP_FOLDER_UPDATED",
+		event.ClipFolderDeleted: "CLIP_FOLDER_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, folderID := newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(clipFolderEvent(topic, userID, folderID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+folderID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
+// TestClipFolderMessageNotification クリップフォルダーへのメッセージの追加・除外時の Notification が正しく動いているかをテストする
+func TestClipFolderMessageNotification(t *testing.T) {
+	cases := map[string]string{
+		event.ClipFolderMessageAdded:   "CLIP_FOLDER_MESSAGE_ADDED",
+		event.ClipFolderMessageDeleted: "CLIP_FOLDER_MESSAGE_DELETED",
+	}
+	for topic, wantType := range cases {
+		t.Run(topic, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				userID, folderID, messageID := newID(), newID(), newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(clipFolderMessageEvent(topic, userID, folderID, messageID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, wantType, messages[0].typeName)
+				assert.JSONEq(t, `{"folder_id":"`+folderID.String()+`","message_id":"`+messageID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+					fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+			})
+		})
+	}
+}
+
 // ---- 複数トピックを 1 つの WS イベントにまとめるもの ----
 
 // TestUserTagsUpdatedNotification ユーザーのタグ変更時の Notification が正しく動いているかをテストする
@@ -593,6 +923,9 @@ func TestUserGroupUpdatedNotification(t *testing.T) {
 	cases := map[string]func(groupID uuid.UUID) hub.Message{
 		event.UserGroupUpdated:     userGroupUpdatedEvent,
 		event.UserGroupMemberAdded: func(groupID uuid.UUID) hub.Message { return userGroupMemberAddedEvent(groupID, newID()) },
+	}
+	for _, topic := range []string{event.UserGroupMemberUpdated, event.UserGroupMemberRemoved, event.UserGroupAdminAdded, event.UserGroupAdminRemoved} {
+		cases[topic] = func(groupID uuid.UUID) hub.Message { return userGroupMemberEvent(topic, groupID, newID()) }
 	}
 	for topic, makeEvent := range cases {
 		t.Run(topic, func(t *testing.T) {

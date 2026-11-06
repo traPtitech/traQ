@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
+	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserGroupUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	groupID := fields["group_id"].(uuid.UUID)
+	groupID := event.MustPayload[event.UserGroupUpdatedPayload](fields).GroupID
 	bots, err := ctx.GetBots(botevent.UserGroupUpdated)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -51,22 +50,16 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 	}
 
 	parseResult := message.Parse(text)
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageCreated,
-		Fields: hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": parseResult,
-		},
+	event.Publish(repo.hub, event.MessageCreatedPayload{
+		MessageID:   m.ID,
+		Message:     m,
+		ParseResult: parseResult,
 	})
 	if len(parseResult.Citation) > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageCited,
-			Fields: hub.Fields{
-				"message_id": m.ID,
-				"message":    m,
-				"cited_ids":  parseResult.Citation,
-			},
+		event.Publish(repo.hub, event.MessageCitedPayload{
+			MessageID: m.ID,
+			Message:   m,
+			CitedIDs:  parseResult.Citation,
 		})
 	}
 	return m, nil
@@ -108,13 +101,10 @@ func (repo *Repository) UpdateMessage(ctx context.Context, messageID uuid.UUID, 
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageUpdated,
-		Fields: hub.Fields{
-			"message_id":  messageID,
-			"old_message": &oldMes,
-			"message":     &newMes,
-		},
+	event.Publish(repo.hub, event.MessageUpdatedPayload{
+		MessageID:  messageID,
+		OldMessage: &oldMes,
+		Message:    &newMes,
 	})
 	return nil
 }
@@ -171,13 +161,10 @@ func (repo *Repository) DeleteMessage(ctx context.Context, messageID uuid.UUID) 
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageDeleted,
-		Fields: hub.Fields{
-			"message_id":      messageID,
-			"message":         &m,
-			"deleted_unreads": unreads,
-		},
+	event.Publish(repo.hub, event.MessageDeletedPayload{
+		MessageID:      messageID,
+		Message:        &m,
+		DeletedUnreads: unreads,
 	})
 	return nil
 }
@@ -379,13 +366,10 @@ func (repo *Repository) SetMessageUnreads(ctx context.Context, userNoticeableMap
 		return err
 	}
 	for _, unread := range unreadListToInsert {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUnread,
-			Fields: hub.Fields{
-				"message_id": messageID,
-				"user_id":    unread.UserID,
-				"noticeable": unread.Noticeable,
-			},
+		event.Publish(repo.hub, event.MessageUnreadPayload{
+			MessageID:  messageID,
+			UserID:     unread.UserID,
+			Noticeable: unread.Noticeable,
 		})
 	}
 
@@ -450,13 +434,10 @@ func (repo *Repository) DeleteUnreadsByChannelID(ctx context.Context, channelID,
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelRead,
-			Fields: hub.Fields{
-				"channel_id":        channelID,
-				"user_id":           userID,
-				"read_messages_num": int(result.RowsAffected),
-			},
+		event.Publish(repo.hub, event.ChannelReadPayload{
+			ChannelID:       channelID,
+			UserID:          userID,
+			ReadMessagesNum: int(result.RowsAffected),
 		})
 	}
 	return nil
@@ -516,15 +497,12 @@ func (repo *Repository) AddStampToMessage(ctx context.Context, messageID, stampI
 	if err := repo.db.WithContext(ctx).Take(ms, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Error; err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageStamped,
-		Fields: hub.Fields{
-			"message_id": messageID,
-			"stamp_id":   stampID,
-			"user_id":    userID,
-			"count":      ms.Count,
-			"created_at": ms.CreatedAt,
-		},
+	event.Publish(repo.hub, event.MessageStampedPayload{
+		MessageID: messageID,
+		StampID:   stampID,
+		UserID:    userID,
+		Count:     ms.Count,
+		CreatedAt: ms.CreatedAt,
 	})
 	return ms, nil
 }
@@ -539,13 +517,10 @@ func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, s
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUnstamped,
-			Fields: hub.Fields{
-				"message_id": messageID,
-				"stamp_id":   stampID,
-				"user_id":    userID,
-			},
+		event.Publish(repo.hub, event.MessageUnstampedPayload{
+			MessageID: messageID,
+			StampID:   stampID,
+			UserID:    userID,
 		})
 	}
 	return nil

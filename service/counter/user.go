@@ -96,7 +96,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 		for e := range hub.Subscribe(1, event.UserCreated, event.UserUpdated, event.BotCreated, event.BotStateChanged, event.BotDeleted).Receiver {
 			switch e.Topic() {
 			case event.UserCreated:
-				createdUser := e.Fields["user"].(*model.User)
+				createdUser := event.MustPayload[event.UserCreatedPayload](e.Fields).User
 				if createdUser.Bot {
 					break
 				}
@@ -107,7 +107,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.userStatus[createdUser.ID] = model.UserAccountStatusActive
 
 			case event.UserUpdated:
-				userID := e.Fields["user_id"].(uuid.UUID)
+				userID := event.MustPayload[event.UserUpdatedPayload](e.Fields).UserID
 				var newStatusInInt int
 				db.Model(&model.User{}).Where("id = ?", userID).Select("status").First(&newStatusInInt)
 				newStatus := model.UserAccountStatus(newStatusInInt)
@@ -120,18 +120,20 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.userStatus[userID] = newStatus
 
 			case event.BotCreated:
-				botState := e.Fields["bot"].(*model.Bot).State
+				p := event.MustPayload[event.BotCreatedPayload](e.Fields)
+				botState := p.Bot.State
 
 				counter.botCounter[botState].inc()
 				counter.botTotalCounter.inc()
 				usersCounter.WithLabelValues(botStatus2Label[botState]).Inc()
 				usersCounter.WithLabelValues("bot-total").Inc()
-				createdBotID := e.Fields["bot_id"].(uuid.UUID)
+				createdBotID := p.BotID
 				counter.botStatus[createdBotID] = botState
 
 			case event.BotStateChanged:
-				changedBotID := e.Fields["bot_id"].(uuid.UUID)
-				newStatus := e.Fields["state"].(model.BotState)
+				p := event.MustPayload[event.BotStateChangedPayload](e.Fields)
+				changedBotID := p.BotID
+				newStatus := p.State
 				preStatus := counter.botStatus[changedBotID]
 
 				counter.botCounter[preStatus].dec()
@@ -141,7 +143,7 @@ func NewUserCounter(db *gorm.DB, hub *hub.Hub) (UserCounter, error) {
 				counter.botStatus[changedBotID] = newStatus
 
 			case event.BotDeleted:
-				deletedBotID := e.Fields["bot_id"].(uuid.UUID)
+				deletedBotID := event.MustPayload[event.BotDeletedPayload](e.Fields).BotID
 				deletedBotState := counter.botStatus[deletedBotID]
 
 				counter.botCounter[deletedBotState].dec()

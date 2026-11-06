@@ -44,7 +44,8 @@ func TestBotPingRequest(t *testing.T) {
 		d.EXPECT().Send(b, botevent.Ping, buf).Return(true).Times(1)
 
 		assert.NoError(t, BotPingRequest(handlerCtx, et, event.BotPingRequest, hub.Fields{
-			"bot": b,
+			"bot_id": b.ID,
+			"bot":    b,
 		}))
 	})
 
@@ -64,7 +65,8 @@ func TestBotPingRequest(t *testing.T) {
 		d.EXPECT().Send(b, botevent.Ping, buf).Return(false).Times(1)
 
 		assert.NoError(t, BotPingRequest(handlerCtx, et, event.BotPingRequest, hub.Fields{
-			"bot": b,
+			"bot_id": b.ID,
+			"bot":    b,
 		}))
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/traPtitech/traQ/utils/optional"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/set"
 )
 
@@ -91,8 +89,9 @@ func (ns *Service) startConcurrentNotifications() {
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
-	m := ev.Fields["message"].(*model.Message)
-	parsed := ev.Fields["parse_result"].(*message.ParseResult)
+	p := event.MustPayload[event.MessageCreatedPayload](ev.Fields)
+	m := p.Message
+	parsed := p.ParseResult
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
 	chTree := ns.cm.PublicChannelTree(context.Background())
@@ -298,10 +297,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["message"].(*model.Message).ChannelID
+	p := event.MustPayload[event.MessageUpdatedPayload](ev.Fields)
+	cid := p.Message.ChannelID
 	wsEventType := "MESSAGE_UPDATED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": p.MessageID,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -320,10 +320,11 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["message"].(*model.Message).ChannelID
+	p := event.MustPayload[event.MessageDeletedPayload](ev.Fields)
+	cid := p.Message.ChannelID
 	wsEventType := "MESSAGE_DELETED"
 	wsPayload := map[string]interface{}{
-		"id": ev.Fields["message_id"].(uuid.UUID),
+		"id": p.MessageID,
 	}
 
 	var targetFunc ws.TargetFunc
@@ -342,84 +343,94 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessagePinnedPayload](ev.Fields)
+	channelViewerMulticast(ns, p.ChannelID,
 		"MESSAGE_PINNED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"channel_id": p.ChannelID,
 		},
 	)
 }
 
 func messageUnpinnedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageUnpinnedPayload](ev.Fields)
+	channelViewerMulticast(ns, p.ChannelID,
 		"MESSAGE_UNPINNED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"channel_id": p.ChannelID,
 		},
 	)
 }
 
 func messageStampedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageStampedPayload](ev.Fields)
+	messageViewerMulticast(ns, p.MessageID,
 		"MESSAGE_STAMPED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
-			"count":      ev.Fields["count"].(int),
-			"created_at": ev.Fields["created_at"].(time.Time),
+			"message_id": p.MessageID,
+			"user_id":    p.UserID,
+			"stamp_id":   p.StampID,
+			"count":      p.Count,
+			"created_at": p.CreatedAt,
 		},
 	)
 }
 
 func messageUnstampedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID),
+	p := event.MustPayload[event.MessageUnstampedPayload](ev.Fields)
+	messageViewerMulticast(ns, p.MessageID,
 		"MESSAGE_UNSTAMPED",
 		map[string]interface{}{
-			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
+			"message_id": p.MessageID,
+			"user_id":    p.UserID,
+			"stamp_id":   p.StampID,
 		},
 	)
 }
 
 func channelCreatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_CREATED")
+	p := event.MustPayload[event.ChannelCreatedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_CREATED")
 }
 
 func channelUpdatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_UPDATED")
+	p := event.MustPayload[event.ChannelUpdatedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_UPDATED")
 }
 
 func channelDeletedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, "CHANNEL_DELETED")
+	p := event.MustPayload[event.ChannelDeletedPayload](ev.Fields)
+	channelHandler(ns, p.ChannelID, p.Private, "CHANNEL_DELETED")
 }
 
 func channelStaredHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelStaredPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CHANNEL_STARED",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
 
 func channelUnstaredHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelUnstaredPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CHANNEL_UNSTARED",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
 
 func channelReadHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ChannelReadPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"MESSAGE_READ",
 		map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
+			"id": p.ChannelID,
 		},
 	)
 }
@@ -436,8 +447,9 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["channel_id"].(uuid.UUID)
-	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
+	p := event.MustPayload[event.ChannelSubscribersChangedPayload](ev.Fields)
+	cid := p.ChannelID
+	uids := p.SubscriberIDs
 	ns.messageWriter.WriteMessage(
 		"CHANNEL_SUBSCRIBERS_CHANGED",
 		map[string]interface{}{
@@ -451,7 +463,7 @@ func userCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_JOINED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserCreatedPayload](ev.Fields).UserID,
 		},
 	)
 }
@@ -460,7 +472,7 @@ func userUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserUpdatedPayload](ev.Fields).UserID,
 		},
 	)
 }
@@ -469,7 +481,7 @@ func userIconUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_ICON_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserIconUpdatedPayload](ev.Fields).UserID,
 		},
 	)
 }
@@ -499,11 +511,25 @@ func userViewStateChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func userTagUpdatedHandler(ns *Service, ev hub.Message) {
+	var userID, tagID uuid.UUID
+	switch ev.Name {
+	case event.UserTagAdded:
+		p := event.MustPayload[event.UserTagAddedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	case event.UserTagUpdated:
+		p := event.MustPayload[event.UserTagUpdatedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	case event.UserTagRemoved:
+		p := event.MustPayload[event.UserTagRemovedPayload](ev.Fields)
+		userID, tagID = p.UserID, p.TagID
+	default:
+		panic("unexpected topic: " + ev.Name)
+	}
 	broadcast(ns,
 		"USER_TAGS_UPDATED",
 		map[string]interface{}{
-			"id":     ev.Fields["user_id"].(uuid.UUID),
-			"tag_id": ev.Fields["tag_id"].(uuid.UUID),
+			"id":     userID,
+			"tag_id": tagID,
 		},
 	)
 }
@@ -512,16 +538,33 @@ func userGroupCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_GROUP_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserGroupCreatedPayload](ev.Fields).GroupID,
 		},
 	)
 }
 
 func userGroupUpdatedHandler(ns *Service, ev hub.Message) {
+	var groupID uuid.UUID
+	switch ev.Name {
+	case event.UserGroupUpdated:
+		groupID = event.MustPayload[event.UserGroupUpdatedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberAdded:
+		groupID = event.MustPayload[event.UserGroupMemberAddedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberUpdated:
+		groupID = event.MustPayload[event.UserGroupMemberUpdatedPayload](ev.Fields).GroupID
+	case event.UserGroupMemberRemoved:
+		groupID = event.MustPayload[event.UserGroupMemberRemovedPayload](ev.Fields).GroupID
+	case event.UserGroupAdminAdded:
+		groupID = event.MustPayload[event.UserGroupAdminAddedPayload](ev.Fields).GroupID
+	case event.UserGroupAdminRemoved:
+		groupID = event.MustPayload[event.UserGroupAdminRemovedPayload](ev.Fields).GroupID
+	default:
+		panic("unexpected topic: " + ev.Name)
+	}
 	broadcast(ns,
 		"USER_GROUP_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": groupID,
 		},
 	)
 }
@@ -530,7 +573,7 @@ func userGroupDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"USER_GROUP_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["group_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserGroupDeletedPayload](ev.Fields).GroupID,
 		},
 	)
 }
@@ -563,28 +606,31 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampPaletteCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteCreatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
 
 func stampPaletteUpdatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteUpdatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
 
 func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.StampPaletteDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"STAMP_PALETTE_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+			"id": p.StampPaletteID,
 		},
 	)
 }
@@ -639,55 +685,58 @@ func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderCreatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderUpdatedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": p.ClipFolderID,
 		},
 	)
 }
 
 func clipFolderMessageDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderMessageDeletedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_MESSAGE_DELETED",
 		map[string]interface{}{
-			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
-			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  p.ClipFolderID,
+			"message_id": p.ClipFolderMessageID,
 		},
 	)
 }
 
 func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID),
+	p := event.MustPayload[event.ClipFolderMessageAddedPayload](ev.Fields)
+	userMulticast(ns, p.UserID,
 		"CLIP_FOLDER_MESSAGE_ADDED",
 		map[string]interface{}{
-			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
-			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  p.ClipFolderID,
+			"message_id": p.ClipFolderMessageID,
 		},
 	)
 }
 
-func channelHandler(ns *Service, ev hub.Message, eventType string) {
-	cid := ev.Fields["channel_id"].(uuid.UUID)
-	private := ev.Fields["private"].(bool)
+func channelHandler(ns *Service, cid uuid.UUID, private bool, eventType string) {
 	if private {
 		members, err := ns.cm.GetDMChannelMembers(context.Background(), cid)
 		if err != nil {

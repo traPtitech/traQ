@@ -9,18 +9,19 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 )
 
 func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := fields["message"].(*model.Message)
-	parsed := fields["parse_result"].(*message.ParseResult)
+	p := event.MustPayload[event.MessageCreatedPayload](fields)
+	m := p.Message
+	parsed := p.ParseResult
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {

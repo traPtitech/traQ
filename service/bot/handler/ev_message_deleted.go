@@ -8,13 +8,13 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := fields["message"].(*model.Message)
+	m := event.MustPayload[event.MessageDeletedPayload](fields).Message
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {

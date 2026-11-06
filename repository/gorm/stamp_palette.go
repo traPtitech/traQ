@@ -5,7 +5,6 @@ import (
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -53,13 +52,10 @@ func (repo *Repository) CreateStampPalette(ctx context.Context, name, descriptio
 		return nil, err
 	}
 
-	repo.hub.Publish(hub.Message{
-		Name: event.StampPaletteCreated,
-		Fields: hub.Fields{
-			"user_id":          userID,
-			"stamp_palette_id": stampPalette.ID,
-			"stamp_palette":    stampPalette,
-		},
+	event.Publish(repo.hub, event.StampPaletteCreatedPayload{
+		UserID:         userID,
+		StampPaletteID: stampPalette.ID,
+		StampPalette:   stampPalette,
 	})
 	return stampPalette, nil
 }
@@ -110,12 +106,9 @@ func (repo *Repository) UpdateStampPalette(ctx context.Context, id uuid.UUID, ar
 		return err
 	}
 	if len(changes) > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.StampPaletteUpdated,
-			Fields: hub.Fields{
-				"user_id":          userID,
-				"stamp_palette_id": id,
-			},
+		event.Publish(repo.hub, event.StampPaletteUpdatedPayload{
+			UserID:         userID,
+			StampPaletteID: id,
 		})
 	}
 	return nil
@@ -147,12 +140,9 @@ func (repo *Repository) DeleteStampPalette(ctx context.Context, id uuid.UUID) (e
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.StampPaletteDeleted,
-			Fields: hub.Fields{
-				"user_id":          stampPalette.CreatorID,
-				"stamp_palette_id": id,
-			},
+		event.Publish(repo.hub, event.StampPaletteDeletedPayload{
+			UserID:         stampPalette.CreatorID,
+			StampPaletteID: id,
 		})
 		return nil
 	}

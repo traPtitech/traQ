@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func BotLeft(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	botID := fields["bot_id"].(uuid.UUID)
-	channelID := fields["channel_id"].(uuid.UUID)
+	p := event.MustPayload[event.BotLeftPayload](fields)
+	botID := p.BotID
+	channelID := p.ChannelID
 
 	bot, err := ctx.GetBot(botID)
 	if err != nil {

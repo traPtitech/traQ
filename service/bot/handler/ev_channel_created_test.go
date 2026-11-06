@@ -51,7 +51,9 @@ func TestChannelCreated(t *testing.T) {
 
 		expectMulticast(handlerCtx, botevent.ChannelCreated, payload.MakeChannelCreated(et, ch, ch.Name, u), []*model.Bot{b})
 		assert.NoError(t, ChannelCreated(handlerCtx, et, event.ChannelCreated, hub.Fields{
-			"channel": ch,
+			"channel_id": ch.ID,
+			"channel":    ch,
+			"private":    !ch.IsPublic,
 		}))
 	})
 
@@ -60,13 +62,16 @@ func TestChannelCreated(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		handlerCtx, _, _ := setup(t, ctrl)
 
+		pc := &model.Channel{
+			ID:        uuid.NewV3(uuid.Nil, "pc"),
+			Name:      "private channel",
+			IsPublic:  false,
+			CreatorID: u.ID,
+		}
 		assert.NoError(t, ChannelCreated(handlerCtx, time.Now(), event.ChannelCreated, hub.Fields{
-			"channel": &model.Channel{
-				ID:        uuid.NewV3(uuid.Nil, "pc"),
-				Name:      "private channel",
-				IsPublic:  false,
-				CreatorID: u.ID,
-			},
+			"channel_id": pc.ID,
+			"channel":    pc,
+			"private":    !pc.IsPublic,
 		}))
 	})
 
