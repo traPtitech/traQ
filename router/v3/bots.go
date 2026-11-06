@@ -212,13 +212,13 @@ func (h *Handlers) DeleteBot(c *echo.Context) error {
 
 // GetBotIcon GET /bots/:botID/icon
 func (h *Handlers) GetBotIcon(c *echo.Context) error {
-	b, err := h.getBot(c)
+	bot, err := h.getBot(c)
 	if err != nil {
 		return err
 	}
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(c.Request().Context(), b.BotUserID, false)
+	user, err := h.Repo.GetUser(c.Request().Context(), bot.BotUserID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

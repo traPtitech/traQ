@@ -149,7 +149,7 @@ func (h *Handlers) getAccessibleClipFolder(c *echo.Context) (*model.ClipFolder, 
 //
 // アクセス権確認は行わない。Botが存在しない場合は404を返す。
 func (h *Handlers) getBot(c *echo.Context) (*model.Bot, error) {
-	id, err := utils.ParseUUIDParam(c, consts.ParamBotID)
+	id, err := parseUUIDParam(c, consts.ParamBotID)
 	if err != nil {
 		return nil, err
 	}
