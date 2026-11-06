@@ -84,12 +84,12 @@ func (h *Handlers) GetClipFolder(c *echo.Context) error {
 
 // DeleteClipFolder DELETE /clip-folders/:folderID
 func (h *Handlers) DeleteClipFolder(c *echo.Context) error {
-	cf, err := h.getAccessibleClipFolder(c)
+	clipFolder, err := h.getAccessibleClipFolder(c)
 	if err != nil {
 		return err
 	}
 
-	if err := h.Repo.DeleteClipFolder(c.Request().Context(), cf.ID); err != nil {
+	if err := h.Repo.DeleteClipFolder(c.Request().Context(), clipFolder.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)

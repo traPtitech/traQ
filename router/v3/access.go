@@ -125,7 +125,7 @@ func (h *Handlers) getAccessibleWebhook(c *echo.Context) (model.Webhook, error) 
 //
 // クリップフォルダが存在しない場合は404、所有者以外のアクセスは403を返す。
 func (h *Handlers) getAccessibleClipFolder(c *echo.Context) (*model.ClipFolder, error) {
-	id, err := utils.ParseUUIDParam(c, consts.ParamClipFolderID)
+	id, err := parseUUIDParam(c, consts.ParamClipFolderID)
 	if err != nil {
 		return nil, err
 	}
