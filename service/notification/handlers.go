@@ -539,7 +539,7 @@ func stampCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"STAMP_CREATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
+			"id": event.MustPayload[event.StampCreatedPayload](ev.Fields).StampID,
 		},
 	)
 }
@@ -548,7 +548,7 @@ func stampUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"STAMP_UPDATED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
+			"id": event.MustPayload[event.StampUpdatedPayload](ev.Fields).StampID,
 		},
 	)
 }
@@ -557,7 +557,7 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"STAMP_DELETED",
 		map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
+			"id": event.MustPayload[event.StampDeletedPayload](ev.Fields).StampID,
 		},
 	)
 }

@@ -10,9 +10,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -26,7 +26,7 @@ func TestStampUpdated(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.StampUpdated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.StampUpdated.String()}),
 		State:           model.BotActive,
 	}
 	testErr := errors.New("test error")
@@ -65,7 +65,7 @@ func TestStampUpdated(t *testing.T) {
 			if tt.noBots {
 				bots = nil
 			}
-			handlerCtx.EXPECT().GetBots(event.StampUpdated).Return(bots, tt.getBotsErr)
+			handlerCtx.EXPECT().GetBots(botevent.StampUpdated).Return(bots, tt.getBotsErr)
 
 			if !tt.noBots && tt.getBotsErr == nil {
 				var creator payload.User
@@ -74,7 +74,7 @@ func TestStampUpdated(t *testing.T) {
 					creator = payload.MakeUser(user)
 				}
 				if tt.getUserErr == nil {
-					handlerCtx.EXPECT().Multicast(event.StampUpdated, &payload.StampUpdated{
+					handlerCtx.EXPECT().Multicast(botevent.StampUpdated, &payload.StampUpdated{
 						Base:    payload.Base{EventTime: et},
 						ID:      stamp.ID,
 						Name:    stamp.Name,
@@ -84,7 +84,7 @@ func TestStampUpdated(t *testing.T) {
 				}
 			}
 
-			err := StampUpdated(handlerCtx, et, intevent.StampUpdated, hub.Fields{"stamp": stamp})
+			err := StampUpdated(handlerCtx, et, event.StampUpdated, hub.Fields{"stamp_id": stamp.ID, "stamp": stamp})
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 				assert.ErrorIs(t, err, testErr)

@@ -7,15 +7,16 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func StampUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	stamp := fields["stamp"].(*model.Stamp)
+	stamp := event.MustPayload[event.StampUpdatedPayload](fields).Stamp
 
-	bots, err := ctx.GetBots(event.StampUpdated)
+	bots, err := ctx.GetBots(botevent.StampUpdated)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
 	}
@@ -32,7 +33,7 @@ func StampUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) 
 	}
 
 	if err := ctx.Multicast(
-		event.StampUpdated,
+		botevent.StampUpdated,
 		payload.MakeStampUpdated(datetime, stamp, user),
 		bots,
 	); err != nil {

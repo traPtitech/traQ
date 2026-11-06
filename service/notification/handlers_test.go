@@ -105,6 +105,25 @@ func userCreatedEvent(u *model.User) hub.Message {
 	}}
 }
 
+func stampCreatedEvent(stamp *model.Stamp) hub.Message {
+	return hub.Message{Name: event.StampCreated, Fields: event.FieldsOf(event.StampCreatedPayload{
+		StampID: stamp.ID,
+		Stamp:   stamp,
+	})}
+}
+
+func stampUpdatedEvent(stampID uuid.UUID) hub.Message {
+	return hub.Message{Name: event.StampUpdated, Fields: event.FieldsOf(event.StampUpdatedPayload{
+		StampID: stampID,
+	})}
+}
+
+func stampDeletedEvent(stampID uuid.UUID) hub.Message {
+	return hub.Message{Name: event.StampDeleted, Fields: event.FieldsOf(event.StampDeletedPayload{
+		StampID: stampID,
+	})}
+}
+
 func qallRoomStateChangedEvent(states []qall.RoomWithParticipants) hub.Message {
 	return hub.Message{Name: event.QallRoomStateChanged, Fields: hub.Fields{
 		"roomStates": states,
@@ -613,6 +632,40 @@ func TestUserJoinedNotification(t *testing.T) {
 		assert.JSONEq(t, `{"id":"`+u.ID.String()+`"}`, messages[0].body)
 		assert.ElementsMatch(t, []string{"any"}, targetKeys(messages[0].target, fakeSession{key: "any", userID: newID()}))
 	})
+}
+
+// ---- STAMP_CREATED / STAMP_UPDATED / STAMP_DELETED ----
+
+// TestStampNotification スタンプ作成・更新・削除時の Notification が正しく動いているかをテストする
+func TestStampNotification(t *testing.T) {
+	cases := []struct {
+		typeName  string
+		makeEvent func(stampID uuid.UUID) hub.Message
+	}{
+		{"STAMP_CREATED", func(stampID uuid.UUID) hub.Message {
+			return stampCreatedEvent(&model.Stamp{ID: stampID, Name: "test", FileID: newID()})
+		}},
+		{"STAMP_UPDATED", stampUpdatedEvent},
+		{"STAMP_DELETED", stampDeletedEvent},
+	}
+	for _, tc := range cases {
+		t.Run(tc.typeName, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				stampID := newID()
+
+				h, writer := startService(notificationDeps{})
+				defer h.Close()
+				h.Publish(tc.makeEvent(stampID))
+				synctest.Wait()
+
+				messages := writer.snapshot()
+				require.Len(t, messages, 1)
+				assert.Equal(t, tc.typeName, messages[0].typeName)
+				assert.JSONEq(t, `{"id":"`+stampID.String()+`"}`, messages[0].body)
+				assert.ElementsMatch(t, []string{"any"}, targetKeys(messages[0].target, fakeSession{key: "any", userID: newID()}))
+			})
+		})
+	}
 }
 
 // ---- QALL_ROOM_STATE_CHANGED ----
