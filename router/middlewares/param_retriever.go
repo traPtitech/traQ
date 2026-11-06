@@ -100,13 +100,6 @@ func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	})
 }
 
-// WebhookID リクエストURLの`webhookID`パラメータからBotを取り出す
-func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetWebhook(c.Request().Context(), v)
-	})
-}
-
 // StampID リクエストURLの`stampID`パラメータからStampを取り出します
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {

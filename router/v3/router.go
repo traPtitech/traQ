@@ -91,7 +91,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
-	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
@@ -284,7 +283,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.CreateWebhook, requires(permission.CreateWebhook))
-			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
+			apiWebhooksWID := apiWebhooks.Group("/:webhookID")
 			{
 				apiWebhooksWID.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWID.PATCH("", h.EditWebhook, requires(permission.EditWebhook))
@@ -423,7 +422,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{

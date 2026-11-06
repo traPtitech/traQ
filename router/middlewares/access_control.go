@@ -103,23 +103,6 @@ func CheckBotAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	}
 }
 
-// CheckWebhookAccessPerm Webhookアクセス権限を確認するミドルウェア
-func CheckWebhookAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			w := c.Get(consts.KeyParamWebhook).(model.Webhook)
-
-			// アクセス権確認
-			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersWebhook) && w.GetCreatorID() != user.GetID() {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
 // CheckClientAccessPerm Clientアクセス権限を確認するミドルウェア
 func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

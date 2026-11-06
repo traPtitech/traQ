@@ -6,11 +6,13 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // getAccessibleMessage URLの:messageIDに対応するMessageを取得し、リクエストユーザーがアクセス可能かを確認する
@@ -78,4 +80,43 @@ func (h *Handlers) getAccessibleChannel(c *echo.Context) (*model.Channel, error)
 // ファイルが存在しない場合は404、アクセスできない場合は403を返す。
 func (h *Handlers) getAccessibleFile(c *echo.Context) (model.File, error) {
 	return extension.GetAccessibleFile(c, h.FileManager, getRequestUserID(c))
+}
+
+// getWebhook URLの:webhookIDに対応するWebhookを取得する
+//
+// アクセス権確認は行わない。認証を伴わないWebhookへの投稿でのみ使うこと。
+// Webhookが存在しない場合は404を返す。
+func (h *Handlers) getWebhook(c *echo.Context) (model.Webhook, error) {
+	id, err := parseUUIDParam(c, consts.ParamWebhookID)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := h.Repo.GetWebhook(c.Request().Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	return w, nil
+}
+
+// getAccessibleWebhook URLの:webhookIDに対応するWebhookを取得し、リクエストユーザーがアクセス可能かを確認する
+//
+// Webhookが存在しない場合は404を返す。
+// 作成者以外は、他人のWebhookへのアクセス権限を持つ場合のみアクセスでき、それ以外は403を返す。
+func (h *Handlers) getAccessibleWebhook(c *echo.Context) (model.Webhook, error) {
+	w, err := h.getWebhook(c)
+	if err != nil {
+		return nil, err
+	}
+
+	user := getRequestUser(c)
+	if w.GetCreatorID() != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersWebhook) {
+		return nil, herror.Forbidden()
+	}
+
+	return w, nil
 }
