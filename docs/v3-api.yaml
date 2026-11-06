@@ -19,6 +19,8 @@ servers:
 x-traq-codegen-schemas:
   description: HTTPエンドポイントから参照されていないが、クライアントがWebSocketイベントの型を生成するために使用するコンポーネント
   schemas:
+    WebSocketMessage:
+      $ref: "#/components/schemas/WebSocketMessage"
     UserOfflineEvent:
       $ref: "#/components/schemas/UserOfflineEvent"
     QallRoomStateChangedEvent:
@@ -2580,6 +2582,9 @@ paths:
         ## 受信
         TextMessageとして各種イベントが`type`と`body`を持つJSONとして非同期に送られます。
 
+        サーバーは、未知のコマンドや不正な引数などに対して、エラーメッセージを `body` に持つ `ERROR` イベントを返すことがあります。
+        受信するメッセージのスキーマは `WebSocketMessage` を参照してください。
+
         例:
         ```json
         {"type":"USER_ONLINE","body":{"id":"7dd8e07f-7f5d-4331-9176-b56a4299768b"}}
@@ -2634,7 +2639,7 @@ paths:
 
         + `view_states`: 変化したWSセッションを含めた、該当ユーザーの変更後の状態(配列)
           + `key`: WSセッションの識別子
-          + `channel_id`: 閲覧しているチャンネルId
+          + `channelId`: 閲覧しているチャンネルId
           + `state`: 閲覧状態
 
         ### `USER_ONLINE`
@@ -2878,8 +2883,7 @@ paths:
 
         対象: 全員
 
-        + `room_id`: 変更されたルームのId
-        + `state`: 変更後のルーム状態
+        + `roomStates`: 変更後のルーム状態(配列)
           + `roomId`: ルームのID
           + `participants`: ルーム内の参加者(配列)
             + `identity`: ユーザーID_RandomUUID
@@ -7124,6 +7128,584 @@ components:
       required:
         - userId
         - channelId
+    WebSocketMessage:
+      description: /ws のサーバーから受信するテキストメッセージ
+      discriminator:
+        propertyName: type
+        mapping:
+          PING: "#/components/schemas/WebSocketPing"
+          ERROR: "#/components/schemas/WebSocketError"
+          USER_JOINED: "#/components/schemas/WebSocketUserJoined"
+          USER_UPDATED: "#/components/schemas/WebSocketUserUpdated"
+          USER_TAGS_UPDATED: "#/components/schemas/WebSocketUserTagsUpdated"
+          USER_ICON_UPDATED: "#/components/schemas/WebSocketUserIconUpdated"
+          USER_WEBRTC_STATE_CHANGED: "#/components/schemas/WebSocketUserWebRTCStateChanged"
+          USER_VIEWSTATE_CHANGED: "#/components/schemas/WebSocketUserViewStateChanged"
+          USER_ONLINE: "#/components/schemas/WebSocketUserOnline"
+          USER_OFFLINE: "#/components/schemas/WebSocketUserOffline"
+          USER_GROUP_CREATED: "#/components/schemas/WebSocketUserGroupCreated"
+          USER_GROUP_UPDATED: "#/components/schemas/WebSocketUserGroupUpdated"
+          USER_GROUP_DELETED: "#/components/schemas/WebSocketUserGroupDeleted"
+          CHANNEL_CREATED: "#/components/schemas/WebSocketChannelCreated"
+          CHANNEL_UPDATED: "#/components/schemas/WebSocketChannelUpdated"
+          CHANNEL_DELETED: "#/components/schemas/WebSocketChannelDeleted"
+          CHANNEL_STARED: "#/components/schemas/WebSocketChannelStared"
+          CHANNEL_UNSTARED: "#/components/schemas/WebSocketChannelUnstared"
+          CHANNEL_VIEWERS_CHANGED: "#/components/schemas/WebSocketChannelViewersChanged"
+          CHANNEL_SUBSCRIBERS_CHANGED: "#/components/schemas/WebSocketChannelSubscribersChanged"
+          MESSAGE_CREATED: "#/components/schemas/WebSocketMessageCreated"
+          MESSAGE_UPDATED: "#/components/schemas/WebSocketMessageUpdated"
+          MESSAGE_DELETED: "#/components/schemas/WebSocketMessageDeleted"
+          MESSAGE_STAMPED: "#/components/schemas/WebSocketMessageStamped"
+          MESSAGE_UNSTAMPED: "#/components/schemas/WebSocketMessageUnstamped"
+          MESSAGE_PINNED: "#/components/schemas/WebSocketMessagePinned"
+          MESSAGE_UNPINNED: "#/components/schemas/WebSocketMessageUnpinned"
+          MESSAGE_READ: "#/components/schemas/WebSocketMessageRead"
+          STAMP_CREATED: "#/components/schemas/WebSocketStampCreated"
+          STAMP_UPDATED: "#/components/schemas/WebSocketStampUpdated"
+          STAMP_DELETED: "#/components/schemas/WebSocketStampDeleted"
+          STAMP_PALETTE_CREATED: "#/components/schemas/WebSocketStampPaletteCreated"
+          STAMP_PALETTE_UPDATED: "#/components/schemas/WebSocketStampPaletteUpdated"
+          STAMP_PALETTE_DELETED: "#/components/schemas/WebSocketStampPaletteDeleted"
+          CLIP_FOLDER_CREATED: "#/components/schemas/WebSocketClipFolderCreated"
+          CLIP_FOLDER_UPDATED: "#/components/schemas/WebSocketClipFolderUpdated"
+          CLIP_FOLDER_DELETED: "#/components/schemas/WebSocketClipFolderDeleted"
+          CLIP_FOLDER_MESSAGE_DELETED: "#/components/schemas/WebSocketClipFolderMessageDeleted"
+          CLIP_FOLDER_MESSAGE_ADDED: "#/components/schemas/WebSocketClipFolderMessageAdded"
+          QALL_ROOM_STATE_CHANGED: "#/components/schemas/WebSocketQallRoomStateChanged"
+          QALL_SOUNDBOARD_ITEM_CREATED: "#/components/schemas/WebSocketQallSoundboardItemCreated"
+          QALL_SOUNDBOARD_ITEM_DELETED: "#/components/schemas/WebSocketQallSoundboardItemDeleted"
+      oneOf:
+        - $ref: "#/components/schemas/WebSocketPing"
+        - $ref: "#/components/schemas/WebSocketError"
+        - $ref: "#/components/schemas/WebSocketUserJoined"
+        - $ref: "#/components/schemas/WebSocketUserUpdated"
+        - $ref: "#/components/schemas/WebSocketUserTagsUpdated"
+        - $ref: "#/components/schemas/WebSocketUserIconUpdated"
+        - $ref: "#/components/schemas/WebSocketUserWebRTCStateChanged"
+        - $ref: "#/components/schemas/WebSocketUserViewStateChanged"
+        - $ref: "#/components/schemas/WebSocketUserOnline"
+        - $ref: "#/components/schemas/WebSocketUserOffline"
+        - $ref: "#/components/schemas/WebSocketUserGroupCreated"
+        - $ref: "#/components/schemas/WebSocketUserGroupUpdated"
+        - $ref: "#/components/schemas/WebSocketUserGroupDeleted"
+        - $ref: "#/components/schemas/WebSocketChannelCreated"
+        - $ref: "#/components/schemas/WebSocketChannelUpdated"
+        - $ref: "#/components/schemas/WebSocketChannelDeleted"
+        - $ref: "#/components/schemas/WebSocketChannelStared"
+        - $ref: "#/components/schemas/WebSocketChannelUnstared"
+        - $ref: "#/components/schemas/WebSocketChannelViewersChanged"
+        - $ref: "#/components/schemas/WebSocketChannelSubscribersChanged"
+        - $ref: "#/components/schemas/WebSocketMessageCreated"
+        - $ref: "#/components/schemas/WebSocketMessageUpdated"
+        - $ref: "#/components/schemas/WebSocketMessageDeleted"
+        - $ref: "#/components/schemas/WebSocketMessageStamped"
+        - $ref: "#/components/schemas/WebSocketMessageUnstamped"
+        - $ref: "#/components/schemas/WebSocketMessagePinned"
+        - $ref: "#/components/schemas/WebSocketMessageUnpinned"
+        - $ref: "#/components/schemas/WebSocketMessageRead"
+        - $ref: "#/components/schemas/WebSocketStampCreated"
+        - $ref: "#/components/schemas/WebSocketStampUpdated"
+        - $ref: "#/components/schemas/WebSocketStampDeleted"
+        - $ref: "#/components/schemas/WebSocketStampPaletteCreated"
+        - $ref: "#/components/schemas/WebSocketStampPaletteUpdated"
+        - $ref: "#/components/schemas/WebSocketStampPaletteDeleted"
+        - $ref: "#/components/schemas/WebSocketClipFolderCreated"
+        - $ref: "#/components/schemas/WebSocketClipFolderUpdated"
+        - $ref: "#/components/schemas/WebSocketClipFolderDeleted"
+        - $ref: "#/components/schemas/WebSocketClipFolderMessageDeleted"
+        - $ref: "#/components/schemas/WebSocketClipFolderMessageAdded"
+        - $ref: "#/components/schemas/WebSocketQallRoomStateChanged"
+        - $ref: "#/components/schemas/WebSocketQallSoundboardItemCreated"
+        - $ref: "#/components/schemas/WebSocketQallSoundboardItemDeleted"
+    WebSocketPing:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketPingType"
+        body:
+          description: 常に null
+          # boolean を基底型にすると、型生成でも null が文字列化されない。
+          type: boolean
+          nullable: true
+          enum: [null]
+    WebSocketError:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketErrorType"
+        body:
+          type: string
+    WebSocketUserJoined:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserJoinedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserTagsUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserTagsUpdatedType"
+        body:
+          type: object
+          required: [id, tag_id]
+          properties:
+            id:
+              type: string
+              format: uuid
+            tag_id:
+              type: string
+              format: uuid
+    WebSocketUserIconUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserIconUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserWebRTCStateChanged:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserWebRTCStateChangedType"
+        body:
+          type: object
+          required: [user_id, channel_id, sessions]
+          properties:
+            user_id:
+              type: string
+              format: uuid
+            channel_id:
+              type: string
+              format: uuid
+            sessions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Session"
+    WebSocketUserViewStateChanged:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserViewStateChangedType"
+        body:
+          type: object
+          required: [view_states]
+          properties:
+            view_states:
+              type: array
+              items:
+                $ref: "#/components/schemas/MyChannelViewState"
+    WebSocketUserOnline:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserOnlineType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserOffline:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserOfflineType"
+        body:
+          $ref: "#/components/schemas/UserOfflineEvent"
+    WebSocketUserGroupCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserGroupCreatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserGroupUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserGroupUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketUserGroupDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketUserGroupDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketChannelCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelCreatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketChannelBody"
+    WebSocketChannelUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketChannelBody"
+    WebSocketChannelDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketChannelBody"
+    WebSocketChannelStared:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelStaredType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketChannelUnstared:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelUnstaredType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketChannelViewersChanged:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelViewersChangedType"
+        body:
+          type: object
+          required: [id, viewers]
+          properties:
+            id:
+              type: string
+              format: uuid
+            viewers:
+              type: array
+              items:
+                $ref: "#/components/schemas/ChannelViewer"
+    WebSocketChannelSubscribersChanged:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketChannelSubscribersChangedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketMessageCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageCreatedType"
+        body:
+          type: object
+          required: [id, is_citing]
+          properties:
+            id:
+              type: string
+              format: uuid
+            is_citing:
+              type: boolean
+    WebSocketMessageUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketMessageDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketMessageStamped:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageStampedType"
+        body:
+          type: object
+          required: [message_id, user_id, stamp_id, count, created_at]
+          properties:
+            message_id:
+              type: string
+              format: uuid
+            user_id:
+              type: string
+              format: uuid
+            stamp_id:
+              type: string
+              format: uuid
+            count:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+    WebSocketMessageUnstamped:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageUnstampedType"
+        body:
+          type: object
+          required: [message_id, user_id, stamp_id]
+          properties:
+            message_id:
+              type: string
+              format: uuid
+            user_id:
+              type: string
+              format: uuid
+            stamp_id:
+              type: string
+              format: uuid
+    WebSocketMessagePinned:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessagePinnedType"
+        body:
+          $ref: "#/components/schemas/WebSocketMessagePinBody"
+    WebSocketMessageUnpinned:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageUnpinnedType"
+        body:
+          $ref: "#/components/schemas/WebSocketMessagePinBody"
+    WebSocketMessageRead:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketMessageReadType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampCreatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampPaletteCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampPaletteCreatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampPaletteUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampPaletteUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketStampPaletteDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketStampPaletteDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketClipFolderCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketClipFolderCreatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketClipFolderUpdated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketClipFolderUpdatedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketClipFolderDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketClipFolderDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketIdBody"
+    WebSocketClipFolderMessageDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketClipFolderMessageDeletedType"
+        body:
+          $ref: "#/components/schemas/WebSocketClipFolderMessageBody"
+    WebSocketClipFolderMessageAdded:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketClipFolderMessageAddedType"
+        body:
+          $ref: "#/components/schemas/WebSocketClipFolderMessageBody"
+    WebSocketQallRoomStateChanged:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketQallRoomStateChangedType"
+        body:
+          $ref: "#/components/schemas/QallRoomStateChangedEvent"
+    WebSocketQallSoundboardItemCreated:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketQallSoundboardItemCreatedType"
+        body:
+          $ref: "#/components/schemas/QallSoundboardItemCreatedEvent"
+    WebSocketQallSoundboardItemDeleted:
+      type: object
+      required: [type, body]
+      properties:
+        type:
+          $ref: "#/components/schemas/WebSocketQallSoundboardItemDeletedType"
+        body:
+          $ref: "#/components/schemas/QallSoundboardItemDeletedEvent"
+    WebSocketPingType: {type: string, enum: [PING]}
+    WebSocketErrorType: {type: string, enum: [ERROR]}
+    WebSocketUserJoinedType: {type: string, enum: [USER_JOINED]}
+    WebSocketUserUpdatedType: {type: string, enum: [USER_UPDATED]}
+    WebSocketUserTagsUpdatedType: {type: string, enum: [USER_TAGS_UPDATED]}
+    WebSocketUserIconUpdatedType: {type: string, enum: [USER_ICON_UPDATED]}
+    WebSocketUserWebRTCStateChangedType: {type: string, enum: [USER_WEBRTC_STATE_CHANGED]}
+    WebSocketUserViewStateChangedType: {type: string, enum: [USER_VIEWSTATE_CHANGED]}
+    WebSocketUserOnlineType: {type: string, enum: [USER_ONLINE]}
+    WebSocketUserOfflineType: {type: string, enum: [USER_OFFLINE]}
+    WebSocketUserGroupCreatedType: {type: string, enum: [USER_GROUP_CREATED]}
+    WebSocketUserGroupUpdatedType: {type: string, enum: [USER_GROUP_UPDATED]}
+    WebSocketUserGroupDeletedType: {type: string, enum: [USER_GROUP_DELETED]}
+    WebSocketChannelCreatedType: {type: string, enum: [CHANNEL_CREATED]}
+    WebSocketChannelUpdatedType: {type: string, enum: [CHANNEL_UPDATED]}
+    WebSocketChannelDeletedType: {type: string, enum: [CHANNEL_DELETED]}
+    WebSocketChannelStaredType: {type: string, enum: [CHANNEL_STARED]}
+    WebSocketChannelUnstaredType: {type: string, enum: [CHANNEL_UNSTARED]}
+    WebSocketChannelViewersChangedType: {type: string, enum: [CHANNEL_VIEWERS_CHANGED]}
+    WebSocketChannelSubscribersChangedType: {type: string, enum: [CHANNEL_SUBSCRIBERS_CHANGED]}
+    WebSocketMessageCreatedType: {type: string, enum: [MESSAGE_CREATED]}
+    WebSocketMessageUpdatedType: {type: string, enum: [MESSAGE_UPDATED]}
+    WebSocketMessageDeletedType: {type: string, enum: [MESSAGE_DELETED]}
+    WebSocketMessageStampedType: {type: string, enum: [MESSAGE_STAMPED]}
+    WebSocketMessageUnstampedType: {type: string, enum: [MESSAGE_UNSTAMPED]}
+    WebSocketMessagePinnedType: {type: string, enum: [MESSAGE_PINNED]}
+    WebSocketMessageUnpinnedType: {type: string, enum: [MESSAGE_UNPINNED]}
+    WebSocketMessageReadType: {type: string, enum: [MESSAGE_READ]}
+    WebSocketStampCreatedType: {type: string, enum: [STAMP_CREATED]}
+    WebSocketStampUpdatedType: {type: string, enum: [STAMP_UPDATED]}
+    WebSocketStampDeletedType: {type: string, enum: [STAMP_DELETED]}
+    WebSocketStampPaletteCreatedType: {type: string, enum: [STAMP_PALETTE_CREATED]}
+    WebSocketStampPaletteUpdatedType: {type: string, enum: [STAMP_PALETTE_UPDATED]}
+    WebSocketStampPaletteDeletedType: {type: string, enum: [STAMP_PALETTE_DELETED]}
+    WebSocketClipFolderCreatedType: {type: string, enum: [CLIP_FOLDER_CREATED]}
+    WebSocketClipFolderUpdatedType: {type: string, enum: [CLIP_FOLDER_UPDATED]}
+    WebSocketClipFolderDeletedType: {type: string, enum: [CLIP_FOLDER_DELETED]}
+    WebSocketClipFolderMessageDeletedType: {type: string, enum: [CLIP_FOLDER_MESSAGE_DELETED]}
+    WebSocketClipFolderMessageAddedType: {type: string, enum: [CLIP_FOLDER_MESSAGE_ADDED]}
+    WebSocketQallRoomStateChangedType: {type: string, enum: [QALL_ROOM_STATE_CHANGED]}
+    WebSocketQallSoundboardItemCreatedType: {type: string, enum: [QALL_SOUNDBOARD_ITEM_CREATED]}
+    WebSocketQallSoundboardItemDeletedType: {type: string, enum: [QALL_SOUNDBOARD_ITEM_DELETED]}
+    WebSocketIdBody:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+    WebSocketChannelBody:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        dm_user_id:
+          type: string
+          format: uuid
+    WebSocketMessagePinBody:
+      type: object
+      required: [message_id, channel_id]
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+    WebSocketClipFolderMessageBody:
+      type: object
+      required: [folder_id, message_id]
+      properties:
+        folder_id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
     UserOfflineEvent:
       title: UserOfflineEvent
       type: object
@@ -7200,32 +7782,32 @@ components:
       type: object
       description: Qallのサウンドボードアイテムが作成された
       properties:
-        soundId:
+        sound_id:
           type: string
           format: uuid
           description: 作成されたサウンドボードアイテムのId
         name:
           type: string
           description: 作成されたサウンドボードアイテムの名前
-        creatorId:
+        creator_id:
           type: string
           format: uuid
           description: 作成者のId
       required:
-        - soundId
+        - sound_id
         - name
-        - creatorId
+        - creator_id
     QallSoundboardItemDeletedEvent:
       title: QallSoundboardItemDeletedEvent
       type: object
       description: Qallのサウンドボードアイテムが削除された
       properties:
-        soundId:
+        sound_id:
           type: string
           format: uuid
           description: 削除されたサウンドボードアイテムのId
       required:
-        - soundId
+        - sound_id
     StampPalette:
       title: StampPalette
       type: object
