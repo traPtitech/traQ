@@ -84,6 +84,17 @@ func getParamGroup(c *echo.Context) *model.UserGroup {
 	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
 }
 
+// parseUUIDParam URLのnameパラメータをUUIDとしてパースする
+//
+// 不正な値やNilの場合は、そのパスのリソースが存在しないものとして404を返す。
+func parseUUIDParam(c *echo.Context, name string) (uuid.UUID, error) {
+	id, err := uuid.FromString(c.Param(name))
+	if err != nil || id == uuid.Nil {
+		return uuid.Nil, herror.NotFound()
+	}
+	return id, nil
+}
+
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c *echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)

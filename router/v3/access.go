@@ -8,14 +8,9 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
 )
-
-// このファイルの getAccessibleXxx は、URLパラメータで指定されたエンティティを取得し、
-// リクエストユーザーがアクセス可能かを確認する。
-// パラメータを扱うハンドラは、IDしか使わない場合でもアクセス権確認のために必ずこれらを呼ぶこと。
 
 // getAccessibleMessage URLの:messageIDに対応するMessageを取得し、リクエストユーザーがアクセス可能かを確認する
 //
@@ -23,7 +18,7 @@ import (
 func (h *Handlers) getAccessibleMessage(c *echo.Context) (message.Message, error) {
 	ctx := c.Request().Context()
 
-	id, err := utils.ParseUUIDParam(c, consts.ParamMessageID)
+	id, err := parseUUIDParam(c, consts.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +48,7 @@ func (h *Handlers) getAccessibleMessage(c *echo.Context) (message.Message, error
 func (h *Handlers) getAccessibleChannel(c *echo.Context) (*model.Channel, error) {
 	ctx := c.Request().Context()
 
-	id, err := utils.ParseUUIDParam(c, consts.ParamChannelID)
+	id, err := parseUUIDParam(c, consts.ParamChannelID)
 	if err != nil {
 		return nil, err
 	}

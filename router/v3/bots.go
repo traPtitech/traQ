@@ -254,12 +254,12 @@ func (h *Handlers) GetBotLogs(c *echo.Context) error {
 
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c *echo.Context) error {
-	ch, err := h.getAccessibleChannel(c)
+	channel, err := h.getAccessibleChannel(c)
 	if err != nil {
 		return err
 	}
 
-	bots, err := h.Repo.GetBots(c.Request().Context(), repository.BotsQuery{}.CMemberOf(ch.ID))
+	bots, err := h.Repo.GetBots(c.Request().Context(), repository.BotsQuery{}.CMemberOf(channel.ID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
