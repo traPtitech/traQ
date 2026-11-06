@@ -7,14 +7,14 @@ import (
 )
 
 // QallRoomStateChangedPayload QallRoomStateChanged のペイロード
-type QallRoomStateChangedPayload struct { //nolint:revive // あとで fix したいから #<PR番号> で暫定的に入れている
+type QallRoomStateChangedPayload struct { //nolint:revive // あとで fix したいから #3601 で暫定的に入れている
 	RoomStates []RoomWithParticipants `hub:"roomStates"`
 }
 
 func (QallRoomStateChangedPayload) TopicName() string { return event.QallRoomStateChanged }
 
 // QallSoundboardItemCreatedPayload QallSoundboardItemCreated のペイロード
-type QallSoundboardItemCreatedPayload struct { //nolint:revive // あとで fix したいから #<PR番号> で暫定的に入れている
+type QallSoundboardItemCreatedPayload struct { //nolint:revive // あとで fix したいから #3601 で暫定的に入れている
 	SoundID   uuid.UUID `hub:"sound_id"`
 	Name      string    `hub:"name"`
 	CreatorID uuid.UUID `hub:"creator_id"`
@@ -23,7 +23,7 @@ type QallSoundboardItemCreatedPayload struct { //nolint:revive // あとで fix 
 func (QallSoundboardItemCreatedPayload) TopicName() string { return event.QallSoundboardItemCreated }
 
 // QallSoundboardItemDeletedPayload QallSoundboardItemDeleted のペイロード
-type QallSoundboardItemDeletedPayload struct { //nolint:revive // あとで fix したいから #<PR番号> で暫定的に入れている
+type QallSoundboardItemDeletedPayload struct { //nolint:revive // あとで fix したいから #3601 で暫定的に入れている
 	SoundID uuid.UUID `hub:"sound_id"`
 }
 

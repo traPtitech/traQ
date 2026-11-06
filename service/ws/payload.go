@@ -9,7 +9,7 @@ import (
 )
 
 // WSConnectedPayload WSConnected のペイロード
-type WSConnectedPayload struct { //nolint:revive // あとで fix したいから #<PR番号> で暫定的に入れている
+type WSConnectedPayload struct { //nolint:revive // あとで fix したいから #3601 で暫定的に入れている
 	UserID uuid.UUID     `hub:"user_id"`
 	Req    *http.Request `hub:"req"`
 }
@@ -17,7 +17,7 @@ type WSConnectedPayload struct { //nolint:revive // あとで fix したいか�
 func (WSConnectedPayload) TopicName() string { return event.WSConnected }
 
 // WSDisconnectedPayload WSDisconnected のペイロード
-type WSDisconnectedPayload struct { //nolint:revive // あとで fix したいから #<PR番号> で暫定的に入れている
+type WSDisconnectedPayload struct { //nolint:revive // あとで fix したいから #3601 で暫定的に入れている
 	UserID uuid.UUID     `hub:"user_id"`
 	Req    *http.Request `hub:"req"`
 }
