@@ -6,14 +6,14 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	intevent "github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func StampDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	stampID := intevent.MustPayload[intevent.StampDeletedPayload](fields).StampID
-	bots, err := ctx.GetBots(event.StampDeleted)
+	stampID := event.MustPayload[event.StampDeletedPayload](fields).StampID
+	bots, err := ctx.GetBots(botevent.StampDeleted)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
 	}
@@ -22,7 +22,7 @@ func StampDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) 
 	}
 
 	if err := ctx.Multicast(
-		event.StampDeleted,
+		botevent.StampDeleted,
 		payload.MakeStampDeleted(datetime, stampID),
 		bots,
 	); err != nil {
