@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
 )
@@ -51,8 +51,8 @@ func TestBotJoined(t *testing.T) {
 
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.Joined, payload.MakeJoined(et, ch, ch.Name, u), b)
-		assert.NoError(t, BotJoined(handlerCtx, et, intevent.BotJoined, hub.Fields{
+		expectUnicast(handlerCtx, botevent.Joined, payload.MakeJoined(et, ch, ch.Name, u), b)
+		assert.NoError(t, BotJoined(handlerCtx, et, event.BotJoined, hub.Fields{
 			"bot_id":     b.ID,
 			"channel_id": ch.ID,
 		}))

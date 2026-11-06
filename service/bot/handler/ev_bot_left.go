@@ -9,7 +9,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -32,7 +32,7 @@ func BotLeft(ctx Context, datetime time.Time, _ string, fields hub.Fields) error
 	}
 
 	err = ctx.Unicast(
-		event.Left,
+		botevent.Left,
 		payload.MakeLeft(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(channelID), user),
 		bot,
 	)

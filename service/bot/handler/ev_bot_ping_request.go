@@ -9,7 +9,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -21,7 +21,7 @@ func BotPingRequest(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		return err
 	}
 
-	if ctx.D().Send(bot, event.Ping, buf) {
+	if ctx.D().Send(bot, botevent.Ping, buf) {
 		// OK
 		if err := ctx.R().ChangeBotState(context.Background(), bot.ID, model.BotActive); err != nil {
 			return fmt.Errorf("failed to ChangeBotState: %w", err)

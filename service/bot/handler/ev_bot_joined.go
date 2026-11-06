@@ -9,7 +9,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -32,7 +32,7 @@ func BotJoined(ctx Context, datetime time.Time, _ string, fields hub.Fields) err
 	}
 
 	err = ctx.Unicast(
-		event.Joined,
+		botevent.Joined,
 		payload.MakeJoined(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(channelID), user),
 		bot,
 	)

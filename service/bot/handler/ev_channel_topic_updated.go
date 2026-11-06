@@ -9,7 +9,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -18,7 +18,7 @@ func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.F
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
 
-	bots, err := ctx.GetChannelBots(chID, event.ChannelTopicChanged)
+	bots, err := ctx.GetChannelBots(chID, botevent.ChannelTopicChanged)
 	if err != nil {
 		return fmt.Errorf("failed to GetChannelBots: %w", err)
 	}
@@ -42,7 +42,7 @@ func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.F
 	}
 
 	if err := ctx.Multicast(
-		event.ChannelTopicChanged,
+		botevent.ChannelTopicChanged,
 		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	); err != nil {

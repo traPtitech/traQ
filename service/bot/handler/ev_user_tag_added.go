@@ -8,7 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -20,7 +20,7 @@ func UserTagAdded(ctx Context, datetime time.Time, _ string, fields hub.Fields) 
 	if err != nil {
 		return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 	}
-	if bot == nil || !bot.SubscribeEvents.Contains(event.TagAdded) {
+	if bot == nil || !bot.SubscribeEvents.Contains(botevent.TagAdded) {
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func UserTagAdded(ctx Context, datetime time.Time, _ string, fields hub.Fields) 
 	}
 
 	if err := ctx.Unicast(
-		event.TagAdded,
+		botevent.TagAdded,
 		payload.MakeTagAdded(datetime, t),
 		bot,
 	); err != nil {

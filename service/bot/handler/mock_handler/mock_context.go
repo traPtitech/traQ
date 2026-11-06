@@ -11,7 +11,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
-	event "github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	channel "github.com/traPtitech/traQ/service/channel"
 	zap "go.uber.org/zap"
 )
@@ -54,10 +54,10 @@ func (mr *MockContextMockRecorder) CM() *gomock.Call {
 }
 
 // D mocks base method.
-func (m *MockContext) D() event.Dispatcher {
+func (m *MockContext) D() botevent.Dispatcher {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "D")
-	ret0, _ := ret[0].(event.Dispatcher)
+	ret0, _ := ret[0].(botevent.Dispatcher)
 	return ret0
 }
 
