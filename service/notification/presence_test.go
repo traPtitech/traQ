@@ -72,7 +72,7 @@ func TestPresenceNotificationsPersistBeforeDelivery(t *testing.T) {
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": disconnectedAt,
 		}})
-		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID}})
+		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID, "datetime": time.Now()}})
 		synctest.Wait()
 		assert.Empty(t, writer.snapshot(), "neither notification may overtake persistence")
 		assert.True(t, updateArgs.LastOnline.Valid)
@@ -105,7 +105,7 @@ func TestPresenceNotificationsReportPersistenceFailure(t *testing.T) {
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": time.Now(),
 		}})
-		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID}})
+		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID, "datetime": time.Now()}})
 		synctest.Wait()
 
 		assert.Equal(t, 1, logs.FilterMessage("failed to persist last online time").Len())
@@ -142,7 +142,7 @@ func TestPresenceNotificationsContinueAfterPersistenceTimeout(t *testing.T) {
 		h.Publish(hub.Message{Name: event.UserOffline, Fields: hub.Fields{
 			"user_id": userID, "datetime": time.Now(),
 		}})
-		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID}})
+		h.Publish(hub.Message{Name: event.UserOnline, Fields: hub.Fields{"user_id": userID, "datetime": time.Now()}})
 		synctest.Wait()
 
 		time.Sleep(lastOnlinePersistTimeout - time.Nanosecond)

@@ -113,24 +113,18 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session := newSession(r.Context().Value(ctxkey.UserID).(uuid.UUID), s, conn)
 
 	s.register(session)
-	s.hub.Publish(hub.Message{
-		Name: event.BotWSConnected,
-		Fields: hub.Fields{
-			"user_id": session.userID,
-			"req":     r,
-		},
+	event.Publish(s.hub, BotWSConnectedPayload{
+		UserID: session.userID,
+		Req:    r,
 	})
 
 	go session.WriteLoop()
 	session.ReadLoop()
 
 	_ = s.webrtc.ResetState(session.key, session.userID)
-	s.hub.Publish(hub.Message{
-		Name: event.BotWSDisconnected,
-		Fields: hub.Fields{
-			"user_id": session.userID,
-			"req":     r,
-		},
+	event.Publish(s.hub, BotWSDisconnectedPayload{
+		UserID: session.userID,
+		Req:    r,
 	})
 	s.unregister(session)
 }
