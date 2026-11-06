@@ -64,7 +64,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.47.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.58.0
-	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
+	golang.org/x/exp v0.0.0-20261106112924-d498a4c2cc9a
 	golang.org/x/image v0.47.0
 	golang.org/x/net v0.62.0
 	golang.org/x/oauth2 v0.37.0
