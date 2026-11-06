@@ -267,9 +267,6 @@ func (repo *Repository) AddUsersToGroup(ctx context.Context, users []model.UserG
 			return convertError(err)
 		}
 
-		// NOTE: 規約 (event package のドキュメント) に反してトランザクションの中で発行している。
-		// ロールバックしてもイベントは取り消されず、購読側が詰まるとロックを持ったままになる。
-		// 振る舞いを変えないため、型付きイベントへの移行では現状を維持している。
 		for _, user := range users {
 			if g.IsMember(user.UserID) {
 				event.Publish(repo.hub, event.UserGroupMemberUpdatedPayload{
