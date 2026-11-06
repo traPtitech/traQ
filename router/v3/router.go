@@ -90,8 +90,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
-	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
-
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
 	{
 		apiUsers := api.Group("/users")
@@ -254,11 +252,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
 			apiStamps.POST("", h.CreateStamp, requires(permission.CreateStamp))
-			apiStampsSID := apiStamps.Group("/:stampID", retrieve.StampID(false))
+			apiStampsSID := apiStamps.Group("/:stampID")
 			{
 				apiStampsSID.GET("", h.GetStamp, requires(permission.GetStamp))
 				apiStampsSID.PATCH("", h.EditStamp, requires(permission.EditStamp))
-				apiStampsSID.DELETE("", h.DeleteStamp, requiresDeleteStampPerm)
+				apiStampsSID.DELETE("", h.DeleteStamp) // 権限確認はハンドラ内の getDeletableStamp で行う
 				apiStampsSID.GET("/stats", h.GetStampStats, requires(permission.GetStamp))
 				apiStampsSID.GET("/image", h.GetStampImage, requires(permission.GetStamp, permission.DownloadFile))
 				apiStampsSID.PUT("/image", h.ChangeStampImage, requires(permission.EditStamp))

@@ -49,11 +49,6 @@ func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
-// getParamStamp URLの:stampIDに対応するStampを取得
-func getParamStamp(c *echo.Context) *model.Stamp {
-	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
 // getParamStampPalette URLの:paletteIDに対応するStampPaletteを取得
 func getParamStampPalette(c *echo.Context) *model.StampPalette {
 	return c.Get(consts.KeyParamStampPalette).(*model.StampPalette)
