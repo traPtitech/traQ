@@ -1,9 +1,8 @@
-package exevent
+package event
 
 import (
 	"github.com/gofrs/uuid"
 
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/message"
 )
 
@@ -13,6 +12,6 @@ type MessageStampsUpdatedPayload struct {
 	Message   message.Message `hub:"message"`
 }
 
-func (MessageStampsUpdatedPayload) TopicName() string { return event.MessageStampsUpdated }
+func (MessageStampsUpdatedPayload) TopicName() string { return MessageStampsUpdated }
 
-var _ event.Payload = MessageStampsUpdatedPayload{}
+var _ Payload = MessageStampsUpdatedPayload{}

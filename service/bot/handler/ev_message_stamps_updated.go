@@ -9,11 +9,10 @@ import (
 	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/service/exevent"
 )
 
 func MessageStampsUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := event.MustPayload[exevent.MessageStampsUpdatedPayload](fields).Message
+	m := event.MustPayload[event.MessageStampsUpdatedPayload](fields).Message
 
 	bot, err := ctx.GetBotByBotUserID(m.GetUserID())
 	if err != nil {

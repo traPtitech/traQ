@@ -17,7 +17,6 @@ import (
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/viewer"
-	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/set"
 )
@@ -643,7 +642,7 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 		State     string `json:"state"`
 		SessionID string `json:"sessionId"`
 	}
-	p := event.MustPayload[webrtcv3.UserWebRTCv3StateChangedPayload](ev.Fields)
+	p := event.MustPayload[event.UserWebRTCv3StateChangedPayload](ev.Fields)
 	sessions := make([]StateSession, 0)
 	for session, state := range p.Sessions {
 		sessions = append(sessions, StateSession{State: state, SessionID: session})
@@ -669,7 +668,7 @@ func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func qallSoundboardItemCreatedHandler(ns *Service, ev hub.Message) {
-	p := event.MustPayload[qall.QallSoundboardItemCreatedPayload](ev.Fields)
+	p := event.MustPayload[event.QallSoundboardItemCreatedPayload](ev.Fields)
 	broadcast(ns,
 		"QALL_SOUNDBOARD_ITEM_CREATED",
 		map[string]interface{}{
@@ -684,7 +683,7 @@ func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"QALL_SOUNDBOARD_ITEM_DELETED",
 		map[string]interface{}{
-			"sound_id": event.MustPayload[qall.QallSoundboardItemDeletedPayload](ev.Fields).SoundID,
+			"sound_id": event.MustPayload[event.QallSoundboardItemDeletedPayload](ev.Fields).SoundID,
 		},
 	)
 }

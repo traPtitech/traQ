@@ -9,7 +9,6 @@ import (
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -34,14 +33,14 @@ func userOnlineHandler(ns *Service, ev hub.Message) {
 	ns.messageWriter.WriteMessage(
 		"USER_ONLINE",
 		map[string]any{
-			"id": event.MustPayload[counter.UserOnlinePayload](ev.Fields).UserID,
+			"id": event.MustPayload[event.UserOnlinePayload](ev.Fields).UserID,
 		},
 		ws.TargetAll(),
 	)
 }
 
 func userOfflineHandler(ns *Service, ev hub.Message) {
-	p := event.MustPayload[counter.UserOfflinePayload](ev.Fields)
+	p := event.MustPayload[event.UserOfflinePayload](ev.Fields)
 	userID := p.UserID
 	lastOnline := p.Datetime.UTC().Truncate(time.Microsecond)
 

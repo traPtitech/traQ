@@ -1,9 +1,7 @@
-package webrtcv3
+package event
 
 import (
 	"github.com/gofrs/uuid"
-
-	"github.com/traPtitech/traQ/event"
 )
 
 // UserWebRTCv3StateChangedPayload UserWebRTCv3StateChanged のペイロード
@@ -13,6 +11,6 @@ type UserWebRTCv3StateChangedPayload struct {
 	Sessions  map[string]string `hub:"sessions"`
 }
 
-func (UserWebRTCv3StateChangedPayload) TopicName() string { return event.UserWebRTCv3StateChanged }
+func (UserWebRTCv3StateChangedPayload) TopicName() string { return UserWebRTCv3StateChanged }
 
-var _ event.Payload = UserWebRTCv3StateChangedPayload{}
+var _ Payload = UserWebRTCv3StateChangedPayload{}

@@ -72,7 +72,7 @@ func (m *soundboardManager) SaveSoundboardItem(ctx context.Context, soundID uuid
 
 	// イベント発行
 	if m.hub != nil {
-		event.Publish(m.hub, QallSoundboardItemCreatedPayload{
+		event.Publish(m.hub, event.QallSoundboardItemCreatedPayload{
 			SoundID:   soundID,
 			Name:      soundName,
 			CreatorID: creatorID,
@@ -100,7 +100,7 @@ func (m *soundboardManager) DeleteSoundboardItem(ctx context.Context, soundID uu
 
 	// イベント発行
 	if m.hub != nil {
-		event.Publish(m.hub, QallSoundboardItemDeletedPayload{
+		event.Publish(m.hub, event.QallSoundboardItemDeletedPayload{
 			SoundID: soundID,
 		})
 	}

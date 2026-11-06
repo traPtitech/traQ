@@ -1,11 +1,9 @@
-package counter
+package event
 
 import (
 	"time"
 
 	"github.com/gofrs/uuid"
-
-	"github.com/traPtitech/traQ/event"
 )
 
 // UserOnlinePayload UserOnline のペイロード
@@ -14,7 +12,7 @@ type UserOnlinePayload struct {
 	Datetime time.Time `hub:"datetime"`
 }
 
-func (UserOnlinePayload) TopicName() string { return event.UserOnline }
+func (UserOnlinePayload) TopicName() string { return UserOnline }
 
 // UserOfflinePayload UserOffline のペイロード
 type UserOfflinePayload struct {
@@ -22,9 +20,9 @@ type UserOfflinePayload struct {
 	Datetime time.Time `hub:"datetime"`
 }
 
-func (UserOfflinePayload) TopicName() string { return event.UserOffline }
+func (UserOfflinePayload) TopicName() string { return UserOffline }
 
 var (
-	_ event.Payload = UserOnlinePayload{}
-	_ event.Payload = UserOfflinePayload{}
+	_ Payload = UserOnlinePayload{}
+	_ Payload = UserOfflinePayload{}
 )

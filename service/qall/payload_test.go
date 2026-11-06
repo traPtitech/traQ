@@ -11,6 +11,4 @@ import (
 func TestPayloads(t *testing.T) {
 	t.Parallel()
 	eventtest.AssertValidPayload(t, QallRoomStateChangedPayload{})
-	eventtest.AssertValidPayload(t, QallSoundboardItemCreatedPayload{})
-	eventtest.AssertValidPayload(t, QallSoundboardItemDeletedPayload{})
 }

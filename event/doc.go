@@ -33,14 +33,14 @@
 //   - 名前は「トピック定数名 + Payload」とする (例: StampCreated → StampCreatedPayload)。
 //   - struct の値型で定義し、値で発行する。全フィールドを exported にし、
 //     `hub:"key"` タグで hub.Fields 上のキー名を指定する。
-//   - ドメインイベント (repository が発行するもの) のペイロード型は、この package に置く。
-//   - service 内部の状態イベントのペイロード型は、import の循環を避けるため発行元の package
-//     (service/counter, service/viewer, service/qall など) の payload.go に置く。
-//     トピック名の定数は、どちらの場合もこの package の topic.go に置く。
+//   - ペイロード型とトピック名の定数 (topic.go) は、この package に置く。
+//   - フィールドに発行元の package の型を使っていて、この package に置くと import が循環する
+//     ペイロード型だけは、例外的に発行元の package の payload.go に置いている
+//     (service/viewer, service/qall)。新しく例外を増やさないこと。
 //
 // # テスト
 //
 //   - この package に置いたペイロード型は typed_test.go の definedPayloads に登録する。
-//   - ほかの package に置いたペイロード型は、その package の payload_test.go から
+//   - 例外的にほかの package に置いたペイロード型は、その package の payload_test.go から
 //     eventtest.AssertValidPayload を呼んで検証する。
 package event

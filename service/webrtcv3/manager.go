@@ -88,7 +88,7 @@ func (m *Manager) SetState(connKey string, user, channel uuid.UUID, sessions map
 	us.channelID = channel
 	cs.setUser(us)
 
-	event.Publish(m.eventbus, UserWebRTCv3StateChangedPayload{
+	event.Publish(m.eventbus, event.UserWebRTCv3StateChangedPayload{
 		UserID:    us.userID,
 		ChannelID: us.channelID,
 		Sessions:  us.sessions,
@@ -119,7 +119,7 @@ func (m *Manager) ResetState(connKey string, user uuid.UUID) error {
 		webrtcUsingChannelsCounter.Dec()
 	}
 
-	event.Publish(m.eventbus, UserWebRTCv3StateChangedPayload{
+	event.Publish(m.eventbus, event.UserWebRTCv3StateChangedPayload{
 		UserID:    us.userID,
 		ChannelID: us.channelID,
 		Sessions:  map[string]string{},

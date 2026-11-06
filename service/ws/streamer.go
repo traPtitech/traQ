@@ -108,7 +108,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session := newSession(r.Context().Value(ctxkey.UserID).(uuid.UUID), conn, s)
 
 	s.register(session)
-	event.Publish(s.hub, WSConnectedPayload{
+	event.Publish(s.hub, event.WSConnectedPayload{
 		UserID: session.UserID(),
 		Req:    r,
 	})
@@ -118,7 +118,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	s.vm.RemoveViewer(session)
 	_ = s.webrtc.ResetState(session.Key(), session.UserID())
-	event.Publish(s.hub, WSDisconnectedPayload{
+	event.Publish(s.hub, event.WSDisconnectedPayload{
 		UserID: session.UserID(),
 		Req:    r,
 	})

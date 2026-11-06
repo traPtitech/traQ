@@ -10,8 +10,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/traPtitech/traQ/event"
-	botws "github.com/traPtitech/traQ/service/bot/ws"
-	"github.com/traPtitech/traQ/service/ws"
 )
 
 var (
@@ -42,16 +40,16 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 		for e := range hub.Subscribe(8, event.WSConnected, event.WSDisconnected, event.BotWSConnected, event.BotWSDisconnected).Receiver {
 			switch e.Topic() {
 			case event.WSConnected:
-				oc.inc(event.MustPayload[ws.WSConnectedPayload](e.Fields).UserID, "user")
+				oc.inc(event.MustPayload[event.WSConnectedPayload](e.Fields).UserID, "user")
 				wsConnectionCounter.WithLabelValues("user").Inc()
 			case event.BotWSConnected:
-				oc.inc(event.MustPayload[botws.BotWSConnectedPayload](e.Fields).UserID, "bot")
+				oc.inc(event.MustPayload[event.BotWSConnectedPayload](e.Fields).UserID, "bot")
 				wsConnectionCounter.WithLabelValues("bot").Inc()
 			case event.WSDisconnected:
-				oc.dec(event.MustPayload[ws.WSDisconnectedPayload](e.Fields).UserID, "user")
+				oc.dec(event.MustPayload[event.WSDisconnectedPayload](e.Fields).UserID, "user")
 				wsConnectionCounter.WithLabelValues("user").Dec()
 			case event.BotWSDisconnected:
-				oc.dec(event.MustPayload[botws.BotWSDisconnectedPayload](e.Fields).UserID, "bot")
+				oc.dec(event.MustPayload[event.BotWSDisconnectedPayload](e.Fields).UserID, "bot")
 				wsConnectionCounter.WithLabelValues("bot").Dec()
 			}
 		}
@@ -74,7 +72,7 @@ func (oc *OnlineCounter) inc(userID uuid.UUID, userType string) (toOnline bool) 
 	toOnline = c.inc()
 	if toOnline {
 		onlineUsersCounter.WithLabelValues(userType).Inc()
-		event.Publish(oc.hub, UserOnlinePayload{
+		event.Publish(oc.hub, event.UserOnlinePayload{
 			UserID:   userID,
 			Datetime: c.getLastUpdated(),
 		})
@@ -95,7 +93,7 @@ func (oc *OnlineCounter) dec(userID uuid.UUID, userType string) (toOffline bool)
 	toOffline = c.dec()
 	if toOffline {
 		onlineUsersCounter.WithLabelValues(userType).Dec()
-		event.Publish(oc.hub, UserOfflinePayload{
+		event.Publish(oc.hub, event.UserOfflinePayload{
 			UserID:   userID,
 			Datetime: c.getLastUpdated(),
 		})
