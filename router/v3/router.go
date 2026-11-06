@@ -85,7 +85,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.FileManager)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
@@ -94,7 +94,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.ChannelManager)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
@@ -196,7 +195,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
 			apiChannels.POST("", h.CreateChannels, requires(permission.CreateChannel))
-			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
+			apiChannelsCID := apiChannels.Group("/:channelID")
 			{
 				apiChannelsCID.GET("", h.GetChannel, requires(permission.GetChannel))
 				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel))

@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/file"
@@ -255,9 +254,12 @@ func (h *Handlers) GetBotLogs(c *echo.Context) error {
 
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
-	bots, err := h.Repo.GetBots(c.Request().Context(), repository.BotsQuery{}.CMemberOf(channelID))
+	bots, err := h.Repo.GetBots(c.Request().Context(), repository.BotsQuery{}.CMemberOf(ch.ID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
