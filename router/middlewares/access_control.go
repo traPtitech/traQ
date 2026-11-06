@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -113,30 +112,6 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 
 			// アクセス権確認
 			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersWebhook) && w.GetCreatorID() != user.GetID() {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// CheckFileAccessPerm Fileアクセス権限を確認するミドルウェア
-func CheckFileAccessPerm(fm file.Manager) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			f := c.Get(consts.KeyParamFile).(model.File)
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-
-			if t := f.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {
-				// スタンプ・アイコン画像の場合はスキップ
-				return next(c)
-			}
-
-			// アクセス権確認
-			if ok, err := fm.Accessible(c.Request().Context(), f.GetID(), userID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
 				return herror.Forbidden()
 			}
 

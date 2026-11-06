@@ -7,18 +7,16 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/service/file"
 )
 
 // ParamRetriever リクエストパスパラメータで指定された各種エンティティをrepositoryから取得するミドルウェア
 type ParamRetriever struct {
 	repo repository.Repository
-	fm   file.Manager
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository, fm file.Manager) *ParamRetriever {
-	return &ParamRetriever{repo: repo, fm: fm}
+func NewParamRetriever(repo repository.Repository) *ParamRetriever {
+	return &ParamRetriever{repo: repo}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c *echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -76,8 +74,6 @@ func (pr *ParamRetriever) error(err error) error {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
-		case file.ErrNotFound:
-			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -101,13 +97,6 @@ func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetBotByID(c.Request().Context(), v)
-	})
-}
-
-// FileID リクエストURLの`fileID`パラメータからFileを取り出す
-func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.fm.Get(c.Request().Context(), v)
 	})
 }
 
