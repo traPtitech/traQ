@@ -6,7 +6,7 @@ import (
 
 type Timeline interface {
 	Query() TimelineQuery
-	Records() []Message
+	Records() []DetailedMessage
 	HasMore() bool
 	RetrievedAt() time.Time
 }
