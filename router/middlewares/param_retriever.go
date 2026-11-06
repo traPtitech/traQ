@@ -7,20 +7,16 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/service/channel"
-	"github.com/traPtitech/traQ/service/file"
 )
 
 // ParamRetriever リクエストパスパラメータで指定された各種エンティティをrepositoryから取得するミドルウェア
 type ParamRetriever struct {
 	repo repository.Repository
-	cm   channel.Manager
-	fm   file.Manager
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager) *ParamRetriever {
-	return &ParamRetriever{repo: repo, cm: cm, fm: fm}
+func NewParamRetriever(repo repository.Repository) *ParamRetriever {
+	return &ParamRetriever{repo: repo}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c *echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -78,10 +74,6 @@ func (pr *ParamRetriever) error(err error) error {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
-		case channel.ErrChannelNotFound:
-			return herror.NotFound()
-		case file.ErrNotFound:
-			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -105,27 +97,6 @@ func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetBotByID(c.Request().Context(), v)
-	})
-}
-
-// ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
-func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.cm.GetChannel(c.Request().Context(), v)
-	})
-}
-
-// FileID リクエストURLの`fileID`パラメータからFileを取り出す
-func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.fm.Get(c.Request().Context(), v)
-	})
-}
-
-// WebhookID リクエストURLの`webhookID`パラメータからBotを取り出す
-func (pr *ParamRetriever) WebhookID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamWebhookID, consts.KeyParamWebhook, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetWebhook(c.Request().Context(), v)
 	})
 }
 
@@ -157,12 +128,5 @@ func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 	}
 	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetUser(c.Request().Context(), v, true)
-	})
-}
-
-// ClipFolderID リクエストURLの`folderID`パラメータからClipFolderを取り出す
-func (pr *ParamRetriever) ClipFolderID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamClipFolderID, consts.KeyParamClipFolder, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetClipFolder(c.Request().Context(), v)
 	})
 }

@@ -107,7 +107,10 @@ func (h *Handlers) CreateChannels(c *echo.Context) error {
 // GetChannel GET /channels/:channelID
 func (h *Handlers) GetChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree(ctx).GetChildrenIDs(ch.ID)))
 }
 
@@ -128,7 +131,11 @@ func (r PatchChannelRequest) Validate() error {
 // EditChannel PATCH /channels/:channelID
 func (h *Handlers) EditChannel(c *echo.Context) error {
 	ctx := c.Request().Context()
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
+	channelID := ch.ID
 
 	if !h.ChannelManager.IsPublicChannel(ctx, channelID) {
 		return herror.BadRequest("channel must be public")
@@ -186,16 +193,22 @@ func (h *Handlers) EditChannel(c *echo.Context) error {
 
 // GetChannelViewers GET /channels/:channelID/viewers
 func (h *Handlers) GetChannelViewers(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
-	cv := h.VM.GetChannelViewers(channelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
+	cv := h.VM.GetChannelViewers(ch.ID)
 	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }
 
 // GetChannelStats GET /channels/:channelID/stats
 func (h *Handlers) GetChannelStats(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 	excludeDeletedMessages := isTrue(c.QueryParam("exclude-deleted-messages"))
-	stats, err := h.Repo.GetChannelStats(c.Request().Context(), channelID, excludeDeletedMessages)
+	stats, err := h.Repo.GetChannelStats(c.Request().Context(), ch.ID, excludeDeletedMessages)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -205,7 +218,10 @@ func (h *Handlers) GetChannelStats(c *echo.Context) error {
 // GetChannelTopic GET /channels/:channelID/topic
 func (h *Handlers) GetChannelTopic(c *echo.Context) error {
 	ctx := c.Request().Context()
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 	if !h.ChannelManager.IsPublicChannel(ctx, ch.ID) {
 		return herror.BadRequest("channel must be public")
 	}
@@ -226,7 +242,10 @@ func (r PutChannelTopicRequest) Validate() error {
 // EditChannelTopic PUT /channels/:channelID/topic
 func (h *Handlers) EditChannelTopic(c *echo.Context) error {
 	ctx := c.Request().Context()
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	if !h.ChannelManager.IsPublicChannel(ctx, ch.ID) {
 		return herror.BadRequest("channel must be public")
@@ -254,9 +273,12 @@ func (h *Handlers) EditChannelTopic(c *echo.Context) error {
 
 // GetChannelPins GET /channels/:channelID/pins
 func (h *Handlers) GetChannelPins(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
-	pins, err := h.Repo.GetPinnedMessageByChannelID(c.Request().Context(), channelID)
+	pins, err := h.Repo.GetPinnedMessageByChannelID(c.Request().Context(), ch.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -297,14 +319,17 @@ func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuer
 
 // GetChannelEvents GET /channels/:channelID/events
 func (h *Handlers) GetChannelEvents(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req channelEventsQuery
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	events, more, err := h.Repo.GetChannelEvents(c.Request().Context(), req.convert(channelID))
+	events, more, err := h.Repo.GetChannelEvents(c.Request().Context(), req.convert(ch.ID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -314,7 +339,10 @@ func (h *Handlers) GetChannelEvents(c *echo.Context) error {
 
 // GetChannelSubscribers GET /channels/:channelID/subscribers
 func (h *Handlers) GetChannelSubscribers(c *echo.Context) error {
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
 	if !ch.IsPublic || ch.IsForced {
@@ -341,7 +369,10 @@ type PutChannelSubscribersRequest struct {
 // SetChannelSubscribers PUT /channels/:channelID/subscribers
 func (h *Handlers) SetChannelSubscribers(c *echo.Context) error {
 	ctx := c.Request().Context()
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req PutChannelSubscribersRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -383,7 +414,10 @@ type PatchChannelSubscribersRequest struct {
 // EditChannelSubscribers PATCH /channels/:channelID/subscribers
 func (h *Handlers) EditChannelSubscribers(c *echo.Context) error {
 	ctx := c.Request().Context()
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req PatchChannelSubscribersRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -434,9 +468,12 @@ func (h *Handlers) GetUserDMChannel(c *echo.Context) error {
 // GetChannelPath GET /channels/:channelID/path
 func (h *Handlers) GetChannelPath(c *echo.Context) error {
 	ctx := c.Request().Context()
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
-	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, channelID)
+	channelPath := h.ChannelManager.GetChannelPathFromID(ctx, ch.ID)
 
 	return c.JSON(http.StatusOK, map[string]any{"path": channelPath})
 }

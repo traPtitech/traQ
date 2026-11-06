@@ -351,21 +351,27 @@ func (h *Handlers) GetMessageClips(c *echo.Context) error {
 
 // GetMessages GET /channels/:channelID/messages
 func (h *Handlers) GetMessages(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req MessagesQuery
 	if err := req.bind(c); err != nil {
 		return err
 	}
 
-	return serveMessages(c, h.MessageManager, req.convertC(channelID))
+	return serveMessages(c, h.MessageManager, req.convertC(ch.ID))
 }
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
-	ch := getParamChannel(c)
+	ch, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {

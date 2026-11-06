@@ -49,7 +49,10 @@ func (h *Handlers) GetWebhooks(c *echo.Context) error {
 
 // GetWebhookIcon GET /webhooks/:webhookID/icon
 func (h *Handlers) GetWebhookIcon(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 
 	// ユーザー取得
 	user, err := h.Repo.GetUser(c.Request().Context(), w.GetBotUserID(), false)
@@ -62,7 +65,11 @@ func (h *Handlers) GetWebhookIcon(c *echo.Context) error {
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) ChangeWebhookIcon(c *echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamWebhook(c).GetBotUserID())
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, w.GetBotUserID())
 }
 
 // PostWebhooksRequest POST /webhooks リクエストボディ
@@ -111,7 +118,10 @@ func (h *Handlers) CreateWebhook(c *echo.Context) error {
 
 // GetWebhook GET /webhooks/:webhookID
 func (h *Handlers) GetWebhook(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
 
@@ -136,7 +146,10 @@ func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 
 // EditWebhook PATCH /webhooks/:webhookID
 func (h *Handlers) EditWebhook(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 
 	var req PatchWebhookRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -164,7 +177,10 @@ func (h *Handlers) EditWebhook(c *echo.Context) error {
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c *echo.Context) error {
 	ctx := c.Request().Context()
-	w := getParamWebhook(c)
+	w, err := h.getWebhook(c)
+	if err != nil {
+		return err
+	}
 	channelID := w.GetChannelID()
 
 	// text/plainのみ受け付ける
@@ -228,7 +244,10 @@ func (h *Handlers) PostWebhook(c *echo.Context) error {
 
 // DeleteWebhook DELETE /webhooks/:webhookID
 func (h *Handlers) DeleteWebhook(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 
 	if err := h.Repo.DeleteWebhook(c.Request().Context(), w.GetID()); err != nil {
 		return herror.InternalServerError(err)
@@ -239,7 +258,10 @@ func (h *Handlers) DeleteWebhook(c *echo.Context) error {
 
 // GetWebhookMessages GET /webhooks/:webhookID/messages
 func (h *Handlers) GetWebhookMessages(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 
 	var req MessagesQuery
 	if err := req.bind(c); err != nil {
@@ -251,7 +273,10 @@ func (h *Handlers) GetWebhookMessages(c *echo.Context) error {
 
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
 func (h *Handlers) DeleteWebhookMessage(c *echo.Context) error {
-	w := getParamWebhook(c)
+	w, err := h.getAccessibleWebhook(c)
+	if err != nil {
+		return err
+	}
 	m, err := h.getAccessibleMessage(c)
 	if err != nil {
 		return err

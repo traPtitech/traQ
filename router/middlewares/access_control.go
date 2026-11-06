@@ -9,8 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/service/channel"
-	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -105,47 +103,6 @@ func CheckBotAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	}
 }
 
-// CheckWebhookAccessPerm Webhookアクセス権限を確認するミドルウェア
-func CheckWebhookAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			w := c.Get(consts.KeyParamWebhook).(model.Webhook)
-
-			// アクセス権確認
-			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersWebhook) && w.GetCreatorID() != user.GetID() {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// CheckFileAccessPerm Fileアクセス権限を確認するミドルウェア
-func CheckFileAccessPerm(fm file.Manager) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			f := c.Get(consts.KeyParamFile).(model.File)
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-
-			if t := f.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {
-				// スタンプ・アイコン画像の場合はスキップ
-				return next(c)
-			}
-
-			// アクセス権確認
-			if ok, err := fm.Accessible(c.Request().Context(), f.GetID(), userID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
 // CheckClientAccessPerm Clientアクセス権限を確認するミドルウェア
 func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -156,25 +113,6 @@ func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 			// アクセス権確認
 			if !rbac.IsGranted(user.GetRole(), permission.ManageOthersClient) && oc.CreatorID != user.GetID() {
 				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// CheckChannelAccessPerm Channelアクセス権限を確認するミドルウェア
-func CheckChannelAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
-
-			// アクセス権確認
-			if ok, err := cm.IsChannelAccessibleToUser(c.Request().Context(), userID, ch.ID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.NotFound()
 			}
 
 			return next(c)
@@ -194,21 +132,6 @@ func CheckUserGroupAdminPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 			}
 
 			return next(c)
-		}
-	}
-}
-
-// CheckClipFolderAccessPerm ClipFolderアクセス権限を確認するミドルウェア
-func CheckClipFolderAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			cf := c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
-			if user.GetID() == cf.OwnerID {
-				return next(c) // 所有者のアクセス
-			}
-
-			return herror.Forbidden()
 		}
 	}
 }

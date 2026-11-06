@@ -85,18 +85,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
-	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.ChannelManager)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
-	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
@@ -196,7 +192,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
 			apiChannels.POST("", h.CreateChannels, requires(permission.CreateChannel))
-			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
+			apiChannelsCID := apiChannels.Group("/:channelID")
 			{
 				apiChannelsCID.GET("", h.GetChannel, requires(permission.GetChannel))
 				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel))
@@ -242,7 +238,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiFiles.GET("", h.GetFiles, requires(permission.DownloadFile))
 			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
-			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
+			apiFilesFID := apiFiles.Group("/:fileID")
 			{
 				apiFilesFID.GET("", h.GetFile, requires(permission.DownloadFile))
 				apiFilesFID.DELETE("", h.DeleteFile, requires(permission.DeleteFile))
@@ -286,7 +282,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.CreateWebhook, requires(permission.CreateWebhook))
-			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
+			apiWebhooksWID := apiWebhooks.Group("/:webhookID")
 			{
 				apiWebhooksWID.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWID.PATCH("", h.EditWebhook, requires(permission.EditWebhook))
@@ -381,7 +377,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
 			apiClipFolders.POST("", h.CreateClipFolder, requires(permission.CreateClipFolder))
-			apiClipFoldersFID := apiClipFolders.Group("/:folderID", retrieve.ClipFolderID(), requiresClipFolderAccessPerm)
+			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
 			{
 				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
 				apiClipFoldersFID.PATCH("", h.EditClipFolder, requires(permission.EditClipFolder))
@@ -425,7 +421,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNoAuth.POST("/login", h.Login, noLogin)
 		apiNoAuth.POST("/logout", h.Logout)
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuth.POST("/qall/webhook", h.LiveKitWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{

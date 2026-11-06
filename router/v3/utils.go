@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,11 +49,6 @@ func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
-// getParamWebhook URLの:webhookIDに対応するWebhookを取得
-func getParamWebhook(c *echo.Context) model.Webhook {
-	return c.Get(consts.KeyParamWebhook).(model.Webhook)
-}
-
 // getParamBot URLの:botIDに対応するBotを取得
 func getParamBot(c *echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
@@ -63,11 +57,6 @@ func getParamBot(c *echo.Context) *model.Bot {
 // getParamClient URLの:clientIDに対応するOAuth2Clientを取得
 func getParamClient(c *echo.Context) *model.OAuth2Client {
 	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
-}
-
-// getParamFile URLの:fileIDに対応するFileを取得
-func getParamFile(c *echo.Context) model.File {
-	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 // getParamStamp URLの:stampIDに対応するStampを取得
@@ -80,42 +69,6 @@ func getParamStampPalette(c *echo.Context) *model.StampPalette {
 	return c.Get(consts.KeyParamStampPalette).(*model.StampPalette)
 }
 
-// getParamChannel URLの:channelIDに対応するChannelを取得
-func getParamChannel(c *echo.Context) *model.Channel {
-	return c.Get(consts.KeyParamChannel).(*model.Channel)
-}
-
-// getAccessibleMessage URLの:messageIDに対応するMessageを取得し、リクエストユーザーがアクセス可能かを確認する
-//
-// メッセージが存在しない場合と、メッセージのチャンネルにアクセスできない場合はどちらも404を返す。
-// :messageIDを扱うハンドラは、IDしか使わない場合でもアクセス権確認のために必ずこれを呼ぶこと。
-func (h *Handlers) getAccessibleMessage(c *echo.Context) (message.Message, error) {
-	ctx := c.Request().Context()
-
-	id, err := uuid.FromString(c.Param(consts.ParamMessageID))
-	if err != nil || id == uuid.Nil {
-		return nil, herror.NotFound()
-	}
-
-	m, err := h.MessageManager.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, message.ErrNotFound) {
-			return nil, herror.NotFound()
-		}
-		return nil, herror.InternalServerError(err)
-	}
-
-	ok, err := h.ChannelManager.IsChannelAccessibleToUser(ctx, getRequestUserID(c), m.GetChannelID())
-	if err != nil {
-		return nil, herror.InternalServerError(err)
-	}
-	if !ok {
-		return nil, herror.NotFound()
-	}
-
-	return m, nil
-}
-
 // getParamGroup URLの:groupIDに対応するUserGroupを取得
 func getParamGroup(c *echo.Context) *model.UserGroup {
 	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
@@ -124,11 +77,6 @@ func getParamGroup(c *echo.Context) *model.UserGroup {
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c *echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
-}
-
-// getParamClipFolder URLの:folderIDに対応するClipFolderを取得
-func getParamClipFolder(c *echo.Context) *model.ClipFolder {
-	return c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
 }
 
 type MessagesQuery struct {

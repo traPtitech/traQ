@@ -51,10 +51,8 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot()
-
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 
 	gone := func(_ *echo.Context) error {
 		return herror.HTTPError(http.StatusGone, "This API has been deleted. Please migrate to v3 or newer API.")
@@ -205,7 +203,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiFiles := api.Group("/files")
 		{
 			apiFiles.POST("", gone)
-			apiFilesFid := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
+			apiFilesFid := apiFiles.Group("/:fileID")
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
 				apiFilesFid.GET("/meta", h.GetMetaDataByFileID, requires(permission.DownloadFile))
@@ -332,10 +330,6 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 
 func getStampFromContext(c *echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
-func getFileFromContext(c *echo.Context) model.File {
-	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 // L ロガーを返します
