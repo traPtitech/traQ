@@ -7,7 +7,6 @@ const (
 	KeyParamStamp         = "paramStamp"
 	KeyParamStampPalette  = "paramStampPalette"
 	KeyParamUser          = "paramUser"
-	KeyParamClient        = "paramClient"
 	KeyRepo               = "_repo"
 	KeyChannelManager     = "_cm"
 )

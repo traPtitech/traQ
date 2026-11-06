@@ -224,3 +224,36 @@ func (h *Handlers) getAdministrableUserGroup(c *echo.Context) (*model.UserGroup,
 
 	return g, nil
 }
+
+// getClient URLの:clientIDに対応するOAuth2Clientを取得する
+//
+// アクセス権確認は行わない。クライアントが存在しない場合は404を返す。
+func (h *Handlers) getClient(c *echo.Context) (*model.OAuth2Client, error) {
+	oc, err := h.Repo.GetClient(c.Request().Context(), c.Param(consts.ParamClientID))
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	return oc, nil
+}
+
+// getAccessibleClient URLの:clientIDに対応するOAuth2Clientを取得し、リクエストユーザーが管理できるかを確認する
+//
+// クライアントが存在しない場合は404を返す。
+// 作成者、または他人のクライアントの管理権限を持つユーザーのみアクセスでき、それ以外は403を返す。
+func (h *Handlers) getAccessibleClient(c *echo.Context) (*model.OAuth2Client, error) {
+	oc, err := h.getClient(c)
+	if err != nil {
+		return nil, err
+	}
+
+	user := getRequestUser(c)
+	if oc.CreatorID != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.ManageOthersClient) {
+		return nil, herror.Forbidden()
+	}
+
+	return oc, nil
+}
