@@ -82,6 +82,7 @@ func provideOAuth2Config(c *Config) oauth2.Config {
 
 func provideV3Config(c *Config) v3.Config {
 	return v3.Config{
+		Origin:                          c.Origin,
 		Version:                         c.Version,
 		Revision:                        c.Revision,
 		SkyWaySecretKey:                 c.SkyWaySecretKey,

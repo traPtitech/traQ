@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/mock_event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
@@ -41,10 +41,11 @@ func TestBotPingRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		repo.MockBotRepository.EXPECT().ChangeBotState(gomock.Any(), b.ID, model.BotActive).Return(nil).Times(1)
-		d.EXPECT().Send(b, event.Ping, buf).Return(true).Times(1)
+		d.EXPECT().Send(b, botevent.Ping, buf).Return(true).Times(1)
 
-		assert.NoError(t, BotPingRequest(handlerCtx, et, intevent.BotPingRequest, hub.Fields{
-			"bot": b,
+		assert.NoError(t, BotPingRequest(handlerCtx, et, event.BotPingRequest, hub.Fields{
+			"bot_id": b.ID,
+			"bot":    b,
 		}))
 	})
 
@@ -61,10 +62,11 @@ func TestBotPingRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		repo.MockBotRepository.EXPECT().ChangeBotState(gomock.Any(), b.ID, model.BotPaused).Return(nil).Times(1)
-		d.EXPECT().Send(b, event.Ping, buf).Return(false).Times(1)
+		d.EXPECT().Send(b, botevent.Ping, buf).Return(false).Times(1)
 
-		assert.NoError(t, BotPingRequest(handlerCtx, et, intevent.BotPingRequest, hub.Fields{
-			"bot": b,
+		assert.NoError(t, BotPingRequest(handlerCtx, et, event.BotPingRequest, hub.Fields{
+			"bot_id": b.ID,
+			"bot":    b,
 		}))
 	})
 }

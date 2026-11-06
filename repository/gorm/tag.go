@@ -5,7 +5,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -58,12 +57,9 @@ func (repo *Repository) AddUserTag(ctx context.Context, userID, tagID uuid.UUID)
 		}
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserTagAdded,
-		Fields: hub.Fields{
-			"user_id": userID,
-			"tag_id":  tagID,
-		},
+	event.Publish(repo.hub, event.UserTagAddedPayload{
+		UserID: userID,
+		TagID:  tagID,
 	})
 	return nil
 }
@@ -81,12 +77,9 @@ func (repo *Repository) ChangeUserTagLock(ctx context.Context, userID, tagID uui
 	if result.RowsAffected == 0 {
 		return repository.ErrNotFound
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserTagUpdated,
-		Fields: hub.Fields{
-			"user_id": userID,
-			"tag_id":  tagID,
-		},
+	event.Publish(repo.hub, event.UserTagUpdatedPayload{
+		UserID: userID,
+		TagID:  tagID,
 	})
 	return nil
 }
@@ -101,12 +94,9 @@ func (repo *Repository) DeleteUserTag(ctx context.Context, userID, tagID uuid.UU
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserTagRemoved,
-			Fields: hub.Fields{
-				"user_id": userID,
-				"tag_id":  tagID,
-			},
+		event.Publish(repo.hub, event.UserTagRemovedPayload{
+			UserID: userID,
+			TagID:  tagID,
 		})
 	}
 	return nil

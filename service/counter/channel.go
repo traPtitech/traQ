@@ -38,7 +38,7 @@ func NewChannelCounter(db *gorm.DB, hub *hub.Hub) (ChannelCounter, error) {
 	channelsCounter.Add(float64(counter.count))
 	go func() {
 		for e := range hub.Subscribe(1, event.ChannelCreated).Receiver {
-			if e.Fields["channel"].(*model.Channel).IsPublic {
+			if event.MustPayload[event.ChannelCreatedPayload](e.Fields).Channel.IsPublic {
 				counter.inc()
 			}
 		}

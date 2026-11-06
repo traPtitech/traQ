@@ -1,5 +1,7 @@
 package search
 
+import "context"
+
 var nullE = &nullEngine{}
 
 type nullEngine struct{}
@@ -9,7 +11,7 @@ func NewNullEngine() Engine {
 	return nullE
 }
 
-func (n *nullEngine) Do(*Query) (Result, error) {
+func (n *nullEngine) Do(context.Context, *Query) (Result, error) {
 	return nil, ErrServiceUnavailable
 }
 

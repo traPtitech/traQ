@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 	"github.com/traPtitech/traQ/service/message"
@@ -23,7 +23,7 @@ func TestMessageStampsUpdated(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.BotMessageStampsUpdated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.BotMessageStampsUpdated.String()}),
 		State:           model.BotActive,
 	}
 
@@ -41,8 +41,8 @@ func TestMessageStampsUpdated(t *testing.T) {
 		}
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.BotMessageStampsUpdated, payload.MakeBotMessageStampsUpdated(et, m.ID, m.Stamps), b)
-		assert.NoError(t, MessageStampsUpdated(handlerCtx, et, intevent.MessageStampsUpdated, hub.Fields{
+		expectUnicast(handlerCtx, botevent.BotMessageStampsUpdated, payload.MakeBotMessageStampsUpdated(et, m.ID, m.Stamps), b)
+		assert.NoError(t, MessageStampsUpdated(handlerCtx, et, event.MessageStampsUpdated, hub.Fields{
 			"message":    m,
 			"message_id": m.ID,
 		}))
@@ -56,7 +56,7 @@ func TestMessageStampsUpdated(t *testing.T) {
 		b := &model.Bot{
 			ID:              uuid.NewV3(uuid.Nil, "b"),
 			BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-			SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageCreated.String()}),
+			SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MessageCreated.String()}),
 			State:           model.BotActive,
 		}
 		registerBot(t, handlerCtx, b)
@@ -68,7 +68,7 @@ func TestMessageStampsUpdated(t *testing.T) {
 		}
 		et := time.Now()
 
-		assert.NoError(t, MessageStampsUpdated(handlerCtx, et, intevent.MessageStampsUpdated, hub.Fields{
+		assert.NoError(t, MessageStampsUpdated(handlerCtx, et, event.MessageStampsUpdated, hub.Fields{
 			"message":    m,
 			"message_id": m.ID,
 		}))

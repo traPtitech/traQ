@@ -126,6 +126,13 @@ Command:
 			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
 		}
 
+	case "ping":
+		// ping
+		_ = s.WriteMessage(&rawMessage{
+			t:    websocket.TextMessage,
+			data: makeMessage("PING", nil).toJSON(),
+		})
+
 	default:
 		// 不明なコマンド
 		s.sendErrorMessage(fmt.Sprintf("unknown command: %s", cmd))

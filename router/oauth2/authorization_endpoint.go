@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -95,10 +96,10 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	}
 
 	// リダイレクトURI確認
-	if len(req.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI {
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, req.RedirectURI)
+	if !ok {
 		return herror.BadRequest("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
 	q := &url.Values{}
 	if len(req.State) > 0 {
@@ -117,6 +118,14 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
+	}
+	// ネイティブアプリ向け(http(s)以外)のリダイレクトはPKCE(S256)必須
+	isNativeAppRedirect := isNativeAppRedirectURI(redirectURI)
+	if isNativeAppRedirect && !hasS256CodeChallenge(req.CodeChallenge, req.CodeChallengeMethod) {
+		q.Set("error", errInvalidRequest)
+		q.Set("error_description", errDescriptionPKCERequired)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 
 	// スコープ確認
@@ -195,6 +204,12 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
+		// ネイティブアプリ向けのリダイレクトでは自動で認可しない
+		if isNativeAppRedirect {
+			q.Set("error", errConsentRequired)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
+		}
 		tokens, err := h.Repo.GetTokensByUser(ctx, se.UserID())
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
@@ -203,10 +218,14 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
+		requiredScopes := req.Scopes
+		if len(requiredScopes) == 0 {
+			requiredScopes = req.ValidScopes
+		}
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for s := range req.Scopes {
+				for s := range requiredScopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
@@ -258,7 +277,7 @@ func (h *Handler) AuthorizationEndpointHandler(c *echo.Context) error {
 	case types.Code && !types.Token && !types.IDToken: // 現状は Authorization Code Flow しかサポートしない
 		if se == nil {
 			// 未ログインの場合はログインしてから再度叩かせる
-			current := c.Request().URL
+			current := c.Request().URL.Clone()
 			v, _ := query.Values(req)
 			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
 
@@ -343,7 +362,10 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 	if client.RedirectURI == "" { // RedirectURIが事前登録されていない
 		return herror.Forbidden("invalid client")
 	}
-	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
+	redirectURI, ok := resolveRedirectURI(client.RedirectURI, reqAuth.RedirectURI)
+	if !ok {
+		return herror.Forbidden("invalid client")
+	}
 
 	q := url.Values{}
 	if len(reqAuth.State) > 0 {
@@ -360,6 +382,13 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 	// 拒否
 	if req.Submit != "approve" {
 		q.Set("error", errAccessDenied)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
+	// 認可リクエスト後にコールバックURLが変更されている場合があるので、ここでもPKCE(S256)を確認
+	if isNativeAppRedirectURI(redirectURI) && !hasS256CodeChallenge(reqAuth.CodeChallenge, reqAuth.CodeChallengeMethod) {
+		q.Set("error", errInvalidRequest)
+		q.Set("error_description", errDescriptionPKCERequired)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
@@ -393,4 +422,66 @@ func (h *Handler) AuthorizationDecideHandler(c *echo.Context) error {
 
 	redirectURI.RawQuery = q.Encode()
 	return c.Redirect(http.StatusFound, redirectURI.String())
+}
+
+const errDescriptionPKCERequired = "code challenge with S256 method is required for private-use URI scheme redirect"
+
+// isNativeAppRedirectURI ネイティブアプリ向け(http(s)以外)のリダイレクト先かどうか
+func isNativeAppRedirectURI(u *url.URL) bool {
+	return u.Scheme != "http" && u.Scheme != "https"
+}
+
+// hasS256CodeChallenge S256のcode challengeがあるかどうか
+func hasS256CodeChallenge(codeChallenge, codeChallengeMethod string) bool {
+	return len(codeChallenge) > 0 && codeChallengeMethod == "S256"
+}
+
+// resolveRedirectURI validates the requested redirect URI against the
+// registered URI and returns the URI to use for the authorization response.
+func resolveRedirectURI(registered, requested string) (*url.URL, bool) {
+	redirectURI := registered
+	if requested != "" {
+		if !redirectURIMatches(registered, requested) {
+			return nil, false
+		}
+		redirectURI = requested
+	}
+
+	u, err := url.ParseRequestURI(redirectURI)
+	return u, err == nil
+}
+
+// redirectURIMatches compares redirect URIs using exact string matching,
+// except that RFC 8252 permits the port to differ for HTTP loopback IP URIs.
+func redirectURIMatches(registered, requested string) bool {
+	registeredURI, err := url.ParseRequestURI(registered)
+	if err != nil {
+		return false
+	}
+	requestedURI, err := url.ParseRequestURI(requested)
+	if err != nil {
+		return false
+	}
+	if registered == requested {
+		return true
+	}
+
+	if registeredURI.Scheme != "http" || requestedURI.Scheme != "http" {
+		return false
+	}
+	registeredIP := net.ParseIP(registeredURI.Hostname())
+	if registeredIP == nil || !registeredIP.IsLoopback() {
+		return false
+	}
+
+	return registeredURI.Opaque == requestedURI.Opaque &&
+		registeredURI.User.String() == requestedURI.User.String() &&
+		registeredURI.Hostname() == requestedURI.Hostname() &&
+		registeredURI.Path == requestedURI.Path &&
+		registeredURI.RawPath == requestedURI.RawPath &&
+		registeredURI.OmitHost == requestedURI.OmitHost &&
+		registeredURI.ForceQuery == requestedURI.ForceQuery &&
+		registeredURI.RawQuery == requestedURI.RawQuery &&
+		registeredURI.Fragment == requestedURI.Fragment &&
+		registeredURI.RawFragment == requestedURI.RawFragment
 }

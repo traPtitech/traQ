@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 )
@@ -22,7 +22,7 @@ func TestUserGroupAdminRemoved(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.UserGroupAdminRemoved.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.UserGroupAdminRemoved.String()}),
 		State:           model.BotActive,
 	}
 
@@ -36,8 +36,8 @@ func TestUserGroupAdminRemoved(t *testing.T) {
 		groupID := uuid.NewV3(uuid.Nil, "g")
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupAdminRemoved, payload.MakeUserGroupAdminRemoved(et, groupID, userID), []*model.Bot{b})
-		assert.NoError(t, UserGroupAdminRemoved(handlerCtx, et, intevent.UserGroupAdminRemoved, hub.Fields{
+		expectMulticast(handlerCtx, botevent.UserGroupAdminRemoved, payload.MakeUserGroupAdminRemoved(et, groupID, userID), []*model.Bot{b})
+		assert.NoError(t, UserGroupAdminRemoved(handlerCtx, et, event.UserGroupAdminRemoved, hub.Fields{
 			"group_id": groupID,
 			"user_id":  userID,
 		}))
@@ -50,7 +50,7 @@ func TestUserGroupAdminRemoved(t *testing.T) {
 		b2 := &model.Bot{
 			ID:              uuid.NewV3(uuid.Nil, "b2"),
 			BotUserID:       uuid.NewV3(uuid.Nil, "bu2"),
-			SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageCreated.String()}),
+			SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MessageCreated.String()}),
 			State:           model.BotActive,
 		}
 		registerBot(t, handlerCtx, b)
@@ -60,8 +60,8 @@ func TestUserGroupAdminRemoved(t *testing.T) {
 		groupID := uuid.NewV3(uuid.Nil, "g")
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupAdminRemoved, payload.MakeUserGroupAdminRemoved(et, groupID, userID), []*model.Bot{b})
-		assert.NoError(t, UserGroupAdminRemoved(handlerCtx, et, intevent.UserGroupAdminRemoved, hub.Fields{
+		expectMulticast(handlerCtx, botevent.UserGroupAdminRemoved, payload.MakeUserGroupAdminRemoved(et, groupID, userID), []*model.Bot{b})
+		assert.NoError(t, UserGroupAdminRemoved(handlerCtx, et, event.UserGroupAdminRemoved, hub.Fields{
 			"group_id": groupID,
 			"user_id":  userID,
 		}))

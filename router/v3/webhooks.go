@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -257,8 +258,13 @@ func (h *Handlers) DeleteWebhookMessage(c *echo.Context) error {
 	messageUserID := m.GetUserID()
 
 	if botUserID == messageUserID {
-		if err := h.Repo.DeleteMessage(c.Request().Context(), messageID); err != nil {
-			return herror.InternalServerError(err)
+		if err := h.MessageManager.Delete(c.Request().Context(), messageID); err != nil {
+			switch {
+			case errors.Is(err, message.ErrChannelArchived):
+				return herror.BadRequest("the channel of this message has been archived")
+			default:
+				return herror.InternalServerError(err)
+			}
 		}
 	} else {
 		return herror.Forbidden("you are not allowed to delete this message")

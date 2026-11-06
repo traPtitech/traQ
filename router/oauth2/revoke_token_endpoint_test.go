@@ -51,6 +51,10 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 
 		_, err = env.Repository.GetTokenByID(context.TODO(), token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
+
+		d, err := env.Repository.GetTokenByIDWithDeleted(context.TODO(), token.ID)
+		assert.NoError(t, err)
+		assert.True(t, d.DeletedAt.Valid)
 	})
 
 	t.Run("RefreshToken", func(t *testing.T) {
@@ -66,5 +70,9 @@ func runRevokeTokenEndpointTests(t *testing.T, useUUIDv4 bool) {
 
 		_, err = env.Repository.GetTokenByID(context.TODO(), token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
+
+		d, err := env.Repository.GetTokenByIDWithDeleted(context.TODO(), token.ID)
+		assert.NoError(t, err)
+		assert.True(t, d.DeletedAt.Valid)
 	})
 }

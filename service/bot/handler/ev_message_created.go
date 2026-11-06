@@ -9,15 +9,19 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/repository"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := fields["message"].(*model.Message)
-	parsed := fields["parse_result"].(*message.ParseResult)
+	p := event.MustPayload[event.MessageCreatedPayload](fields)
+	m := p.Message
+	parsed := p.ParseResult
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
@@ -47,12 +51,12 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		if err != nil {
 			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 		}
-		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageCreated) {
+		if bot == nil || !bot.SubscribeEvents.Contains(botevent.DirectMessageCreated) {
 			return nil
 		}
 
 		if err := ctx.Unicast(
-			event.DirectMessageCreated,
+			botevent.DirectMessageCreated,
 			payload.MakeDirectMessageCreated(datetime, m, user, parsed),
 			bot,
 		); err != nil {
@@ -60,27 +64,32 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 	} else {
 		// 購読BOT
-		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageCreated)
+		bots, err := ctx.GetChannelBots(m.ChannelID, botevent.MessageCreated)
 		if err != nil {
 			return fmt.Errorf("failed to GetChannelBots: %w", err)
 		}
 
 		// メンションBOT
-		done := make(map[uuid.UUID]bool)
-		for _, uid := range parsed.Mentions {
-			if !done[uid] {
-				done[uid] = true
-				b, err := ctx.GetBotByBotUserID(uid)
-				if err != nil {
-					ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
-					continue
-				}
-				if b == nil {
-					continue
-				}
-				if b.SubscribeEvents.Contains(event.MentionMessageCreated) {
-					bots = append(bots, b)
-				}
+		mentions := set.UUIDSetFromArray(parsed.Mentions)
+		for gid := range set.UUIDSetFromArray(parsed.GroupMentions) {
+			members, err := ctx.R().GetUserIDs(context.Background(), repository.UsersQuery{IsBot: optional.From(true)}.GMemberOf(gid))
+			if err != nil {
+				ctx.L().Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("groupId", gid))
+				continue
+			}
+			mentions.Add(members...)
+		}
+		for uid := range mentions {
+			b, err := ctx.GetBotByBotUserID(uid)
+			if err != nil {
+				ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
+				continue
+			}
+			if b == nil {
+				continue
+			}
+			if b.SubscribeEvents.Contains(botevent.MentionMessageCreated) {
+				bots = append(bots, b)
 			}
 		}
 
@@ -90,7 +99,7 @@ func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		if err := ctx.Multicast(
-			event.MessageCreated,
+			botevent.MessageCreated,
 			payload.MakeMessageCreated(datetime, m, user, parsed),
 			bots,
 		); err != nil {

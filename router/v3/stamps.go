@@ -90,7 +90,7 @@ func (h *Handlers) CreateStamp(c *echo.Context) error {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
+		case errors.Is(err, repository.ErrAlreadyExists):
 			return herror.Conflict("this name has already been used")
 		default:
 			return herror.InternalServerError(err)
@@ -142,7 +142,7 @@ func (h *Handlers) EditStamp(c *echo.Context) error {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
+		case errors.Is(err, repository.ErrAlreadyExists):
 			return herror.Conflict("this name has already been used")
 		default:
 			return herror.InternalServerError(err)
