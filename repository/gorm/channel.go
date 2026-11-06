@@ -37,10 +37,6 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 		}
 	}
 
-	if channelType == model.ChannelTypeThread {
-		ch.Type = model.ChannelTypeThread
-	}
-
 	if channelType == model.ChannelTypeDM {
 		ch.ParentID = dmChannelRootUUID
 		ch.Type = model.ChannelTypeDM
@@ -86,27 +82,18 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 		}
 		return nil, err
 	}
-	if channelType != model.ChannelTypeThread {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelCreated,
-			Fields: hub.Fields{
-				"channel_id": ch.ID,
-				"channel":    &ch,
-				"private":    ch.IsDMChannel(),
-			},
-		})
-	} else {
-		repo.hub.Publish(hub.Message{
-			Name: event.ThreadCreated,
-			Fields: hub.Fields{
-				"channel_id": ch.ID,
-				"thread":     &ch,
-			},
-		})
-	}
+	repo.hub.Publish(hub.Message{
+		Name: event.ChannelCreated,
+		Fields: hub.Fields{
+			"channel_id": ch.ID,
+			"channel":    &ch,
+			"private":    ch.IsDMChannel(),
+		},
+	})
 	return &ch, nil
 }
 
+// CreateThread implements ChannelRepository interface.
 func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
 	arr := []interface{}{&ch, &th}
 

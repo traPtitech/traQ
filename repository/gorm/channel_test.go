@@ -144,11 +144,12 @@ func TestGormRepository_UpdateChannel_NameConflict(t *testing.T) {
 		t.Parallel()
 		repo, _, _, user := setupWithUser(t, common, false)
 		parent := mustMakeChannel(t, repo, rand)
-		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+		message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
+		_, err := repo.CreateThread(context.TODO(), model.Channel{
 			Name:      "conflict",
 			ParentID:  parent.ID,
 			IsVisible: true,
-		}, nil, model.ChannelTypeThread)
+		}, model.Thread{MessageID: message.ID})
 		require.NoError(t, err)
 
 		ch, err := repo.CreateChannel(context.TODO(), model.Channel{
@@ -203,11 +204,12 @@ func TestGormRepository_UpdateChannel_NameConflict(t *testing.T) {
 		t.Parallel()
 		repo, _, _, user := setupWithUser(t, common, false)
 		parent := mustMakeChannel(t, repo, rand)
-		_, err := repo.CreateChannel(context.TODO(), model.Channel{
+		message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
+		_, err := repo.CreateThread(context.TODO(), model.Channel{
 			Name:      "conflict",
 			ParentID:  parent.ID,
 			IsVisible: true,
-		}, nil, model.ChannelTypeThread)
+		}, model.Thread{MessageID: message.ID})
 		require.NoError(t, err)
 
 		originalParent := mustMakeChannel(t, repo, rand)
