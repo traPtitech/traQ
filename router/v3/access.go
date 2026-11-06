@@ -144,3 +144,45 @@ func (h *Handlers) getAccessibleClipFolder(c *echo.Context) (*model.ClipFolder, 
 
 	return cf, nil
 }
+
+// getBot URLの:botIDに対応するBotを取得する
+//
+// アクセス権確認は行わない。Botが存在しない場合は404を返す。
+func (h *Handlers) getBot(c *echo.Context) (*model.Bot, error) {
+	id, err := utils.ParseUUIDParam(c, consts.ParamBotID)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := h.Repo.GetBotByID(c.Request().Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	return b, nil
+}
+
+// getAccessibleBot URLの:botIDに対応するBotを取得し、リクエストユーザーが管理できるかを確認する
+//
+// Botが存在しない場合は404を返す。
+// Bot自身、Botの作成者、他人のBotへのアクセス権限を持つユーザーのみアクセスでき、それ以外は403を返す。
+func (h *Handlers) getAccessibleBot(c *echo.Context) (*model.Bot, error) {
+	b, err := h.getBot(c)
+	if err != nil {
+		return nil, err
+	}
+
+	user := getRequestUser(c)
+	switch {
+	case b.BotUserID == user.GetID(): // Bot自身のアクセス
+	case b.CreatorID == user.GetID(): // Bot管理人のアクセス
+	case h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersBot): // 特権使用のアクセス
+	default:
+		return nil, herror.Forbidden()
+	}
+
+	return b, nil
+}

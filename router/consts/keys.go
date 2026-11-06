@@ -9,7 +9,6 @@ const (
 	KeyParamGroup         = "paramGroup"
 	KeyParamUser          = "paramUser"
 	KeyParamClient        = "paramClient"
-	KeyParamBot           = "paramBot"
 	KeyRepo               = "_repo"
 	KeyChannelManager     = "_cm"
 )

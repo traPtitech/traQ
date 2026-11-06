@@ -103,7 +103,10 @@ func (h *Handlers) CreateBot(c *echo.Context) error {
 
 // GetBot GET /bots/:botID
 func (h *Handlers) GetBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getBot(c)
+	if err != nil {
+		return err
+	}
 
 	if isTrue(c.QueryParam("detail")) {
 		user := getRequestUser(c)
@@ -155,7 +158,10 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 
 // EditBot PATCH /bots/:botID
 func (h *Handlers) EditBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
 	var req PatchBotRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -192,7 +198,10 @@ func (h *Handlers) EditBot(c *echo.Context) error {
 
 // DeleteBot DELETE /bots/:botID
 func (h *Handlers) DeleteBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
 	if err := h.Repo.DeleteBot(c.Request().Context(), b.ID); err != nil {
 		return herror.InternalServerError(err)
@@ -203,10 +212,13 @@ func (h *Handlers) DeleteBot(c *echo.Context) error {
 
 // GetBotIcon GET /bots/:botID/icon
 func (h *Handlers) GetBotIcon(c *echo.Context) error {
-	w := getParamBot(c)
+	b, err := h.getBot(c)
+	if err != nil {
+		return err
+	}
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(c.Request().Context(), w.BotUserID, false)
+	user, err := h.Repo.GetUser(c.Request().Context(), b.BotUserID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -216,7 +228,11 @@ func (h *Handlers) GetBotIcon(c *echo.Context) error {
 
 // ChangeBotIcon PUT /bots/:botID/icon
 func (h *Handlers) ChangeBotIcon(c *echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamBot(c).BotUserID)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, b.BotUserID)
 }
 
 // GetBotLogsRequest GET /bots/:botID/logs リクエストクエリ
@@ -237,7 +253,10 @@ func (r *GetBotLogsRequest) Validate() error {
 
 // GetBotLogs GET /bots/:botID/logs
 func (h *Handlers) GetBotLogs(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
 	var req GetBotLogsRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -276,7 +295,10 @@ func (h *Handlers) GetChannelBots(c *echo.Context) error {
 
 // ActivateBot POST /bots/:botID/actions/activate
 func (h *Handlers) ActivateBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
 	h.Hub.Publish(hub.Message{
 		Name: event.BotPingRequest,
@@ -290,7 +312,10 @@ func (h *Handlers) ActivateBot(c *echo.Context) error {
 
 // InactivateBot POST /bots/:botID/actions/inactivate
 func (h *Handlers) InactivateBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
 	if err := h.Repo.ChangeBotState(c.Request().Context(), b.ID, model.BotInactive); err != nil {
 		return herror.InternalServerError(err)
@@ -300,9 +325,12 @@ func (h *Handlers) InactivateBot(c *echo.Context) error {
 
 // ReissueBot POST /bots/:botID/actions/reissue
 func (h *Handlers) ReissueBot(c *echo.Context) error {
-	b := getParamBot(c)
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
 
-	b, err := h.Repo.ReissueBotTokens(c.Request().Context(), b.ID)
+	b, err = h.Repo.ReissueBotTokens(c.Request().Context(), b.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -331,12 +359,15 @@ func (r PostBotActionJoinRequest) ValidateWithContext(ctx context.Context) error
 
 // LetBotJoinChannel POST /bots/:botID/actions/join
 func (h *Handlers) LetBotJoinChannel(c *echo.Context) error {
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
+
 	var req PostBotActionJoinRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	b := getParamBot(c)
 
 	// 参加
 	if err := h.Repo.AddBotToChannel(c.Request().Context(), b.ID, req.ChannelID); err != nil {
@@ -359,12 +390,15 @@ func (r PostBotActionLeaveRequest) Validate() error {
 
 // LetBotLeaveChannel POST /bots/:botID/actions/leave
 func (h *Handlers) LetBotLeaveChannel(c *echo.Context) error {
+	b, err := h.getAccessibleBot(c)
+	if err != nil {
+		return err
+	}
+
 	var req PostBotActionLeaveRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	b := getParamBot(c)
 
 	// 退出
 	if err := h.Repo.RemoveBotFromChannel(c.Request().Context(), b.ID, req.ChannelID); err != nil {

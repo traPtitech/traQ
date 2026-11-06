@@ -80,29 +80,6 @@ func BlockNonBot() echo.MiddlewareFunc {
 	}
 }
 
-// CheckBotAccessPerm BOTアクセス権限を確認するミドルウェア
-func CheckBotAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			b := c.Get(consts.KeyParamBot).(*model.Bot)
-
-			// アクセス権確認
-			if b.BotUserID == user.GetID() {
-				return next(c) // Bot自身のアクセス
-			}
-			if b.CreatorID == user.GetID() {
-				return next(c) // Bot管理人のアクセス
-			}
-			if rbac.IsGranted(user.GetRole(), permission.AccessOthersBot) {
-				return next(c) // 特権使用のアクセス
-			}
-
-			return herror.Forbidden()
-		}
-	}
-}
-
 // CheckClientAccessPerm Clientアクセス権限を確認するミドルウェア
 func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
