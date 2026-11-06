@@ -462,6 +462,50 @@ func (repo *Repository) DeleteUnreadsByChannelID(ctx context.Context, channelID,
 	return nil
 }
 
+// DeleteDeactivatedUserUnreads implements MessageRepository interface.
+func (repo *Repository) DeleteDeactivatedUserUnreads(ctx context.Context, limit int) (int64, error) {
+	if limit <= 0 {
+		return 0, repository.ArgError("limit", "must be positive")
+	}
+
+	var (
+		unreads []*model.Unread
+		deleted int64
+	)
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Lock both the unread rows and their users until deletion, preventing
+		// reactivation or another cleaner from changing this batch midway.
+		if err := tx.
+			Select("unreads.user_id, unreads.channel_id, unreads.message_id").
+			Joins("INNER JOIN users ON users.id = unreads.user_id").
+			Where("users.status = ?", model.UserAccountStatusDeactivated).
+			Limit(limit).
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Find(&unreads).Error; err != nil {
+			return err
+		}
+		if len(unreads) == 0 {
+			return nil
+		}
+
+		result := tx.Delete(&unreads)
+		deleted = result.RowsAffected
+		return result.Error
+	})
+	if err != nil {
+		return 0, err
+	}
+	if deleted > 0 {
+		repo.hub.Publish(hub.Message{
+			Name: event.UnreadsDeleted,
+			Fields: hub.Fields{
+				"deleted_unreads": unreads,
+			},
+		})
+	}
+	return deleted, nil
+}
+
 // GetChannelLatestMessages implements MessageRepository interface.
 func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
 	var messages []*model.Message

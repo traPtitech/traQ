@@ -243,6 +243,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		return err
 	})
 	eg.Go(func() error {
+		err := s.SS.UnreadCleaner.Shutdown(ctx)
+		s.L.Info("Unread cleaner shutdown")
+		return err
+	})
+	eg.Go(func() error {
 		err := s.SS.BOT.Shutdown(ctx)
 		s.L.Info("Bot shutdown")
 		return err

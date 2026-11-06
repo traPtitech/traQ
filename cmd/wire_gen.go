@@ -22,6 +22,7 @@ import (
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/unread"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	ws2 "github.com/traPtitech/traQ/service/ws"
@@ -49,6 +50,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	if err != nil {
 		return nil, err
 	}
+	unreadService := unread.NewService(repo, logger)
 	messageCounter := counter.NewMessageCounter(db, hub2)
 	userCounter, err := counter.NewUserCounter(db, hub2)
 	if err != nil {
@@ -102,6 +104,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		ChannelManager:       manager,
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
+		UnreadCleaner:        unreadService,
 		MessageCounter:       messageCounter,
 		UserCounter:          userCounter,
 		ChannelCounter:       channelCounter,

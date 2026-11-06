@@ -48,13 +48,13 @@ func NewUnreadMessageCounter(db *gorm.DB, hub *hub.Hub) (UnreadMessageCounter, e
 	}
 
 	go func() {
-		for e := range hub.Subscribe(8, event.MessageUnread, event.ChannelRead, event.MessageDeleted).Receiver {
+		for e := range hub.Subscribe(8, event.MessageUnread, event.ChannelRead, event.MessageDeleted, event.UnreadsDeleted).Receiver {
 			switch e.Topic() {
 			case event.MessageUnread:
 				impl.Inc(e.Fields["user_id"].(uuid.UUID), 1)
 			case event.ChannelRead:
 				impl.Dec(e.Fields["user_id"].(uuid.UUID), e.Fields["read_messages_num"].(int))
-			case event.MessageDeleted:
+			case event.MessageDeleted, event.UnreadsDeleted:
 				impl.DecMultiple(e.Fields["deleted_unreads"].([]*model.Unread))
 			}
 		}
