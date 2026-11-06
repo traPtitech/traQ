@@ -318,6 +318,7 @@ func (m *manager) RemoveStamps(ctx context.Context, id, stampID, requesterID uui
 	}
 
 	// 他のユーザーのスタンプを削除できるのは、Botかつ自分のメッセージのみ
+	// TODO: IsBot() ではなく Bot Scope (RBAC) の権限で判定できるようにする
 	if hasOtherUser {
 		user, err := m.R.GetUser(ctx, requesterID, false)
 		if err != nil {
