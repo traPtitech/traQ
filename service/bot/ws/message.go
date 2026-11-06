@@ -1,6 +1,10 @@
 package ws
 
-import "github.com/gofrs/uuid"
+import (
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
+)
 
 type rawMessage struct {
 	t    int
@@ -10,6 +14,9 @@ type rawMessage struct {
 type marshalledRaw []byte
 
 func (m marshalledRaw) MarshalJSON() ([]byte, error) {
+	if len(m) == 0 {
+		return []byte("null"), nil
+	}
 	return m, nil
 }
 
@@ -28,7 +35,7 @@ func makeEventMessage(t string, reqID uuid.UUID, b []byte) (m *eventMessage) {
 }
 
 func (m *eventMessage) toJSON() (b []byte) {
-	b, _ = json.Marshal(m)
+	b, _ = jsonutil.Marshal(m)
 	return
 }
 
@@ -45,6 +52,6 @@ func makeErrorMessage(b interface{}) (m *errorMessage) {
 }
 
 func (m *errorMessage) toJSON() (b []byte) {
-	b, _ = json.Marshal(m)
+	b, _ = jsonutil.Marshal(m)
 	return
 }

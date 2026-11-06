@@ -5,6 +5,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 func TestChannel_TableName(t *testing.T) {
@@ -49,7 +51,7 @@ func TestChannelEventDetail_Value(t *testing.T) {
 	v, err := d.Value()
 	assert.NoError(t, err)
 	j := ChannelEventDetail{}
-	assert.NoError(t, json.Unmarshal([]byte(v.(string)), &j))
+	assert.NoError(t, jsonutil.Unmarshal([]byte(v.(string)), &j))
 	assert.EqualValues(t, d, j)
 }
 

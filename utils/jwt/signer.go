@@ -6,7 +6,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/jsontext"
 
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
@@ -73,6 +73,6 @@ func SupportedAlgorithms() []string {
 }
 
 // JWKSet Public の JSON Web Key Set を取得する
-func JWKSet(ctx context.Context) (json.RawMessage, error) {
+func JWKSet(ctx context.Context) (jsontext.Value, error) {
 	return jwks.JSONPublic(ctx)
 }

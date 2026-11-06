@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // UUID uuid.UUIDの集合
@@ -40,17 +42,20 @@ func (set UUID) Contains(v uuid.UUID) bool {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (set UUID) MarshalJSON() ([]byte, error) {
+	if set == nil {
+		return []byte("null"), nil
+	}
 	arr := make([]uuid.UUID, 0, len(set))
 	for e := range set {
 		arr = append(arr, e)
 	}
-	return json.Marshal(arr)
+	return jsonutil.Marshal(arr)
 }
 
 // UnmarshalJSON encoding/json.Unmarshaler 実装
 func (set *UUID) UnmarshalJSON(data []byte) error {
 	var value []uuid.UUID
-	if err := json.Unmarshal(data, &value); err != nil {
+	if err := jsonutil.Unmarshal(data, &value); err != nil {
 		return err
 	}
 	*set = UUIDSetFromArray(value)

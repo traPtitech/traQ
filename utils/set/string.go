@@ -2,6 +2,8 @@ package set
 
 import (
 	"strings"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // String stringの集合
@@ -38,17 +40,20 @@ func (set String) Contains(v string) bool {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (set String) MarshalJSON() ([]byte, error) {
+	if set == nil {
+		return []byte("null"), nil
+	}
 	arr := make([]string, 0, len(set))
 	for e := range set {
 		arr = append(arr, e)
 	}
-	return json.Marshal(arr)
+	return jsonutil.Marshal(arr)
 }
 
 // UnmarshalJSON encoding/json.Unmarshaler 実装
 func (set *String) UnmarshalJSON(data []byte) error {
 	var value []string
-	if err := json.Unmarshal(data, &value); err != nil {
+	if err := jsonutil.Unmarshal(data, &value); err != nil {
 		return err
 	}
 	*set = StringSetFromArray(value)

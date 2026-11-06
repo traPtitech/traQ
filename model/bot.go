@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // BotMode Bot動作モード
@@ -148,13 +149,16 @@ func (set BotEventTypes) Clone() BotEventTypes {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (set BotEventTypes) MarshalJSON() ([]byte, error) {
-	return jsonIter.ConfigFastest.Marshal(set.Array())
+	if set == nil {
+		return []byte("null"), nil
+	}
+	return jsonutil.Marshal(set.Array())
 }
 
 // UnmarshalJSON encoding/json.Unmarshaler 実装
 func (set *BotEventTypes) UnmarshalJSON(data []byte) error {
 	var arr []string
-	err := jsonIter.ConfigFastest.Unmarshal(data, &arr)
+	err := jsonutil.Unmarshal(data, &arr)
 	if err != nil {
 		return err
 	}

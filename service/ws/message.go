@@ -1,5 +1,7 @@
 package ws
 
+import "github.com/traPtitech/traQ/utils/jsonutil"
+
 type rawMessage struct {
 	t    int
 	data []byte
@@ -18,6 +20,6 @@ func makeMessage(t string, b interface{}) (m *message) {
 }
 
 func (m *message) toJSON() (b []byte) {
-	b, _ = json.Marshal(m)
+	b, _ = jsonutil.Marshal(m)
 	return
 }

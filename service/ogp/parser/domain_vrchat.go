@@ -8,7 +8,8 @@ import (
 
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/dyatlov/go-opengraph/opengraph/types/image"
-	jsonIter "github.com/json-iterator/go"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -68,7 +69,7 @@ func fetchVRChatWorldInfo(worldID string) (*VRChatAPIWorldResponse, error) {
 	}
 
 	var data VRChatAPIWorldResponse
-	if err = jsonIter.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err = jsonutil.Decode(resp.Body, &data); err != nil {
 		return nil, err
 	}
 	return &data, nil
