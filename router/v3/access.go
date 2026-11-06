@@ -262,7 +262,7 @@ func (h *Handlers) getAccessibleClient(c *echo.Context) (*model.OAuth2Client, er
 //
 // アクセス権確認は行わない。スタンプが存在しない場合は404を返す。
 func (h *Handlers) getStamp(c *echo.Context) (*model.Stamp, error) {
-	id, err := utils.ParseUUIDParam(c, consts.ParamStampID)
+	id, err := parseUUIDParam(c, consts.ParamStampID)
 	if err != nil {
 		return nil, err
 	}
