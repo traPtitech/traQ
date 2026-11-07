@@ -72,13 +72,10 @@ func (m *soundboardManager) SaveSoundboardItem(ctx context.Context, soundID uuid
 
 	// イベント発行
 	if m.hub != nil {
-		m.hub.Publish(hub.Message{
-			Name: event.QallSoundboardItemCreated,
-			Fields: hub.Fields{
-				"sound_id":   soundID,
-				"name":       soundName,
-				"creator_id": creatorID,
-			},
+		event.Publish(m.hub, event.QallSoundboardItemCreatedPayload{
+			SoundID:   soundID,
+			Name:      soundName,
+			CreatorID: creatorID,
 		})
 	}
 
@@ -103,11 +100,8 @@ func (m *soundboardManager) DeleteSoundboardItem(ctx context.Context, soundID uu
 
 	// イベント発行
 	if m.hub != nil {
-		m.hub.Publish(hub.Message{
-			Name: event.QallSoundboardItemDeleted,
-			Fields: hub.Fields{
-				"sound_id": soundID,
-			},
+		event.Publish(m.hub, event.QallSoundboardItemDeletedPayload{
+			SoundID: soundID,
 		})
 	}
 

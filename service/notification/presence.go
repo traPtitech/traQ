@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 
@@ -34,15 +33,16 @@ func userOnlineHandler(ns *Service, ev hub.Message) {
 	ns.messageWriter.WriteMessage(
 		"USER_ONLINE",
 		map[string]any{
-			"id": ev.Fields["user_id"].(uuid.UUID),
+			"id": event.MustPayload[event.UserOnlinePayload](ev.Fields).UserID,
 		},
 		ws.TargetAll(),
 	)
 }
 
 func userOfflineHandler(ns *Service, ev hub.Message) {
-	userID := ev.Fields["user_id"].(uuid.UUID)
-	lastOnline := ev.Fields["datetime"].(time.Time).UTC().Truncate(time.Microsecond)
+	p := event.MustPayload[event.UserOfflinePayload](ev.Fields)
+	userID := p.UserID
+	lastOnline := p.Datetime.UTC().Truncate(time.Microsecond)
 
 	ctx, cancel := context.WithTimeout(context.Background(), lastOnlinePersistTimeout)
 	defer cancel()
