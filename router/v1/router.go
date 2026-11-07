@@ -51,7 +51,7 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.FileManager)
 	blockBot := middlewares.BlockBot()
 
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)

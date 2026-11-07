@@ -351,21 +351,27 @@ func (h *Handlers) GetMessageClips(c *echo.Context) error {
 
 // GetMessages GET /channels/:channelID/messages
 func (h *Handlers) GetMessages(c *echo.Context) error {
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	channel, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req MessagesQuery
 	if err := req.bind(c); err != nil {
 		return err
 	}
 
-	return serveMessages(c, h.MessageManager, req.convertC(channelID))
+	return serveMessages(c, h.MessageManager, req.convertC(channel.ID))
 }
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := getRequestUserID(c)
-	ch := getParamChannel(c)
+	channel, err := h.getAccessibleChannel(c)
+	if err != nil {
+		return err
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -382,7 +388,7 @@ func (h *Handlers) PostMessage(c *echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.MessageManager.Create(ctx, ch.ID, userID, req.Content)
+	m, err := h.MessageManager.Create(ctx, channel.ID, userID, req.Content)
 	if err != nil {
 		switch err {
 		case message.ErrChannelArchived:
