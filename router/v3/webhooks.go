@@ -252,13 +252,15 @@ func (h *Handlers) GetWebhookMessages(c *echo.Context) error {
 // DeleteWebhookMessage DELETE /webhooks/:webhookID/messages/:messageID
 func (h *Handlers) DeleteWebhookMessage(c *echo.Context) error {
 	w := getParamWebhook(c)
-	m := getParamMessage(c)
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	m, err := h.getAccessibleMessage(c)
+	if err != nil {
+		return err
+	}
 	botUserID := w.GetBotUserID()
 	messageUserID := m.GetUserID()
 
 	if botUserID == messageUserID {
-		if err := h.MessageManager.Delete(c.Request().Context(), messageID); err != nil {
+		if err := h.MessageManager.Delete(c.Request().Context(), m.GetID()); err != nil {
 			switch {
 			case errors.Is(err, message.ErrChannelArchived):
 				return herror.BadRequest("the channel of this message has been archived")

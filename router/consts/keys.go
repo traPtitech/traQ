@@ -11,7 +11,6 @@ const (
 	KeyParamClient        = "paramClient"
 	KeyParamBot           = "paramBot"
 	KeyParamWebhook       = "paramWebhook"
-	KeyParamMessage       = "paramMessage"
 	KeyParamChannel       = "paramChannel"
 	KeyParamFile          = "paramFile"
 	KeyParamClipFolder    = "paramClipFolder"
