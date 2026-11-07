@@ -49,11 +49,6 @@ func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
-// getParamWebhook URLの:webhookIDに対応するWebhookを取得
-func getParamWebhook(c *echo.Context) model.Webhook {
-	return c.Get(consts.KeyParamWebhook).(model.Webhook)
-}
-
 // getParamBot URLの:botIDに対応するBotを取得
 func getParamBot(c *echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
