@@ -90,7 +90,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
-	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
@@ -335,11 +334,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClients.GET("", h.GetClients, requires(permission.GetClients))
 			apiClients.POST("", h.CreateClient, requires(permission.CreateClient))
-			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
+			apiClientsCID := apiClients.Group("/:clientID")
 			{
 				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
-				apiClientsCID.PATCH("", h.EditClient, requiresClientAccessPerm, requires(permission.EditMyClient))
-				apiClientsCID.DELETE("", h.DeleteClient, requiresClientAccessPerm, requires(permission.DeleteMyClient))
+				apiClientsCID.PATCH("", h.EditClient, requires(permission.EditMyClient))
+				apiClientsCID.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient))
 				apiClientsCID.DELETE("/tokens", h.RevokeClientTokens, requires(permission.RevokeMyToken))
 			}
 		}

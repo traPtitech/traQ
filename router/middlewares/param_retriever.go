@@ -79,13 +79,6 @@ func (pr *ParamRetriever) error(err error) error {
 	}
 }
 
-// ClientID リクエストURLの`clientID`パラメータからOAuth2Clientを取り出す
-func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
-	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(c *echo.Context, v string) (interface{}, error) {
-		return pr.repo.GetClient(c.Request().Context(), v)
-	})
-}
-
 // StampID リクエストURLの`stampID`パラメータからStampを取り出します
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {

@@ -77,7 +77,10 @@ func (h *Handlers) CreateClient(c *echo.Context) error {
 
 // GetClient GET /clients/:clientID
 func (h *Handlers) GetClient(c *echo.Context) error {
-	oc := getParamClient(c)
+	oc, err := h.getClient(c)
+	if err != nil {
+		return err
+	}
 
 	if isTrue(c.QueryParam("detail")) {
 		user := getRequestUser(c)
@@ -110,7 +113,10 @@ func (r PatchClientRequest) Validate() error {
 
 // EditClient PATCH /clients/:clientID
 func (h *Handlers) EditClient(c *echo.Context) error {
-	oc := getParamClient(c)
+	oc, err := h.getAccessibleClient(c)
+	if err != nil {
+		return err
+	}
 
 	var req PatchClientRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -136,7 +142,10 @@ func (h *Handlers) EditClient(c *echo.Context) error {
 
 // DeleteClient DELETE /clients/:clientID
 func (h *Handlers) DeleteClient(c *echo.Context) error {
-	oc := getParamClient(c)
+	oc, err := h.getAccessibleClient(c)
+	if err != nil {
+		return err
+	}
 
 	// delete client
 	if err := h.Repo.DeleteClient(c.Request().Context(), oc.ID); err != nil {
@@ -148,10 +157,13 @@ func (h *Handlers) DeleteClient(c *echo.Context) error {
 
 // RevokeClientTokens /clients/:clientID/tokens
 func (h *Handlers) RevokeClientTokens(c *echo.Context) error {
-	oc := getParamClient(c)
+	oc, err := h.getClient(c)
+	if err != nil {
+		return err
+	}
 	userID := getRequestUserID(c)
 
-	err := h.Repo.DeleteUserTokensByClient(c.Request().Context(), userID, oc.ID)
+	err = h.Repo.DeleteUserTokensByClient(c.Request().Context(), userID, oc.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

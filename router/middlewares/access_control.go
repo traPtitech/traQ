@@ -80,23 +80,6 @@ func BlockNonBot() echo.MiddlewareFunc {
 	}
 }
 
-// CheckClientAccessPerm Clientアクセス権限を確認するミドルウェア
-func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			user := c.Get(consts.KeyUser).(model.UserInfo)
-			oc := c.Get(consts.KeyParamClient).(*model.OAuth2Client)
-
-			// アクセス権確認
-			if !rbac.IsGranted(user.GetRole(), permission.ManageOthersClient) && oc.CreatorID != user.GetID() {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
 // CheckDeleteStampPerm スタンプ削除権限を確認するミドルウェア
 func CheckDeleteStampPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

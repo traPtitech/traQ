@@ -49,11 +49,6 @@ func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
-// getParamClient URLの:clientIDに対応するOAuth2Clientを取得
-func getParamClient(c *echo.Context) *model.OAuth2Client {
-	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
-}
-
 // getParamStamp URLの:stampIDに対応するStampを取得
 func getParamStamp(c *echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
