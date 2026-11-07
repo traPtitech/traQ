@@ -257,3 +257,44 @@ func (h *Handlers) getAccessibleClient(c *echo.Context) (*model.OAuth2Client, er
 
 	return oc, nil
 }
+
+// getStamp URLの:stampIDに対応するStampを取得する
+//
+// アクセス権確認は行わない。スタンプが存在しない場合は404を返す。
+func (h *Handlers) getStamp(c *echo.Context) (*model.Stamp, error) {
+	id, err := parseUUIDParam(c, consts.ParamStampID)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := h.Repo.GetStamp(c.Request().Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	return s, nil
+}
+
+// getDeletableStamp URLの:stampIDに対応するStampを取得し、リクエストユーザーが削除できるかを確認する
+//
+// スタンプが存在しない場合は404を返す。
+// スタンプ削除権限を持つユーザー、または自分のスタンプの削除権限を持つ作成者のみアクセスでき、それ以外は403を返す。
+func (h *Handlers) getDeletableStamp(c *echo.Context) (*model.Stamp, error) {
+	s, err := h.getStamp(c)
+	if err != nil {
+		return nil, err
+	}
+
+	user := getRequestUser(c)
+	switch {
+	case h.RBAC.IsGranted(user.GetRole(), permission.DeleteStamp): // adminのアクセス
+	case h.RBAC.IsGranted(user.GetRole(), permission.DeleteMyStamp) && s.CreatorID == user.GetID(): // スタンプ作成者のアクセス
+	default:
+		return nil, herror.Forbidden()
+	}
+
+	return s, nil
+}

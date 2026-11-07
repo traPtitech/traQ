@@ -101,7 +101,11 @@ func (h *Handlers) CreateStamp(c *echo.Context) error {
 
 // GetStamp GET /stamps/:stampID
 func (h *Handlers) GetStamp(c *echo.Context) error {
-	return c.JSON(http.StatusOK, getParamStamp(c))
+	stamp, err := h.getStamp(c)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, stamp)
 }
 
 // PatchStampRequest PATCH /stamps/:stampID リクエストボディ
@@ -119,13 +123,17 @@ func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
 
 // EditStamp PATCH /stamps/:stampID
 func (h *Handlers) EditStamp(c *echo.Context) error {
+	stamp, err := h.getStamp(c)
+	if err != nil {
+		return err
+	}
+
 	var req PatchStampRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
 	user := getRequestUser(c)
-	stamp := getParamStamp(c)
 
 	// ユーザー確認
 	if stamp.CreatorID != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampCreatedByOthers) {
@@ -153,9 +161,12 @@ func (h *Handlers) EditStamp(c *echo.Context) error {
 
 // DeleteStamp DELETE /stamps/:stampID
 func (h *Handlers) DeleteStamp(c *echo.Context) error {
-	stampID := getParamAsUUID(c, consts.ParamStampID)
+	stamp, err := h.getDeletableStamp(c)
+	if err != nil {
+		return err
+	}
 
-	if err := h.Repo.DeleteStamp(c.Request().Context(), stampID); err != nil {
+	if err := h.Repo.DeleteStamp(c.Request().Context(), stamp.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -164,7 +175,10 @@ func (h *Handlers) DeleteStamp(c *echo.Context) error {
 
 // GetStampImage GET /stamps/:stampID/image
 func (h *Handlers) GetStampImage(c *echo.Context) error {
-	stamp := getParamStamp(c)
+	stamp, err := h.getStamp(c)
+	if err != nil {
+		return err
+	}
 
 	// ファイルメタ取得
 	meta, err := h.FileManager.Get(c.Request().Context(), stamp.FileID)
@@ -187,8 +201,11 @@ func (h *Handlers) GetStampImage(c *echo.Context) error {
 
 // ChangeStampImage PUT /stamps/:stampID/image
 func (h *Handlers) ChangeStampImage(c *echo.Context) error {
+	stamp, err := h.getStamp(c)
+	if err != nil {
+		return err
+	}
 	user := getRequestUser(c)
-	stamp := getParamStamp(c)
 
 	// ユーザー確認
 	if stamp.CreatorID != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampCreatedByOthers) {
@@ -216,8 +233,11 @@ func (h *Handlers) ChangeStampImage(c *echo.Context) error {
 
 // GetStampStats GET /stamps/:stampID/stats
 func (h *Handlers) GetStampStats(c *echo.Context) error {
-	stampID := getParamAsUUID(c, consts.ParamStampID)
-	stats, err := h.Repo.GetStampStats(c.Request().Context(), stampID)
+	stamp, err := h.getStamp(c)
+	if err != nil {
+		return err
+	}
+	stats, err := h.Repo.GetStampStats(c.Request().Context(), stamp.ID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
