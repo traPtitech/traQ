@@ -8,15 +8,15 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
 )
 
 func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := fields["message"].(*model.Message)
-	parsed := fields["parse_result"].(*message.ParseResult)
+	p := event.MustPayload[event.MessageUpdatedPayload](fields)
+	m := p.Message
+	parsed := p.ParseResult
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {
@@ -46,12 +46,12 @@ func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		if err != nil {
 			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 		}
-		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageUpdated) {
+		if bot == nil || !bot.SubscribeEvents.Contains(botevent.DirectMessageUpdated) {
 			return nil
 		}
 
 		if err := ctx.Unicast(
-			event.DirectMessageUpdated,
+			botevent.DirectMessageUpdated,
 			payload.MakeDirectMessageUpdated(datetime, m, user, parsed),
 			bot,
 		); err != nil {
@@ -59,7 +59,7 @@ func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 	} else {
 		// 購読BOT
-		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageUpdated)
+		bots, err := ctx.GetChannelBots(m.ChannelID, botevent.MessageUpdated)
 		if err != nil {
 			return fmt.Errorf("failed to GetChannelBots: %w", err)
 		}
@@ -71,7 +71,7 @@ func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		if err := ctx.Multicast(
-			event.MessageUpdated,
+			botevent.MessageUpdated,
 			payload.MakeMessageUpdated(datetime, m, user, parsed),
 			bots,
 		); err != nil {

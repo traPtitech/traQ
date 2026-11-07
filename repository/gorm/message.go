@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -55,22 +54,16 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 		return nil, err
 	}
 
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageCreated,
-		Fields: hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": parseResult,
-		},
+	event.Publish(repo.hub, event.MessageCreatedPayload{
+		MessageID:   m.ID,
+		Message:     m,
+		ParseResult: parseResult,
 	})
 	if len(parseResult.Citation) > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageCited,
-			Fields: hub.Fields{
-				"message_id": m.ID,
-				"message":    m,
-				"cited_ids":  parseResult.Citation,
-			},
+		event.Publish(repo.hub, event.MessageCitedPayload{
+			MessageID: m.ID,
+			Message:   m,
+			CitedIDs:  parseResult.Citation,
 		})
 	}
 	return m, nil
@@ -117,14 +110,11 @@ func (repo *Repository) UpdateMessage(ctx context.Context, messageID uuid.UUID, 
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageUpdated,
-		Fields: hub.Fields{
-			"message_id":   messageID,
-			"old_message":  &oldMes,
-			"parse_result": parseResult,
-			"message":      &newMes,
-		},
+	event.Publish(repo.hub, event.MessageUpdatedPayload{
+		MessageID:   messageID,
+		ParseResult: parseResult,
+		OldMessage:  &oldMes,
+		Message:     &newMes,
 	})
 	return nil
 }
@@ -181,13 +171,10 @@ func (repo *Repository) DeleteMessage(ctx context.Context, messageID uuid.UUID) 
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageDeleted,
-		Fields: hub.Fields{
-			"message_id":      messageID,
-			"message":         &m,
-			"deleted_unreads": unreads,
-		},
+	event.Publish(repo.hub, event.MessageDeletedPayload{
+		MessageID:      messageID,
+		Message:        &m,
+		DeletedUnreads: unreads,
 	})
 	return nil
 }
@@ -389,13 +376,10 @@ func (repo *Repository) SetMessageUnreads(ctx context.Context, userNoticeableMap
 		return err
 	}
 	for _, unread := range unreadListToInsert {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUnread,
-			Fields: hub.Fields{
-				"message_id": messageID,
-				"user_id":    unread.UserID,
-				"noticeable": unread.Noticeable,
-			},
+		event.Publish(repo.hub, event.MessageUnreadPayload{
+			MessageID:  messageID,
+			UserID:     unread.UserID,
+			Noticeable: unread.Noticeable,
 		})
 	}
 
@@ -460,13 +444,10 @@ func (repo *Repository) DeleteUnreadsByChannelID(ctx context.Context, channelID,
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelRead,
-			Fields: hub.Fields{
-				"channel_id":        channelID,
-				"user_id":           userID,
-				"read_messages_num": int(result.RowsAffected),
-			},
+		event.Publish(repo.hub, event.ChannelReadPayload{
+			ChannelID:       channelID,
+			UserID:          userID,
+			ReadMessagesNum: int(result.RowsAffected),
 		})
 	}
 	return nil
@@ -526,36 +507,52 @@ func (repo *Repository) AddStampToMessage(ctx context.Context, messageID, stampI
 	if err := repo.db.WithContext(ctx).Take(ms, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Error; err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessageStamped,
-		Fields: hub.Fields{
-			"message_id": messageID,
-			"stamp_id":   stampID,
-			"user_id":    userID,
-			"count":      ms.Count,
-			"created_at": ms.CreatedAt,
-		},
+	event.Publish(repo.hub, event.MessageStampedPayload{
+		MessageID: messageID,
+		StampID:   stampID,
+		UserID:    userID,
+		Count:     ms.Count,
+		CreatedAt: ms.CreatedAt,
 	})
 	return ms, nil
 }
 
-// RemoveStampFromMessage implements MessageRepository interface.
-func (repo *Repository) RemoveStampFromMessage(ctx context.Context, messageID, stampID, userID uuid.UUID) (err error) {
-	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
+// RemoveStampsFromMessage implements MessageRepository interface.
+func (repo *Repository) RemoveStampsFromMessage(ctx context.Context, messageID, stampID uuid.UUID, userIDs []uuid.UUID) (err error) {
+	if messageID == uuid.Nil || stampID == uuid.Nil || len(userIDs) == 0 {
 		return repository.ErrNilID
 	}
-	result := repo.db.WithContext(ctx).Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
-	if result.Error != nil {
-		return result.Error
+	for _, userID := range userIDs {
+		if userID == uuid.Nil {
+			return repository.ErrNilID
+		}
 	}
-	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUnstamped,
-			Fields: hub.Fields{
-				"message_id": messageID,
-				"stamp_id":   stampID,
-				"user_id":    userID,
-			},
+	var stamps []model.MessageStamp
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Find(&stamps).
+			Error; err != nil {
+			return err
+		}
+		if len(stamps) == 0 {
+			return nil
+		}
+		return tx.
+			Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", messageID, stampID, userIDs).
+			Delete(&model.MessageStamp{}).
+			Error
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, stamp := range stamps {
+		event.Publish(repo.hub, event.MessageUnstampedPayload{
+			MessageID: stamp.MessageID,
+			StampID:   stamp.StampID,
+			UserID:    stamp.UserID,
 		})
 	}
 	return nil

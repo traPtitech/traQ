@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -22,8 +22,8 @@ func TestMessageUpdated(t *testing.T) {
 		ID:        uuid.NewV3(uuid.Nil, "b"),
 		BotUserID: uuid.NewV3(uuid.Nil, "bu"),
 		SubscribeEvents: model.BotEventTypesFromArray([]string{
-			event.MessageUpdated.String(),
-			event.DirectMessageUpdated.String(),
+			botevent.MessageUpdated.String(),
+			botevent.DirectMessageUpdated.String(),
 		}),
 		State: model.BotActive,
 	}
@@ -63,14 +63,15 @@ func TestMessageUpdated(t *testing.T) {
 		et := time.Now()
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageUpdated).
+			GetChannelBots(m.ChannelID, botevent.MessageUpdated).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		expectMulticast(handlerCtx, event.MessageUpdated, payload.MakeMessageUpdated(et, m, mu, parsed), []*model.Bot{b})
-		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
+		expectMulticast(handlerCtx, botevent.MessageUpdated, payload.MakeMessageUpdated(et, m, mu, parsed), []*model.Bot{b})
+		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
 			"parse_result": parseMessage(t, m.Text),
 			"message_id":   m.ID,
+			"old_message":  m,
 			"message":      m,
 		}))
 	})
@@ -97,13 +98,14 @@ func TestMessageUpdated(t *testing.T) {
 		registerChannel(cm, ch)
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageUpdated).
+			GetChannelBots(m.ChannelID, botevent.MessageUpdated).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), intevent.MessageUpdated, hub.Fields{
+		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), event.MessageUpdated, hub.Fields{
 			"parse_result": parseMessage(t, m.Text),
 			"message_id":   m.ID,
+			"old_message":  m,
 			"message":      m,
 		}))
 	})
@@ -126,10 +128,11 @@ func TestMessageUpdated(t *testing.T) {
 		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.DirectMessageUpdated, payload.MakeDirectMessageUpdated(et, m, u, parsed), b)
-		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
+		expectUnicast(handlerCtx, botevent.DirectMessageUpdated, payload.MakeDirectMessageUpdated(et, m, u, parsed), b)
+		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
 			"parse_result": parseMessage(t, m.Text),
 			"message_id":   m.ID,
+			"old_message":  m,
 			"message":      m,
 		}))
 	})
@@ -152,9 +155,10 @@ func TestMessageUpdated(t *testing.T) {
 		}
 		et := time.Now()
 
-		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
+		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
 			"parse_result": parseMessage(t, m.Text),
 			"message_id":   m.ID,
+			"old_message":  m,
 			"message":      m,
 		}))
 	})

@@ -18,6 +18,7 @@ const (
 	// UserOnline ユーザーがオンラインになった
 	// 	Fields:
 	// 		user_id: uuid.UUID
+	// 		datetime: time.Time
 	UserOnline = "user.online"
 	// UserOffline ユーザーがオフラインになった
 	// 	Fields:
@@ -100,6 +101,7 @@ const (
 	// 		message_id: uuid.UUID
 	// 		message: *model.Message
 	// 		old_message: *model.Message
+	// 		parse_result: *message.ParseResult
 	MessageUpdated = "message.updated"
 	// MessageDeleted メッセージが削除された
 	// 	Fields:
@@ -190,7 +192,7 @@ const (
 	// ChannelSubscribersChanged チャンネルの購読者が変化した
 	// 	Fields:
 	// 		channel_id: uuid.UUID
-	//    subscriber_ids: []uuid.UUID
+	// 		subscriber_ids: []uuid.UUID
 	ChannelSubscribersChanged = "channel.subscribers_changed"
 
 	// StampCreated スタンプが作成された
@@ -201,6 +203,7 @@ const (
 	// StampUpdated スタンプが更新された
 	// 	Fields:
 	// 		stamp_id: uuid.UUID
+	// 		stamp: *model.Stamp
 	StampUpdated = "stamp.updated"
 	// StampDeleted スタンプが削除された
 	// 	Fields:
@@ -227,7 +230,7 @@ const (
 	// WebhookCreated Webhookが作成された
 	// 	Fields:
 	// 		webhook_id: uuid.UUID
-	// 		webhook: Webhook
+	// 		webhook: *model.WebhookBot
 	WebhookCreated = "webhook.created"
 	// WebhookUpdated Webhookが更新された
 	// 	Fields:
@@ -281,8 +284,7 @@ const (
 
 	// QallRoomStateChanged Qallのルーム状態が変更された
 	// 	Fields:
-	// 		room_id: uuid.UUID
-	// 		state: *qall.RoomWithParticipants
+	// 		roomStates: []qall.RoomWithParticipants	全ルームの状態
 	QallRoomStateChanged = "qall.roomstate.changed"
 
 	// QallSoundboardItemCreated サウンドボードアイテムが作成された

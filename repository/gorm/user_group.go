@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -37,12 +36,9 @@ func (repo *Repository) CreateUserGroup(ctx context.Context, name, description, 
 	}
 	g.Members = make([]*model.UserGroupMember, 0)
 	g.Admins = []*model.UserGroupAdmin{{GroupID: g.ID, UserID: adminID}}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserGroupCreated,
-		Fields: hub.Fields{
-			"group_id": g.ID,
-			"group":    g,
-		},
+	event.Publish(repo.hub, event.UserGroupCreatedPayload{
+		GroupID: g.ID,
+		Group:   g,
 	})
 	return g, nil
 }
@@ -90,11 +86,8 @@ func (repo *Repository) UpdateUserGroup(ctx context.Context, id uuid.UUID, args 
 	}
 
 	if updated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupUpdated,
-			Fields: hub.Fields{
-				"group_id": id,
-			},
+		event.Publish(repo.hub, event.UserGroupUpdatedPayload{
+			GroupID: id,
 		})
 	}
 	return nil
@@ -124,11 +117,8 @@ func (repo *Repository) DeleteUserGroup(ctx context.Context, id uuid.UUID) error
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserGroupDeleted,
-		Fields: hub.Fields{
-			"group_id": id,
-		},
+	event.Publish(repo.hub, event.UserGroupDeletedPayload{
+		GroupID: id,
 	})
 	return err
 }
@@ -143,6 +133,41 @@ func (repo *Repository) GetUserGroup(ctx context.Context, id uuid.UUID) (*model.
 		return nil, convertError(err)
 	}
 	return &g, nil
+}
+
+// GetUserGroupMemberIDs implements UserGroupRepository interface.
+func (repo *Repository) GetUserGroupMemberIDs(ctx context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
+	members := make(map[uuid.UUID][]uuid.UUID)
+
+	if len(groupIDs) == 0 {
+		return members, nil
+	}
+
+	var rows []struct {
+		GroupID uuid.UUID
+		UserID  uuid.NullUUID
+	}
+
+	if err := repo.db.WithContext(ctx).
+		Table("user_groups AS g").
+		Select("g.id AS group_id, m.user_id").
+		Joins("LEFT JOIN user_group_members AS m ON m.group_id = g.id").
+		Where("g.id IN ?", groupIDs).
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		if _, ok := members[row.GroupID]; !ok {
+			members[row.GroupID] = []uuid.UUID{}
+		}
+
+		if row.UserID.Valid {
+			members[row.GroupID] = append(members[row.GroupID], row.UserID.UUID)
+		}
+	}
+
+	return members, nil
 }
 
 // GetUserGroupByName implements UserGroupRepository interface.
@@ -210,21 +235,15 @@ func (repo *Repository) AddUserToGroup(ctx context.Context, userID, groupID uuid
 		return err
 	}
 	if added {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupMemberAdded,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
+		event.Publish(repo.hub, event.UserGroupMemberAddedPayload{
+			GroupID: groupID,
+			UserID:  userID,
 		})
 	}
 	if updated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupMemberUpdated,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
+		event.Publish(repo.hub, event.UserGroupMemberUpdatedPayload{
+			GroupID: groupID,
+			UserID:  userID,
 		})
 	}
 	return nil
@@ -250,20 +269,14 @@ func (repo *Repository) AddUsersToGroup(ctx context.Context, users []model.UserG
 
 		for _, user := range users {
 			if g.IsMember(user.UserID) {
-				repo.hub.Publish(hub.Message{
-					Name: event.UserGroupMemberUpdated,
-					Fields: hub.Fields{
-						"group_id": user.GroupID,
-						"user_id":  user.UserID,
-					},
+				event.Publish(repo.hub, event.UserGroupMemberUpdatedPayload{
+					GroupID: user.GroupID,
+					UserID:  user.UserID,
 				})
 			} else {
-				repo.hub.Publish(hub.Message{
-					Name: event.UserGroupMemberAdded,
-					Fields: hub.Fields{
-						"group_id": user.GroupID,
-						"user_id":  user.UserID,
-					},
+				event.Publish(repo.hub, event.UserGroupMemberAddedPayload{
+					GroupID: user.GroupID,
+					UserID:  user.UserID,
 				})
 			}
 		}
@@ -303,12 +316,9 @@ func (repo *Repository) RemoveUserFromGroup(ctx context.Context, userID, groupID
 		return err
 	}
 	if changed {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupMemberRemoved,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
+		event.Publish(repo.hub, event.UserGroupMemberRemovedPayload{
+			GroupID: groupID,
+			UserID:  userID,
 		})
 	}
 	return nil
@@ -333,12 +343,9 @@ func (repo *Repository) RemoveUsersFromGroup(ctx context.Context, groupID uuid.U
 	}
 
 	for _, user := range removedUsers {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupMemberRemoved,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  user.UserID,
-			},
+		event.Publish(repo.hub, event.UserGroupMemberRemovedPayload{
+			GroupID: groupID,
+			UserID:  user.UserID,
 		})
 	}
 	return nil
@@ -371,12 +378,9 @@ func (repo *Repository) AddUserToGroupAdmin(ctx context.Context, userID, groupID
 	}
 
 	if added {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupAdminAdded,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
+		event.Publish(repo.hub, event.UserGroupAdminAddedPayload{
+			GroupID: groupID,
+			UserID:  userID,
 		})
 	}
 	return nil
@@ -414,12 +418,9 @@ func (repo *Repository) RemoveUserFromGroupAdmin(ctx context.Context, userID, gr
 	}
 
 	if removed {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserGroupAdminRemoved,
-			Fields: hub.Fields{
-				"group_id": groupID,
-				"user_id":  userID,
-			},
+		event.Publish(repo.hub, event.UserGroupAdminRemovedPayload{
+			GroupID: groupID,
+			UserID:  userID,
 		})
 	}
 	return nil

@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 )
@@ -22,7 +22,7 @@ func TestUserGroupUpdated(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.UserGroupUpdated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.UserGroupUpdated.String()}),
 		State:           model.BotActive,
 	}
 
@@ -48,8 +48,8 @@ func TestUserGroupUpdated(t *testing.T) {
 		group.Members = append(group.Members, &model.UserGroupMember{GroupID: group.ID, UserID: user.ID})
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group.ID), []*model.Bot{b})
-		assert.NoError(t, UserGroupUpdated(handlerCtx, et, intevent.UserGroupUpdated, hub.Fields{
+		expectMulticast(handlerCtx, botevent.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group.ID), []*model.Bot{b})
+		assert.NoError(t, UserGroupUpdated(handlerCtx, et, event.UserGroupUpdated, hub.Fields{
 			"group_id": group.ID,
 		}))
 	})
@@ -61,7 +61,7 @@ func TestUserGroupUpdated(t *testing.T) {
 		b2 := &model.Bot{
 			ID:              uuid.NewV3(uuid.Nil, "b2"),
 			BotUserID:       uuid.NewV3(uuid.Nil, "bu2"),
-			SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageCreated.String()}),
+			SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MessageCreated.String()}),
 			State:           model.BotActive,
 		}
 		registerBot(t, handlerCtx, b)
@@ -83,8 +83,8 @@ func TestUserGroupUpdated(t *testing.T) {
 		group.Members = append(group.Members, &model.UserGroupMember{GroupID: group.ID, UserID: user.ID})
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group.ID), []*model.Bot{b})
-		assert.NoError(t, UserGroupUpdated(handlerCtx, et, intevent.UserGroupUpdated, hub.Fields{
+		expectMulticast(handlerCtx, botevent.UserGroupUpdated, payload.MakeUserGroupUpdated(et, group.ID), []*model.Bot{b})
+		assert.NoError(t, UserGroupUpdated(handlerCtx, et, event.UserGroupUpdated, hub.Fields{
 			"group_id": group.ID,
 		}))
 	})

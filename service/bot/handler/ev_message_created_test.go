@@ -12,10 +12,10 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -28,8 +28,8 @@ func TestMessageCreated(t *testing.T) {
 		ID:        uuid.NewV3(uuid.Nil, "b"),
 		BotUserID: uuid.NewV3(uuid.Nil, "bu"),
 		SubscribeEvents: model.BotEventTypesFromArray([]string{
-			event.MessageCreated.String(),
-			event.DirectMessageCreated.String(),
+			botevent.MessageCreated.String(),
+			botevent.DirectMessageCreated.String(),
 		}),
 		State: model.BotActive,
 	}
@@ -69,12 +69,12 @@ func TestMessageCreated(t *testing.T) {
 		et := time.Now()
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageCreated).
+			GetChannelBots(m.ChannelID, botevent.MessageCreated).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		expectMulticast(handlerCtx, event.MessageCreated, payload.MakeMessageCreated(et, m, mu, parsed), []*model.Bot{b})
-		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+		expectMulticast(handlerCtx, botevent.MessageCreated, payload.MakeMessageCreated(et, m, mu, parsed), []*model.Bot{b})
+		assert.NoError(t, MessageCreated(handlerCtx, et, event.MessageCreated, hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
 			"parse_result": parsed,
@@ -103,11 +103,11 @@ func TestMessageCreated(t *testing.T) {
 		registerChannel(cm, ch)
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageCreated).
+			GetChannelBots(m.ChannelID, botevent.MessageCreated).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
 
-		assert.NoError(t, MessageCreated(handlerCtx, time.Now(), intevent.MessageCreated, hub.Fields{
+		assert.NoError(t, MessageCreated(handlerCtx, time.Now(), event.MessageCreated, hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
 			"parse_result": parseMessage(t, m.Text),
@@ -132,8 +132,8 @@ func TestMessageCreated(t *testing.T) {
 		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.DirectMessageCreated, payload.MakeDirectMessageCreated(et, m, u, parsed), b)
-		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+		expectUnicast(handlerCtx, botevent.DirectMessageCreated, payload.MakeDirectMessageCreated(et, m, u, parsed), b)
+		assert.NoError(t, MessageCreated(handlerCtx, et, event.MessageCreated, hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
 			"parse_result": parsed,
@@ -159,7 +159,7 @@ func TestMessageCreated(t *testing.T) {
 		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
-		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+		assert.NoError(t, MessageCreated(handlerCtx, et, event.MessageCreated, hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
 			"parse_result": parsed,
@@ -173,13 +173,13 @@ func TestMessageCreatedMentions(t *testing.T) {
 	b1 := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b1"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu1"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.MentionMessageCreated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MentionMessageCreated.String()}),
 		State:           model.BotActive,
 	}
 	b2 := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b2"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu2"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.MentionMessageCreated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.MentionMessageCreated.String()}),
 		State:           model.BotActive,
 	}
 	unsubscribed := &model.Bot{
@@ -294,7 +294,7 @@ func TestMessageCreatedMentions(t *testing.T) {
 			parsed := parseMessage(t, m.Text)
 			registerUser(repo, mu)
 			registerChannel(cm, ch)
-			handlerCtx.EXPECT().GetChannelBots(ch.ID, event.MessageCreated).Return(tt.channelBots, nil)
+			handlerCtx.EXPECT().GetChannelBots(ch.ID, botevent.MessageCreated).Return(tt.channelBots, nil)
 			for gid, members := range tt.groups {
 				repo.MockUserRepository.EXPECT().
 					GetUserIDs(gomock.Any(), repository.UsersQuery{IsBot: optional.From(true)}.GMemberOf(gid)).
@@ -308,9 +308,9 @@ func TestMessageCreatedMentions(t *testing.T) {
 
 			et := time.Now()
 			if len(tt.wantBots) > 0 {
-				handlerCtx.EXPECT().Multicast(event.MessageCreated, payload.MakeMessageCreated(et, m, mu, parsed), gomock.InAnyOrder(tt.wantBots))
+				handlerCtx.EXPECT().Multicast(botevent.MessageCreated, payload.MakeMessageCreated(et, m, mu, parsed), gomock.InAnyOrder(tt.wantBots))
 			}
-			assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+			assert.NoError(t, MessageCreated(handlerCtx, et, event.MessageCreated, hub.Fields{
 				"message_id":   m.ID,
 				"message":      m,
 				"parse_result": parsed,

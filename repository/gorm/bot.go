@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -71,19 +70,13 @@ func (repo *Repository) CreateBot(ctx context.Context, name, displayName, descri
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserCreated,
-		Fields: hub.Fields{
-			"user_id": u.ID,
-			"user":    u,
-		},
+	event.Publish(repo.hub, event.UserCreatedPayload{
+		UserID: u.ID,
+		User:   u,
 	})
-	repo.hub.Publish(hub.Message{
-		Name: event.BotCreated,
-		Fields: hub.Fields{
-			"bot_id": b.ID,
-			"bot":    b,
-		},
+	event.Publish(repo.hub, event.BotCreatedPayload{
+		BotID: b.ID,
+		Bot:   b,
 	})
 	return b, nil
 }
@@ -157,19 +150,13 @@ func (repo *Repository) UpdateBot(ctx context.Context, id uuid.UUID, args reposi
 	}
 
 	if userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": b.BotUserID,
-			},
+		event.Publish(repo.hub, event.UserUpdatedPayload{
+			UserID: b.BotUserID,
 		})
 	}
 	if updated || userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.BotUpdated,
-			Fields: hub.Fields{
-				"bot_id": b.ID,
-			},
+		event.Publish(repo.hub, event.BotUpdatedPayload{
+			BotID: b.ID,
 		})
 	}
 	return nil
@@ -277,12 +264,9 @@ func (repo *Repository) ChangeBotState(ctx context.Context, id uuid.UUID, state 
 		return err
 	}
 	if changed {
-		repo.hub.Publish(hub.Message{
-			Name: event.BotStateChanged,
-			Fields: hub.Fields{
-				"bot_id": id,
-				"state":  state,
-			},
+		event.Publish(repo.hub, event.BotStateChangedPayload{
+			BotID: id,
+			State: state,
 		})
 	}
 	return nil
@@ -332,12 +316,9 @@ func (repo *Repository) ReissueBotTokens(ctx context.Context, id uuid.UUID) (*mo
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.BotStateChanged,
-		Fields: hub.Fields{
-			"bot_id": id,
-			"state":  bot.State,
-		},
+	event.Publish(repo.hub, event.BotStateChangedPayload{
+		BotID: id,
+		State: bot.State,
 	})
 	return &bot, nil
 }
@@ -371,11 +352,8 @@ func (repo *Repository) DeleteBot(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.BotDeleted,
-		Fields: hub.Fields{
-			"bot_id": id,
-		},
+	event.Publish(repo.hub, event.BotDeletedPayload{
+		BotID: id,
 	})
 	return nil
 }
@@ -388,12 +366,9 @@ func (repo *Repository) AddBotToChannel(ctx context.Context, botID, channelID uu
 	var b model.BotJoinChannel
 	result := repo.db.WithContext(ctx).FirstOrCreate(&b, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.BotJoined,
-			Fields: hub.Fields{
-				"bot_id":     botID,
-				"channel_id": channelID,
-			},
+		event.Publish(repo.hub, event.BotJoinedPayload{
+			BotID:     botID,
+			ChannelID: channelID,
 		})
 	}
 	return result.Error
@@ -406,12 +381,9 @@ func (repo *Repository) RemoveBotFromChannel(ctx context.Context, botID, channel
 	}
 	result := repo.db.WithContext(ctx).Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.BotLeft,
-			Fields: hub.Fields{
-				"bot_id":     botID,
-				"channel_id": channelID,
-			},
+		event.Publish(repo.hub, event.BotLeftPayload{
+			BotID:     botID,
+			ChannelID: channelID,
 		})
 	}
 	return result.Error

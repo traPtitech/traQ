@@ -160,6 +160,54 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	})
 }
 
+func TestRepositoryImpl_GetUserGroupMemberIDs(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user1 := setupWithUser(t, common3, false)
+	user2 := mustMakeUser(t, repo, rand, false)
+	group1 := mustMakeUserGroup(t, repo, rand, user1.GetID())
+	group2 := mustMakeUserGroup(t, repo, rand, user1.GetID())
+	emptyGroup := mustMakeUserGroup(t, repo, rand, user1.GetID())
+	mustAddUserToGroup(t, repo, user1.GetID(), group1.ID)
+	mustAddUserToGroup(t, repo, user2.GetID(), group1.ID)
+	mustAddUserToGroup(t, repo, user2.GetID(), group2.ID)
+
+	t.Run("mixed IDs and empty group", func(t *testing.T) {
+		t.Parallel()
+		unknownID := uuid.Must(uuid.NewV4())
+		members, err := repo.GetUserGroupMemberIDs(context.Background(), []uuid.UUID{
+			group1.ID, group2.ID, emptyGroup.ID, group1.ID, user1.GetID(), unknownID, uuid.Nil,
+		})
+		require.NoError(t, err)
+		assert.Len(t, members, 3)
+		assert.ElementsMatch(t, []uuid.UUID{user1.GetID(), user2.GetID()}, members[group1.ID])
+		assert.Equal(t, []uuid.UUID{user2.GetID()}, members[group2.ID])
+		require.Contains(t, members, emptyGroup.ID)
+		assert.Empty(t, members[emptyGroup.ID])
+	})
+
+	t.Run("empty input", func(t *testing.T) {
+		t.Parallel()
+		members, err := repo.GetUserGroupMemberIDs(context.Background(), nil)
+		require.NoError(t, err)
+		assert.Empty(t, members)
+	})
+
+	t.Run("no matching groups", func(t *testing.T) {
+		t.Parallel()
+		members, err := repo.GetUserGroupMemberIDs(context.Background(), []uuid.UUID{user1.GetID(), uuid.Must(uuid.NewV4())})
+		require.NoError(t, err)
+		assert.Empty(t, members)
+	})
+
+	t.Run("cancelled context", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := repo.GetUserGroupMemberIDs(ctx, []uuid.UUID{group1.ID})
+		assert.ErrorIs(t, err, context.Canceled)
+	})
+}
+
 func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3, false)
