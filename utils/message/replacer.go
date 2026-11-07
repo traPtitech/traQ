@@ -29,19 +29,21 @@ func (re *Replacer) Replace(ctx context.Context, source string) (string, error) 
 		return "", err
 	}
 
-	return markdown.EmbedReferences(source, result.Embedding, re.resolve)
+	return markdown.EmbedReferences(source, result.ReferenceEmbedding, re.resolve)
 }
 
-func (re *Replacer) resolve(kind markdown.LookupKind, name string) (string, bool) {
+func (re *Replacer) resolve(kind markdown.ReferenceKind, name string) (string, bool) {
 	var id uuid.UUID
 	var found bool
 
 	switch kind {
-	case "user":
+	case markdown.ReferenceKindUser:
 		id, found = re.mapper.User(name)
-	case "group":
+
+	case markdown.ReferenceKindGroup:
 		id, found = re.mapper.Group(name)
-	case "channel":
+
+	case markdown.ReferenceKindChannel:
 		id, found = re.mapper.Channel(name)
 	}
 

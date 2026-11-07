@@ -46,7 +46,7 @@ func (state *markdownRuntime) initializeLocked(ctx context.Context) error {
 
 	var err error
 	if state.parser == nil {
-		state.parser, err = state.runtime.NewParser(ctx, markdown.PresetTraqV1)
+		state.parser, err = state.runtime.NewParser(ctx, markdown.GrammarTraqV1)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func (state *markdownRuntime) initializeLocked(ctx context.Context) error {
 	}
 
 	if state.renderer == nil {
-		state.renderer, err = state.runtime.NewPlainTextRenderer(ctx, markdown.RendererOptions{Origin: state.origin})
+		state.renderer, err = state.runtime.NewPlainTextRenderer(ctx, markdown.PlainTextOptions{Origin: state.origin})
 		if err != nil {
 			return err
 		}
