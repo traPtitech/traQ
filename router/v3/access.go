@@ -7,6 +7,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
@@ -70,4 +71,11 @@ func (h *Handlers) getAccessibleChannel(c *echo.Context) (*model.Channel, error)
 	}
 
 	return ch, nil
+}
+
+// getAccessibleFile URLの:fileIDに対応するFileを取得し、リクエストユーザーがアクセス可能かを確認する
+//
+// ファイルが存在しない場合は404、アクセスできない場合は403を返す。
+func (h *Handlers) getAccessibleFile(c *echo.Context) (model.File, error) {
+	return extension.GetAccessibleFile(c, h.FileManager, getRequestUserID(c))
 }

@@ -141,23 +141,38 @@ func (h *Handlers) PostFile(c *echo.Context) error {
 
 // GetFileMeta GET /files/:fileID/meta
 func (h *Handlers) GetFileMeta(c *echo.Context) error {
+	f, err := h.getAccessibleFile(c)
+	if err != nil {
+		return err
+	}
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=86400") // 1日キャッシュ
-	return c.JSON(http.StatusOK, formatFileInfo(getParamFile(c)))
+	return c.JSON(http.StatusOK, formatFileInfo(f))
 }
 
 // GetThumbnailImage GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailImage(c *echo.Context) error {
-	return utils.ServeFileThumbnail(c, getParamFile(c), h.Repo, h.Logger)
+	f, err := h.getAccessibleFile(c)
+	if err != nil {
+		return err
+	}
+	return utils.ServeFileThumbnail(c, f, h.Repo, h.Logger)
 }
 
 // GetFile GET /files/:fileID
 func (h *Handlers) GetFile(c *echo.Context) error {
-	return utils.ServeFile(c, getParamFile(c))
+	f, err := h.getAccessibleFile(c)
+	if err != nil {
+		return err
+	}
+	return utils.ServeFile(c, f)
 }
 
 // DeleteFile DELETE /files/:fileID
 func (h *Handlers) DeleteFile(c *echo.Context) error {
-	f := getParamFile(c)
+	f, err := h.getAccessibleFile(c)
+	if err != nil {
+		return err
+	}
 
 	if !f.GetCreatorID().Valid || f.GetFileType() != model.FileTypeUserFile {
 		return herror.Forbidden()

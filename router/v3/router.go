@@ -85,14 +85,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot()
 	blockNonBot := middlewares.BlockNonBot()
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
@@ -241,7 +240,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiFiles.GET("", h.GetFiles, requires(permission.DownloadFile))
 			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
-			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
+			apiFilesFID := apiFiles.Group("/:fileID")
 			{
 				apiFilesFID.GET("", h.GetFile, requires(permission.DownloadFile))
 				apiFilesFID.DELETE("", h.DeleteFile, requires(permission.DeleteFile))
