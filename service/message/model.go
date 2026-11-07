@@ -1,7 +1,7 @@
 package message
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"time"
 
 	"github.com/gofrs/uuid"

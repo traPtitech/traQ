@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/traPtitech/traQ/utils/jsonutil"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -44,7 +45,7 @@ func (ogp *OgpCache) TableName() string {
 
 // Value database/sql/driver.Valuer 実装
 func (o Ogp) Value() (driver.Value, error) {
-	return json.MarshalToString(o)
+	return jsonutil.MarshalToString(o)
 }
 
 // Scan database/sql.Scanner 実装
@@ -54,9 +55,9 @@ func (o *Ogp) Scan(src interface{}) error {
 	case nil:
 		return nil
 	case string:
-		return json.Unmarshal([]byte(s), o)
+		return jsonutil.Unmarshal([]byte(s), o)
 	case []byte:
-		return json.Unmarshal(s, o)
+		return jsonutil.Unmarshal(s, o)
 	default:
 		return errors.New("failed to scan Ogp")
 	}

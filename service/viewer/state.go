@@ -3,7 +3,7 @@ package viewer
 import (
 	"strings"
 
-	jsonIter "github.com/json-iterator/go"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // State 閲覧状態
@@ -27,7 +27,7 @@ func (s State) String() string {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (s State) MarshalJSON() ([]byte, error) {
-	return jsonIter.ConfigFastest.Marshal(s.String())
+	return jsonutil.Marshal(s.String())
 }
 
 // StateFromString stringからviewer.Stateに変換します

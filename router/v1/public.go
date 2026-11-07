@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // GetPublicUserIcon GET /public/icon/{username}
@@ -129,7 +130,7 @@ func emojiJSONGenerator(repo repository.Repository) func(ctx context.Context, _ 
 		}
 
 		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(map[string][]string{
+		err = jsonutil.Encode(&buf, map[string][]string{
 			"all": stampNames,
 		})
 		if err != nil {

@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -205,7 +205,7 @@ func downloadEmojiMeta() (map[string]*emojiMeta, error) {
 	defer res.Body.Close()
 
 	var temp map[string]*emojiMeta
-	if err := jsonIter.ConfigFastest.NewDecoder(res.Body).Decode(&temp); err != nil {
+	if err := jsonutil.Decode(res.Body, &temp); err != nil {
 		return nil, err
 	}
 

@@ -3,17 +3,16 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
-
-	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
+	"io"
+	"net/http"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -140,7 +139,7 @@ func (p *TraQProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 		Name        string `json:"name"`
 		DisplayName string `json:"displayName"`
 	}
-	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&u); err != nil {
+	if err := jsonutil.Decode(resp.Body, &u); err != nil {
 		return nil, fmt.Errorf(traQAPIRequestErrorFormat, err)
 	}
 	ui.id = u.ID

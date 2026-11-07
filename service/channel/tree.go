@@ -2,7 +2,7 @@
 package channel
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 
 	"github.com/gofrs/uuid"
 
