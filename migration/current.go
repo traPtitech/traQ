@@ -58,6 +58,7 @@ func Migrations() []*gormigrate.Migration {
 		v20261014(), // qallロールを追加
 		vThread1(),  // スレッド機能: channels.type 追加・threads テーブル追加
 		vThread2(),  // スレッド機能: user_thread_subscription_defaults テーブル追加
+		vThread3(),  // スレッド機能: user_thread_subscriptions テーブル追加
 	}
 }
 
@@ -91,6 +92,7 @@ func AllTables() []interface{} {
 		&model.UsersPrivateChannel{},
 		&model.UserSubscribeChannel{},
 		&model.UserThreadSubscriptionDefault{},
+		&model.UserThreadSubscription{},
 		&model.Tag{},
 		&model.ArchivedMessage{},
 		&model.ClipFolderMessage{},
