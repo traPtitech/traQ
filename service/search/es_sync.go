@@ -48,12 +48,17 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		isBot = user.IsBot()
 	}
 
+	ch, err := e.cm.GetChannel(context.Background(), m.ChannelID)
+	if err != nil {
+		return nil, err
+	}
+
 	attr := e.getAttributes(m, parseResult)
 
 	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
-		IsPublic:       e.cm.IsPublicChannel(context.Background(), m.ChannelID),
+		IsPublic:       ch.IsPublic() || ch.IsThread(),
 		Bot:            isBot,
 		Text:           m.Text,
 		CreatedAt:      m.CreatedAt,
