@@ -49,11 +49,6 @@ func getParamUser(c *echo.Context) model.UserInfo {
 	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
-// getParamBot URLの:botIDに対応するBotを取得
-func getParamBot(c *echo.Context) *model.Bot {
-	return c.Get(consts.KeyParamBot).(*model.Bot)
-}
-
 // getParamClient URLの:clientIDに対応するOAuth2Clientを取得
 func getParamClient(c *echo.Context) *model.OAuth2Client {
 	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)

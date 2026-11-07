@@ -93,13 +93,6 @@ func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 	})
 }
 
-// BotID リクエストURLの`botID`パラメータからBotを取り出す
-func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetBotByID(c.Request().Context(), v)
-	})
-}
-
 // StampID リクエストURLの`stampID`パラメータからStampを取り出します
 func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {
