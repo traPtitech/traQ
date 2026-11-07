@@ -5,4 +5,5 @@ const (
 	MimeImageJPEG = "image/jpeg"
 	MimeImageGIF  = "image/gif"
 	MimeImageSVG  = "image/svg+xml"
+	MimeImageWebP = "image/webp"
 )
