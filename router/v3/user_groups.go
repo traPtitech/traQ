@@ -79,7 +79,11 @@ func (h *Handlers) PostUserGroups(c *echo.Context) error {
 
 // GetUserGroup GET /groups/:groupID
 func (h *Handlers) GetUserGroup(c *echo.Context) error {
-	return c.JSON(http.StatusOK, formatUserGroup(getParamGroup(c)))
+	g, err := h.getUserGroup(c)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, formatUserGroup(g))
 }
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
@@ -99,7 +103,10 @@ func (r PatchUserGroupRequest) Validate() error {
 
 // EditUserGroup PATCH /groups/:groupID
 func (h *Handlers) EditUserGroup(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 
 	var req PatchUserGroupRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -128,7 +135,10 @@ func (h *Handlers) EditUserGroup(c *echo.Context) error {
 
 // PutUserGroupIcon PUT /groups/:groupID/icon
 func (h *Handlers) PutUserGroupIcon(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 
 	fileID, err := utils.SaveUploadIconImage(h.Imaging, c, h.FileManager, "file")
 	if err != nil {
@@ -144,7 +154,10 @@ func (h *Handlers) PutUserGroupIcon(c *echo.Context) error {
 
 // DeleteUserGroup DELETE /groups/:groupID
 func (h *Handlers) DeleteUserGroup(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 
 	if err := h.Repo.DeleteUserGroup(c.Request().Context(), g.ID); err != nil {
 		return herror.InternalServerError(err)
@@ -155,7 +168,11 @@ func (h *Handlers) DeleteUserGroup(c *echo.Context) error {
 
 // GetUserGroupMembers GET /groups/:groupID/members
 func (h *Handlers) GetUserGroupMembers(c *echo.Context) error {
-	return c.JSON(http.StatusOK, formatUserGroupMembers(getParamGroup(c).Members))
+	g, err := h.getUserGroup(c)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, formatUserGroupMembers(g.Members))
 }
 
 // PostUserGroupMemberRequest POST /groups/:groupID/members リクエストボディ
@@ -173,7 +190,10 @@ func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) err
 
 // AddUserGroupMember POST /groups/:groupID/members
 func (h *Handlers) AddUserGroupMember(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 	bodyBytes, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -218,7 +238,10 @@ func (r PatchUserGroupMemberRequest) Validate() error {
 
 // EditUserGroupMember POST /groups/:groupID/members/:userID
 func (h *Handlers) EditUserGroupMember(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 	uid := getParamAsUUID(c, consts.ParamUserID)
 
 	var req PatchUserGroupMemberRequest
@@ -240,8 +263,11 @@ func (h *Handlers) EditUserGroupMember(c *echo.Context) error {
 
 // RemoveUserGroupMember DELETE /groups/:groupID/members/:userID
 func (h *Handlers) RemoveUserGroupMember(c *echo.Context) error {
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 	userID := getParamAsUUID(c, consts.ParamUserID)
-	g := getParamGroup(c)
 	if err := h.Repo.RemoveUserFromGroup(c.Request().Context(), userID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -251,7 +277,10 @@ func (h *Handlers) RemoveUserGroupMember(c *echo.Context) error {
 
 // RemoveUserGroupMembers DELETE /groups/:groupID/members
 func (h *Handlers) RemoveUserGroupMembers(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 	if err := h.Repo.RemoveUsersFromGroup(c.Request().Context(), g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -260,7 +289,11 @@ func (h *Handlers) RemoveUserGroupMembers(c *echo.Context) error {
 
 // GetUserGroupAdmins GET /groups/:groupID/admins
 func (h *Handlers) GetUserGroupAdmins(c *echo.Context) error {
-	return c.JSON(http.StatusOK, getParamGroup(c).AdminIDArray())
+	g, err := h.getUserGroup(c)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, g.AdminIDArray())
 }
 
 // PostUserGroupAdminRequest POST /groups/:groupID/admins リクエストボディ
@@ -276,7 +309,10 @@ func (r PostUserGroupAdminRequest) ValidateWithContext(ctx context.Context) erro
 
 // AddUserGroupAdmin POST /groups/:groupID/admins
 func (h *Handlers) AddUserGroupAdmin(c *echo.Context) error {
-	g := getParamGroup(c)
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 
 	var req PostUserGroupAdminRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -292,8 +328,11 @@ func (h *Handlers) AddUserGroupAdmin(c *echo.Context) error {
 
 // RemoveUserGroupAdmin DELETE /groups/:groupID/admins/:userID
 func (h *Handlers) RemoveUserGroupAdmin(c *echo.Context) error {
+	g, err := h.getAdministrableUserGroup(c)
+	if err != nil {
+		return err
+	}
 	userID := getParamAsUUID(c, consts.ParamUserID)
-	g := getParamGroup(c)
 
 	if err := h.Repo.RemoveUserFromGroupAdmin(c.Request().Context(), userID, g.ID); err != nil {
 		if err == repository.ErrForbidden {

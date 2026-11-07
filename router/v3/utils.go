@@ -64,11 +64,6 @@ func getParamStampPalette(c *echo.Context) *model.StampPalette {
 	return c.Get(consts.KeyParamStampPalette).(*model.StampPalette)
 }
 
-// getParamGroup URLの:groupIDに対応するUserGroupを取得
-func getParamGroup(c *echo.Context) *model.UserGroup {
-	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
-}
-
 // parseUUIDParam URLのnameパラメータをUUIDとしてパースする
 //
 // 不正な値やNilの場合は、そのパスのリソースが存在しないものとして404を返す。

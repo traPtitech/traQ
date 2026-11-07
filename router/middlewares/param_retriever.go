@@ -79,13 +79,6 @@ func (pr *ParamRetriever) error(err error) error {
 	}
 }
 
-// GroupID リクエストURLの`groupID`パラメータからGroupを取り出す
-func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
-	return pr.byUUID(consts.ParamGroupID, consts.KeyParamGroup, func(c *echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUserGroup(c.Request().Context(), v)
-	})
-}
-
 // ClientID リクエストURLの`clientID`パラメータからOAuth2Clientを取り出す
 func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 	return pr.byString(consts.ParamClientID, consts.KeyParamClient, func(c *echo.Context, v string) (interface{}, error) {

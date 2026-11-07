@@ -91,7 +91,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	noLogin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
-	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
 	requiresDeleteStampPerm := middlewares.CheckDeleteStampPerm(h.RBAC)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.RateLimit(rate.Limit(100), 1000, time.Minute))
@@ -299,18 +298,18 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiGroups.GET("", h.GetUserGroups, requires(permission.GetUserGroup))
 			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
-			apiGroupsGID := apiGroups.Group("/:groupID", retrieve.GroupID())
+			apiGroupsGID := apiGroups.Group("/:groupID")
 			{
 				apiGroupsGID.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
-				apiGroupsGID.PATCH("", h.EditUserGroup, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-				apiGroupsGID.DELETE("", h.DeleteUserGroup, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
-				apiGroupsGID.PUT("/icon", h.PutUserGroupIcon, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+				apiGroupsGID.PATCH("", h.EditUserGroup, requires(permission.EditUserGroup))
+				apiGroupsGID.DELETE("", h.DeleteUserGroup, requires(permission.DeleteUserGroup))
+				apiGroupsGID.PUT("/icon", h.PutUserGroupIcon, requires(permission.EditUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
-					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-					apiGroupsGIDMembers.DELETE("", h.RemoveUserGroupMembers, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
+					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requires(permission.EditUserGroup))
+					apiGroupsGIDMembers.DELETE("", h.RemoveUserGroupMembers, requires(permission.EditUserGroup))
+					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID")
 					{
 						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
 						apiGroupsGIDMembersUID.DELETE("", h.RemoveUserGroupMember, requires(permission.EditUserGroup))
@@ -319,8 +318,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiGroupsGIDAdmins := apiGroupsGID.Group("/admins")
 				{
 					apiGroupsGIDAdmins.GET("", h.GetUserGroupAdmins, requires(permission.GetUserGroup))
-					apiGroupsGIDAdmins.POST("", h.AddUserGroupAdmin, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm)
+					apiGroupsGIDAdmins.POST("", h.AddUserGroupAdmin, requires(permission.EditUserGroup))
+					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID")
 					{
 						apiGroupsGIDAdminsUID.DELETE("", h.RemoveUserGroupAdmin, requires(permission.EditUserGroup))
 					}
