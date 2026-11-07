@@ -57,6 +57,7 @@ func Migrations() []*gormigrate.Migration {
 		v43_2(), //スタンプ名が"0x"で始まるときに、1文字目を"_"に変更。加えて、変更後に他のスタンプ名が一致する場合は_3などの接尾辞を追加。
 		// qallロールを追加
 		v20261014(),
+		v44(), // 画像埋め込みジョブテーブルを追加
 	}
 }
 
@@ -107,5 +108,6 @@ func AllTables() []interface{} {
 		&model.SessionRecord{},
 		&model.OgpCache{},
 		&model.SoundboardItem{},
+		&model.ImageEmbeddingJob{},
 	}
 }
