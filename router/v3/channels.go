@@ -411,21 +411,18 @@ func (h *Handlers) GetChannelEvents(c *echo.Context) error {
 func (h *Handlers) GetChannelSubscribers(c *echo.Context) error {
 	ch := getParamChannel(c)
 
-	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
-	if !ch.CanGetSubscribers() {
-		return herror.Forbidden()
-	}
-
-	subscriptions, err := h.Repo.GetChannelSubscriptions(c.Request().Context(), repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	subscribers, err := h.ChannelManager.GetChannelSubscribers(c.Request().Context(), ch.ID)
 	if err != nil {
-		return herror.InternalServerError(err)
+		switch {
+		case errors.Is(err, channel.ErrChannelNotFound):
+			return herror.NotFound()
+		case errors.Is(err, channel.ErrInvalidChannel), errors.Is(err, channel.ErrForcedNotification):
+			return herror.Forbidden()
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
-	result := make([]uuid.UUID, 0)
-	for _, subscription := range subscriptions {
-		result = append(result, subscription.UserID)
-	}
-
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, subscribers)
 }
 
 // PutChannelSubscribersRequest PUT /channels/:channelID/subscribers リクエストボディ

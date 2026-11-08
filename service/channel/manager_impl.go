@@ -415,6 +415,37 @@ func (m *managerImpl) PublicChannelTree(_ context.Context) Tree {
 	return m.T
 }
 
+func (m *managerImpl) GetChannelSubscribers(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
+	ch, err := m.GetChannel(ctx, channelID)
+	if err != nil {
+		return nil, err
+	}
+	if !ch.IsPublic() && !ch.IsThread() {
+		return nil, ErrInvalidChannel
+	}
+	if ch.IsForced {
+		return nil, ErrForcedNotification
+	}
+	if ch.IsThread() {
+		users, err := m.R.GetThreadSubscribers(ctx, channelID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to GetThreadSubscribers: %w", err)
+		}
+		return users, nil
+	}
+
+	subscriptions, err := m.R.GetChannelSubscriptions(ctx, repository.ChannelSubscriptionQuery{}.
+		SetChannel(channelID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetChannelSubscriptions: %w", err)
+	}
+	users := make([]uuid.UUID, 0, len(subscriptions))
+	for _, subscription := range subscriptions {
+		users = append(users, subscription.UserID)
+	}
+	return users, nil
+}
+
 func (m *managerImpl) ChangeChannelSubscriptions(ctx context.Context, channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error {
 	if !m.IsPublicChannel(ctx, channelID) {
 		return ErrInvalidChannel

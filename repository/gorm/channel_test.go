@@ -1032,3 +1032,134 @@ func TestGormRepository_CreateThread(t *testing.T) {
 		assert.EqualValues(t, 1, threadCount)
 	})
 }
+
+func TestGormRepository_GetThreadSubscribers(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+	ctx := context.Background()
+
+	t.Run("Nil ID", func(t *testing.T) {
+		t.Parallel()
+		_, err := repo.GetThreadSubscribers(ctx, uuid.Nil)
+		require.ErrorIs(t, err, repository.ErrNilID)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		_, err := repo.GetThreadSubscribers(ctx, mustGenerateUUID(false))
+		require.ErrorIs(t, err, repository.ErrNotFound)
+	})
+
+	t.Run("Public channel", func(t *testing.T) {
+		t.Parallel()
+		public := mustMakeChannel(t, repo, rand)
+		_, err := repo.GetThreadSubscribers(ctx, public.ID)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+	})
+
+	// 各ケースで独立した親・スレッド・ユーザーを作成する。
+	checkSubscriber := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced, subscribed bool) {
+		t.Helper()
+		parent := mustMakeChannel(t, repo, rand)
+		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+		user := mustMakeUser(t, repo, rand, false)
+		id := user.GetID()
+		message := mustMakeMessage(t, repo, id, parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "subscribers", ParentID: parent.ID,
+			CreatorID: id, UpdaterID: id,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		_, _, err = repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
+		})
+		require.NoError(t, err)
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, defaultLevel))
+		require.NoError(t, repo.SetThreadSubscription(ctx, id, thread.ChannelID, threadLevel))
+
+		actual, err := repo.GetThreadSubscribers(ctx, thread.ChannelID)
+		require.NoError(t, err)
+		if forced {
+			// 強制通知では、他のテストのユーザーも対象になる。
+			if subscribed {
+				assert.Contains(t, actual, id)
+			} else {
+				assert.NotContains(t, actual, id)
+			}
+		} else if subscribed {
+			assert.ElementsMatch(t, []uuid.UUID{id}, actual)
+		} else {
+			assert.Empty(t, actual)
+		}
+	}
+
+	t.Run("Thread notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 2, 0, 0, false, true)
+	})
+
+	t.Run("Thread none overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 0, 2, 2, false, false)
+	})
+
+	t.Run("Thread mark overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 1, 2, 2, false, false)
+	})
+
+	t.Run("Inherit default notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 2, 0, false, true)
+	})
+
+	t.Run("Default none overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 0, 2, false, false)
+	})
+
+	t.Run("Default mark overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 1, 2, false, false)
+	})
+
+	t.Run("Inherit parent notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 2, false, true)
+	})
+
+	t.Run("Inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 1, false, false)
+	})
+
+	t.Run("No subscription", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 0, false, false)
+	})
+
+	t.Run("Inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 0, true, true)
+	})
+
+	t.Run("Thread none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 0, -1, 0, true, false)
+	})
+
+	t.Run("Thread mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 1, -1, 0, true, false)
+	})
+
+	t.Run("Default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 0, 0, true, false)
+	})
+
+	t.Run("Default mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 1, 0, true, false)
+	})
+}

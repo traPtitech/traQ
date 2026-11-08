@@ -147,6 +147,9 @@ type ChannelRepository interface {
 	ChangeChannelSubscription(ctx context.Context, channelID uuid.UUID, args ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error)
 	// GetChannelSubscriptions 指定したクエリに基づいてチャンネル購読情報を取得します
 	GetChannelSubscriptions(ctx context.Context, query ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error)
+	// GetThreadSubscribers 継承設定を含めてスレッドの通知購読者のID一覧を取得します。
+	// threadIDがNilの場合はErrNilID、スレッドが存在しない場合はErrNotFoundを返します。
+	GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) ([]uuid.UUID, error)
 	// GetThreadSubscriptionDefaults ユーザーの明示的なスレッドのデフォルト購読設定を取得します。
 	GetThreadSubscriptionDefaults(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscriptionDefault, error)
 	// SetThreadSubscriptionDefault デフォルト購読レベルを設定します。-1 は設定を削除します。

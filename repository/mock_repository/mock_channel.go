@@ -251,6 +251,21 @@ func (mr *MockChannelRepositoryMockRecorder) GetThreadChannels(ctx, query interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadChannels), ctx, query)
 }
 
+// GetThreadSubscribers mocks base method.
+func (m *MockChannelRepository) GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadSubscribers", ctx, threadID)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadSubscribers indicates an expected call of GetThreadSubscribers.
+func (mr *MockChannelRepositoryMockRecorder) GetThreadSubscribers(ctx, threadID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadSubscribers", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadSubscribers), ctx, threadID)
+}
+
 // GetThreadSubscriptionDefaults mocks base method.
 func (m *MockChannelRepository) GetThreadSubscriptionDefaults(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscriptionDefault, error) {
 	m.ctrl.T.Helper()

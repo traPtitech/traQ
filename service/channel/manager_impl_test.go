@@ -2462,3 +2462,86 @@ func TestManagerImpl_IsPublicChannel(t *testing.T) {
 	assert.True(t, cm.IsPublicChannel(context.TODO(), cA))
 	assert.False(t, cm.IsPublicChannel(context.TODO(), cNotFound))
 }
+
+func TestManagerImpl_GetChannelSubscribers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Public channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+		repo.EXPECT().GetChannelSubscriptions(gomock.Any(), repository.ChannelSubscriptionQuery{}.SetChannel(cA).SetLevel(model.ChannelSubscribeLevelMarkAndNotify)).Return([]*model.UserSubscribeChannel{{UserID: id}}, nil)
+		users, err := cm.GetChannelSubscribers(context.Background(), cA)
+		require.NoError(t, err)
+		assert.Equal(t, []uuid.UUID{id}, users)
+	})
+
+	t.Run("Empty subscribers", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannelSubscriptions(gomock.Any(), gomock.Any()).Return(nil, nil)
+		users, err := cm.GetChannelSubscribers(context.Background(), cA)
+		require.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.Empty(t, users)
+	})
+
+	t.Run("Thread channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+		repo.EXPECT().GetThreadSubscribers(gomock.Any(), cEKL).Return([]uuid.UUID{id}, nil)
+		users, err := cm.GetChannelSubscribers(context.Background(), cEKL)
+		require.NoError(t, err)
+		assert.Equal(t, []uuid.UUID{id}, users)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(nil, repository.ErrNotFound)
+		_, err := cm.GetChannelSubscribers(context.Background(), cNotFound)
+		assert.ErrorIs(t, err, ErrChannelNotFound)
+	})
+
+	t.Run("Invalid channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeDM}, nil)
+		_, err := cm.GetChannelSubscribers(context.Background(), cNotFound)
+		assert.ErrorIs(t, err, ErrInvalidChannel)
+	})
+
+	t.Run("Forced notification", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		_, err := cm.GetChannelSubscribers(context.Background(), cE)
+		assert.ErrorIs(t, err, ErrForcedNotification)
+	})
+
+	t.Run("Public repository error", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repoErr := errors.New("repository error")
+		repo.EXPECT().GetChannelSubscriptions(gomock.Any(), gomock.Any()).Return(nil, repoErr)
+		_, err := cm.GetChannelSubscribers(context.Background(), cA)
+		assert.ErrorIs(t, err, repoErr)
+	})
+
+	t.Run("Thread repository error", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repoErr := errors.New("repository error")
+		repo.EXPECT().GetThreadSubscribers(gomock.Any(), cEKL).Return(nil, repoErr)
+		_, err := cm.GetChannelSubscribers(context.Background(), cEKL)
+		assert.ErrorIs(t, err, repoErr)
+	})
+}

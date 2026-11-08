@@ -1337,6 +1337,22 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 		obj.Length().IsEqual(1)
 		obj.Value(0).String().IsEqual(user.GetID().String())
 	})
+
+	t.Run("success (thread)", func(t *testing.T) {
+		t.Parallel()
+		thread := env.CreateThread(t, user.GetID(), channel.ID)
+		require.NoError(t, env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.ChannelID, -1))
+
+		obj := env.R(t).GET(path, thread.ChannelID).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().IsEqual(1)
+		obj.Value(0).String().IsEqual(user.GetID().String())
+	})
 }
 
 func TestHandlers_SetChannelSubscribers(t *testing.T) {

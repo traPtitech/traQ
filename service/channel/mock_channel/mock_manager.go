@@ -140,6 +140,21 @@ func (mr *MockManagerMockRecorder) GetChannelPathFromID(ctx, id interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelPathFromID", reflect.TypeOf((*MockManager)(nil).GetChannelPathFromID), ctx, id)
 }
 
+// GetChannelSubscribers mocks base method.
+func (m *MockManager) GetChannelSubscribers(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelSubscribers", ctx, channelID)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetChannelSubscribers indicates an expected call of GetChannelSubscribers.
+func (mr *MockManagerMockRecorder) GetChannelSubscribers(ctx, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelSubscribers", reflect.TypeOf((*MockManager)(nil).GetChannelSubscribers), ctx, channelID)
+}
+
 // GetDMChannel mocks base method.
 func (m *MockManager) GetDMChannel(ctx context.Context, user1, user2 uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()

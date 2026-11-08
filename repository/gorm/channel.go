@@ -586,6 +586,71 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 	}).Create(&setting).Error
 }
 
+// GetThreadSubscribers implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) (users []uuid.UUID, err error) {
+	users = make([]uuid.UUID, 0)
+	if threadID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var thread model.Channel
+		if err := tx.Where("id = ? AND type = ?", threadID, model.ChannelTypeThread).
+			First(&thread).Error; err != nil {
+			return convertError(err)
+		}
+		var parent model.Channel
+		if err := tx.First(&parent, "id = ?", thread.ParentID).Error; err != nil {
+			return convertError(err)
+		}
+
+		nonInheritingThreadUsers := tx.Model(&model.UserThreadSubscription{}).
+			Select("user_id").Where("channel_id = ? AND level <> -1", threadID)
+		nonInheritingDefaultUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
+			Select("user_id").Where("channel_id = ? AND level <> -1", parent.ID)
+		defaultNotifyUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
+			Select("user_id").Where("channel_id = ? AND level = ?", parent.ID, model.ChannelSubscribeLevelMarkAndNotify)
+		parentNotifyUsers := tx.Model(&model.UserSubscribeChannel{}).
+			Select("user_id").Where("channel_id = ? AND notify = ?", parent.ID, true)
+		
+		// 1. スレッドの購読レベルが2。
+		var threadSubscribers []uuid.UUID
+		if err := tx.Model(&model.UserThreadSubscription{}).
+			Where("channel_id = ? AND level = ?", threadID, model.ChannelSubscribeLevelMarkAndNotify).
+			Pluck("user_id", &threadSubscribers).Error; err != nil {
+			return err
+		}
+		users = append(users, threadSubscribers...)
+
+		// 2. スレッドの購読レベルが継承（-1）で、親チャンネルに対するスレッドのデフォルト購読レベルが2。
+		var defaultSubscribers []uuid.UUID
+		if err := tx.Model(&model.User{}).
+			Where("id NOT IN (?)", nonInheritingThreadUsers).
+			Where("id IN (?)", defaultNotifyUsers).
+			Pluck("id", &defaultSubscribers).Error; err != nil {
+			return err
+		}
+		users = append(users, defaultSubscribers...)
+
+		// スレッドの購読レベルと、親チャンネルのスレッドのデフォルト購読レベルがともに継承（-1）で、親チャンネルが次のいずれかに該当する。
+		//  購読レベルが2。または強制通知チャンネル。
+		var parentSubscribers []uuid.UUID
+		if err := tx.Model(&model.User{}).
+			Where("id NOT IN (?)", nonInheritingThreadUsers).
+			Where("id NOT IN (?)", nonInheritingDefaultUsers).
+			Where("? OR id IN (?)", parent.IsForced, parentNotifyUsers).
+			Pluck("id", &parentSubscribers).Error; err != nil {
+			return err
+		}
+		users = append(users, parentSubscribers...)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return users, err
+}
+
 // GetChannelEvents implements ChannelRepository interface.
 func (repo *Repository) GetChannelEvents(ctx context.Context, query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
 	events = make([]*model.ChannelEvent, 0)
