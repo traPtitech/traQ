@@ -16,7 +16,7 @@ import (
 type ChangeChannelSubscriptionArgs struct {
 	Subscription map[uuid.UUID]model.ChannelSubscribeLevel
 	KeepOffLevel bool
-	Replace bool
+	Replace      bool
 }
 
 // UpdateChannelArgs チャンネル情報更新引数
