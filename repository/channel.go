@@ -152,6 +152,14 @@ type ChannelRepository interface {
 	// SetThreadSubscriptionDefault デフォルト購読レベルを設定します。-1 は設定を削除します。
 	// IDがNilの場合はErrNilID、levelが-1〜2以外の場合はArgumentErrorを返します。
 	SetThreadSubscriptionDefault(ctx context.Context, userID, channelID uuid.UUID, level int) error
+	// GetThreadSubscriptions ユーザーの明示的なスレッド購読設定を取得します。IDがNilの場合はErrNilIDを返します。
+	GetThreadSubscriptions(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscription, error)
+	// GetThreadSubscription 指定したスレッドの明示的な購読設定を取得します。
+	// IDがNilの場合はErrNilID、設定が存在しない場合はErrNotFoundを返します。
+	GetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID) (*model.UserThreadSubscription, error)
+	// SetThreadSubscription 購読レベルを設定します。-1 は設定を削除します。
+	// IDがNilの場合はErrNilID、levelが-1〜2以外の場合はArgumentErrorを返します。
+	SetThreadSubscription(ctx context.Context, userID, channelID uuid.UUID, level int) error
 	// GetChannelEvents 指定したクエリでチャンネルイベントを取得します
 	//
 	// 負のoffset, limitは無視されます。

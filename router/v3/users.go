@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"time"
@@ -531,12 +532,64 @@ func (h *Handlers) GetMyThreadSubscriptionDefaults(c *echo.Context) error {
 	return extension.ServeJSONWithETag(c, result)
 }
 
+type threadSubscriptionResponse struct {
+	ChannelID uuid.UUID `json:"channelId"`
+	Level     int       `json:"level"`
+}
+
+// GetMyThreadSubscriptions GET /users/me/thread-subscriptions
+func (h *Handlers) GetMyThreadSubscriptions(c *echo.Context) error {
+	settings, err := h.Repo.GetThreadSubscriptions(c.Request().Context(), getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	result := make([]threadSubscriptionResponse, len(settings))
+	for i, setting := range settings {
+		result[i] = threadSubscriptionResponse{ChannelID: setting.ChannelID, Level: setting.Level.Int()}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ChannelID.String() < result[j].ChannelID.String() })
+
+	return extension.ServeJSONWithETag(c, result)
+}
+
 // PutThreadSubscriptionDefaultRequest PUT /users/me/thread-subscription-defaults/:channelID リクエストボディ
 type PutThreadSubscriptionDefaultRequest struct {
 	Level optional.Of[int] `json:"level"`
 }
 
 func (r PutThreadSubscriptionDefaultRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Level, vd.NotNil, vd.Min(-1), vd.Max(2)),
+	)
+}
+
+// GetMyThreadSubscription GET /users/me/thread-subscriptions/:channelID
+func (h *Handlers) GetMyThreadSubscription(c *echo.Context) error {
+	ch, err := h.getThreadSubscriptionChannel(c)
+	if err != nil {
+		return err
+	}
+
+	setting, err := h.Repo.GetThreadSubscription(c.Request().Context(), getRequestUserID(c), ch.ID)
+	result := threadSubscriptionResponse{ChannelID: ch.ID, Level: -1}
+	if err != nil {
+		if !errors.Is(err, repository.ErrNotFound) {
+			return herror.InternalServerError(err)
+		}
+	} else {
+		result.Level = setting.Level.Int()
+	}
+
+	return extension.ServeJSONWithETag(c, result)
+}
+
+// PutThreadSubscriptionRequest PUT /users/me/thread-subscriptions/:channelID リクエストボディ
+type PutThreadSubscriptionRequest struct {
+	Level optional.Of[int] `json:"level"`
+}
+
+func (r PutThreadSubscriptionRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Level, vd.NotNil, vd.Min(-1), vd.Max(2)),
 	)
@@ -568,6 +621,40 @@ func (h *Handlers) SetMyThreadSubscriptionDefault(c *echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+// SetMyThreadSubscription PUT /users/me/thread-subscriptions/:channelID
+func (h *Handlers) SetMyThreadSubscription(c *echo.Context) error {
+	var req PutThreadSubscriptionRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	ch, err := h.getThreadSubscriptionChannel(c)
+	if err != nil {
+		return err
+	}
+
+	if err := h.Repo.SetThreadSubscription(c.Request().Context(), getRequestUserID(c), ch.ID, req.Level.V); err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *Handlers) getThreadSubscriptionChannel(c *echo.Context) (*model.Channel, error) {
+	ch, err := h.ChannelManager.GetChannel(c.Request().Context(), getParamAsUUID(c, consts.ParamChannelID))
+	if err != nil {
+		if errors.Is(err, channel.ErrChannelNotFound) {
+			return nil, herror.NotFound()
+		}
+		return nil, herror.InternalServerError(err)
+	}
+
+	if !ch.IsThread() {
+		return nil, herror.BadRequest("channel must be thread")
+	}
+
+	return ch, nil
 }
 
 // GetUserStats GET /users/me/:userID/stats
