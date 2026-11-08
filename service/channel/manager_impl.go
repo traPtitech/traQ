@@ -446,6 +446,59 @@ func (m *managerImpl) GetChannelSubscribers(ctx context.Context, channelID uuid.
 	return users, nil
 }
 
+func (m *managerImpl) SetChannelSubscribers(ctx context.Context, channelID uuid.UUID, on []uuid.UUID, updaterID uuid.UUID) error {
+	subscriptions := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(on))
+	for _, id := range on {
+		subscriptions[id] = model.ChannelSubscribeLevelMarkAndNotify
+	}
+	return m.changeChannelSubscribers(ctx, channelID, subscriptions, true, updaterID)
+}
+
+func (m *managerImpl) EditChannelSubscribers(ctx context.Context, channelID uuid.UUID, on, off []uuid.UUID, updaterID uuid.UUID) error {
+	subscriptions := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(on)+len(off))
+	for _, id := range off {
+		subscriptions[id] = model.ChannelSubscribeLevelNone
+	}
+	for _, id := range on {
+		subscriptions[id] = model.ChannelSubscribeLevelMarkAndNotify
+	}
+	for _, id := range off {
+		if subscriptions[id] == model.ChannelSubscribeLevelMarkAndNotify {
+			delete(subscriptions, id) // onとoffの両方にあるユーザーは変更しない。
+		}
+	}
+	return m.changeChannelSubscribers(ctx, channelID, subscriptions, false, updaterID)
+}
+
+func (m *managerImpl) changeChannelSubscribers(ctx context.Context, channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, replace bool, updaterID uuid.UUID) error {
+	ch, err := m.GetChannel(ctx, channelID)
+	if err != nil {
+		return err
+	}
+	if !ch.IsPublic() && !ch.IsThread() {
+		return ErrInvalidChannel
+	}
+	if ch.IsForced {
+		return ErrForcedNotification
+	}
+	args := repository.ChangeChannelSubscriptionArgs{Subscription: subscriptions, KeepOffLevel: true, Replace: replace}
+	var on, off []uuid.UUID
+	if ch.IsThread() {
+		on, off, err = m.R.ChangeThreadSubscription(ctx, channelID, args)
+	} else {
+		on, off, err = m.R.ChangeChannelSubscription(ctx, channelID, args)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to change channel subscribers: %w", err)
+	}
+	if len(on) > 0 || len(off) > 0 {
+		m.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
+			"userId": updaterID, "on": on, "off": off,
+		}, time.Now())
+	}
+	return nil
+}
+
 func (m *managerImpl) ChangeChannelSubscriptions(ctx context.Context, channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error {
 	if !m.IsPublicChannel(ctx, channelID) {
 		return ErrInvalidChannel

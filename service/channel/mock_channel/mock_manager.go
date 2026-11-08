@@ -326,3 +326,31 @@ func (mr *MockManagerMockRecorder) Wait() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Wait", reflect.TypeOf((*MockManager)(nil).Wait))
 }
+
+// EditChannelSubscribers mocks base method.
+func (m *MockManager) EditChannelSubscribers(ctx context.Context, channelID uuid.UUID, on, off []uuid.UUID, updaterID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditChannelSubscribers", ctx, channelID, on, off, updaterID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EditChannelSubscribers indicates an expected call of EditChannelSubscribers.
+func (mr *MockManagerMockRecorder) EditChannelSubscribers(ctx, channelID, on, off, updaterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditChannelSubscribers", reflect.TypeOf((*MockManager)(nil).EditChannelSubscribers), ctx, channelID, on, off, updaterID)
+}
+
+// SetChannelSubscribers mocks base method.
+func (m *MockManager) SetChannelSubscribers(ctx context.Context, channelID uuid.UUID, on []uuid.UUID, updaterID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetChannelSubscribers", ctx, channelID, on, updaterID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetChannelSubscribers indicates an expected call of SetChannelSubscribers.
+func (mr *MockManagerMockRecorder) SetChannelSubscribers(ctx, channelID, on, updaterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetChannelSubscribers", reflect.TypeOf((*MockManager)(nil).SetChannelSubscribers), ctx, channelID, on, updaterID)
+}

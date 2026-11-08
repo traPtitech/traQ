@@ -16,6 +16,7 @@ import (
 type ChangeChannelSubscriptionArgs struct {
 	Subscription map[uuid.UUID]model.ChannelSubscribeLevel
 	KeepOffLevel bool
+	Replace bool
 }
 
 // UpdateChannelArgs チャンネル情報更新引数
@@ -150,6 +151,10 @@ type ChannelRepository interface {
 	// GetThreadSubscribers 継承設定を含めてスレッドの通知購読者のID一覧を取得します。
 	// threadIDがNilの場合はErrNilID、スレッドが存在しない場合はErrNotFoundを返します。
 	GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) ([]uuid.UUID, error)
+	// ChangeThreadSubscription スレッドの通知購読設定を一括変更し、通知対象になった・外れたユーザーを返します。
+	// Subscriptionには0または2を指定します。0は変更前に通知対象だったユーザーだけに適用します。
+	// Replaceの場合は指定外の通知購読者も0にします。存在しないユーザーは無視します。
+	ChangeThreadSubscription(ctx context.Context, threadID uuid.UUID, args ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error)
 	// GetThreadSubscriptionDefaults ユーザーの明示的なスレッドのデフォルト購読設定を取得します。
 	GetThreadSubscriptionDefaults(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscriptionDefault, error)
 	// SetThreadSubscriptionDefault デフォルト購読レベルを設定します。-1 は設定を削除します。

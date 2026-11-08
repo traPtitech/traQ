@@ -12,7 +12,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -440,24 +439,13 @@ func (h *Handlers) SetChannelSubscribers(c *echo.Context) error {
 		return err
 	}
 
-	subscriptions, err := h.Repo.GetChannelSubscriptions(ctx, repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	subs := map[uuid.UUID]model.ChannelSubscribeLevel{}
-	for _, subscription := range subscriptions {
-		subs[subscription.UserID] = model.ChannelSubscribeLevelNone
-	}
-	for _, id := range req.On.Array() {
-		subs[id] = model.ChannelSubscribeLevelMarkAndNotify
-	}
-
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, subs, true, getRequestUserID(c)); err != nil {
-		switch err {
-		case channel.ErrInvalidChannel:
+	if err := h.ChannelManager.SetChannelSubscribers(ctx, ch.ID, req.On.Array(), getRequestUserID(c)); err != nil {
+		switch {
+		case errors.Is(err, channel.ErrChannelNotFound):
+			return herror.NotFound()
+		case errors.Is(err, channel.ErrInvalidChannel):
 			return herror.Forbidden("the channel's subscriptions is not configurable")
-		case channel.ErrForcedNotification:
+		case errors.Is(err, channel.ErrForcedNotification):
 			return herror.Forbidden("the channel's subscriptions is not configurable")
 		default:
 			return herror.InternalServerError(err)
@@ -482,24 +470,13 @@ func (h *Handlers) EditChannelSubscribers(c *echo.Context) error {
 		return err
 	}
 
-	subscriptions := map[uuid.UUID]model.ChannelSubscribeLevel{}
-	for _, id := range req.On.Array() {
-		subscriptions[id] = model.ChannelSubscribeLevelMarkAndNotify
-	}
-	for _, id := range req.Off.Array() {
-		if _, ok := subscriptions[id]; ok {
-			// On, Offどっちにもあるものは相殺
-			delete(subscriptions, id)
-		} else {
-			subscriptions[id] = model.ChannelSubscribeLevelNone
-		}
-	}
-
-	if err := h.ChannelManager.ChangeChannelSubscriptions(ctx, ch.ID, subscriptions, true, getRequestUserID(c)); err != nil {
-		switch err {
-		case channel.ErrInvalidChannel:
+	if err := h.ChannelManager.EditChannelSubscribers(ctx, ch.ID, req.On.Array(), req.Off.Array(), getRequestUserID(c)); err != nil {
+		switch {
+		case errors.Is(err, channel.ErrChannelNotFound):
+			return herror.NotFound()
+		case errors.Is(err, channel.ErrInvalidChannel):
 			return herror.Forbidden("the channel's subscriptions is not configurable")
-		case channel.ErrForcedNotification:
+		case errors.Is(err, channel.ErrForcedNotification):
 			return herror.Forbidden("the channel's subscriptions is not configurable")
 		default:
 			return herror.InternalServerError(err)

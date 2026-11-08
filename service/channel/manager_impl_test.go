@@ -2545,3 +2545,145 @@ func TestManagerImpl_GetChannelSubscribers(t *testing.T) {
 		assert.ErrorIs(t, err, repoErr)
 	})
 }
+
+func TestManagerImpl_SetChannelSubscribers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Public channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		added := mustGenerateUUID()
+		removed := mustGenerateUUID()
+		updater := mustGenerateUUID()
+		args := repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify}, KeepOffLevel: true, Replace: true}
+		repo.EXPECT().ChangeChannelSubscription(gomock.Any(), cA, args).Return([]uuid.UUID{added}, []uuid.UUID{removed}, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cA, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{"userId": updater, "on": []uuid.UUID{added}, "off": []uuid.UUID{removed}}, gomock.Any()).Return(nil)
+		err := cm.SetChannelSubscribers(context.Background(), cA, []uuid.UUID{added}, updater)
+		require.NoError(t, err)
+		cm.Wait()
+	})
+
+	t.Run("Thread channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		added := mustGenerateUUID()
+		removed := mustGenerateUUID()
+		updater := mustGenerateUUID()
+		args := repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify}, KeepOffLevel: true, Replace: true}
+		repo.EXPECT().ChangeThreadSubscription(gomock.Any(), cEKL, args).Return([]uuid.UUID{added}, []uuid.UUID{removed}, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cEKL, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{"userId": updater, "on": []uuid.UUID{added}, "off": []uuid.UUID{removed}}, gomock.Any()).Return(nil)
+		err := cm.SetChannelSubscribers(context.Background(), cEKL, []uuid.UUID{added}, updater)
+		require.NoError(t, err)
+		cm.Wait()
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(nil, repository.ErrNotFound)
+		err := cm.SetChannelSubscribers(context.Background(), cNotFound, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrChannelNotFound)
+	})
+
+	t.Run("DM", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeDM}, nil)
+		err := cm.SetChannelSubscribers(context.Background(), cNotFound, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrInvalidChannel)
+	})
+
+	t.Run("Forced notification", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		err := cm.SetChannelSubscribers(context.Background(), cE, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrForcedNotification)
+	})
+
+	t.Run("Repository error", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repoErr := errors.New("repository error")
+		repo.EXPECT().ChangeThreadSubscription(gomock.Any(), cEKL, gomock.Any()).Return(nil, nil, repoErr)
+		err := cm.SetChannelSubscribers(context.Background(), cEKL, nil, uuid.Nil)
+		assert.ErrorIs(t, err, repoErr)
+	})
+}
+
+func TestManagerImpl_EditChannelSubscribers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Public channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		added := mustGenerateUUID()
+		removed := mustGenerateUUID()
+		unchanged := mustGenerateUUID()
+		updater := mustGenerateUUID()
+		args := repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify, removed: model.ChannelSubscribeLevelNone}, KeepOffLevel: true}
+		repo.EXPECT().ChangeChannelSubscription(gomock.Any(), cA, args).Return([]uuid.UUID{added}, []uuid.UUID{removed}, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cA, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{"userId": updater, "on": []uuid.UUID{added}, "off": []uuid.UUID{removed}}, gomock.Any()).Return(nil)
+		err := cm.EditChannelSubscribers(context.Background(), cA, []uuid.UUID{added, unchanged, added}, []uuid.UUID{removed, unchanged, removed}, updater)
+		require.NoError(t, err)
+		cm.Wait()
+	})
+
+	t.Run("Thread channel", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		added := mustGenerateUUID()
+		removed := mustGenerateUUID()
+		unchanged := mustGenerateUUID()
+		updater := mustGenerateUUID()
+		args := repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify, removed: model.ChannelSubscribeLevelNone}, KeepOffLevel: true}
+		repo.EXPECT().ChangeThreadSubscription(gomock.Any(), cEKL, args).Return([]uuid.UUID{added}, []uuid.UUID{removed}, nil)
+		repo.EXPECT().RecordChannelEvent(gomock.Any(), cEKL, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{"userId": updater, "on": []uuid.UUID{added}, "off": []uuid.UUID{removed}}, gomock.Any()).Return(nil)
+		err := cm.EditChannelSubscribers(context.Background(), cEKL, []uuid.UUID{added, unchanged, added}, []uuid.UUID{removed, unchanged, removed}, updater)
+		require.NoError(t, err)
+		cm.Wait()
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(nil, repository.ErrNotFound)
+		err := cm.EditChannelSubscribers(context.Background(), cNotFound, nil, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrChannelNotFound)
+	})
+
+	t.Run("DM", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(&model.Channel{ID: cNotFound, Type: model.ChannelTypeDM}, nil)
+		err := cm.EditChannelSubscribers(context.Background(), cNotFound, nil, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrInvalidChannel)
+	})
+
+	t.Run("Forced notification", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		err := cm.EditChannelSubscribers(context.Background(), cE, nil, nil, uuid.Nil)
+		assert.ErrorIs(t, err, ErrForcedNotification)
+	})
+
+	t.Run("Repository error", func(t *testing.T) {
+		t.Parallel()
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repoErr := errors.New("repository error")
+		repo.EXPECT().ChangeThreadSubscription(gomock.Any(), cEKL, gomock.Any()).Return(nil, nil, repoErr)
+		err := cm.EditChannelSubscribers(context.Background(), cEKL, nil, nil, uuid.Nil)
+		assert.ErrorIs(t, err, repoErr)
+	})
+}
