@@ -1368,3 +1368,134 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 		assert.Equal(t, model.ChannelSubscribeLevelMarkAndNotify, setting.Level)
 	})
 }
+
+func TestGormRepository_SetThreadSubscriptionPublishesEvent(t *testing.T) {
+	t.Parallel()
+	checkEvent := func(t *testing.T, before, after, defaultLevel, parentLevel int, forced, changed bool) {
+		t.Helper()
+		r, _, _, user := setupWithUser(t, common, false)
+		isolated := *r.(*Repository)
+		repo := &isolated
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		parent := mustMakeChannel(t, repo, rand)
+		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+		_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{user.GetID(): model.ChannelSubscribeLevel(parentLevel)},
+		})
+		require.NoError(t, err)
+		message := mustMakeMessage(t, repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "subscription", ParentID: parent.ID,
+			CreatorID: user.GetID(), UpdaterID: user.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), parent.ID, defaultLevel))
+		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), thread.ChannelID, before))
+		sub := repo.hub.Subscribe(8, event.ChannelSubscribersChanged)
+		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), thread.ChannelID, after))
+		select {
+		case ev := <-sub.Receiver:
+			require.True(t, changed, "unexpected event")
+			assert.Equal(t, hub.Fields{"channel_id": thread.ChannelID, "subscriber_ids": []uuid.UUID{user.GetID()}}, ev.Fields)
+		default:
+			require.False(t, changed, "event was not published")
+		}
+	}
+
+	t.Run("enable", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 2, -1, 0, false, true)
+	})
+
+	t.Run("disable", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 0, -1, 0, false, true)
+	})
+
+	t.Run("notify to mark", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 1, -1, 0, false, true)
+	})
+
+	t.Run("mark to none", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 0, -1, 0, false, false)
+	})
+
+	t.Run("unchanged", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 2, -1, 0, false, false)
+	})
+
+	t.Run("inherit enables", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, 2, 0, false, true)
+	})
+
+	t.Run("inherit disables", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, 0, 0, false, true)
+	})
+
+	t.Run("explicit notify from inherited notify", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 2, 2, 0, false, false)
+	})
+
+	t.Run("disable inherited notify", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 0, 2, 0, false, true)
+	})
+
+	t.Run("disable parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 0, -1, 2, false, true)
+	})
+
+	t.Run("inherit parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, -1, 2, false, true)
+	})
+
+	t.Run("inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, -1, 1, false, true)
+	})
+
+	t.Run("disable forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 0, -1, 0, true, true)
+	})
+
+	t.Run("inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, -1, 0, true, true)
+	})
+
+	t.Run("default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, 0, 0, true, true)
+	})
+
+	t.Run("default mark overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, 1, 2, false, true)
+	})
+
+	t.Run("default notify overrides parent none", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, 2, 0, false, true)
+	})
+
+	t.Run("explicit mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 0, -1, 0, true, false)
+	})
+
+	t.Run("explicit notify to inherited forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, -1, 0, true, false)
+	})
+}

@@ -587,14 +587,43 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 		ChannelID: channelID,
 		Level:     model.ChannelSubscribeLevel(level),
 	}
-	tx := repo.db.WithContext(ctx)
-	if level == -1 {
-		return tx.Delete(&setting).Error
+	var changed bool
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		before, err := isThreadSubscriber(tx, channelID, userID)
+		if err != nil {
+			return err
+		}
+		if level == -1 {
+			err = tx.Delete(&setting).Error
+		} else {
+			err = tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+				DoUpdates: clause.AssignmentColumns([]string{"level"}),
+			}).Create(&setting).Error
+		}
+		if err != nil {
+			return err
+		}
+		after, err := isThreadSubscriber(tx, channelID, userID)
+		if err != nil {
+			return err
+		}
+		changed = before != after
+		return nil
+	})
+	if err != nil {
+		return err
 	}
-	return tx.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"level"}),
-	}).Create(&setting).Error
+	if changed {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelSubscribersChanged,
+			Fields: hub.Fields{
+				"channel_id":     channelID,
+				"subscriber_ids": []uuid.UUID{userID},
+			},
+		})
+	}
+	return nil
 }
 
 // GetThreadSubscribers implements ChannelRepository interface.
@@ -613,6 +642,15 @@ func (repo *Repository) GetThreadSubscribers(ctx context.Context, threadID uuid.
 }
 
 func getThreadSubscribers(tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) {
+	return getThreadSubscribersForUsers(tx, threadID, nil)
+}
+
+func isThreadSubscriber(tx *gorm.DB, threadID, userID uuid.UUID) (bool, error) {
+	users, err := getThreadSubscribersForUsers(tx, threadID, []uuid.UUID{userID})
+	return len(users) > 0, err
+}
+
+func getThreadSubscribersForUsers(tx *gorm.DB, threadID uuid.UUID, userIDs []uuid.UUID) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
 	var thread model.Channel
 	if err := tx.Where("id = ? AND type = ?", threadID, model.ChannelTypeThread).
@@ -634,8 +672,18 @@ func getThreadSubscribers(tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) 
 		Select("user_id").Where("channel_id = ? AND notify = ?", parent.ID, true)
 
 	// 1. スレッドの購読レベルが2。
+	threadUsers := tx.Model(&model.UserThreadSubscription{})
+	allUsers := tx.Model(&model.User{})
+	if userIDs != nil {
+		threadUsers = threadUsers.Where("user_id IN (?)", userIDs)
+		allUsers = allUsers.Where("id IN (?)", userIDs)
+		nonInheritingThreadUsers = nonInheritingThreadUsers.Where("user_id IN (?)", userIDs)
+		nonInheritingDefaultUsers = nonInheritingDefaultUsers.Where("user_id IN (?)", userIDs)
+		defaultNotifyUsers = defaultNotifyUsers.Where("user_id IN (?)", userIDs)
+		parentNotifyUsers = parentNotifyUsers.Where("user_id IN (?)", userIDs)
+	}
 	var threadSubscribers []uuid.UUID
-	if err := tx.Model(&model.UserThreadSubscription{}).
+	if err := threadUsers.
 		Where("channel_id = ? AND level = ?", threadID, model.ChannelSubscribeLevelMarkAndNotify).
 		Pluck("user_id", &threadSubscribers).Error; err != nil {
 		return nil, err
@@ -644,7 +692,7 @@ func getThreadSubscribers(tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) 
 
 	// 2. スレッドの購読レベルが継承（-1）で、親チャンネルに対するスレッドのデフォルト購読レベルが2。
 	var defaultSubscribers []uuid.UUID
-	if err := tx.Model(&model.User{}).
+	if err := allUsers.Session(&gorm.Session{}).
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
 		Where("id IN (?)", defaultNotifyUsers).
 		Pluck("id", &defaultSubscribers).Error; err != nil {
@@ -655,7 +703,7 @@ func getThreadSubscribers(tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) 
 	// スレッドの購読レベルと、親チャンネルのスレッドのデフォルト購読レベルがともに継承（-1）で、親チャンネルが次のいずれかに該当する。
 	//  購読レベルが2。または強制通知チャンネル。
 	var parentSubscribers []uuid.UUID
-	if err := tx.Model(&model.User{}).
+	if err := allUsers.Session(&gorm.Session{}).
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
 		Where("id NOT IN (?)", nonInheritingDefaultUsers).
 		Where("? OR id IN (?)", parent.IsForced, parentNotifyUsers).
