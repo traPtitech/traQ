@@ -20,9 +20,10 @@ func (MessageCreatedPayload) TopicName() string { return MessageCreated }
 
 // MessageUpdatedPayload MessageUpdated のペイロード
 type MessageUpdatedPayload struct {
-	MessageID  uuid.UUID      `hub:"message_id"`
-	OldMessage *model.Message `hub:"old_message"`
-	Message    *model.Message `hub:"message"`
+	MessageID   uuid.UUID            `hub:"message_id"`
+	OldMessage  *model.Message       `hub:"old_message"`
+	Message     *model.Message       `hub:"message"`
+	ParseResult *message.ParseResult `hub:"parse_result"`
 }
 
 func (MessageUpdatedPayload) TopicName() string { return MessageUpdated }

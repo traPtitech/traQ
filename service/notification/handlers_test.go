@@ -45,11 +45,11 @@ func messageCreatedEvent(m *model.Message, parsed *message.ParseResult) hub.Mess
 }
 
 func messageUpdatedEvent(oldM, newM *model.Message) hub.Message {
-	return hub.Message{Name: event.MessageUpdated, Fields: hub.Fields{
-		"message_id":  newM.ID,
-		"old_message": oldM,
-		"message":     newM,
-	}}
+	return hub.Message{Name: event.MessageUpdated, Fields: event.FieldsOf(event.MessageUpdatedPayload{
+		MessageID:  newM.ID,
+		OldMessage: oldM,
+		Message:    newM,
+	})}
 }
 
 func messageDeletedEvent(m *model.Message, unreads []*model.Unread) hub.Message {
@@ -364,13 +364,18 @@ func TestMessageCreatedNotification(t *testing.T) {
 	// viewer.Manager は GC 用の goroutine を常駐させるため、synctest のバブルの外で作る
 	vm := viewer.NewManager(hub.New())
 
+	// The shared Markdown runtime must be used outside synctest bubbles.
 	t.Run("public channel", func(t *testing.T) {
+		const text = "hello"
+		parsed, err := message.Parse(context.Background(), text)
+		require.NoError(t, err)
+
 		synctest.Test(t, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			chID := newID()
 			author := &model.User{ID: newID(), Name: "author", DisplayName: "Author", Status: model.UserAccountStatusActive}
 			notifyUserID, markUserID, otherUserID := newID(), newID(), newID()
-			m := &model.Message{ID: newID(), UserID: author.ID, ChannelID: chID, Text: "hello"}
+			m := &model.Message{ID: newID(), UserID: author.ID, ChannelID: chID, Text: text}
 
 			tree := mock_channel.NewMockTree(ctrl)
 			tree.EXPECT().IsChannelPresent(chID).Return(true).AnyTimes()
@@ -395,7 +400,7 @@ func TestMessageCreatedNotification(t *testing.T) {
 				vm:   vm,
 			})
 			defer h.Close()
-			h.Publish(messageCreatedEvent(m, message.Parse(m.Text)))
+			h.Publish(messageCreatedEvent(m, parsed))
 			synctest.Wait()
 
 			sessions := []fakeSession{
@@ -428,12 +433,16 @@ func TestMessageCreatedNotification(t *testing.T) {
 	})
 
 	t.Run("direct message", func(t *testing.T) {
+		const text = "hi"
+		parsed, err := message.Parse(context.Background(), text)
+		require.NoError(t, err)
+
 		synctest.Test(t, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			chID := newID()
 			author := &model.User{ID: newID(), Name: "author", DisplayName: "Author", Status: model.UserAccountStatusActive}
 			peerID, otherUserID := newID(), newID()
-			m := &model.Message{ID: newID(), UserID: author.ID, ChannelID: chID, Text: "hi"}
+			m := &model.Message{ID: newID(), UserID: author.ID, ChannelID: chID, Text: text}
 
 			tree := mock_channel.NewMockTree(ctrl)
 			tree.EXPECT().IsChannelPresent(chID).Return(false).AnyTimes()
@@ -456,7 +465,7 @@ func TestMessageCreatedNotification(t *testing.T) {
 				vm:   vm,
 			})
 			defer h.Close()
-			h.Publish(messageCreatedEvent(m, message.Parse(m.Text)))
+			h.Publish(messageCreatedEvent(m, parsed))
 			synctest.Wait()
 
 			sessions := []fakeSession{

@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
 )
 
 func TestMessageUpdated(t *testing.T) {
@@ -54,7 +53,7 @@ func TestMessageUpdated(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
+		parsed := parseMessage(t, m.Text)
 		mu := &model.User{
 			ID:   m.UserID,
 			Name: "testman",
@@ -70,9 +69,10 @@ func TestMessageUpdated(t *testing.T) {
 
 		expectMulticast(handlerCtx, botevent.MessageUpdated, payload.MakeMessageUpdated(et, m, mu, parsed), []*model.Bot{b})
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id":  m.ID,
-			"old_message": m,
-			"message":     m,
+			"parse_result": parseMessage(t, m.Text),
+			"message_id":   m.ID,
+			"old_message":  m,
+			"message":      m,
 		}))
 	})
 
@@ -103,9 +103,10 @@ func TestMessageUpdated(t *testing.T) {
 			AnyTimes()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), event.MessageUpdated, hub.Fields{
-			"message_id":  m.ID,
-			"old_message": m,
-			"message":     m,
+			"parse_result": parseMessage(t, m.Text),
+			"message_id":   m.ID,
+			"old_message":  m,
+			"message":      m,
 		}))
 	})
 
@@ -124,14 +125,15 @@ func TestMessageUpdated(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
+		parsed := parseMessage(t, m.Text)
 		et := time.Now()
 
 		expectUnicast(handlerCtx, botevent.DirectMessageUpdated, payload.MakeDirectMessageUpdated(et, m, u, parsed), b)
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id":  m.ID,
-			"old_message": m,
-			"message":     m,
+			"parse_result": parseMessage(t, m.Text),
+			"message_id":   m.ID,
+			"old_message":  m,
+			"message":      m,
 		}))
 	})
 
@@ -154,9 +156,10 @@ func TestMessageUpdated(t *testing.T) {
 		et := time.Now()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, et, event.MessageUpdated, hub.Fields{
-			"message_id":  m.ID,
-			"old_message": m,
-			"message":     m,
+			"parse_result": parseMessage(t, m.Text),
+			"message_id":   m.ID,
+			"old_message":  m,
+			"message":      m,
 		}))
 	})
 }

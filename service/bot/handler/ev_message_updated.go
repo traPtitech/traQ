@@ -11,12 +11,12 @@ import (
 	"github.com/traPtitech/traQ/event"
 	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
 )
 
 func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	m := event.MustPayload[event.MessageUpdatedPayload](fields).Message
-	parsed := message.Parse(m.Text)
+	p := event.MustPayload[event.MessageUpdatedPayload](fields)
+	m := p.Message
+	parsed := p.ParseResult
 
 	ch, err := ctx.CM().GetChannel(context.Background(), m.ChannelID)
 	if err != nil {

@@ -31,7 +31,7 @@ func serveCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "serve",
 		Short: "Serve traQ API",
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(command *cobra.Command, _ []string) {
 			// Logger
 			logger, gormLogger := getLogger()
 			defer logger.Sync()
@@ -107,7 +107,9 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, engine, repo, fs, logger, &c)
+			serveCtx, serveCancel := context.WithCancel(command.Context())
+			defer serveCancel()
+			server, err := newServer(serveCtx, hub, engine, repo, fs, logger, &c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
 			}
@@ -158,7 +160,6 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
-			serveCtx, serveCancel := context.WithCancel(context.Background())
 			server.routerCancel = serveCancel
 			server.routerStopped = make(chan struct{})
 			go func() {

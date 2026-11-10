@@ -132,7 +132,12 @@ func (h *Handlers) EditMessage(c *echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Content = h.Replacer.Replace(req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		req.Content = content
 	}
 
 	if err := h.MessageManager.Edit(ctx, m.GetID(), req.Content); err != nil {
@@ -365,7 +370,12 @@ func (h *Handlers) PostMessage(c *echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Content = h.Replacer.Replace(req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		req.Content = content
 	}
 
 	m, err := h.MessageManager.Create(ctx, ch.ID, userID, req.Content)
@@ -418,7 +428,12 @@ func (h *Handlers) PostDirectMessage(c *echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Content = h.Replacer.Replace(req.Content)
+		content, err := h.Replacer.Replace(c.Request().Context(), req.Content)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		req.Content = content
 	}
 
 	m, err := h.MessageManager.CreateDM(ctx, myID, targetID, req.Content)

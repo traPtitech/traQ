@@ -101,6 +101,7 @@ const (
 	// 		message_id: uuid.UUID
 	// 		message: *model.Message
 	// 		old_message: *model.Message
+	// 		parse_result: *message.ParseResult
 	MessageUpdated = "message.updated"
 	// MessageDeleted メッセージが削除された
 	// 	Fields:

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"time"
@@ -468,9 +469,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(ctx context.Context, mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(mm, cm, repo, logger, config)
+		return search.NewESEngine(ctx, mm, cm, repo, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
