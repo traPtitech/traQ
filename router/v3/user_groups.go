@@ -61,6 +61,11 @@ func (h *Handlers) PostUserGroups(c *echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
+	if req.Type == "team" && !h.RBAC.IsGranted(getRequestUser(c).GetRole(), permission.CreateSpecialUserGroup) {
+		// 班グループは権限が必要
+		return herror.Forbidden("you are not permitted to create groups of this type")
+	}
+
 	iconFileID, err := file2.GenerateIconFile(c.Request().Context(), h.FileManager, req.Name)
 	if err != nil {
 		return herror.InternalServerError(err)
