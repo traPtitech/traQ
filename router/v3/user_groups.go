@@ -116,6 +116,11 @@ func (h *Handlers) EditUserGroup(c *echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
+	if req.Type.ValueOrZero() == "team" && !h.RBAC.IsGranted(getRequestUser(c).GetRole(), permission.CreateSpecialUserGroup) {
+		// 班グループは権限が必要
+		return herror.Forbidden("you are not permitted to create groups of this type")
+	}
+
 	args := repository.UpdateUserGroupArgs{
 		Name:        req.Name,
 		Description: req.Description,
