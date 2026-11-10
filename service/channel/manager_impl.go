@@ -68,7 +68,14 @@ func (m *managerImpl) GetChannel(ctx context.Context, id uuid.UUID) (*model.Chan
 	return ch, nil
 }
 
-func (m *managerImpl) GetChannelPathFromID(_ context.Context, id uuid.UUID) string {
+func (m *managerImpl) GetChannelPathFromID(ctx context.Context, id uuid.UUID) string {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return ""
+	}
+	if !ch.IsPublic() {
+		return ""
+	}
 	return m.T.getChannelPath(id)
 }
 
