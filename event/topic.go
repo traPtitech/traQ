@@ -204,13 +204,13 @@ const (
 	// 		channel_id: uuid.UUID
 	ThreadUpdated = "thread.updated"
 
-	// ThreadSubscribersChanged スレッドの購読設定が通知グループ間で変化した
+	// ThreadSubscribersChanged スレッドの購読設定が通知クラス間で変化した
 	// Fields:
 	//   channel_id: uuid.UUID
 	//   subscriber_ids: []uuid.UUID
 	ThreadSubscribersChanged = "thread.subscribers_changed"
 
-	// ThreadDefaultSubscribersChanged スレッドのデフォルト購読設定が通知グループ間で変化した
+	// ThreadDefaultSubscribersChanged スレッドのデフォルト購読設定が通知クラス間で変化した
 	// Fields:
 	//   channel_id: uuid.UUID (親チャンネル)
 	//   subscriber_ids: []uuid.UUID

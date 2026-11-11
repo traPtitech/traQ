@@ -553,7 +553,7 @@ func (repo *Repository) SetThreadSubscriptionDefault(ctx context.Context, userID
 		if len(levels) > 0 {
 			previous = levels[0]
 		}
-		changed = subscriptionGroup(previous) != subscriptionGroup(level)
+		changed = subscriptionClass(previous) != subscriptionClass(level)
 		if level == -1 {
 			return tx.Delete(&setting).Error
 		}
@@ -620,7 +620,7 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 		if len(levels) > 0 {
 			previous = levels[0]
 		}
-		changed = subscriptionGroup(previous) != subscriptionGroup(level)
+		changed = subscriptionClass(previous) != subscriptionClass(level)
 		if level == -1 {
 			return tx.Delete(&setting).Error
 		}
@@ -641,7 +641,7 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 	return nil
 }
 
-func subscriptionGroup(level int) int {
+func subscriptionClass(level int) int {
 	if level == 1 {
 		return 0
 	}
@@ -781,7 +781,7 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 			if !ok {
 				previous = -1
 			}
-			if subscriptionGroup(previous) != subscriptionGroup(int(level)) {
+			if subscriptionClass(previous) != subscriptionClass(int(level)) {
 				changed = append(changed, id)
 			}
 			if level == model.ChannelSubscribeLevelMarkAndNotify && !current[id] {
