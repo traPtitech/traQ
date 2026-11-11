@@ -26,55 +26,57 @@ import (
 type eventHandler func(ns *Service, ev hub.Message)
 
 var handlerMap = map[string]eventHandler{
-	event.MessageCreated:            messageCreatedHandler,
-	event.MessageUpdated:            messageUpdatedHandler,
-	event.MessageDeleted:            messageDeletedHandler,
-	event.MessagePinned:             messagePinnedHandler,
-	event.MessageUnpinned:           messageUnpinnedHandler,
-	event.MessageStamped:            messageStampedHandler,
-	event.MessageUnstamped:          messageUnstampedHandler,
-	event.ChannelCreated:            channelCreatedHandler,
-	event.ChannelUpdated:            channelUpdatedHandler,
-	event.ChannelDeleted:            channelDeletedHandler,
-	event.ChannelStared:             channelStaredHandler,
-	event.ChannelUnstared:           channelUnstaredHandler,
-	event.ChannelRead:               channelReadHandler,
-	event.ChannelViewersChanged:     channelViewersChangedHandler,
-	event.ChannelSubscribersChanged: channelSubscribersChangedHandler,
-	event.ThreadCreated:             threadCreatedHandler,
-	event.ThreadUpdated:             threadUpdatedHandler,
-	event.UserCreated:               userCreatedHandler,
-	event.UserUpdated:               userUpdatedHandler,
-	event.UserIconUpdated:           userIconUpdatedHandler,
-	event.UserOnline:                userOnlineHandler,
-	event.UserOffline:               userOfflineHandler,
-	event.UserViewStateChanged:      userViewStateChangedHandler,
-	event.UserTagAdded:              userTagUpdatedHandler,
-	event.UserTagRemoved:            userTagUpdatedHandler,
-	event.UserTagUpdated:            userTagUpdatedHandler,
-	event.UserGroupCreated:          userGroupCreatedHandler,
-	event.UserGroupUpdated:          userGroupUpdatedHandler,
-	event.UserGroupDeleted:          userGroupDeletedHandler,
-	event.UserGroupMemberAdded:      userGroupUpdatedHandler,
-	event.UserGroupMemberUpdated:    userGroupUpdatedHandler,
-	event.UserGroupMemberRemoved:    userGroupUpdatedHandler,
-	event.UserGroupAdminAdded:       userGroupUpdatedHandler,
-	event.UserGroupAdminRemoved:     userGroupUpdatedHandler,
-	event.StampCreated:              stampCreatedHandler,
-	event.StampUpdated:              stampUpdatedHandler,
-	event.StampDeleted:              stampDeletedHandler,
-	event.StampPaletteCreated:       stampPaletteCreatedHandler,
-	event.StampPaletteUpdated:       stampPaletteUpdatedHandler,
-	event.StampPaletteDeleted:       stampPaletteDeletedHandler,
-	event.UserWebRTCv3StateChanged:  userWebRTCv3StateChangedHandler,
-	event.ClipFolderCreated:         clipFolderCreatedHandler,
-	event.ClipFolderUpdated:         clipFolderUpdatedHandler,
-	event.ClipFolderDeleted:         clipFolderDeletedHandler,
-	event.ClipFolderMessageDeleted:  clipFolderMessageDeletedHandler,
-	event.ClipFolderMessageAdded:    clipFolderMessageAddedHandler,
-	event.QallRoomStateChanged:      qallRoomStateChangedHandler,
-	event.QallSoundboardItemCreated: qallSoundboardItemCreatedHandler,
-	event.QallSoundboardItemDeleted: qallSoundboardItemDeletedHandler,
+	event.MessageCreated:                  messageCreatedHandler,
+	event.MessageUpdated:                  messageUpdatedHandler,
+	event.MessageDeleted:                  messageDeletedHandler,
+	event.MessagePinned:                   messagePinnedHandler,
+	event.MessageUnpinned:                 messageUnpinnedHandler,
+	event.MessageStamped:                  messageStampedHandler,
+	event.MessageUnstamped:                messageUnstampedHandler,
+	event.ChannelCreated:                  channelCreatedHandler,
+	event.ChannelUpdated:                  channelUpdatedHandler,
+	event.ChannelDeleted:                  channelDeletedHandler,
+	event.ChannelStared:                   channelStaredHandler,
+	event.ChannelUnstared:                 channelUnstaredHandler,
+	event.ChannelRead:                     channelReadHandler,
+	event.ChannelViewersChanged:           channelViewersChangedHandler,
+	event.ChannelSubscribersChanged:       channelSubscribersChangedHandler,
+	event.ThreadCreated:                   threadCreatedHandler,
+	event.ThreadUpdated:                   threadUpdatedHandler,
+	event.ThreadSubscribersChanged:        threadSubscribersChangedHandler,
+	event.ThreadDefaultSubscribersChanged: threadDefaultSubscribersChangedHandler,
+	event.UserCreated:                     userCreatedHandler,
+	event.UserUpdated:                     userUpdatedHandler,
+	event.UserIconUpdated:                 userIconUpdatedHandler,
+	event.UserOnline:                      userOnlineHandler,
+	event.UserOffline:                     userOfflineHandler,
+	event.UserViewStateChanged:            userViewStateChangedHandler,
+	event.UserTagAdded:                    userTagUpdatedHandler,
+	event.UserTagRemoved:                  userTagUpdatedHandler,
+	event.UserTagUpdated:                  userTagUpdatedHandler,
+	event.UserGroupCreated:                userGroupCreatedHandler,
+	event.UserGroupUpdated:                userGroupUpdatedHandler,
+	event.UserGroupDeleted:                userGroupDeletedHandler,
+	event.UserGroupMemberAdded:            userGroupUpdatedHandler,
+	event.UserGroupMemberUpdated:          userGroupUpdatedHandler,
+	event.UserGroupMemberRemoved:          userGroupUpdatedHandler,
+	event.UserGroupAdminAdded:             userGroupUpdatedHandler,
+	event.UserGroupAdminRemoved:           userGroupUpdatedHandler,
+	event.StampCreated:                    stampCreatedHandler,
+	event.StampUpdated:                    stampUpdatedHandler,
+	event.StampDeleted:                    stampDeletedHandler,
+	event.StampPaletteCreated:             stampPaletteCreatedHandler,
+	event.StampPaletteUpdated:             stampPaletteUpdatedHandler,
+	event.StampPaletteDeleted:             stampPaletteDeletedHandler,
+	event.UserWebRTCv3StateChanged:        userWebRTCv3StateChangedHandler,
+	event.ClipFolderCreated:               clipFolderCreatedHandler,
+	event.ClipFolderUpdated:               clipFolderUpdatedHandler,
+	event.ClipFolderDeleted:               clipFolderDeletedHandler,
+	event.ClipFolderMessageDeleted:        clipFolderMessageDeletedHandler,
+	event.ClipFolderMessageAdded:          clipFolderMessageAddedHandler,
+	event.QallRoomStateChanged:            qallRoomStateChangedHandler,
+	event.QallSoundboardItemCreated:       qallSoundboardItemCreatedHandler,
+	event.QallSoundboardItemDeleted:       qallSoundboardItemDeletedHandler,
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -454,10 +456,22 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelSubscribersChangedHandler(ns *Service, ev hub.Message) {
+	subscribersChangedHandler(ns, ev, "CHANNEL_SUBSCRIBERS_CHANGED")
+}
+
+func threadSubscribersChangedHandler(ns *Service, ev hub.Message) {
+	subscribersChangedHandler(ns, ev, "THREAD_SUBSCRIBERS_CHANGED")
+}
+
+func threadDefaultSubscribersChangedHandler(ns *Service, ev hub.Message) {
+	subscribersChangedHandler(ns, ev, "THREAD_DEFAULT_SUBSCRIBERS_CHANGED")
+}
+
+func subscribersChangedHandler(ns *Service, ev hub.Message, eventType string) {
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	uids := ev.Fields["subscriber_ids"].([]uuid.UUID)
 	ns.ws.WriteMessage(
-		"CHANNEL_SUBSCRIBERS_CHANGED",
+		eventType,
 		map[string]interface{}{
 			"id": cid,
 		},
