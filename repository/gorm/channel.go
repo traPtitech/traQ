@@ -704,25 +704,26 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 		if err := tx.Model(&model.User{}).Where("id IN (?)", ids).Pluck("id", &existingUsers).Error; err != nil {
 			return err
 		}
+		settings := make([]model.UserThreadSubscription, 0, len(existingUsers))
 		for _, id := range existingUsers {
 			level := subscriptions[id]
 			if level == model.ChannelSubscribeLevelNone && !current[id] {
 				continue // 通知されていないユーザーの設定は維持する。
 			}
-			setting := model.UserThreadSubscription{UserID: id, ChannelID: threadID, Level: level}
-			if err := tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
-				DoUpdates: clause.AssignmentColumns([]string{"level"}),
-			}).Create(&setting).Error; err != nil {
-				return err
-			}
+			settings = append(settings, model.UserThreadSubscription{UserID: id, ChannelID: threadID, Level: level})
 			if level == model.ChannelSubscribeLevelMarkAndNotify && !current[id] {
 				on = append(on, id)
 			} else if level == model.ChannelSubscribeLevelNone {
 				off = append(off, id)
 			}
 		}
-		return nil
+		if len(settings) == 0 {
+			return nil
+		}
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"level"}),
+		}).Create(&settings).Error
 	})
 	if err != nil {
 		return nil, nil, err
