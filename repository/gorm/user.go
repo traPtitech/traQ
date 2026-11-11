@@ -191,6 +191,12 @@ func (r *userRepository) makeGetUsersTx(ctx context.Context, query repository.Us
 	if query.IsSubscriberAtNotifyLevelOf.Valid {
 		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ? AND users_subscribe_channels.notify = true", query.IsSubscriberAtNotifyLevelOf.V)
 	}
+	if query.IsThreadSubscriberAtMarkLevelOf.Valid {
+		tx = tx.Where("users.id IN (?)", threadSubscriberQuery(r.db.WithContext(ctx), query.IsThreadSubscriberAtMarkLevelOf.V, model.ChannelSubscribeLevelMark))
+	}
+	if query.IsThreadSubscriberAtNotifyLevelOf.Valid {
+		tx = tx.Where("users.id IN (?)", threadSubscriberQuery(r.db.WithContext(ctx), query.IsThreadSubscriberAtNotifyLevelOf.V, model.ChannelSubscribeLevelMarkAndNotify))
+	}
 	if query.IsCMemberOf.Valid {
 		tx = tx.Joins("INNER JOIN users_private_channels ON users_private_channels.user_id = users.id AND users_private_channels.channel_id = ?", query.IsCMemberOf.V)
 	}

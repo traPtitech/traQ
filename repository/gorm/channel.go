@@ -741,46 +741,47 @@ func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) 
 		return nil, convertError(err)
 	}
 
+	if err := threadSubscriberQuery(tx, threadID, model.ChannelSubscribeLevelMarkAndNotify).
+		Pluck("user_id", &users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func threadSubscriberQuery(tx *gorm.DB, threadID uuid.UUID, minimum model.ChannelSubscribeLevel) *gorm.DB {
+	parentID := tx.Model(&model.Channel{}).Select("parent_id").
+		Where("id = ? AND type = ?", threadID, model.ChannelTypeThread)
 	nonInheritingThreadUsers := tx.Model(&model.UserThreadSubscription{}).
 		Select("user_id").Where("channel_id = ? AND level <> -1", threadID)
 	nonInheritingDefaultUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
-		Select("user_id").Where("channel_id = ? AND level <> -1", parent.ID)
-	defaultNotifyUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
-		Select("user_id").Where("channel_id = ? AND level = ?", parent.ID, model.ChannelSubscribeLevelMarkAndNotify)
-	parentNotifyUsers := tx.Model(&model.UserSubscribeChannel{}).
-		Select("user_id").Where("channel_id = ? AND notify = ?", parent.ID, true)
+		Select("user_id").Where("channel_id = (?) AND level <> -1", parentID)
+	defaultSubscribers := tx.Model(&model.UserThreadSubscriptionDefault{}).
+		Select("user_id").Where("channel_id = (?) AND level >= ?", parentID, minimum)
+	parentSubscriptions := tx.Model(&model.UserSubscribeChannel{}).
+		Select("user_id").Where("channel_id = (?)", parentID)
 
-	// 1. スレッドの購読レベルが2。
-	var threadSubscribers []uuid.UUID
-	if err := tx.Model(&model.UserThreadSubscription{}).
-		Where("channel_id = ? AND level = ?", threadID, model.ChannelSubscribeLevelMarkAndNotify).
-		Pluck("user_id", &threadSubscribers).Error; err != nil {
-		return nil, err
+	if minimum == model.ChannelSubscribeLevelMarkAndNotify {
+		parentSubscriptions = parentSubscriptions.Where("notify = ?", true)
+	} else {
+		parentSubscriptions = parentSubscriptions.Where("mark = ? OR notify = ?", true, true)
 	}
-	users = append(users, threadSubscribers...)
+	forcedParent := tx.Model(&model.Channel{}).Select("id").
+		Where("id = (?) AND is_forced = ?", parentID, true)
 
-	// 2. スレッドの購読レベルが継承（-1）で、親チャンネルに対するスレッドのデフォルト購読レベルが2。
-	var defaultSubscribers []uuid.UUID
-	if err := tx.Model(&model.User{}).
+	// 1. スレッド個別の購読レベルを優先する。
+	individual := tx.Model(&model.UserThreadSubscription{}).
+		Select("user_id").Where("channel_id = ? AND level >= ?", threadID, minimum)
+	// 2. 個別設定が継承の場合、親チャンネルのスレッドのデフォルトの通知設定を使う。
+	defaults := tx.Model(&model.User{}).Select("id AS user_id").
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
-		Where("id IN (?)", defaultNotifyUsers).
-		Pluck("id", &defaultSubscribers).Error; err != nil {
-		return nil, err
-	}
-	users = append(users, defaultSubscribers...)
-
-	// スレッドの購読レベルと、親チャンネルのスレッドのデフォルト購読レベルがともに継承（-1）で、親チャンネルが次のいずれかに該当する。
-	//  購読レベルが2。または強制通知チャンネル。
-	var parentSubscribers []uuid.UUID
-	if err := tx.Model(&model.User{}).
+		Where("id IN (?)", defaultSubscribers)
+	// 3. 両方が継承の場合、親チャンネルの購読設定（強制通知なら2）を使う。
+	parent := tx.Model(&model.User{}).Select("id AS user_id").
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
 		Where("id NOT IN (?)", nonInheritingDefaultUsers).
-		Where("? OR id IN (?)", parent.IsForced, parentNotifyUsers).
-		Pluck("id", &parentSubscribers).Error; err != nil {
-		return nil, err
-	}
-	users = append(users, parentSubscribers...)
-	return users, nil
+		Where("EXISTS (?) OR id IN (?)", forcedParent, parentSubscriptions)
+	return tx.Table("((?) UNION (?) UNION (?)) AS thread_subscribers", individual, defaults, parent).Select("user_id")
 }
 
 // ChangeThreadSubscription implements ChannelRepository interface.

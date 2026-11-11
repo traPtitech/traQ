@@ -43,14 +43,16 @@ type LinkExternalUserAccountArgs struct {
 
 // UsersQuery GetUsers用クエリ
 type UsersQuery struct {
-	Name                        optional.Of[string]
-	IsBot                       optional.Of[bool]
-	IsActive                    optional.Of[bool]
-	IsCMemberOf                 optional.Of[uuid.UUID]
-	IsGMemberOf                 optional.Of[uuid.UUID]
-	IsSubscriberAtMarkLevelOf   optional.Of[uuid.UUID]
-	IsSubscriberAtNotifyLevelOf optional.Of[uuid.UUID]
-	EnableProfileLoading        bool
+	Name                              optional.Of[string]
+	IsBot                             optional.Of[bool]
+	IsActive                          optional.Of[bool]
+	IsCMemberOf                       optional.Of[uuid.UUID]
+	IsGMemberOf                       optional.Of[uuid.UUID]
+	IsSubscriberAtMarkLevelOf         optional.Of[uuid.UUID]
+	IsSubscriberAtNotifyLevelOf       optional.Of[uuid.UUID]
+	IsThreadSubscriberAtMarkLevelOf   optional.Of[uuid.UUID]
+	IsThreadSubscriberAtNotifyLevelOf optional.Of[uuid.UUID]
+	EnableProfileLoading              bool
 }
 
 // NotBot Botでない
@@ -92,6 +94,18 @@ func (q UsersQuery) SubscriberAtMarkLevelOf(channelID uuid.UUID) UsersQuery {
 // SubscriberAtNotifyLevelOf channelIDチャンネルの通知レベル購読ユーザーである
 func (q UsersQuery) SubscriberAtNotifyLevelOf(channelID uuid.UUID) UsersQuery {
 	q.IsSubscriberAtNotifyLevelOf = optional.From(channelID)
+	return q
+}
+
+// ThreadSubscriberAtMarkLevelOf 継承後のスレッド購読レベルが未読管理以上のユーザーである
+func (q UsersQuery) ThreadSubscriberAtMarkLevelOf(channelID uuid.UUID) UsersQuery {
+	q.IsThreadSubscriberAtMarkLevelOf = optional.From(channelID)
+	return q
+}
+
+// ThreadSubscriberAtNotifyLevelOf 継承後のスレッド購読レベルが通知のユーザーである
+func (q UsersQuery) ThreadSubscriberAtNotifyLevelOf(channelID uuid.UUID) UsersQuery {
+	q.IsThreadSubscriberAtNotifyLevelOf = optional.From(channelID)
 	return q
 }
 

@@ -182,7 +182,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	default: // 通常チャンネル,スレッドチャンネルメッセージ
 		// チャンネル通知購読者取得
-		notify, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtNotifyLevelOf(chID))
+		notifyQuery := q.SubscriberAtNotifyLevelOf(chID)
+		markQuery := q.SubscriberAtMarkLevelOf(chID)
+		if isThread {
+			notifyQuery = q.ThreadSubscriberAtNotifyLevelOf(chID)
+			markQuery = q.ThreadSubscriberAtMarkLevelOf(chID)
+		}
+		notify, err := ns.repo.GetUserIDs(context.Background(), notifyQuery)
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -190,7 +196,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		notifiedUsers.Add(notify...)
 
 		// チャンネル未読管理購読者取得
-		mark, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtMarkLevelOf(chID))
+		mark, err := ns.repo.GetUserIDs(context.Background(), markQuery)
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return

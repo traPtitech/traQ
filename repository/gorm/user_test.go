@@ -321,3 +321,132 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 	})
 
 }
+
+func TestRepositoryImpl_GetUserIDs_ThreadSubscribers(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+	ctx := context.Background()
+
+	checkSubscriber := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced bool, status model.UserAccountStatus, bot, markExpected, notifyExpected bool) {
+		t.Helper()
+		parent := mustMakeChannel(t, repo, rand)
+		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+		user := mustMakeUser(t, repo, rand, false)
+		id := user.GetID()
+		require.NoError(t, getDB(repo).Model(&model.User{ID: id}).Updates(map[string]interface{}{
+			"status": status, "bot": bot,
+		}).Error)
+		message := mustMakeMessage(t, repo, id, parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "notification", ParentID: parent.ID, CreatorID: id, UpdaterID: id,
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		_, _, err = repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
+		})
+		require.NoError(t, err)
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, defaultLevel))
+		require.NoError(t, repo.SetThreadSubscription(ctx, id, thread.ChannelID, threadLevel))
+
+		q := repository.UsersQuery{}.NameOf(user.GetName()).Active().NotBot()
+		mark, err := repo.GetUserIDs(ctx, q.ThreadSubscriberAtMarkLevelOf(thread.ChannelID))
+		require.NoError(t, err)
+		if markExpected {
+			assert.ElementsMatch(t, []uuid.UUID{id}, mark)
+		} else {
+			assert.Empty(t, mark)
+		}
+		notify, err := repo.GetUserIDs(ctx, q.ThreadSubscriberAtNotifyLevelOf(thread.ChannelID))
+		require.NoError(t, err)
+		if notifyExpected {
+			assert.ElementsMatch(t, []uuid.UUID{id}, notify)
+		} else {
+			assert.Empty(t, notify)
+		}
+	}
+
+	t.Run("Thread notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 2, 0, 0, false, model.UserAccountStatusActive, false, true, true)
+	})
+
+	t.Run("Thread mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 1, 2, 2, false, model.UserAccountStatusActive, false, true, false)
+	})
+
+	t.Run("Thread none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 0, 2, 2, false, model.UserAccountStatusActive, false, false, false)
+	})
+
+	t.Run("Inherit default notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 2, 0, false, model.UserAccountStatusActive, false, true, true)
+	})
+
+	t.Run("Inherit default mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 1, 2, false, model.UserAccountStatusActive, false, true, false)
+	})
+
+	t.Run("Default none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 0, 2, false, model.UserAccountStatusActive, false, false, false)
+	})
+
+	t.Run("Inherit parent notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 2, false, model.UserAccountStatusActive, false, true, true)
+	})
+
+	t.Run("Inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 1, false, model.UserAccountStatusActive, false, true, false)
+	})
+
+	t.Run("No subscription", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 0, false, model.UserAccountStatusActive, false, false, false)
+	})
+
+	t.Run("Inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, -1, 0, true, model.UserAccountStatusActive, false, true, true)
+	})
+
+	t.Run("Thread notify overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 2, 0, 0, true, model.UserAccountStatusActive, false, true, true)
+	})
+
+	t.Run("Thread mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 1, -1, 0, true, model.UserAccountStatusActive, false, true, false)
+	})
+
+	t.Run("Thread none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 0, -1, 0, true, model.UserAccountStatusActive, false, false, false)
+	})
+
+	t.Run("Default mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 1, 0, true, model.UserAccountStatusActive, false, true, false)
+	})
+
+	t.Run("Default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, -1, 0, 0, true, model.UserAccountStatusActive, false, false, false)
+	})
+
+	t.Run("Inactive user", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 2, -1, 0, false, model.UserAccountStatusDeactivated, false, false, false)
+	})
+
+	t.Run("Bot", func(t *testing.T) {
+		t.Parallel()
+		checkSubscriber(t, 2, -1, 0, false, model.UserAccountStatusActive, true, false, false)
+	})
+}
