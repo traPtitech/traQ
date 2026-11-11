@@ -810,6 +810,170 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	})
 }
 
+func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
+	t.Parallel()
+
+	checkSubscription := func(t *testing.T, creatorDefault, authorDefault, parentLevel int, forced, sameUser, creatorMarked, authorMarked bool) {
+		t.Helper()
+		base, _, _, creator, parent := setupWithUserAndChannel(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+		ctx := context.Background()
+		author := creator
+		if !sameUser {
+			author = mustMakeUser(t, &repo, rand, false)
+		}
+		require.NoError(t, getDB(&repo).Model(parent).Update("is_forced", forced).Error)
+		wantChanged := make([]uuid.UUID, 0, 2)
+		users := []uuid.UUID{creator.GetID()}
+		defaults := []int{creatorDefault}
+		marked := []bool{creatorMarked}
+		if !sameUser {
+			users = append(users, author.GetID())
+			defaults = append(defaults, authorDefault)
+			marked = append(marked, authorMarked)
+		}
+		for i, id := range users {
+			_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+				Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
+			})
+			require.NoError(t, err)
+			// -2 は未設定、-1 は明示的な継承レコードも検証する。
+			if defaults[i] >= -1 {
+				require.NoError(t, getDB(&repo).Create(&model.UserThreadSubscriptionDefault{
+					UserID: id, ChannelID: parent.ID, Level: model.ChannelSubscribeLevel(defaults[i]),
+				}).Error)
+			}
+			if marked[i] {
+				wantChanged = append(wantChanged, id)
+			}
+		}
+		message := mustMakeMessage(t, &repo, author.GetID(), parent.ID)
+		sub := repo.hub.Subscribe(8, event.ThreadCreated, event.ThreadSubscribersChanged,
+			event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "thread", ParentID: parent.ID, CreatorID: creator.GetID(), UpdaterID: creator.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		for i, id := range users {
+			setting, err := repo.GetThreadSubscription(ctx, id, thread.ChannelID)
+			if marked[i] {
+				require.NoError(t, err)
+				assert.Equal(t, model.ChannelSubscribeLevelMark, setting.Level)
+			} else {
+				assert.ErrorIs(t, err, repository.ErrNotFound)
+			}
+		}
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.ThreadCreated, ev.Name)
+		default:
+			t.Fatal("thread creation event was not published")
+		}
+		if len(wantChanged) > 0 {
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
+				assert.Equal(t, thread.ChannelID, ev.Fields["channel_id"])
+				assert.ElementsMatch(t, wantChanged, ev.Fields["subscriber_ids"])
+			default:
+				t.Fatal("subscription event was not published")
+			}
+		}
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	}
+
+	t.Run("No subscription", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, false, false, true, true)
+	})
+
+	t.Run("Inherit parent none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, false, false, true, true)
+	})
+
+	t.Run("Inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 1, false, false, false, false)
+	})
+
+	t.Run("Inherit parent notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 2, false, false, false, false)
+	})
+
+	t.Run("Inherit default mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 0, false, false, false, false)
+	})
+
+	t.Run("Inherit default notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 2, 2, 0, false, false, false, false)
+	})
+
+	t.Run("Default none overrides parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 1, false, false, true, true)
+	})
+
+	t.Run("Default none overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 2, false, false, true, true)
+	})
+
+	t.Run("Default mark overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 2, false, false, false, false)
+	})
+
+	t.Run("Inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, true, false, false, false)
+	})
+
+	t.Run("No default inherits forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, true, false, false, false)
+	})
+
+	t.Run("Default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 0, true, false, true, true)
+	})
+
+	t.Run("Default mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 0, true, false, false, false)
+	})
+
+	t.Run("Default notify preserves forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 2, 2, 0, true, false, false, false)
+	})
+
+	t.Run("Only creator needs mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 2, 2, false, false, true, false)
+	})
+
+	t.Run("Only author needs mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 0, 2, false, false, false, true)
+	})
+
+	t.Run("Creator is author", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, false, true, true, true)
+	})
+}
+
 func TestGormRepository_CreateThread(t *testing.T) {
 	t.Parallel()
 
