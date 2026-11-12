@@ -482,7 +482,7 @@ func subscribersChangedHandler(ns *Service, ev hub.Message, eventType string) {
 func subscriptionChangeTarget(ns *Service, channelID uuid.UUID, userIDs []uuid.UUID, includeThreads bool) ws.TargetFunc {
 	channelIDs := set.UUID{channelID: struct{}{}}
 	changedUsers := set.UUIDSetFromArray(userIDs)
-	
+
 	if includeThreads {
 		threads, err := ns.cm.GetThreadChannels(context.Background(), repository.GetThreadChannelQuery{
 			ChannelID: channelID,

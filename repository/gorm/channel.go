@@ -542,7 +542,7 @@ func (repo *Repository) SetThreadSubscriptionDefault(ctx context.Context, userID
 		ChannelID: channelID,
 		Level:     model.ChannelSubscribeLevel(level),
 	}
-	
+
 	var changed bool
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var levels []int
@@ -612,7 +612,7 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 		ChannelID: channelID,
 		Level:     model.ChannelSubscribeLevel(level),
 	}
-	
+
 	var changed bool
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var levels []int
@@ -637,7 +637,7 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 	if err != nil {
 		return err
 	}
-	
+
 	if changed {
 		repo.hub.Publish(hub.Message{
 			Name:   event.ThreadSubscribersChanged,
