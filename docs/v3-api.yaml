@@ -7882,6 +7882,10 @@ components:
           type: string
           format: uuid
           description: チャンネルUUID
+        creatorId:
+          type: string
+          format: uuid
+          description: スレッドを作成したアカウントのUUID
         parentChannelId:
           type: string
           description: 親チャンネルUUID
@@ -7898,6 +7902,7 @@ components:
           description: スレッド名
       required:
         - id
+        - creatorId
         - parentChannelId
         - parentMessageId
         - archived

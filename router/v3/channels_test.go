@@ -400,7 +400,8 @@ func TestHandlers_CreateThreads(t *testing.T) {
 		t.Run("success/"+name, func(t *testing.T) {
 			t.Parallel()
 			parent := env.CreateChannel(t, rand)
-			parentMessage := env.CreateMessage(t, user.GetID(), parent.ID, "parent")
+			parentMessageAuther := env.CreateUser(t, rand)
+			parentMessage := env.CreateMessage(t, parentMessageAuther.GetID(), parent.ID, "parent")
 
 			obj := env.R(t).POST(path).
 				WithCookie(session.CookieName, commonSession).
@@ -411,6 +412,7 @@ func TestHandlers_CreateThreads(t *testing.T) {
 				Object()
 
 			obj.Value("parentChannelId").String().IsEqual(parent.ID.String())
+			obj.Value("creatorId").String().IsEqual(user.GetID().String())
 			obj.Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
 			obj.Value("archived").Boolean().IsFalse()
 			obj.Value("name").String().IsEqual(name)
@@ -435,6 +437,7 @@ func TestHandlers_CreateThreads(t *testing.T) {
 				Array()
 			list.Length().IsEqual(1)
 			list.Value(0).Object().Value("id").String().IsEqual(id.String())
+			list.Value(0).Object().Value("creatorId").String().IsEqual(user.GetID().String())
 			list.Value(0).Object().Value("parentMessageId").String().IsEqual(parentMessage.GetID().String())
 		})
 	}
