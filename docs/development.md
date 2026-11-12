@@ -98,7 +98,8 @@ a fresh MariaDB and RustFS for each run and removes both containers afterward.
 
 ### Linux and macOS
 
-1. Run `mise run up-test-db` to start the test database.
+1. Run `mise run up-test-db` to start the test database and wait until it is
+   ready.
 2. Run `mise run test`.
 3. Run `mise run rm-test-db` when you are done with the test database.
 
@@ -153,7 +154,8 @@ Run the schema tasks from your development shell with Docker running.
 
 ### Regenerate and lint the schema
 
-1. Run `mise run up-test-db` to start the test database.
+1. Run `mise run up-test-db` to start the test database and wait until it is
+   ready.
 2. Run `mise run db-gen-docs` to regenerate the docs.
 3. Run `mise run db-lint` to lint the schema.
 
