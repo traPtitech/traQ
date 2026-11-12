@@ -400,8 +400,8 @@ func TestHandlers_CreateThreads(t *testing.T) {
 		t.Run("success/"+name, func(t *testing.T) {
 			t.Parallel()
 			parent := env.CreateChannel(t, rand)
-			parentMessageAuther := env.CreateUser(t, rand)
-			parentMessage := env.CreateMessage(t, parentMessageAuther.GetID(), parent.ID, "parent")
+			parentMessageAuthor := env.CreateUser(t, rand)
+			parentMessage := env.CreateMessage(t, parentMessageAuthor.GetID(), parent.ID, "parent")
 
 			obj := env.R(t).POST(path).
 				WithCookie(session.CookieName, commonSession).
