@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -229,8 +230,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			markedUsers.Add(gs...)
 			noticeable.Add(gs...)
 		}
+		// スレッドの最初の投稿は、親メッセージへの引用と同じ通知対象にする。
+		citationIDs := parsed.Citation
+		if parentID, ok := ev.Fields["thread_parent_message_id"].(uuid.UUID); isThread && ok && parentID != uuid.Nil && !slices.Contains(citationIDs, parentID) {
+			citationIDs = append(slices.Clone(citationIDs), parentID)
+		}
 		// メッセージを引用されたユーザーへの通知
-		for _, mid := range parsed.Citation {
+		for _, mid := range citationIDs {
 			m, err := ns.repo.GetMessageByID(context.Background(), mid)
 			if err != nil {
 				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗

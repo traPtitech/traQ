@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -165,10 +166,15 @@ func TestSubscriptionChangeTarget(t *testing.T) {
 }
 
 type notificationTestRepository struct {
+	notifyCitation bool
 	*mock_repository.MockChannelRepository
 	*mock_repository.MockUserRepository
 	*mock_repository.MockMessageRepository
 	testutils.EmptyTestRepository
+}
+
+func (r *notificationTestRepository) GetNotifyCitation(context.Context, uuid.UUID) (bool, error) {
+	return r.notifyCitation, nil
 }
 
 type captureFCM struct {
@@ -254,5 +260,114 @@ func TestMessageCreatedThread(t *testing.T) {
 	t.Run("Exclude viewer", func(t *testing.T) {
 		t.Parallel()
 		checkNotification(t, subscriber, true, true, false, false)
+	})
+}
+
+func TestMessageCreatedThreadParentNotification(t *testing.T) {
+	t.Parallel()
+
+	author := uuid.NewV3(uuid.Nil, "author")
+	parentAuthor := &model.User{ID: uuid.NewV3(uuid.Nil, "parentAuthor"), Status: model.UserAccountStatusActive}
+	parentMessageID := uuid.NewV3(uuid.Nil, "parentMessage")
+
+	setupNotification := func(t *testing.T, parentUser *model.User, enabled bool) (*Service, *notificationTestRepository, *captureFCM, hub.Message) {
+		t.Helper()
+
+		ctrl := gomock.NewController(t)
+
+		repo := &notificationTestRepository{
+			notifyCitation:        enabled,
+			MockChannelRepository: mock_repository.NewMockChannelRepository(ctrl),
+			MockUserRepository:    mock_repository.NewMockUserRepository(ctrl),
+			MockMessageRepository: mock_repository.NewMockMessageRepository(ctrl),
+		}
+		cm := mock_channel.NewMockManager(ctrl)
+		tree := mock_channel.NewMockTree(ctrl)
+
+		thread := uuid.NewV3(uuid.Nil, "thread")
+		parent := uuid.NewV3(uuid.Nil, "parent")
+		m := &model.Message{ID: uuid.NewV3(uuid.Nil, "reply"), UserID: author, ChannelID: thread}
+
+		cm.EXPECT().PublicChannelTree(gomock.Any()).Return(tree)
+		tree.EXPECT().IsForceChannel(thread).Return(false)
+		tree.EXPECT().GetChannelPath(parent).Return("general")
+		repo.MockChannelRepository.EXPECT().GetChannel(gomock.Any(), thread).Return(&model.Channel{
+			ID: thread, ParentID: parent, Name: "discussion", Type: model.ChannelTypeThread,
+		}, nil)
+
+		authorCalls := 1
+		if parentUser.ID == author {
+			authorCalls++
+		} else {
+			repo.MockUserRepository.EXPECT().GetUser(gomock.Any(), parentUser.ID, false).Return(parentUser, nil)
+		}
+		repo.MockUserRepository.EXPECT().GetUser(gomock.Any(), author, false).Return(&model.User{ID: author, Name: "author", Status: model.UserAccountStatusActive}, nil).Times(authorCalls)
+
+		q := repository.UsersQuery{}.Active().NotBot()
+		repo.MockUserRepository.EXPECT().GetUserIDs(gomock.Any(), q.ThreadSubscriberAtNotifyLevelOf(thread)).Return(nil, nil)
+		repo.MockUserRepository.EXPECT().GetUserIDs(gomock.Any(), q.ThreadSubscriberAtMarkLevelOf(thread)).Return(nil, nil)
+		repo.MockMessageRepository.EXPECT().GetMessageByID(gomock.Any(), parentMessageID).Return(&model.Message{ID: parentMessageID, UserID: parentUser.ID}, nil)
+
+		h := hub.New()
+		t.Cleanup(h.Close)
+		vm := viewer.NewManager(h)
+		push := &captureFCM{}
+		ns := &Service{repo: repo, cm: cm, logger: zap.NewNop(), fcm: push, vm: vm, ws: ws.NewStreamer(h, vm, nil, zap.NewNop())}
+		ev := hub.Message{Name: event.MessageCreated, Fields: hub.Fields{
+			"message": m, "parse_result": &message.ParseResult{}, "thread_parent_message_id": parentMessageID,
+		}}
+
+		return ns, repo, push, ev
+	}
+
+	checkNotification := func(t *testing.T, ns *Service, repo *notificationTestRepository, push *captureFCM, ev hub.Message, notified, marked bool) {
+		t.Helper()
+
+		unreads := map[uuid.UUID]bool{}
+		if marked {
+			unreads[parentAuthor.ID] = true
+		}
+		repo.MockMessageRepository.EXPECT().SetMessageUnreads(gomock.Any(), unreads, ev.Fields["message"].(*model.Message).ID).Return(nil)
+
+		messageCreatedHandler(ns, ev)
+
+		if notified {
+			assert.Equal(t, set.UUIDSetFromArray([]uuid.UUID{parentAuthor.ID}), push.targets)
+		} else {
+			assert.Empty(t, push.targets)
+		}
+	}
+
+	t.Run("Notify parent author with citation notifications enabled", func(t *testing.T) {
+		t.Parallel()
+		ns, repo, push, ev := setupNotification(t, parentAuthor, true)
+		checkNotification(t, ns, repo, push, ev, true, true)
+		assert.Empty(t, ev.Fields["parse_result"].(*message.ParseResult).Citation)
+	})
+
+	t.Run("Mark parent author when citation notifications are disabled", func(t *testing.T) {
+		t.Parallel()
+		ns, repo, push, ev := setupNotification(t, parentAuthor, false)
+		checkNotification(t, ns, repo, push, ev, false, true)
+	})
+
+	t.Run("Exclude author", func(t *testing.T) {
+		t.Parallel()
+		ns, repo, push, ev := setupNotification(t, &model.User{ID: author, Status: model.UserAccountStatusActive}, true)
+		checkNotification(t, ns, repo, push, ev, false, false)
+	})
+
+	t.Run("Exclude viewer", func(t *testing.T) {
+		t.Parallel()
+		ns, repo, push, ev := setupNotification(t, parentAuthor, true)
+		ns.vm.SetViewer("parent", "parent", parentAuthor.ID, ev.Fields["message"].(*model.Message).ChannelID, viewer.StateMonitoring)
+		checkNotification(t, ns, repo, push, ev, false, false)
+	})
+
+	t.Run("Explicit parent citation is processed only once", func(t *testing.T) {
+		t.Parallel()
+		ns, repo, push, ev := setupNotification(t, parentAuthor, true)
+		ev.Fields["parse_result"].(*message.ParseResult).Citation = []uuid.UUID{parentMessageID}
+		checkNotification(t, ns, repo, push, ev, true, true)
 	})
 }

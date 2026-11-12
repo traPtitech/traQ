@@ -30,7 +30,25 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 		Text:      text,
 		Stamps:    []model.MessageStamp{},
 	}
+
+	threadParentMessageID := uuid.Nil
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var thread model.Thread
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("channel_id = ?", channelID).Take(&thread).Error
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		} else {
+			err := tx.Select("id").Where("channel_id = ?", channelID).Take(&model.Message{}).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				threadParentMessageID = thread.MessageID
+			} else if err != nil {
+				return err
+			}
+		}
+
 		if err := tx.Create(m).Error; err != nil {
 			return err
 		}
@@ -54,9 +72,10 @@ func (repo *Repository) CreateMessage(ctx context.Context, userID, channelID uui
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
 		Fields: hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": parseResult,
+			"message_id":               m.ID,
+			"message":                  m,
+			"parse_result":             parseResult,
+			"thread_parent_message_id": threadParentMessageID,
 		},
 	})
 	if len(parseResult.Citation) > 0 {
