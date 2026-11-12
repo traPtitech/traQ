@@ -13,4 +13,5 @@ type Processor interface {
 	FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error)
 	WaveformMp3(src io.ReadSeeker, width, height int) (io.Reader, error)
 	WaveformWav(src io.ReadSeeker, width, height int) (io.Reader, error)
+	WaveformM4a(src io.ReadSeeker, width, height int) (io.Reader, error)
 }
