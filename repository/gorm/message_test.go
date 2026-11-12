@@ -544,6 +544,7 @@ func TestRepositoryImpl_CreateMessage_ThreadParentNotification(t *testing.T) {
 		t.Parallel()
 
 		repo, user, thread, parent := setupThread(t)
+
 		first, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "first")
 		require.NoError(t, err)
 		require.NoError(t, repo.DeleteMessage(ctx, first.ID))
@@ -560,6 +561,7 @@ func TestRepositoryImpl_CreateMessage_ThreadParentNotification(t *testing.T) {
 		t.Parallel()
 
 		repo, user, thread, _ := setupThread(t)
+
 		first, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "first")
 		require.NoError(t, err)
 		_, err = repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "second")

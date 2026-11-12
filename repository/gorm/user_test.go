@@ -324,23 +324,28 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 
 func TestRepositoryImpl_GetUserIDs_ThreadSubscribers(t *testing.T) {
 	t.Parallel()
+
 	repo, _, _ := setup(t, common)
 	ctx := context.Background()
 
 	checkSubscriber := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced bool, status model.UserAccountStatus, bot, markExpected, notifyExpected bool) {
 		t.Helper()
+
 		parent := mustMakeChannel(t, repo, rand)
 		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+
 		user := mustMakeUser(t, repo, rand, false)
 		id := user.GetID()
 		require.NoError(t, getDB(repo).Model(&model.User{ID: id}).Updates(map[string]interface{}{
 			"status": status, "bot": bot,
 		}).Error)
+
 		message := mustMakeMessage(t, repo, id, parent.ID)
 		thread, err := repo.CreateThread(ctx, model.Channel{
 			Name: "notification", ParentID: parent.ID, CreatorID: id, UpdaterID: id,
 		}, model.Thread{MessageID: message.ID})
 		require.NoError(t, err)
+
 		_, _, err = repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
 		})
@@ -351,13 +356,16 @@ func TestRepositoryImpl_GetUserIDs_ThreadSubscribers(t *testing.T) {
 		q := repository.UsersQuery{}.NameOf(user.GetName()).Active().NotBot()
 		mark, err := repo.GetUserIDs(ctx, q.ThreadSubscriberAtMarkLevelOf(thread.ChannelID))
 		require.NoError(t, err)
+
 		if markExpected {
 			assert.ElementsMatch(t, []uuid.UUID{id}, mark)
 		} else {
 			assert.Empty(t, mark)
 		}
+
 		notify, err := repo.GetUserIDs(ctx, q.ThreadSubscriberAtNotifyLevelOf(thread.ChannelID))
 		require.NoError(t, err)
+
 		if notifyExpected {
 			assert.ElementsMatch(t, []uuid.UUID{id}, notify)
 		} else {

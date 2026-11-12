@@ -195,7 +195,9 @@ func TestMessageCreatedThread(t *testing.T) {
 
 	checkNotification := func(t *testing.T, userID uuid.UUID, notify, viewing, notifyExpected, markExpected bool) *fcm.Payload {
 		t.Helper()
+
 		ctrl := gomock.NewController(t)
+
 		repo := &notificationTestRepository{
 			MockChannelRepository: mock_repository.NewMockChannelRepository(ctrl),
 			MockUserRepository:    mock_repository.NewMockUserRepository(ctrl),
@@ -203,10 +205,12 @@ func TestMessageCreatedThread(t *testing.T) {
 		}
 		cm := mock_channel.NewMockManager(ctrl)
 		tree := mock_channel.NewMockTree(ctrl)
+
 		parent := uuid.NewV3(uuid.Nil, "parent")
 		thread := uuid.NewV3(uuid.Nil, "thread")
 		mid := uuid.NewV3(uuid.Nil, "mid")
 		m := &model.Message{ID: mid, ChannelID: thread, UserID: author}
+
 		cm.EXPECT().PublicChannelTree(gomock.Any()).Return(tree)
 		tree.EXPECT().IsForceChannel(thread).Return(false)
 		tree.EXPECT().GetChannelPath(parent).Return("general/sub")
@@ -214,6 +218,7 @@ func TestMessageCreatedThread(t *testing.T) {
 			ID: thread, ParentID: parent, Name: "discussion", Type: model.ChannelTypeThread,
 		}, nil)
 		repo.MockUserRepository.EXPECT().GetUser(gomock.Any(), author, false).Return(&model.User{ID: author, Name: "author", Status: model.UserAccountStatusActive}, nil)
+
 		q := repository.UsersQuery{}.Active().NotBot()
 		notifyUsers := []uuid.UUID{}
 		if notify {
@@ -221,11 +226,13 @@ func TestMessageCreatedThread(t *testing.T) {
 		}
 		repo.MockUserRepository.EXPECT().GetUserIDs(gomock.Any(), q.ThreadSubscriberAtNotifyLevelOf(thread)).Return(notifyUsers, nil)
 		repo.MockUserRepository.EXPECT().GetUserIDs(gomock.Any(), q.ThreadSubscriberAtMarkLevelOf(thread)).Return([]uuid.UUID{userID}, nil)
+
 		unreads := map[uuid.UUID]bool{}
 		if markExpected {
 			unreads[userID] = false
 		}
 		repo.MockMessageRepository.EXPECT().SetMessageUnreads(gomock.Any(), unreads, mid).Return(nil)
+
 		h := hub.New()
 		defer h.Close()
 		vm := viewer.NewManager(h)
@@ -234,14 +241,17 @@ func TestMessageCreatedThread(t *testing.T) {
 		}
 		push := &captureFCM{}
 		ns := &Service{repo: repo, cm: cm, logger: zap.NewNop(), fcm: push, vm: vm, ws: ws.NewStreamer(h, vm, nil, zap.NewNop())}
+
 		messageCreatedHandler(ns, hub.Message{Name: event.MessageCreated, Fields: hub.Fields{
 			"message": m, "parse_result": &message.ParseResult{},
 		}})
+
 		if notifyExpected {
 			assert.Equal(t, set.UUIDSetFromArray([]uuid.UUID{userID}), push.targets)
 		} else {
 			assert.Empty(t, push.targets)
 		}
+
 		return push.payload
 	}
 
