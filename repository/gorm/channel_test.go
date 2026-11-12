@@ -1129,85 +1129,71 @@ func TestGormRepository_GetThreadSubscribers(t *testing.T) {
 
 	t.Run("Thread notify", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, 2, 0, 0, false, true)
 	})
 
 	t.Run("Thread none overrides parent notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, 0, 2, 2, false, false)
 	})
 
 	t.Run("Thread mark overrides parent notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, 1, 2, 2, false, false)
 	})
 
 	t.Run("Inherit default notify", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, 2, 0, false, true)
 	})
 
 	t.Run("Default none overrides parent notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, 0, 2, false, false)
 	})
 
 	t.Run("Default mark overrides parent notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, 1, 2, false, false)
 	})
 
 	t.Run("Inherit parent notify", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, -1, 2, false, true)
 	})
 
 	t.Run("Inherit parent mark", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, -1, 1, false, false)
 	})
 
 	t.Run("No subscription", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, -1, 0, false, false)
 	})
 
 	t.Run("Inherit forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, -1, 0, true, true)
 	})
 
 	t.Run("Thread none overrides forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, 0, -1, 0, true, false)
 	})
 
 	t.Run("Thread mark overrides forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, 1, -1, 0, true, false)
 	})
 
 	t.Run("Default none overrides forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, 0, 0, true, false)
 	})
 
 	t.Run("Default mark overrides forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkSubscriber(t, -1, 1, 0, true, false)
 	})
 }
@@ -1325,49 +1311,41 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 
 	t.Run("Off explicit notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, 2, -1, 0, false, true)
 	})
 
 	t.Run("Off default notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, 2, 0, false, true)
 	})
 
 	t.Run("Off parent notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, -1, 2, false, true)
 	})
 
 	t.Run("Off forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, -1, 0, true, true)
 	})
 
 	t.Run("Keep explicit mark", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, 1, 2, 2, false, false)
 	})
 
 	t.Run("Keep default mark inheritance", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, 1, 2, false, false)
 	})
 
 	t.Run("Keep parent mark inheritance", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, -1, 1, false, false)
 	})
 
 	t.Run("Keep default none under forced notification", func(t *testing.T) {
 		t.Parallel()
-
 		checkOff(t, -1, 0, 0, true, false)
 	})
 
