@@ -35,6 +35,7 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 
 type Thread struct {
 	ID              uuid.UUID `json:"id"`
+	CreatorID       uuid.UUID `json:"creatorId"`
 	ParentChannelID uuid.UUID `json:"parentChannelId"`
 	ParentMessageID uuid.UUID `json:"parentMessageId"`
 	Archived        bool      `json:"archived"`
@@ -44,6 +45,7 @@ type Thread struct {
 func formatThreadChannel(thread *model.Thread) *Thread {
 	return &Thread{
 		ID:              thread.ChannelID,
+		CreatorID:       thread.Channel.CreatorID,
 		ParentChannelID: thread.Channel.ParentID,
 		ParentMessageID: thread.MessageID,
 		Archived:        thread.Channel.IsArchived(),
@@ -54,13 +56,7 @@ func formatThreadChannel(thread *model.Thread) *Thread {
 func formatThreadChannels(thread []*model.Thread) []*Thread {
 	threads := make([]*Thread, len(thread))
 	for i, t := range thread {
-		threads[i] = &Thread{
-			ID:              t.ChannelID,
-			ParentChannelID: t.Channel.ParentID,
-			ParentMessageID: t.MessageID,
-			Archived:        t.Channel.IsArchived(),
-			Name:            t.Channel.Name,
-		}
+		threads[i] = formatThreadChannel(t)
 	}
 	return threads
 }
