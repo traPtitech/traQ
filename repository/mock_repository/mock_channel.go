@@ -251,6 +251,21 @@ func (mr *MockChannelRepositoryMockRecorder) GetThreadChannels(ctx, query interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadChannels", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadChannels), ctx, query)
 }
 
+// GetThreadSubscribers mocks base method.
+func (m *MockChannelRepository) GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetThreadSubscribers", ctx, threadID)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetThreadSubscribers indicates an expected call of GetThreadSubscribers.
+func (mr *MockChannelRepositoryMockRecorder) GetThreadSubscribers(ctx, threadID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetThreadSubscribers", reflect.TypeOf((*MockChannelRepository)(nil).GetThreadSubscribers), ctx, threadID)
+}
+
 // GetThreadSubscriptionDefaults mocks base method.
 func (m *MockChannelRepository) GetThreadSubscriptionDefaults(ctx context.Context, userID uuid.UUID) ([]*model.UserThreadSubscriptionDefault, error) {
 	m.ctrl.T.Helper()
@@ -381,4 +396,20 @@ func (m *MockChannelRepository) UpdateThread(ctx context.Context, channelID uuid
 func (mr *MockChannelRepositoryMockRecorder) UpdateThread(ctx, channelID, args interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateThread", reflect.TypeOf((*MockChannelRepository)(nil).UpdateThread), ctx, channelID, args)
+}
+
+// ChangeThreadSubscription mocks base method.
+func (m *MockChannelRepository) ChangeThreadSubscription(ctx context.Context, threadID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) ([]uuid.UUID, []uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeThreadSubscription", ctx, threadID, args)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].([]uuid.UUID)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ChangeThreadSubscription indicates an expected call of ChangeThreadSubscription.
+func (mr *MockChannelRepositoryMockRecorder) ChangeThreadSubscription(ctx, threadID, args interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeThreadSubscription", reflect.TypeOf((*MockChannelRepository)(nil).ChangeThreadSubscription), ctx, threadID, args)
 }

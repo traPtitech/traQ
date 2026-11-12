@@ -389,13 +389,12 @@ func (repo *Repository) ChangeChannelSubscription(ctx context.Context, channelID
 	}
 
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// 指定された各ユーザーの現在のチャンネルの購読設定を取得
+		query := tx.Where(&model.UserSubscribeChannel{ChannelID: channelID})
+		if !args.Replace {
+			query = query.Where("user_id IN (?)", uids)
+		}
 		var _current []*model.UserSubscribeChannel
-		if err := tx.
-			Where(&model.UserSubscribeChannel{ChannelID: channelID}).
-			Where("user_id IN (?)", uids).
-			Find(&_current).
-			Error; err != nil {
+		if err := query.Find(&_current).Error; err != nil {
 			return err
 		}
 		current := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(_current))
@@ -403,7 +402,19 @@ func (repo *Repository) ChangeChannelSubscription(ctx context.Context, channelID
 			current[s.UserID] = s.GetLevel()
 		}
 
+		subscriptions := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(args.Subscription))
+		if args.Replace {
+			for uid, level := range current {
+				if level == model.ChannelSubscribeLevelMarkAndNotify {
+					subscriptions[uid] = model.ChannelSubscribeLevelNone
+				}
+			}
+		}
 		for uid, level := range args.Subscription {
+			subscriptions[uid] = level
+		}
+
+		for uid, level := range subscriptions {
 			if cl := current[uid]; cl == level {
 				continue // 既に同じ設定がされているのでスキップ
 			}
@@ -584,6 +595,155 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"level"}),
 	}).Create(&setting).Error
+}
+
+// GetThreadSubscribers implements ChannelRepository interface.
+func (repo *Repository) GetThreadSubscribers(ctx context.Context, threadID uuid.UUID) (users []uuid.UUID, err error) {
+	users = make([]uuid.UUID, 0)
+	if threadID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var err error
+		users, err = getThreadSubscribers(ctx, tx, threadID)
+		return err
+	})
+	return users, err
+}
+
+func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) {
+	tx = tx.WithContext(ctx)
+	users := make([]uuid.UUID, 0)
+	var thread model.Channel
+	if err := tx.Where("id = ? AND type = ?", threadID, model.ChannelTypeThread).
+		First(&thread).Error; err != nil {
+		return nil, convertError(err)
+	}
+	var parent model.Channel
+	if err := tx.First(&parent, "id = ?", thread.ParentID).Error; err != nil {
+		return nil, convertError(err)
+	}
+
+	nonInheritingThreadUsers := tx.Model(&model.UserThreadSubscription{}).
+		Select("user_id").Where("channel_id = ? AND level <> -1", threadID)
+	nonInheritingDefaultUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
+		Select("user_id").Where("channel_id = ? AND level <> -1", parent.ID)
+	defaultNotifyUsers := tx.Model(&model.UserThreadSubscriptionDefault{}).
+		Select("user_id").Where("channel_id = ? AND level = ?", parent.ID, model.ChannelSubscribeLevelMarkAndNotify)
+	parentNotifyUsers := tx.Model(&model.UserSubscribeChannel{}).
+		Select("user_id").Where("channel_id = ? AND notify = ?", parent.ID, true)
+
+	// 1. スレッドの購読レベルが2。
+	var threadSubscribers []uuid.UUID
+	if err := tx.Model(&model.UserThreadSubscription{}).
+		Where("channel_id = ? AND level = ?", threadID, model.ChannelSubscribeLevelMarkAndNotify).
+		Pluck("user_id", &threadSubscribers).Error; err != nil {
+		return nil, err
+	}
+	users = append(users, threadSubscribers...)
+
+	// 2. スレッドの購読レベルが継承（-1）で、親チャンネルに対するスレッドのデフォルト購読レベルが2。
+	var defaultSubscribers []uuid.UUID
+	if err := tx.Model(&model.User{}).
+		Where("id NOT IN (?)", nonInheritingThreadUsers).
+		Where("id IN (?)", defaultNotifyUsers).
+		Pluck("id", &defaultSubscribers).Error; err != nil {
+		return nil, err
+	}
+	users = append(users, defaultSubscribers...)
+
+	// スレッドの購読レベルと、親チャンネルのスレッドのデフォルト購読レベルがともに継承（-1）で、親チャンネルが次のいずれかに該当する。
+	//  購読レベルが2。または強制通知チャンネル。
+	var parentSubscribers []uuid.UUID
+	if err := tx.Model(&model.User{}).
+		Where("id NOT IN (?)", nonInheritingThreadUsers).
+		Where("id NOT IN (?)", nonInheritingDefaultUsers).
+		Where("? OR id IN (?)", parent.IsForced, parentNotifyUsers).
+		Pluck("id", &parentSubscribers).Error; err != nil {
+		return nil, err
+	}
+	users = append(users, parentSubscribers...)
+	return users, nil
+}
+
+// ChangeThreadSubscription implements ChannelRepository interface.
+func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
+	if threadID == uuid.Nil {
+		return nil, nil, repository.ErrNilID
+	}
+	for _, level := range args.Subscription {
+		if level != model.ChannelSubscribeLevelNone && level != model.ChannelSubscribeLevelMarkAndNotify {
+			return nil, nil, repository.ArgError("level", "level must be 0 or 2")
+		}
+	}
+
+	on = make([]uuid.UUID, 0)
+	off = make([]uuid.UUID, 0)
+
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		currentSubscribers, err := getThreadSubscribers(ctx, tx, threadID)
+		if err != nil {
+			return err
+		}
+		current := make(map[uuid.UUID]bool, len(currentSubscribers))
+
+		subscriptions := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(args.Subscription))
+		for _, id := range currentSubscribers {
+			current[id] = true
+			if args.Replace {
+				subscriptions[id] = model.ChannelSubscribeLevelNone
+			}
+		}
+		for id, level := range args.Subscription {
+			subscriptions[id] = level
+		}
+
+		// 存在しないユーザーを除外してから保存する。
+		ids := make([]uuid.UUID, 0, len(subscriptions))
+		for id := range subscriptions {
+			ids = append(ids, id)
+		}
+		var existingUsers []uuid.UUID
+		if err := tx.Model(&model.User{}).Where("id IN (?)", ids).Pluck("id", &existingUsers).Error; err != nil {
+			return err
+		}
+
+		settings := make([]model.UserThreadSubscription, 0, len(existingUsers))
+		for _, id := range existingUsers {
+			level := subscriptions[id]
+			if level == model.ChannelSubscribeLevelNone && !current[id] {
+				continue // 通知されていないユーザーの設定は維持する。
+			}
+
+			settings = append(settings, model.UserThreadSubscription{UserID: id, ChannelID: threadID, Level: level})
+			if level == model.ChannelSubscribeLevelMarkAndNotify && !current[id] {
+				on = append(on, id)
+			} else if level == model.ChannelSubscribeLevelNone {
+				off = append(off, id)
+			}
+		}
+		if len(settings) == 0 {
+			return nil
+		}
+
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"level"}),
+		}).Create(&settings).Error
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(on) > 0 || len(off) > 0 {
+		repo.hub.Publish(hub.Message{
+			Name:   event.ChannelSubscribersChanged,
+			Fields: hub.Fields{"channel_id": threadID, "subscriber_ids": append(on, off...)},
+		})
+	}
+
+	return on, off, nil
 }
 
 // GetChannelEvents implements ChannelRepository interface.

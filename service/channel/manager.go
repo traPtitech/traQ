@@ -35,6 +35,9 @@ type Manager interface {
 	UpdateChannel(ctx context.Context, id uuid.UUID, args repository.UpdateChannelArgs) error
 	PublicChannelTree(ctx context.Context) Tree
 
+	GetChannelSubscribers(ctx context.Context, channelID uuid.UUID) ([]uuid.UUID, error)
+	SetChannelSubscribers(ctx context.Context, channelID uuid.UUID, on []uuid.UUID, updaterID uuid.UUID) error
+	EditChannelSubscribers(ctx context.Context, channelID uuid.UUID, on, off []uuid.UUID, updaterID uuid.UUID) error
 	ChangeChannelSubscriptions(ctx context.Context, channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error
 
 	ArchiveChannel(ctx context.Context, id uuid.UUID, updaterID uuid.UUID) error
