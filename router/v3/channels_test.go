@@ -1340,6 +1340,7 @@ func TestHandlers_GetChannelSubscribers(t *testing.T) {
 
 	t.Run("success (thread)", func(t *testing.T) {
 		t.Parallel()
+
 		thread := env.CreateThread(t, user.GetID(), channel.ID)
 		require.NoError(t, env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.ChannelID, -1))
 
@@ -1435,11 +1436,14 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 
 	t.Run("success (thread)", func(t *testing.T) {
 		t.Parallel()
+
 		parent := env.CreateChannel(t, rand)
 		thread := env.CreateThread(t, user.GetID(), parent.ID)
 		require.NoError(t, env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.ChannelID, 0))
+
 		// 親のデフォルトから通知されるuser2を外し、userを通知対象にする。
 		require.NoError(t, env.Repository.SetThreadSubscriptionDefault(context.TODO(), user2.GetID(), parent.ID, 2))
+
 		env.R(t).PUT(path, thread.ChannelID).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PutChannelSubscribersRequest{On: set.UUID{user.GetID(): struct{}{}, uuid.Must(uuid.NewV4()): struct{}{}}}).
@@ -1448,6 +1452,7 @@ func TestHandlers_SetChannelSubscribers(t *testing.T) {
 		obj := env.R(t).GET(path, thread.ChannelID).
 			WithCookie(session.CookieName, commonSession).
 			Expect().Status(http.StatusOK).JSON().Array()
+
 		obj.Length().IsEqual(1)
 		obj.Value(0).String().IsEqual(user.GetID().String())
 	})
@@ -1570,13 +1575,17 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 
 	t.Run("success (thread)", func(t *testing.T) {
 		t.Parallel()
+
 		parent := env.CreateChannel(t, rand)
 		thread := env.CreateThread(t, user.GetID(), parent.ID)
 		require.NoError(t, env.Repository.SetThreadSubscription(context.TODO(), user.GetID(), thread.ChannelID, 0))
+
 		// 親のデフォルトから通知されるuser2を外し、userを通知対象にする。
 		require.NoError(t, env.Repository.SetThreadSubscriptionDefault(context.TODO(), user2.GetID(), parent.ID, 2))
+
 		// onとoffの両方に含まれるuser3は継承設定のままにする。
 		require.NoError(t, env.Repository.SetThreadSubscriptionDefault(context.TODO(), user3.GetID(), parent.ID, 2))
+
 		env.R(t).PATCH(path, thread.ChannelID).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchChannelSubscribersRequest{On: set.UUID{user.GetID(): struct{}{}, user3.GetID(): struct{}{}, uuid.Must(uuid.NewV4()): struct{}{}}, Off: set.UUID{user2.GetID(): struct{}{}, user3.GetID(): struct{}{}}}).
@@ -1585,8 +1594,10 @@ func TestHandlers_EditChannelSubscribers(t *testing.T) {
 		obj := env.R(t).GET(path, thread.ChannelID).
 			WithCookie(session.CookieName, commonSession).
 			Expect().Status(http.StatusOK).JSON().Array()
+
 		obj.Length().IsEqual(2)
 		obj.ContainsOnly(user.GetID().String(), user3.GetID().String())
+
 		_, err := env.Repository.GetThreadSubscription(context.TODO(), user3.GetID(), thread.ChannelID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})

@@ -528,23 +528,28 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
 	})
+
 	t.Run("Replace preserves mark level", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 		parent := mustMakeChannel(t, repo, rand)
 		added := mustMakeUser(t, repo, rand, false).GetID()
 		removed := mustMakeUser(t, repo, rand, false).GetID()
 		marked := mustMakeUser(t, repo, rand, false).GetID()
+
 		_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{removed: model.ChannelSubscribeLevelMarkAndNotify, marked: model.ChannelSubscribeLevelMark},
 		})
 		require.NoError(t, err)
+
 		on, off, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify}, KeepOffLevel: true, Replace: true,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []uuid.UUID{added}, on)
 		assert.Equal(t, []uuid.UUID{removed}, off)
+
 		subs, err := repo.GetChannelSubscriptions(ctx, repository.ChannelSubscriptionQuery{}.SetChannel(parent.ID).SetLevel(model.ChannelSubscribeLevelMark))
 		require.NoError(t, err)
 		require.Len(t, subs, 1)
@@ -1058,24 +1063,29 @@ func TestGormRepository_CreateThread(t *testing.T) {
 
 func TestGormRepository_GetThreadSubscribers(t *testing.T) {
 	t.Parallel()
+
 	repo, _, _ := setup(t, common)
 	ctx := context.Background()
 
 	t.Run("Nil ID", func(t *testing.T) {
 		t.Parallel()
+
 		_, err := repo.GetThreadSubscribers(ctx, uuid.Nil)
 		require.ErrorIs(t, err, repository.ErrNilID)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
+
 		_, err := repo.GetThreadSubscribers(ctx, mustGenerateUUID(false))
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
 	t.Run("Public channel", func(t *testing.T) {
 		t.Parallel()
+
 		public := mustMakeChannel(t, repo, rand)
+
 		_, err := repo.GetThreadSubscribers(ctx, public.ID)
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
@@ -1083,6 +1093,7 @@ func TestGormRepository_GetThreadSubscribers(t *testing.T) {
 	// 各ケースで独立した親・スレッド・ユーザーを作成する。
 	checkSubscriber := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced, subscribed bool) {
 		t.Helper()
+
 		parent := mustMakeChannel(t, repo, rand)
 		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
 		user := mustMakeUser(t, repo, rand, false)
@@ -1118,106 +1129,127 @@ func TestGormRepository_GetThreadSubscribers(t *testing.T) {
 
 	t.Run("Thread notify", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, 2, 0, 0, false, true)
 	})
 
 	t.Run("Thread none overrides parent notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, 0, 2, 2, false, false)
 	})
 
 	t.Run("Thread mark overrides parent notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, 1, 2, 2, false, false)
 	})
 
 	t.Run("Inherit default notify", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, 2, 0, false, true)
 	})
 
 	t.Run("Default none overrides parent notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, 0, 2, false, false)
 	})
 
 	t.Run("Default mark overrides parent notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, 1, 2, false, false)
 	})
 
 	t.Run("Inherit parent notify", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, -1, 2, false, true)
 	})
 
 	t.Run("Inherit parent mark", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, -1, 1, false, false)
 	})
 
 	t.Run("No subscription", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, -1, 0, false, false)
 	})
 
 	t.Run("Inherit forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, -1, 0, true, true)
 	})
 
 	t.Run("Thread none overrides forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, 0, -1, 0, true, false)
 	})
 
 	t.Run("Thread mark overrides forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, 1, -1, 0, true, false)
 	})
 
 	t.Run("Default none overrides forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, 0, 0, true, false)
 	})
 
 	t.Run("Default mark overrides forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkSubscriber(t, -1, 1, 0, true, false)
 	})
 }
 
 func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 	t.Parallel()
+
 	repo, _, _ := setup(t, common)
 	ctx := context.Background()
 
 	newThread := func(t *testing.T) (*model.Channel, *model.Thread) {
 		t.Helper()
+
 		parent := mustMakeChannel(t, repo, rand)
 		creator := mustMakeUser(t, repo, rand, false)
 		message := mustMakeMessage(t, repo, creator.GetID(), parent.ID)
 		thread, err := repo.CreateThread(ctx, model.Channel{Name: "subscribers", ParentID: parent.ID,
 			CreatorID: creator.GetID(), UpdaterID: creator.GetID()}, model.Thread{MessageID: message.ID})
 		require.NoError(t, err)
+
 		return parent, thread
 	}
 
 	t.Run("Nil ID", func(t *testing.T) {
 		t.Parallel()
+
 		_, _, err := repo.ChangeThreadSubscription(ctx, uuid.Nil, repository.ChangeChannelSubscriptionArgs{})
 		require.ErrorIs(t, err, repository.ErrNilID)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
+
 		_, _, err := repo.ChangeThreadSubscription(ctx, mustGenerateUUID(false), repository.ChangeChannelSubscriptionArgs{})
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
 	t.Run("Invalid level", func(t *testing.T) {
 		t.Parallel()
+
 		_, thread := newThread(t)
+
 		_, _, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{mustGenerateUUID(false): model.ChannelSubscribeLevelMark},
 		})
@@ -1226,34 +1258,42 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 
 	t.Run("Patch preserves unspecified users and ignores nonexistent users", func(t *testing.T) {
 		t.Parallel()
+
 		parent, thread := newThread(t)
 		added := mustMakeUser(t, repo, rand, true).GetID()
 		removed := mustMakeUser(t, repo, rand, false).GetID()
 		unchanged := mustMakeUser(t, repo, rand, false).GetID()
+
 		_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{removed: model.ChannelSubscribeLevelMarkAndNotify, unchanged: model.ChannelSubscribeLevelMarkAndNotify},
 		})
 		require.NoError(t, err)
+
 		on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify, removed: model.ChannelSubscribeLevelNone, mustGenerateUUID(false): model.ChannelSubscribeLevelMarkAndNotify},
 		})
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []uuid.UUID{added}, on)
 		assert.ElementsMatch(t, []uuid.UUID{removed}, off)
+
 		subscribers, err := repo.GetThreadSubscribers(ctx, thread.ChannelID)
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []uuid.UUID{added, unchanged}, subscribers)
+
 		setting, err := repo.GetThreadSubscription(ctx, removed, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Equal(t, model.ChannelSubscribeLevelNone, setting.Level)
+
 		_, err = repo.GetThreadSubscription(ctx, unchanged, thread.ChannelID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
 	checkOff := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced, removed bool) {
 		t.Helper()
+
 		parent, thread := newThread(t)
 		id := mustMakeUser(t, repo, rand, false).GetID()
+
 		_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
 		})
@@ -1261,6 +1301,7 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 		require.NoError(t, repo.SetThreadSubscription(ctx, id, thread.ChannelID, threadLevel))
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, defaultLevel))
 		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+
 		on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevelNone},
 		})
@@ -1272,6 +1313,7 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 		} else {
 			assert.Empty(t, off)
 		}
+
 		setting, err := repo.GetThreadSubscription(ctx, id, thread.ChannelID)
 		if threadLevel == -1 {
 			assert.ErrorIs(t, err, repository.ErrNotFound)
@@ -1283,61 +1325,73 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 
 	t.Run("Off explicit notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, 2, -1, 0, false, true)
 	})
 
 	t.Run("Off default notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, 2, 0, false, true)
 	})
 
 	t.Run("Off parent notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, -1, 2, false, true)
 	})
 
 	t.Run("Off forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, -1, 0, true, true)
 	})
 
 	t.Run("Keep explicit mark", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, 1, 2, 2, false, false)
 	})
 
 	t.Run("Keep default mark inheritance", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, 1, 2, false, false)
 	})
 
 	t.Run("Keep parent mark inheritance", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, -1, 1, false, false)
 	})
 
 	t.Run("Keep default none under forced notification", func(t *testing.T) {
 		t.Parallel()
+
 		checkOff(t, -1, 0, 0, true, false)
 	})
 
 	t.Run("Put replaces only notified users", func(t *testing.T) {
 		t.Parallel()
+
 		parent, thread := newThread(t)
 		added := mustMakeUser(t, repo, rand, false).GetID()
 		removed := mustMakeUser(t, repo, rand, false).GetID()
 		marked := mustMakeUser(t, repo, rand, false).GetID()
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, removed, parent.ID, 2))
 		require.NoError(t, repo.SetThreadSubscription(ctx, marked, thread.ChannelID, 1))
+
 		on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{added: model.ChannelSubscribeLevelMarkAndNotify}, Replace: true,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []uuid.UUID{added}, on)
 		assert.Equal(t, []uuid.UUID{removed}, off)
+
 		setting, err := repo.GetThreadSubscription(ctx, marked, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Equal(t, model.ChannelSubscribeLevelMark, setting.Level)
+
 		actual, err := repo.GetThreadSubscribers(ctx, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Equal(t, []uuid.UUID{added}, actual)
@@ -1347,6 +1401,7 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, on)
 		assert.Equal(t, []uuid.UUID{added}, off)
+
 		actual, err = repo.GetThreadSubscribers(ctx, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Empty(t, actual)
@@ -1354,15 +1409,18 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 
 	t.Run("On pins inherited notification and unchanged state returns no changes", func(t *testing.T) {
 		t.Parallel()
+
 		parent, thread := newThread(t)
 		id := mustMakeUser(t, repo, rand, false).GetID()
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, 2))
+
 		on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevelMarkAndNotify},
 		})
 		require.NoError(t, err)
 		assert.Empty(t, on)
 		assert.Empty(t, off)
+
 		setting, err := repo.GetThreadSubscription(ctx, id, thread.ChannelID)
 		require.NoError(t, err)
 		assert.Equal(t, model.ChannelSubscribeLevelMarkAndNotify, setting.Level)
