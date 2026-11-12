@@ -1407,18 +1407,25 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 
 func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
 	t.Parallel()
+
 	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
 		t.Helper()
+
 		base, _, _, user := setupWithUser(t, common, false)
 		repo := *base.(*Repository)
+
 		// 並列テストのイベントが混ざらないようにHubを分離する。
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
 		channel := mustMakeChannel(t, &repo, rand)
 		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, previous))
+
 		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
 		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, next))
+
 		setting, err := repo.GetThreadSubscription(ctx, user.GetID(), channel.ID)
 		if next == -1 {
 			require.ErrorIs(t, err, repository.ErrNotFound)
@@ -1426,6 +1433,7 @@ func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, model.ChannelSubscribeLevel(next), setting.Level)
 		}
+
 		if wantEvent {
 			select {
 			case ev := <-sub.Receiver:
@@ -1435,6 +1443,7 @@ func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
 				t.Fatal("subscription event was not published")
 			}
 		}
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
@@ -1528,12 +1537,16 @@ func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
 		repo := *base.(*Repository)
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
 		channel := mustMakeChannel(t, &repo, rand)
+
 		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
 		require.Error(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, -2))
 		require.Error(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, 3))
 		require.ErrorIs(t, repo.SetThreadSubscription(ctx, uuid.Nil, channel.ID, 2), repository.ErrNilID)
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
@@ -1544,18 +1557,25 @@ func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
 
 func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
 	t.Parallel()
+
 	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
 		t.Helper()
+
 		base, _, _, user := setupWithUser(t, common, false)
 		repo := *base.(*Repository)
+
 		// 並列テストのイベントが混ざらないようにHubを分離する。
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
 		channel := mustMakeChannel(t, &repo, rand)
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, previous))
+
 		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, next))
+
 		settings, err := repo.GetThreadSubscriptionDefaults(ctx, user.GetID())
 		require.NoError(t, err)
 		if next == -1 {
@@ -1564,6 +1584,7 @@ func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
 			require.Len(t, settings, 1)
 			assert.Equal(t, model.ChannelSubscribeLevel(next), settings[0].Level)
 		}
+
 		if wantEvent {
 			select {
 			case ev := <-sub.Receiver:
@@ -1573,6 +1594,7 @@ func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
 				t.Fatal("subscription event was not published")
 			}
 		}
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
@@ -1666,12 +1688,16 @@ func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
 		repo := *base.(*Repository)
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
 		channel := mustMakeChannel(t, &repo, rand)
+
 		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
 		require.Error(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, -2))
 		require.Error(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, 3))
 		require.ErrorIs(t, repo.SetThreadSubscriptionDefault(ctx, uuid.Nil, channel.ID, 2), repository.ErrNilID)
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
@@ -1682,12 +1708,15 @@ func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
 
 func TestGormRepository_ChangeThreadSubscriptionEvents(t *testing.T) {
 	t.Parallel()
+
 	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
 		t.Helper()
+
 		base, _, _, user := setupWithUser(t, common, false)
 		repo := *base.(*Repository)
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
 		parent := mustMakeChannel(t, &repo, rand)
 		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
@@ -1697,11 +1726,14 @@ func TestGormRepository_ChangeThreadSubscriptionEvents(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), parent.ID, 2))
 		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), thread.ChannelID, previous))
+
 		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ChannelSubscribersChanged)
+
 		_, _, err = repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{user.GetID(): model.ChannelSubscribeLevel(next)},
 		})
 		require.NoError(t, err)
+
 		if wantEvent {
 			select {
 			case ev := <-sub.Receiver:
@@ -1711,6 +1743,7 @@ func TestGormRepository_ChangeThreadSubscriptionEvents(t *testing.T) {
 				t.Fatal("subscription event was not published")
 			}
 		}
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
@@ -1746,10 +1779,12 @@ func TestGormRepository_ChangeThreadSubscriptionEvents(t *testing.T) {
 
 func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
 	t.Parallel()
+
 	base, _, _, creator := setupWithUser(t, common, false)
 	repo := *base.(*Repository)
 	repo.hub = hub.New()
 	defer repo.hub.Close()
+
 	ctx := context.Background()
 	parent := mustMakeChannel(t, &repo, rand)
 	message := mustMakeMessage(t, &repo, creator.GetID(), parent.ID)
@@ -1757,19 +1792,23 @@ func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
 		Name: "thread", ParentID: parent.ID, CreatorID: creator.GetID(), UpdaterID: creator.GetID(),
 	}, model.Thread{MessageID: message.ID})
 	require.NoError(t, err)
+
 	inherited := mustMakeUser(t, &repo, rand, false).GetID()
 	unchanged := mustMakeUser(t, &repo, rand, false).GetID()
 	removed := mustMakeUser(t, &repo, rand, false).GetID()
 	require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, inherited, parent.ID, 2))
 	require.NoError(t, repo.SetThreadSubscription(ctx, unchanged, thread.ChannelID, 2))
 	require.NoError(t, repo.SetThreadSubscription(ctx, removed, thread.ChannelID, 2))
+
 	sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ChannelSubscribersChanged)
+
 	on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
 		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{inherited: 2, unchanged: 2, removed: 0},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, on)
 	assert.ElementsMatch(t, []uuid.UUID{removed}, off)
+
 	select {
 	case ev := <-sub.Receiver:
 		assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
@@ -1778,6 +1817,7 @@ func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
 	default:
 		t.Fatal("subscription event was not published")
 	}
+
 	select {
 	case ev := <-sub.Receiver:
 		t.Fatalf("unexpected event: %+v", ev)

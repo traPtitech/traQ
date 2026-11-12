@@ -29,6 +29,7 @@ func (s subscriptionTestSession) ViewState() (uuid.UUID, viewer.State) {
 
 func TestSubscriptionChangeTarget(t *testing.T) {
 	t.Parallel()
+
 	parent := uuid.Must(uuid.NewV4())
 	thread := uuid.Must(uuid.NewV4())
 	otherChannel := uuid.Must(uuid.NewV4())
@@ -37,14 +38,18 @@ func TestSubscriptionChangeTarget(t *testing.T) {
 
 	checkTarget := func(t *testing.T, includeThreads bool, userID, viewedChannel uuid.UUID, want bool) {
 		t.Helper()
+
 		cm := mock_channel.NewMockManager(gomock.NewController(t))
+
 		if includeThreads {
 			cm.EXPECT().GetThreadChannels(gomock.Any(), repository.GetThreadChannelQuery{
 				ChannelID: parent, Archived: true, Limit: -1,
 			}).Return([]*model.Thread{{ChannelID: thread}}, nil)
 		}
+
 		ns := &Service{cm: cm, logger: zap.NewNop()}
 		target := subscriptionChangeTarget(ns, parent, []uuid.UUID{changedUser}, includeThreads)
+
 		assert.Equal(t, want, target(subscriptionTestSession{userID: userID, channelID: viewedChannel}))
 	}
 
@@ -81,9 +86,12 @@ func TestSubscriptionChangeTarget(t *testing.T) {
 	t.Run("Thread lookup failure preserves original recipients", func(t *testing.T) {
 		t.Parallel()
 		cm := mock_channel.NewMockManager(gomock.NewController(t))
+
 		cm.EXPECT().GetThreadChannels(gomock.Any(), gomock.Any()).Return(nil, errors.New("lookup failed"))
+
 		ns := &Service{cm: cm, logger: zap.NewNop()}
 		target := subscriptionChangeTarget(ns, parent, []uuid.UUID{changedUser}, true)
+
 		assert.True(t, target(subscriptionTestSession{userID: otherUser, channelID: parent}))
 		assert.True(t, target(subscriptionTestSession{userID: changedUser, channelID: otherChannel}))
 		assert.False(t, target(subscriptionTestSession{userID: otherUser, channelID: otherChannel}))
