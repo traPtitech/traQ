@@ -677,14 +677,17 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 			return nil, nil, repository.ArgError("level", "level must be 0 or 2")
 		}
 	}
+
 	on = make([]uuid.UUID, 0)
 	off = make([]uuid.UUID, 0)
+
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		currentSubscribers, err := getThreadSubscribers(ctx, tx, threadID)
 		if err != nil {
 			return err
 		}
 		current := make(map[uuid.UUID]bool, len(currentSubscribers))
+
 		subscriptions := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(args.Subscription))
 		for _, id := range currentSubscribers {
 			current[id] = true
@@ -705,12 +708,14 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 		if err := tx.Model(&model.User{}).Where("id IN (?)", ids).Pluck("id", &existingUsers).Error; err != nil {
 			return err
 		}
+
 		settings := make([]model.UserThreadSubscription, 0, len(existingUsers))
 		for _, id := range existingUsers {
 			level := subscriptions[id]
 			if level == model.ChannelSubscribeLevelNone && !current[id] {
 				continue // 通知されていないユーザーの設定は維持する。
 			}
+
 			settings = append(settings, model.UserThreadSubscription{UserID: id, ChannelID: threadID, Level: level})
 			if level == model.ChannelSubscribeLevelMarkAndNotify && !current[id] {
 				on = append(on, id)
@@ -721,6 +726,7 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 		if len(settings) == 0 {
 			return nil
 		}
+		
 		return tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
 			DoUpdates: clause.AssignmentColumns([]string{"level"}),
@@ -729,12 +735,14 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if len(on) > 0 || len(off) > 0 {
 		repo.hub.Publish(hub.Message{
 			Name:   event.ChannelSubscribersChanged,
 			Fields: hub.Fields{"channel_id": threadID, "subscriber_ids": append(on, off...)},
 		})
 	}
+
 	return on, off, nil
 }
 

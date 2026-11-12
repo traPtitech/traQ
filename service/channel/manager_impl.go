@@ -439,6 +439,7 @@ func (m *managerImpl) GetChannelSubscribers(ctx context.Context, channelID uuid.
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetChannelSubscriptions: %w", err)
 	}
+	
 	users := make([]uuid.UUID, 0, len(subscriptions))
 	for _, subscription := range subscriptions {
 		users = append(users, subscription.UserID)
@@ -481,6 +482,7 @@ func (m *managerImpl) changeChannelSubscribers(ctx context.Context, channelID uu
 	if ch.IsForced {
 		return ErrForcedNotification
 	}
+
 	args := repository.ChangeChannelSubscriptionArgs{Subscription: subscriptions, KeepOffLevel: true, Replace: replace}
 	var on, off []uuid.UUID
 	if ch.IsThread() {
@@ -491,6 +493,7 @@ func (m *managerImpl) changeChannelSubscribers(ctx context.Context, channelID uu
 	if err != nil {
 		return fmt.Errorf("failed to change channel subscribers: %w", err)
 	}
+
 	if len(on) > 0 || len(off) > 0 {
 		m.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
 			"userId": updaterID, "on": on, "off": off,
