@@ -815,16 +815,20 @@ func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
 
 	checkSubscription := func(t *testing.T, creatorDefault, authorDefault, parentLevel int, forced, sameUser, creatorMarked, authorMarked bool) {
 		t.Helper()
+
 		base, _, _, creator, parent := setupWithUserAndChannel(t, common, false)
 		repo := *base.(*Repository)
 		repo.hub = hub.New()
 		defer repo.hub.Close()
+
 		ctx := context.Background()
+
 		author := creator
 		if !sameUser {
 			author = mustMakeUser(t, &repo, rand, false)
 		}
 		require.NoError(t, getDB(&repo).Model(parent).Update("is_forced", forced).Error)
+
 		wantChanged := make([]uuid.UUID, 0, 2)
 		users := []uuid.UUID{creator.GetID()}
 		defaults := []int{creatorDefault}
@@ -834,11 +838,13 @@ func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
 			defaults = append(defaults, authorDefault)
 			marked = append(marked, authorMarked)
 		}
+
 		for i, id := range users {
 			_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
 				Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
 			})
 			require.NoError(t, err)
+
 			// -2 は未設定、-1 は明示的な継承レコードも検証する。
 			if defaults[i] >= -1 {
 				require.NoError(t, getDB(&repo).Create(&model.UserThreadSubscriptionDefault{
@@ -849,13 +855,16 @@ func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
 				wantChanged = append(wantChanged, id)
 			}
 		}
+
 		message := mustMakeMessage(t, &repo, author.GetID(), parent.ID)
 		sub := repo.hub.Subscribe(8, event.ThreadCreated, event.ThreadSubscribersChanged,
 			event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
 		thread, err := repo.CreateThread(ctx, model.Channel{
 			Name: "thread", ParentID: parent.ID, CreatorID: creator.GetID(), UpdaterID: creator.GetID(),
 		}, model.Thread{MessageID: message.ID})
 		require.NoError(t, err)
+
 		for i, id := range users {
 			setting, err := repo.GetThreadSubscription(ctx, id, thread.ChannelID)
 			if marked[i] {
@@ -865,12 +874,14 @@ func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
 				assert.ErrorIs(t, err, repository.ErrNotFound)
 			}
 		}
+
 		select {
 		case ev := <-sub.Receiver:
 			assert.Equal(t, event.ThreadCreated, ev.Name)
 		default:
 			t.Fatal("thread creation event was not published")
 		}
+
 		if len(wantChanged) > 0 {
 			select {
 			case ev := <-sub.Receiver:
@@ -881,6 +892,7 @@ func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
 				t.Fatal("subscription event was not published")
 			}
 		}
+
 		select {
 		case ev := <-sub.Receiver:
 			t.Fatalf("unexpected event: %+v", ev)
