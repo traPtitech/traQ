@@ -16,6 +16,65 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 )
 
+type messageViewerTestSession struct {
+	ws.Session
+	channelID uuid.UUID
+}
+
+func (s messageViewerTestSession) ViewState() (uuid.UUID, viewer.State) {
+	return s.channelID, viewer.StateNone
+}
+
+func TestMessageChannelViewers(t *testing.T) {
+	t.Parallel()
+
+	channelID := uuid.Must(uuid.NewV7())
+	parentID := uuid.Must(uuid.NewV7())
+	otherID := uuid.Must(uuid.NewV7())
+
+	t.Run("public channel viewers only", func(t *testing.T) {
+		t.Parallel()
+
+		target := messageChannelViewers(&model.Channel{
+			ID:       channelID,
+			ParentID: parentID,
+			Type:     model.ChannelTypePublic,
+		})
+		assert.True(t, target(messageViewerTestSession{channelID: channelID}))
+		assert.False(t, target(messageViewerTestSession{channelID: parentID}))
+		assert.False(t, target(messageViewerTestSession{channelID: otherID}))
+		assert.False(t, target(messageViewerTestSession{channelID: uuid.Nil}))
+	})
+
+	t.Run("thread and parent channel viewers", func(t *testing.T) {
+		t.Parallel()
+
+		target := messageChannelViewers(&model.Channel{
+			ID:       channelID,
+			ParentID: parentID,
+			Type:     model.ChannelTypeThread,
+		})
+		assert.True(t, target(messageViewerTestSession{channelID: channelID}))
+		assert.True(t, target(messageViewerTestSession{channelID: parentID}))
+		assert.False(t, target(messageViewerTestSession{channelID: otherID}))
+		assert.False(t, target(messageViewerTestSession{channelID: uuid.Nil}))
+	})
+
+	t.Run("DM channel viewers only", func(t *testing.T) {
+		t.Parallel()
+
+		target := messageChannelViewers(&model.Channel{
+			ID:       channelID,
+			ParentID: parentID,
+			Type:     model.ChannelTypeDM,
+		})
+		assert.True(t, target(messageViewerTestSession{channelID: channelID}))
+		assert.False(t, target(messageViewerTestSession{channelID: parentID}))
+		assert.False(t, target(messageViewerTestSession{channelID: otherID}))
+		assert.False(t, target(messageViewerTestSession{channelID: uuid.Nil}))
+	})
+}
+
 type subscriptionTestSession struct {
 	ws.Session
 	userID    uuid.UUID
