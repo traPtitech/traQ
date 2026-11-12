@@ -183,7 +183,7 @@ type captureFCM struct {
 	payload *fcm.Payload
 }
 
-func (c *captureFCM) Send(targets set.UUID, payload *fcm.Payload, withUnreadCount bool) {
+func (c *captureFCM) Send(targets set.UUID, payload *fcm.Payload, _ bool) {
 	c.targets = targets
 	c.payload = payload
 }

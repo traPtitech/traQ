@@ -140,7 +140,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		fcmPayload.Title = "#" + parentPath + "/" + channel.Name
 		fcmPayload.Path = "/channels/" + parentPath + "/" + chID.String()
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
-		
+
 	} else {
 		// 公開チャンネル
 		path := chTree.GetChannelPath(chID)
