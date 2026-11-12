@@ -810,6 +810,182 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	})
 }
 
+func TestGormRepository_CreateThreadSubscriptions(t *testing.T) {
+	t.Parallel()
+
+	checkSubscription := func(t *testing.T, creatorDefault, authorDefault, parentLevel int, forced, sameUser, creatorMarked, authorMarked bool) {
+		t.Helper()
+
+		base, _, _, creator, parent := setupWithUserAndChannel(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+
+		author := creator
+		if !sameUser {
+			author = mustMakeUser(t, &repo, rand, false)
+		}
+		require.NoError(t, getDB(&repo).Model(parent).Update("is_forced", forced).Error)
+
+		wantChanged := make([]uuid.UUID, 0, 2)
+		users := []uuid.UUID{creator.GetID()}
+		defaults := []int{creatorDefault}
+		marked := []bool{creatorMarked}
+		if !sameUser {
+			users = append(users, author.GetID())
+			defaults = append(defaults, authorDefault)
+			marked = append(marked, authorMarked)
+		}
+
+		for i, id := range users {
+			_, _, err := repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+				Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
+			})
+			require.NoError(t, err)
+
+			// -2 は未設定、-1 は明示的な継承レコードも検証する。
+			if defaults[i] >= -1 {
+				require.NoError(t, getDB(&repo).Create(&model.UserThreadSubscriptionDefault{
+					UserID: id, ChannelID: parent.ID, Level: model.ChannelSubscribeLevel(defaults[i]),
+				}).Error)
+			}
+			if marked[i] {
+				wantChanged = append(wantChanged, id)
+			}
+		}
+
+		message := mustMakeMessage(t, &repo, author.GetID(), parent.ID)
+		sub := repo.hub.Subscribe(8, event.ThreadCreated, event.ThreadSubscribersChanged,
+			event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "thread", ParentID: parent.ID, CreatorID: creator.GetID(), UpdaterID: creator.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		for i, id := range users {
+			setting, err := repo.GetThreadSubscription(ctx, id, thread.ChannelID)
+			if marked[i] {
+				require.NoError(t, err)
+				assert.Equal(t, model.ChannelSubscribeLevelMark, setting.Level)
+			} else {
+				assert.ErrorIs(t, err, repository.ErrNotFound)
+			}
+		}
+
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.ThreadCreated, ev.Name)
+		default:
+			t.Fatal("thread creation event was not published")
+		}
+
+		if len(wantChanged) > 0 {
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
+				assert.Equal(t, thread.ChannelID, ev.Fields["channel_id"])
+				assert.ElementsMatch(t, wantChanged, ev.Fields["subscriber_ids"])
+			default:
+				t.Fatal("subscription event was not published")
+			}
+		}
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	}
+
+	t.Run("No subscription", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, false, false, true, true)
+	})
+
+	t.Run("Inherit parent none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, false, false, true, true)
+	})
+
+	t.Run("Inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 1, false, false, false, false)
+	})
+
+	t.Run("Inherit parent notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 2, false, false, false, false)
+	})
+
+	t.Run("Inherit default mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 0, false, false, false, false)
+	})
+
+	t.Run("Inherit default notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 2, 2, 0, false, false, false, false)
+	})
+
+	t.Run("Default none overrides parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 1, false, false, true, true)
+	})
+
+	t.Run("Default none overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 2, false, false, true, true)
+	})
+
+	t.Run("Default mark overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 2, false, false, false, false)
+	})
+
+	t.Run("Inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, true, false, false, false)
+	})
+
+	t.Run("No default inherits forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, true, false, false, false)
+	})
+
+	t.Run("Default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 0, 0, true, false, true, true)
+	})
+
+	t.Run("Default mark overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 1, 0, true, false, false, false)
+	})
+
+	t.Run("Default notify preserves forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 2, 2, 0, true, false, false, false)
+	})
+
+	t.Run("Only creator needs mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 2, 2, false, false, true, false)
+	})
+
+	t.Run("Only author needs mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 0, 2, false, false, false, true)
+	})
+
+	t.Run("Creator is author", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -2, -2, 0, false, true, true, true)
+	})
+}
+
 func TestGormRepository_CreateThread(t *testing.T) {
 	t.Parallel()
 
@@ -1403,4 +1579,424 @@ func TestGormRepository_ChangeThreadSubscription(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, model.ChannelSubscribeLevelMarkAndNotify, setting.Level)
 	})
+}
+
+func TestGormRepository_SetThreadSubscriptionEvents(t *testing.T) {
+	t.Parallel()
+
+	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
+		t.Helper()
+
+		base, _, _, user := setupWithUser(t, common, false)
+		repo := *base.(*Repository)
+
+		// 並列テストのイベントが混ざらないようにHubを分離する。
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		channel := mustMakeChannel(t, &repo, rand)
+		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, previous))
+
+		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
+		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, next))
+
+		setting, err := repo.GetThreadSubscription(ctx, user.GetID(), channel.ID)
+		if next == -1 {
+			require.ErrorIs(t, err, repository.ErrNotFound)
+		} else {
+			require.NoError(t, err)
+			assert.Equal(t, model.ChannelSubscribeLevel(next), setting.Level)
+		}
+
+		if wantEvent {
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
+				assert.Equal(t, hub.Fields{"channel_id": channel.ID, "subscriber_ids": []uuid.UUID{user.GetID()}}, ev.Fields)
+			default:
+				t.Fatal("subscription event was not published")
+			}
+		}
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	}
+
+	t.Run("Inherit to Inherit does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, -1, false)
+	})
+
+	t.Run("Inherit to None publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 0, true)
+	})
+
+	t.Run("Inherit to Mark publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 1, true)
+	})
+
+	t.Run("Inherit to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 2, true)
+	})
+
+	t.Run("None to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, true)
+	})
+
+	t.Run("None to None does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 0, false)
+	})
+
+	t.Run("None to Mark does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 1, false)
+	})
+
+	t.Run("None to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 2, true)
+	})
+
+	t.Run("Mark to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, -1, true)
+	})
+
+	t.Run("Mark to None does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 0, false)
+	})
+
+	t.Run("Mark to Mark does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 1, false)
+	})
+
+	t.Run("Mark to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 2, true)
+	})
+
+	t.Run("Notify to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, true)
+	})
+
+	t.Run("Notify to None publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 0, true)
+	})
+
+	t.Run("Notify to Mark publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 1, true)
+	})
+
+	t.Run("Notify to Notify does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 2, false)
+	})
+
+	t.Run("Invalid writes do not publish events", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		channel := mustMakeChannel(t, &repo, rand)
+
+		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
+		require.Error(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, -2))
+		require.Error(t, repo.SetThreadSubscription(ctx, user.GetID(), channel.ID, 3))
+		require.ErrorIs(t, repo.SetThreadSubscription(ctx, uuid.Nil, channel.ID, 2), repository.ErrNilID)
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+}
+
+func TestGormRepository_SetThreadSubscriptionDefaultEvents(t *testing.T) {
+	t.Parallel()
+
+	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
+		t.Helper()
+
+		base, _, _, user := setupWithUser(t, common, false)
+		repo := *base.(*Repository)
+
+		// 並列テストのイベントが混ざらないようにHubを分離する。
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		channel := mustMakeChannel(t, &repo, rand)
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, previous))
+
+		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, next))
+
+		settings, err := repo.GetThreadSubscriptionDefaults(ctx, user.GetID())
+		require.NoError(t, err)
+		if next == -1 {
+			assert.Empty(t, settings)
+		} else {
+			require.Len(t, settings, 1)
+			assert.Equal(t, model.ChannelSubscribeLevel(next), settings[0].Level)
+		}
+
+		if wantEvent {
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(t, event.ThreadDefaultSubscribersChanged, ev.Name)
+				assert.Equal(t, hub.Fields{"channel_id": channel.ID, "subscriber_ids": []uuid.UUID{user.GetID()}}, ev.Fields)
+			default:
+				t.Fatal("subscription event was not published")
+			}
+		}
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	}
+
+	t.Run("Inherit to Inherit does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, -1, false)
+	})
+
+	t.Run("Inherit to None publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 0, true)
+	})
+
+	t.Run("Inherit to Mark publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 1, true)
+	})
+
+	t.Run("Inherit to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 2, true)
+	})
+
+	t.Run("None to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, -1, true)
+	})
+
+	t.Run("None to None does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 0, false)
+	})
+
+	t.Run("None to Mark does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 1, false)
+	})
+
+	t.Run("None to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 2, true)
+	})
+
+	t.Run("Mark to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, -1, true)
+	})
+
+	t.Run("Mark to None does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 0, false)
+	})
+
+	t.Run("Mark to Mark does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 1, false)
+	})
+
+	t.Run("Mark to Notify publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 1, 2, true)
+	})
+
+	t.Run("Notify to Inherit publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, -1, true)
+	})
+
+	t.Run("Notify to None publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 0, true)
+	})
+
+	t.Run("Notify to Mark publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 1, true)
+	})
+
+	t.Run("Notify to Notify does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 2, false)
+	})
+
+	t.Run("Invalid writes do not publish events", func(t *testing.T) {
+		t.Parallel()
+		base, _, _, user := setupWithUser(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		channel := mustMakeChannel(t, &repo, rand)
+
+		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ThreadDefaultSubscribersChanged, event.ChannelSubscribersChanged)
+
+		require.Error(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, -2))
+		require.Error(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), channel.ID, 3))
+		require.ErrorIs(t, repo.SetThreadSubscriptionDefault(ctx, uuid.Nil, channel.ID, 2), repository.ErrNilID)
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	})
+}
+
+func TestGormRepository_ChangeThreadSubscriptionEvents(t *testing.T) {
+	t.Parallel()
+
+	checkEvent := func(t *testing.T, previous, next int, wantEvent bool) {
+		t.Helper()
+
+		base, _, _, user := setupWithUser(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		parent := mustMakeChannel(t, &repo, rand)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "thread", ParentID: parent.ID, CreatorID: user.GetID(), UpdaterID: user.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, user.GetID(), parent.ID, 2))
+		require.NoError(t, repo.SetThreadSubscription(ctx, user.GetID(), thread.ChannelID, previous))
+
+		sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ChannelSubscribersChanged)
+
+		_, _, err = repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{user.GetID(): model.ChannelSubscribeLevel(next)},
+		})
+		require.NoError(t, err)
+
+		if wantEvent {
+			select {
+			case ev := <-sub.Receiver:
+				assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
+				assert.Equal(t, hub.Fields{"channel_id": thread.ChannelID, "subscriber_ids": []uuid.UUID{user.GetID()}}, ev.Fields)
+			default:
+				t.Fatal("subscription event was not published")
+			}
+		}
+
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event: %+v", ev)
+		default:
+		}
+	}
+
+	t.Run("Pin inherited notification publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, -1, 2, true)
+	})
+
+	t.Run("Unchanged notification does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 2, false)
+	})
+
+	t.Run("Disable notification publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 2, 0, true)
+	})
+
+	t.Run("Unchanged none does not publish event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 0, false)
+	})
+
+	t.Run("Enable notification publishes event", func(t *testing.T) {
+		t.Parallel()
+		checkEvent(t, 0, 2, true)
+	})
+}
+
+func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
+	t.Parallel()
+
+	base, _, _, creator := setupWithUser(t, common, false)
+	repo := *base.(*Repository)
+	repo.hub = hub.New()
+	defer repo.hub.Close()
+
+	ctx := context.Background()
+	parent := mustMakeChannel(t, &repo, rand)
+	message := mustMakeMessage(t, &repo, creator.GetID(), parent.ID)
+	thread, err := repo.CreateThread(ctx, model.Channel{
+		Name: "thread", ParentID: parent.ID, CreatorID: creator.GetID(), UpdaterID: creator.GetID(),
+	}, model.Thread{MessageID: message.ID})
+	require.NoError(t, err)
+
+	inherited := mustMakeUser(t, &repo, rand, false).GetID()
+	unchanged := mustMakeUser(t, &repo, rand, false).GetID()
+	removed := mustMakeUser(t, &repo, rand, false).GetID()
+	require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, inherited, parent.ID, 2))
+	require.NoError(t, repo.SetThreadSubscription(ctx, unchanged, thread.ChannelID, 2))
+	require.NoError(t, repo.SetThreadSubscription(ctx, removed, thread.ChannelID, 2))
+
+	sub := repo.hub.Subscribe(8, event.ThreadSubscribersChanged, event.ChannelSubscribersChanged)
+
+	on, off, err := repo.ChangeThreadSubscription(ctx, thread.ChannelID, repository.ChangeChannelSubscriptionArgs{
+		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{inherited: 2, unchanged: 2, removed: 0},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, on)
+	assert.ElementsMatch(t, []uuid.UUID{removed}, off)
+
+	select {
+	case ev := <-sub.Receiver:
+		assert.Equal(t, event.ThreadSubscribersChanged, ev.Name)
+		assert.Equal(t, thread.ChannelID, ev.Fields["channel_id"])
+		assert.ElementsMatch(t, []uuid.UUID{inherited, removed}, ev.Fields["subscriber_ids"])
+	default:
+		t.Fatal("subscription event was not published")
+	}
+
+	select {
+	case ev := <-sub.Receiver:
+		t.Fatalf("unexpected event: %+v", ev)
+	default:
+	}
 }

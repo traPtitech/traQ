@@ -204,6 +204,18 @@ const (
 	// 		channel_id: uuid.UUID
 	ThreadUpdated = "thread.updated"
 
+	// ThreadSubscribersChanged スレッドの購読設定が通知クラス間で変化した
+	// Fields:
+	//   channel_id: uuid.UUID
+	//   subscriber_ids: []uuid.UUID
+	ThreadSubscribersChanged = "thread.subscribers_changed"
+
+	// ThreadDefaultSubscribersChanged スレッドのデフォルト購読設定が通知クラス間で変化した
+	// Fields:
+	//   channel_id: uuid.UUID (親チャンネル)
+	//   subscriber_ids: []uuid.UUID
+	ThreadDefaultSubscribersChanged = "thread.default_subscribers_changed"
+
 	// StampCreated スタンプが作成された
 	// 	Fields:
 	// 		stamp_id: uuid.UUID

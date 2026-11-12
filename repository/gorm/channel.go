@@ -97,6 +97,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 // CreateThread implements ChannelRepository interface.
 func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
 	arr := []interface{}{&ch, &th}
+	var changed []uuid.UUID
 
 	ch.ID = uuid.Must(uuid.NewV7())
 	th.ChannelID = ch.ID
@@ -108,6 +109,57 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			if err := tx.Create(v).Error; err != nil {
 				return err
 			}
+		}
+		var message model.Message
+		if err := tx.First(&message, "id = ?", th.MessageID).Error; err != nil {
+			return err
+		}
+
+		var parent model.Channel
+		if err := tx.First(&parent, "id = ?", ch.ParentID).Error; err != nil {
+			return err
+		}
+
+		users := set.UUID{}
+		users.Add(ch.CreatorID, message.UserID)
+		users.Remove(uuid.Nil)
+		for userID := range users {
+			var defaults []model.UserThreadSubscriptionDefault
+			if err := tx.Where("user_id = ? AND channel_id = ?", userID, parent.ID).Find(&defaults).Error; err != nil {
+				return err
+			}
+
+			level := model.ChannelSubscribeLevel(-1)
+			if len(defaults) > 0 {
+				level = defaults[0].Level
+			}
+
+			if level == -1 {
+				if parent.IsForced {
+					continue
+				}
+
+				var subscriptions []model.UserSubscribeChannel
+				if err := tx.Where("user_id = ? AND channel_id = ?", userID, parent.ID).Find(&subscriptions).Error; err != nil {
+					return err
+				}
+
+				level = model.ChannelSubscribeLevelNone
+				if len(subscriptions) > 0 {
+					level = subscriptions[0].GetLevel()
+				}
+			}
+
+			if level != model.ChannelSubscribeLevelNone {
+				continue
+			}
+
+			if err := tx.Create(&model.UserThreadSubscription{
+				UserID: userID, ChannelID: ch.ID, Level: model.ChannelSubscribeLevelMark,
+			}).Error; err != nil {
+				return err
+			}
+			changed = append(changed, userID)
 		}
 		return nil
 	})
@@ -126,6 +178,13 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			"thread":     &ch,
 		},
 	})
+	if len(changed) > 0 {
+		repo.hub.Publish(hub.Message{
+			Name:   event.ThreadSubscribersChanged,
+			Fields: hub.Fields{"channel_id": ch.ID, "subscriber_ids": changed},
+		})
+	}
+
 	th.Channel = &ch
 	return &th, nil
 }
@@ -542,14 +601,39 @@ func (repo *Repository) SetThreadSubscriptionDefault(ctx context.Context, userID
 		ChannelID: channelID,
 		Level:     model.ChannelSubscribeLevel(level),
 	}
-	tx := repo.db.WithContext(ctx)
-	if level == -1 {
-		return tx.Delete(&setting).Error
+
+	var changed bool
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var levels []int
+		if err := tx.Model(&setting).Where("user_id = ? AND channel_id = ?", userID, channelID).
+			Pluck("level", &levels).Error; err != nil {
+			return err
+		}
+		previous := -1
+		if len(levels) > 0 {
+			previous = levels[0]
+		}
+		changed = subscriptionClass(previous) != subscriptionClass(level)
+
+		if level == -1 {
+			return tx.Delete(&setting).Error
+		}
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"level"}),
+		}).Create(&setting).Error
+	})
+	if err != nil {
+		return err
 	}
-	return tx.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"level"}),
-	}).Create(&setting).Error
+
+	if changed {
+		repo.hub.Publish(hub.Message{
+			Name:   event.ThreadDefaultSubscribersChanged,
+			Fields: hub.Fields{"channel_id": channelID, "subscriber_ids": []uuid.UUID{userID}},
+		})
+	}
+	return nil
 }
 
 // GetThreadSubscriptions implements ChannelRepository interface.
@@ -587,14 +671,46 @@ func (repo *Repository) SetThreadSubscription(ctx context.Context, userID, chann
 		ChannelID: channelID,
 		Level:     model.ChannelSubscribeLevel(level),
 	}
-	tx := repo.db.WithContext(ctx)
-	if level == -1 {
-		return tx.Delete(&setting).Error
+
+	var changed bool
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var levels []int
+		if err := tx.Model(&setting).Where("user_id = ? AND channel_id = ?", userID, channelID).
+			Pluck("level", &levels).Error; err != nil {
+			return err
+		}
+		previous := -1
+		if len(levels) > 0 {
+			previous = levels[0]
+		}
+		changed = subscriptionClass(previous) != subscriptionClass(level)
+
+		if level == -1 {
+			return tx.Delete(&setting).Error
+		}
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"level"}),
+		}).Create(&setting).Error
+	})
+	if err != nil {
+		return err
 	}
-	return tx.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"level"}),
-	}).Create(&setting).Error
+
+	if changed {
+		repo.hub.Publish(hub.Message{
+			Name:   event.ThreadSubscribersChanged,
+			Fields: hub.Fields{"channel_id": channelID, "subscriber_ids": []uuid.UUID{userID}},
+		})
+	}
+	return nil
+}
+
+func subscriptionClass(level int) int {
+	if level == 1 {
+		return 0
+	}
+	return level
 }
 
 // GetThreadSubscribers implements ChannelRepository interface.
@@ -681,6 +797,7 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 	on = make([]uuid.UUID, 0)
 	off = make([]uuid.UUID, 0)
 
+	changed := make([]uuid.UUID, 0)
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		currentSubscribers, err := getThreadSubscribers(ctx, tx, threadID)
 		if err != nil {
@@ -709,6 +826,14 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 			return err
 		}
 
+		var currentSettings []model.UserThreadSubscription
+		if err := tx.Where("channel_id = ? AND user_id IN (?)", threadID, existingUsers).Find(&currentSettings).Error; err != nil {
+			return err
+		}
+		currentLevels := make(map[uuid.UUID]int, len(currentSettings))
+		for _, setting := range currentSettings {
+			currentLevels[setting.UserID] = int(setting.Level)
+		}
 		settings := make([]model.UserThreadSubscription, 0, len(existingUsers))
 		for _, id := range existingUsers {
 			level := subscriptions[id]
@@ -717,6 +842,13 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 			}
 
 			settings = append(settings, model.UserThreadSubscription{UserID: id, ChannelID: threadID, Level: level})
+			previous, ok := currentLevels[id]
+			if !ok {
+				previous = -1
+			}
+			if subscriptionClass(previous) != subscriptionClass(int(level)) {
+				changed = append(changed, id)
+			}
 			if level == model.ChannelSubscribeLevelMarkAndNotify && !current[id] {
 				on = append(on, id)
 			} else if level == model.ChannelSubscribeLevelNone {
@@ -736,10 +868,10 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 		return nil, nil, err
 	}
 
-	if len(on) > 0 || len(off) > 0 {
+	if len(changed) > 0 {
 		repo.hub.Publish(hub.Message{
-			Name:   event.ChannelSubscribersChanged,
-			Fields: hub.Fields{"channel_id": threadID, "subscriber_ids": append(on, off...)},
+			Name:   event.ThreadSubscribersChanged,
+			Fields: hub.Fields{"channel_id": threadID, "subscriber_ids": changed},
 		})
 	}
 
