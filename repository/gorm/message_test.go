@@ -1,7 +1,9 @@
 package gorm
 
 import (
+	"bytes"
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -9,12 +11,15 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 func TestRepositoryImpl_CreateMessage(t *testing.T) {
@@ -604,15 +609,35 @@ func TestRepositoryImpl_CreateMessage_ThreadParentNotification(t *testing.T) {
 		assert.ElementsMatch(t, []uuid.UUID{parent.ID, uuid.Nil}, ids)
 	})
 
-	t.Run("Public channel posts do not include a parent message", func(t *testing.T) {
-		t.Parallel()
+	checkPostWithoutThreadLock := func(t *testing.T, repo *Repository, userID, channelID uuid.UUID) {
+		t.Helper()
 
-		repo, user, _, parent := setupThread(t)
+		var queries bytes.Buffer
+		repo.db = repo.db.Session(&gorm.Session{Logger: logger.New(log.New(&queries, "", 0), logger.Config{LogLevel: logger.Info})})
 		sub := repo.hub.Subscribe(1, event.MessageCreated)
 
-		_, err := repo.CreateMessage(ctx, user.GetID(), parent.ChannelID, "public")
+		_, err := repo.CreateMessage(ctx, userID, channelID, "message")
 		require.NoError(t, err)
 
 		assert.Equal(t, uuid.Nil, nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"])
+		assert.NotContains(t, queries.String(), "FOR UPDATE")
+		assert.NotContains(t, queries.String(), "FROM `threads`")
+	}
+
+	t.Run("Public channel posts do not lock threads", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, _, parent := setupThread(t)
+		checkPostWithoutThreadLock(t, repo, user.GetID(), parent.ChannelID)
+	})
+
+	t.Run("DM posts do not lock threads", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, _, _ := setupThread(t)
+		dm, err := repo.CreateChannel(ctx, model.Channel{}, set.UUID{user.GetID(): struct{}{}}, model.ChannelTypeDM)
+		require.NoError(t, err)
+
+		checkPostWithoutThreadLock(t, repo, user.GetID(), dm.ID)
 	})
 }
