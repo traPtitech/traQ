@@ -184,7 +184,7 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			Fields: hub.Fields{"channel_id": ch.ID, "subscriber_ids": changed},
 		})
 	}
-	
+
 	th.Channel = &ch
 	return &th, nil
 }
