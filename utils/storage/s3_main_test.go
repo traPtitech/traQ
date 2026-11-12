@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -21,13 +22,22 @@ const (
 	rustfsDigest     = "sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff"
 )
 
-var s3Main *s3Tester
+var s3Main s3Tester
 
 func TestMain(m *testing.M) {
-	os.Exit(runStorageTests(m))
+	os.Exit(runStorageTests(context.Background(), m))
 }
 
-func runStorageTests(m *testing.M) (code int) {
+func runStorageTests(ctx context.Context, m *testing.M) (code int) {
+	if endpoint := os.Getenv("TRAQ_TEST_S3_ENDPOINT"); endpoint != "" {
+		if err := s3Main.setup(ctx, endpoint); err != nil {
+			fmt.Println("Unable to initialize the test S3 endpoint:", err)
+			return 1
+		}
+
+		return m.Run()
+	}
+
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		fmt.Println("Could not connect to docker:", err)
@@ -84,7 +94,8 @@ func runStorageTests(m *testing.M) (code int) {
 		return 1
 	}
 
-	if err = pool.Retry(s3Main.setupFunc(resource)); err != nil {
+	endpoint := "http://" + resource.GetHostPort("9000/tcp")
+	if err = pool.Retry(func() error { return s3Main.setup(ctx, endpoint) }); err != nil {
 		fmt.Println("Unable to initialize RustFS:", err)
 		return 1
 	}
