@@ -114,10 +114,12 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 		if err := tx.First(&message, "id = ?", th.MessageID).Error; err != nil {
 			return err
 		}
+
 		var parent model.Channel
 		if err := tx.First(&parent, "id = ?", ch.ParentID).Error; err != nil {
 			return err
 		}
+
 		users := set.UUID{}
 		users.Add(ch.CreatorID, message.UserID)
 		users.Remove(uuid.Nil)
@@ -126,26 +128,32 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			if err := tx.Where("user_id = ? AND channel_id = ?", userID, parent.ID).Find(&defaults).Error; err != nil {
 				return err
 			}
+
 			level := model.ChannelSubscribeLevel(-1)
 			if len(defaults) > 0 {
 				level = defaults[0].Level
 			}
+
 			if level == -1 {
 				if parent.IsForced {
 					continue
 				}
+
 				var subscriptions []model.UserSubscribeChannel
 				if err := tx.Where("user_id = ? AND channel_id = ?", userID, parent.ID).Find(&subscriptions).Error; err != nil {
 					return err
 				}
+
 				level = model.ChannelSubscribeLevelNone
 				if len(subscriptions) > 0 {
 					level = subscriptions[0].GetLevel()
 				}
 			}
+
 			if level != model.ChannelSubscribeLevelNone {
 				continue
 			}
+
 			if err := tx.Create(&model.UserThreadSubscription{
 				UserID: userID, ChannelID: ch.ID, Level: model.ChannelSubscribeLevelMark,
 			}).Error; err != nil {
@@ -176,6 +184,7 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			Fields: hub.Fields{"channel_id": ch.ID, "subscriber_ids": changed},
 		})
 	}
+	
 	th.Channel = &ch
 	return &th, nil
 }
