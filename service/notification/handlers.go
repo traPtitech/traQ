@@ -480,7 +480,8 @@ func subscribersChangedHandler(ns *Service, ev hub.Message, eventType string) {
 }
 
 func subscriptionChangeTarget(ns *Service, channelID uuid.UUID, userIDs []uuid.UUID, includeThreads bool) ws.TargetFunc {
-	targets := []ws.TargetFunc{ws.TargetChannelViewers(channelID), ws.TargetUsers(userIDs...)}
+	channelIDs := set.UUID{channelID: struct{}{}}
+	changedUsers := set.UUIDSetFromArray(userIDs)
 	if includeThreads {
 		threads, err := ns.cm.GetThreadChannels(context.Background(), repository.GetThreadChannelQuery{
 			ChannelID: channelID,
@@ -491,11 +492,14 @@ func subscriptionChangeTarget(ns *Service, channelID uuid.UUID, userIDs []uuid.U
 			ns.logger.Error("failed to GetThreadChannels", zap.Error(err), zap.Stringer("channel_id", channelID))
 		} else {
 			for _, thread := range threads {
-				targets = append(targets, ws.TargetChannelViewers(thread.ChannelID))
+				channelIDs.Add(thread.ChannelID)
 			}
 		}
 	}
-	return ws.Or(targets...)
+	return func(s ws.Session) bool {
+		viewedChannel, _ := s.ViewState()
+		return channelIDs.Contains(viewedChannel) || changedUsers.Contains(s.UserID())
+	}
 }
 
 func threadCreatedHandler(ns *Service, ev hub.Message) {
