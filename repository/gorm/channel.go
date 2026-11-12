@@ -766,21 +766,25 @@ func threadSubscriberQuery(tx *gorm.DB, threadID uuid.UUID, minimum model.Channe
 	} else {
 		parentSubscriptions = parentSubscriptions.Where("mark = ? OR notify = ?", true, true)
 	}
+
 	forcedParent := tx.Model(&model.Channel{}).Select("id").
 		Where("id = (?) AND is_forced = ?", parentID, true)
 
 	// 1. スレッド個別の購読レベルを優先する。
 	individual := tx.Model(&model.UserThreadSubscription{}).
 		Select("user_id").Where("channel_id = ? AND level >= ?", threadID, minimum)
+
 	// 2. 個別設定が継承の場合、親チャンネルのスレッドのデフォルトの通知設定を使う。
 	defaults := tx.Model(&model.User{}).Select("id AS user_id").
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
 		Where("id IN (?)", defaultSubscribers)
+
 	// 3. 両方が継承の場合、親チャンネルの購読設定（強制通知なら2）を使う。
 	parent := tx.Model(&model.User{}).Select("id AS user_id").
 		Where("id NOT IN (?)", nonInheritingThreadUsers).
 		Where("id NOT IN (?)", nonInheritingDefaultUsers).
 		Where("EXISTS (?) OR id IN (?)", forcedParent, parentSubscriptions)
+
 	return tx.Table("((?) UNION (?) UNION (?)) AS thread_subscribers", individual, defaults, parent).Select("user_id")
 }
 
