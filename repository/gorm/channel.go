@@ -726,7 +726,7 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 		if len(settings) == 0 {
 			return nil
 		}
-		
+
 		return tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}, {Name: "channel_id"}},
 			DoUpdates: clause.AssignmentColumns([]string{"level"}),
