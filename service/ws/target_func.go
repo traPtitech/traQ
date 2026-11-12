@@ -41,10 +41,15 @@ func TargetUserSets(sets ...set.UUID) TargetFunc {
 }
 
 // TargetChannelViewers 指定したチャンネルの閲覧者を対象に送信します
-func TargetChannelViewers(channelID uuid.UUID) TargetFunc {
+func TargetChannelViewers(channelIDs ...uuid.UUID) TargetFunc {
 	return func(s Session) bool {
 		c, _ := s.ViewState()
-		return c == channelID
+		for _, channelID := range channelIDs {
+			if c == channelID {
+				return true
+			}
+		}
+		return false
 	}
 }
 

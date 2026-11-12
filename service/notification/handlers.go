@@ -306,11 +306,10 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 // messageChannelViewers 投稿チャンネルと、スレッドの場合はその親チャンネルの閲覧者を対象にします。
 func messageChannelViewers(ch *model.Channel) ws.TargetFunc {
-	target := ws.TargetChannelViewers(ch.ID)
 	if ch.IsThread() {
-		return ws.Or(target, ws.TargetChannelViewers(ch.ParentID))
+		return ws.TargetChannelViewers(ch.ID, ch.ParentID)
 	}
-	return target
+	return ws.TargetChannelViewers(ch.ID)
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
