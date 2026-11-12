@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"slices"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/utils/set"
@@ -44,12 +46,7 @@ func TargetUserSets(sets ...set.UUID) TargetFunc {
 func TargetChannelViewers(channelIDs ...uuid.UUID) TargetFunc {
 	return func(s Session) bool {
 		c, _ := s.ViewState()
-		for _, channelID := range channelIDs {
-			if c == channelID {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(channelIDs, c)
 	}
 }
 
