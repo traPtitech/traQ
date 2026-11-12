@@ -439,7 +439,7 @@ func (m *managerImpl) GetChannelSubscribers(ctx context.Context, channelID uuid.
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetChannelSubscriptions: %w", err)
 	}
-	
+
 	users := make([]uuid.UUID, 0, len(subscriptions))
 	for _, subscription := range subscriptions {
 		users = append(users, subscription.UserID)
