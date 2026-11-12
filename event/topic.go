@@ -94,6 +94,7 @@ const (
 	// 		message_id: uuid.UUID
 	// 		message: *model.Message
 	// 		parse_result: *message.ParseResult
+	// 		thread_parent_message_id: uuid.UUID
 	MessageCreated = "message.created"
 	// MessageUpdated メッセージが更新された
 	// 	Fields:

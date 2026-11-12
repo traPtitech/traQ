@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -135,11 +136,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	} else if isThread {
 		// スレッドチャンネル
-		// スレッドの親は必ずpublicChannel→親のパスを取得 + スレッド名
-		path := chTree.GetChannelPath(channel.ParentID) + "/" + channel.Name
-		fcmPayload.Title = "#" + path
-		fcmPayload.Path = "/channels/" + path
+		parentPath := chTree.GetChannelPath(channel.ParentID)
+		fcmPayload.Title = "#" + parentPath + "/" + channel.Name
+		fcmPayload.Path = "/channels/" + parentPath + "/" + chID.String()
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
+
 	} else {
 		// 公開チャンネル
 		path := chTree.GetChannelPath(chID)
@@ -182,7 +183,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	default: // 通常チャンネル,スレッドチャンネルメッセージ
 		// チャンネル通知購読者取得
-		notify, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtNotifyLevelOf(chID))
+		notifyQuery := q.SubscriberAtNotifyLevelOf(chID)
+		markQuery := q.SubscriberAtMarkLevelOf(chID)
+		if isThread {
+			notifyQuery = q.ThreadSubscriberAtNotifyLevelOf(chID)
+			markQuery = q.ThreadSubscriberAtMarkLevelOf(chID)
+		}
+		notify, err := ns.repo.GetUserIDs(context.Background(), notifyQuery)
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -190,7 +197,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		notifiedUsers.Add(notify...)
 
 		// チャンネル未読管理購読者取得
-		mark, err := ns.repo.GetUserIDs(context.Background(), q.SubscriberAtMarkLevelOf(chID))
+		mark, err := ns.repo.GetUserIDs(context.Background(), markQuery)
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -223,8 +230,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			markedUsers.Add(gs...)
 			noticeable.Add(gs...)
 		}
+		// スレッドの最初の投稿は、親メッセージへの引用と同じ通知対象にする。
+		citationIDs := parsed.Citation
+		if parentID, ok := ev.Fields["thread_parent_message_id"].(uuid.UUID); isThread && ok && parentID != uuid.Nil && !slices.Contains(citationIDs, parentID) {
+			citationIDs = append(slices.Clone(citationIDs), parentID)
+		}
 		// メッセージを引用されたユーザーへの通知
-		for _, mid := range parsed.Citation {
+		for _, mid := range citationIDs {
 			m, err := ns.repo.GetMessageByID(context.Background(), mid)
 			if err != nil {
 				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗

@@ -1,16 +1,25 @@
 package gorm
 
 import (
+	"bytes"
 	"context"
+	"log"
 	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 func TestRepositoryImpl_CreateMessage(t *testing.T) {
@@ -478,5 +487,157 @@ func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 		if assert.NoError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, stamp.ID, user.GetID())) {
 			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.MessageStamp{}).Where(&model.MessageStamp{MessageID: message.ID, StampID: stamp.ID, UserID: user.GetID()})))
 		}
+	})
+}
+
+func TestRepositoryImpl_CreateMessage_ThreadParentNotification(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	setupThread := func(t *testing.T) (*Repository, model.UserInfo, *model.Thread, *model.Message) {
+		t.Helper()
+
+		// 並列テストで発行されるイベントと混ざらないようにHubを分離する。
+		repo := *repositories[common]
+		repo.hub = hub.New()
+		t.Cleanup(repo.hub.Close)
+
+		parent := mustMakeChannel(t, &repo, rand)
+		user := mustMakeUser(t, &repo, rand, false)
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "notification", ParentID: parent.ID, CreatorID: user.GetID(), UpdaterID: user.GetID(),
+		}, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		return &repo, user, thread, message
+	}
+
+	nextEvent := func(t *testing.T, receiver <-chan hub.Message) hub.Message {
+		t.Helper()
+
+		select {
+		case ev := <-receiver:
+			return ev
+		case <-time.After(3 * time.Second):
+			t.Fatal("message event was not published")
+			return hub.Message{}
+		}
+	}
+
+	t.Run("Only the first post includes the parent message", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, thread, parent := setupThread(t)
+		sub := repo.hub.Subscribe(2, event.MessageCreated)
+
+		_, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "first")
+		require.NoError(t, err)
+
+		ev := nextEvent(t, sub.Receiver)
+		assert.Equal(t, parent.ID, ev.Fields["thread_parent_message_id"])
+		assert.Empty(t, ev.Fields["parse_result"].(*message.ParseResult).Citation)
+
+		_, err = repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "second")
+		require.NoError(t, err)
+
+		assert.Equal(t, uuid.Nil, nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"])
+	})
+
+	t.Run("Reposting after deleting all posts notifies the parent again", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, thread, parent := setupThread(t)
+
+		first, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "first")
+		require.NoError(t, err)
+		require.NoError(t, repo.DeleteMessage(ctx, first.ID))
+
+		sub := repo.hub.Subscribe(1, event.MessageCreated)
+
+		_, err = repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "second")
+		require.NoError(t, err)
+
+		assert.Equal(t, parent.ID, nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"])
+	})
+
+	t.Run("Deleting the first post while another remains does not notify again", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, thread, _ := setupThread(t)
+
+		first, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "first")
+		require.NoError(t, err)
+		_, err = repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "second")
+		require.NoError(t, err)
+		require.NoError(t, repo.DeleteMessage(ctx, first.ID))
+
+		sub := repo.hub.Subscribe(1, event.MessageCreated)
+
+		_, err = repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "third")
+		require.NoError(t, err)
+
+		assert.Equal(t, uuid.Nil, nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"])
+	})
+
+	t.Run("Concurrent posts notify the parent only once", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, thread, parent := setupThread(t)
+		sub := repo.hub.Subscribe(2, event.MessageCreated)
+
+		start := make(chan struct{})
+		results := make(chan error, 2)
+		for range 2 {
+			go func() {
+				<-start
+				_, err := repo.CreateMessage(ctx, user.GetID(), thread.ChannelID, "reply")
+				results <- err
+			}()
+		}
+
+		close(start)
+		for range 2 {
+			require.NoError(t, <-results)
+		}
+
+		ids := []uuid.UUID{
+			nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"].(uuid.UUID),
+			nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"].(uuid.UUID),
+		}
+		assert.ElementsMatch(t, []uuid.UUID{parent.ID, uuid.Nil}, ids)
+	})
+
+	checkPostWithoutThreadLock := func(t *testing.T, repo *Repository, userID, channelID uuid.UUID) {
+		t.Helper()
+
+		var queries bytes.Buffer
+		repo.db = repo.db.Session(&gorm.Session{Logger: logger.New(log.New(&queries, "", 0), logger.Config{LogLevel: logger.Info})})
+		sub := repo.hub.Subscribe(1, event.MessageCreated)
+
+		_, err := repo.CreateMessage(ctx, userID, channelID, "message")
+		require.NoError(t, err)
+
+		assert.Equal(t, uuid.Nil, nextEvent(t, sub.Receiver).Fields["thread_parent_message_id"])
+		assert.NotContains(t, queries.String(), "FOR UPDATE")
+		assert.NotContains(t, queries.String(), "FROM `threads`")
+	}
+
+	t.Run("Public channel posts do not lock threads", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, _, parent := setupThread(t)
+		checkPostWithoutThreadLock(t, repo, user.GetID(), parent.ChannelID)
+	})
+
+	t.Run("DM posts do not lock threads", func(t *testing.T) {
+		t.Parallel()
+
+		repo, user, _, _ := setupThread(t)
+		dm, err := repo.CreateChannel(ctx, model.Channel{}, set.UUID{user.GetID(): struct{}{}}, model.ChannelTypeDM)
+		require.NoError(t, err)
+
+		checkPostWithoutThreadLock(t, repo, user.GetID(), dm.ID)
 	})
 }
