@@ -606,13 +606,14 @@ func (repo *Repository) GetThreadSubscribers(ctx context.Context, threadID uuid.
 
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var err error
-		users, err = getThreadSubscribers(tx, threadID)
+		users, err = getThreadSubscribers(ctx, tx, threadID)
 		return err
 	})
 	return users, err
 }
 
-func getThreadSubscribers(tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) {
+func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) ([]uuid.UUID, error) {
+	tx = tx.WithContext(ctx)
 	users := make([]uuid.UUID, 0)
 	var thread model.Channel
 	if err := tx.Where("id = ? AND type = ?", threadID, model.ChannelTypeThread).
@@ -679,7 +680,7 @@ func (repo *Repository) ChangeThreadSubscription(ctx context.Context, threadID u
 	on = make([]uuid.UUID, 0)
 	off = make([]uuid.UUID, 0)
 	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		currentSubscribers, err := getThreadSubscribers(tx, threadID)
+		currentSubscribers, err := getThreadSubscribers(ctx, tx, threadID)
 		if err != nil {
 			return err
 		}
