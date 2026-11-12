@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"slices"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/utils/set"
@@ -41,10 +43,10 @@ func TargetUserSets(sets ...set.UUID) TargetFunc {
 }
 
 // TargetChannelViewers 指定したチャンネルの閲覧者を対象に送信します
-func TargetChannelViewers(channelID uuid.UUID) TargetFunc {
+func TargetChannelViewers(channelIDs ...uuid.UUID) TargetFunc {
 	return func(s Session) bool {
 		c, _ := s.ViewState()
-		return c == channelID
+		return slices.Contains(channelIDs, c)
 	}
 }
 

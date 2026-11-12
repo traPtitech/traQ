@@ -288,6 +288,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		targetFuncNotCited = ws.And(
 			ws.Or(
 				ws.TargetUserSets(markedUsers, viewers),
+				messageChannelViewers(channel),
 				ws.TargetTimelineStreamingEnabled(),
 			),
 			ws.Not(ws.TargetUserSets(citedUsers)),
@@ -301,6 +302,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	targets := notifiedUsers.Clone()
 	targets.Remove(m.UserID)
 	ns.fcm.Send(targets, fcmPayload, true)
+}
+
+// messageChannelViewers 投稿チャンネルと、スレッドの場合はその親チャンネルの閲覧者を対象にします。
+func messageChannelViewers(ch *model.Channel) ws.TargetFunc {
+	if ch.IsThread() {
+		return ws.TargetChannelViewers(ch.ID, ch.ParentID)
+	}
+	return ws.TargetChannelViewers(ch.ID)
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
@@ -321,7 +330,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	if ch.IsPublic() || ch.IsThread() {
 		// 公開チャンネル または Thread
 		targetFunc = ws.Or(
-			ws.TargetChannelViewers(cid),
+			messageChannelViewers(ch),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
@@ -350,7 +359,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	if ch.IsPublic() || ch.IsThread() {
 		// 公開チャンネル または Thread
 		targetFunc = ws.Or(
-			ws.TargetChannelViewers(cid),
+			messageChannelViewers(ch),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	} else {
