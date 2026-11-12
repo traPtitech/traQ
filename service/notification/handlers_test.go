@@ -180,10 +180,12 @@ func (r *notificationTestRepository) GetNotifyCitation(context.Context, uuid.UUI
 type captureFCM struct {
 	fcm.Client
 	targets set.UUID
+	payload *fcm.Payload
 }
 
 func (c *captureFCM) Send(targets set.UUID, payload *fcm.Payload, withUnreadCount bool) {
 	c.targets = targets
+	c.payload = payload
 }
 
 func TestMessageCreatedThread(t *testing.T) {
@@ -191,7 +193,7 @@ func TestMessageCreatedThread(t *testing.T) {
 	author := uuid.NewV3(uuid.Nil, "author")
 	subscriber := uuid.NewV3(uuid.Nil, "subscriber")
 
-	checkNotification := func(t *testing.T, userID uuid.UUID, notify, viewing, notifyExpected, markExpected bool) {
+	checkNotification := func(t *testing.T, userID uuid.UUID, notify, viewing, notifyExpected, markExpected bool) *fcm.Payload {
 		t.Helper()
 		ctrl := gomock.NewController(t)
 		repo := &notificationTestRepository{
@@ -207,7 +209,7 @@ func TestMessageCreatedThread(t *testing.T) {
 		m := &model.Message{ID: mid, ChannelID: thread, UserID: author}
 		cm.EXPECT().PublicChannelTree(gomock.Any()).Return(tree)
 		tree.EXPECT().IsForceChannel(thread).Return(false)
-		tree.EXPECT().GetChannelPath(parent).Return("general")
+		tree.EXPECT().GetChannelPath(parent).Return("general/sub")
 		repo.MockChannelRepository.EXPECT().GetChannel(gomock.Any(), thread).Return(&model.Channel{
 			ID: thread, ParentID: parent, Name: "discussion", Type: model.ChannelTypeThread,
 		}, nil)
@@ -240,6 +242,7 @@ func TestMessageCreatedThread(t *testing.T) {
 		} else {
 			assert.Empty(t, push.targets)
 		}
+		return push.payload
 	}
 
 	t.Run("Notify subscriber", func(t *testing.T) {
@@ -260,6 +263,13 @@ func TestMessageCreatedThread(t *testing.T) {
 	t.Run("Exclude viewer", func(t *testing.T) {
 		t.Parallel()
 		checkNotification(t, subscriber, true, true, false, false)
+	})
+
+	t.Run("Thread URL uses the parent path and channel ID", func(t *testing.T) {
+		t.Parallel()
+		payload := checkNotification(t, subscriber, true, false, true, true)
+		assert.Equal(t, "/channels/general/sub/"+uuid.NewV3(uuid.Nil, "thread").String(), payload.Path)
+		assert.Equal(t, "#general/sub/discussion", payload.Title)
 	})
 }
 

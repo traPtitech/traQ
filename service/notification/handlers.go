@@ -136,11 +136,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	} else if isThread {
 		// スレッドチャンネル
-		// スレッドの親は必ずpublicChannel→親のパスを取得 + スレッド名
-		path := chTree.GetChannelPath(channel.ParentID) + "/" + channel.Name
-		fcmPayload.Title = "#" + path
-		fcmPayload.Path = "/channels/" + path
+		parentPath := chTree.GetChannelPath(channel.ParentID)
+		fcmPayload.Title = "#" + parentPath + "/" + channel.Name
+		fcmPayload.Path = "/channels/" + parentPath + "/" + chID.String()
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.NotificationText())
+		
 	} else {
 		// 公開チャンネル
 		path := chTree.GetChannelPath(chID)
