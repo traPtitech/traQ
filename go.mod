@@ -35,7 +35,6 @@ require (
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/jfreymuth/oggvorbis v1.0.5
-	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-opentelemetry v0.0.4
 	github.com/labstack/echo-prometheus v0.0.1
 	github.com/labstack/echo/v5 v5.4.5
@@ -202,8 +201,6 @@ require (
 	github.com/moby/moby/client v0.4.1 // indirect
 	github.com/moby/sys/user v0.4.1 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect

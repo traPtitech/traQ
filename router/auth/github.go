@@ -3,20 +3,19 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"strconv"
-
-	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
+	"io"
+	"net/http"
+	"strconv"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -138,7 +137,7 @@ func (u *githubUserInfo) fetchUserInfo() error {
 		Login   string `json:"login"`
 		Picture string `json:"avatar_url"`
 	}
-	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&user); err != nil {
+	if err := jsonutil.Decode(resp.Body, &user); err != nil {
 		return fmt.Errorf(githubAPIRequestErrorFormat, err)
 	}
 	u.id = user.ID
@@ -162,7 +161,7 @@ func (u *githubUserInfo) fetchOrganizations() error {
 	var orgs []struct {
 		Login string `json:"login"`
 	}
-	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&orgs); err != nil {
+	if err := jsonutil.Decode(resp.Body, &orgs); err != nil {
 		return fmt.Errorf(githubAPIRequestErrorFormat, err)
 	}
 	u.organizations = make([]string, len(orgs))
