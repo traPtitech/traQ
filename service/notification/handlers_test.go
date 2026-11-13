@@ -202,6 +202,28 @@ func stampDeletedEvent(stampID uuid.UUID) hub.Message {
 	})}
 }
 
+func channelViewersChangedEvent(channelID uuid.UUID, viewers map[uuid.UUID]viewer.StateWithTime) hub.Message {
+	return hub.Message{Name: event.ChannelViewersChanged, Fields: hub.Fields{
+		"channel_id": channelID,
+		"viewers":    viewers,
+	}}
+}
+
+func userViewStateChangedEvent(userID uuid.UUID, viewStates map[string]viewer.StateWithChannel) hub.Message {
+	return hub.Message{Name: event.UserViewStateChanged, Fields: hub.Fields{
+		"user_id":     userID,
+		"view_states": viewStates,
+	}}
+}
+
+func userWebRTCv3StateChangedEvent(userID, channelID uuid.UUID, sessions map[string]string) hub.Message {
+	return hub.Message{Name: event.UserWebRTCv3StateChanged, Fields: hub.Fields{
+		"user_id":    userID,
+		"channel_id": channelID,
+		"sessions":   sessions,
+	}}
+}
+
 func qallRoomStateChangedEvent(states []qall.RoomWithParticipants) hub.Message {
 	return hub.Message{Name: event.QallRoomStateChanged, Fields: hub.Fields{
 		"roomStates": states,
@@ -1002,6 +1024,122 @@ func TestStampNotification(t *testing.T) {
 }
 
 // ---- QALL_ROOM_STATE_CHANGED ----
+
+// TestChannelViewersChangedNotification チャンネルの閲覧者変化時の Notification が正しく動いているかをテストする
+func TestChannelViewersChangedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		chID, viewerID := newID(), newID()
+		updatedAt := time.Date(2026, 11, 4, 12, 34, 56, 0, time.UTC)
+
+		h, writer := startService(notificationDeps{})
+		defer h.Close()
+		h.Publish(channelViewersChangedEvent(chID, map[uuid.UUID]viewer.StateWithTime{
+			viewerID: {State: viewer.StateMonitoring, Time: updatedAt},
+		}))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "CHANNEL_VIEWERS_CHANGED", messages[0].typeName)
+		assert.JSONEq(t, `{
+			"id":"`+chID.String()+`",
+			"viewers":[{"userId":"`+viewerID.String()+`","state":"monitoring","updatedAt":"2026-11-04T12:34:56Z"}]
+		}`, messages[0].body)
+		assert.ElementsMatch(t, []string{"viewer"}, targetKeys(messages[0].target,
+			fakeSession{key: "viewer", userID: newID(), viewing: chID}, fakeSession{key: "other", userID: newID()}))
+	})
+}
+
+// TestUserViewStateChangedNotification ユーザーの閲覧状態変化時の Notification が正しく動いているかをテストする
+func TestUserViewStateChangedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		userID, chID := newID(), newID()
+
+		h, writer := startService(notificationDeps{})
+		defer h.Close()
+		h.Publish(userViewStateChangedEvent(userID, map[string]viewer.StateWithChannel{
+			"conn": {State: viewer.StateEditing, ChannelID: chID},
+		}))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "USER_VIEWSTATE_CHANGED", messages[0].typeName)
+		assert.JSONEq(t, `{
+			"view_states":[{"key":"conn","channelId":"`+chID.String()+`","state":"editing"}]
+		}`, messages[0].body)
+		assert.ElementsMatch(t, []string{"user"}, targetKeys(messages[0].target,
+			fakeSession{key: "user", userID: userID}, fakeSession{key: "other", userID: newID()}))
+	})
+}
+
+// TestUserWebRTCv3StateChangedNotification ユーザーの WebRTC 状態変化時の Notification が正しく動いているかをテストする
+func TestUserWebRTCv3StateChangedNotification(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		userID, chID := newID(), newID()
+
+		h, writer := startService(notificationDeps{})
+		defer h.Close()
+		h.Publish(userWebRTCv3StateChangedEvent(userID, chID, map[string]string{"session": "joined"}))
+		synctest.Wait()
+
+		messages := writer.snapshot()
+		require.Len(t, messages, 1)
+		assert.Equal(t, "USER_WEBRTC_STATE_CHANGED", messages[0].typeName)
+		assert.JSONEq(t, `{
+			"user_id":"`+userID.String()+`",
+			"channel_id":"`+chID.String()+`",
+			"sessions":[{"state":"joined","sessionId":"session"}]
+		}`, messages[0].body)
+		assert.ElementsMatch(t, []string{"any"}, targetKeys(messages[0].target, fakeSession{key: "any", userID: newID()}))
+	})
+}
+
+// TestQallSoundboardNotification サウンドボードアイテムの作成・削除時の Notification が正しく動いているかをテストする
+func TestQallSoundboardNotification(t *testing.T) {
+	t.Run("created", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			soundID, creatorID := newID(), newID()
+
+			h, writer := startService(notificationDeps{})
+			defer h.Close()
+			h.Publish(hub.Message{Name: event.QallSoundboardItemCreated, Fields: hub.Fields{
+				"sound_id":   soundID,
+				"name":       "sound",
+				"creator_id": creatorID,
+			}})
+			synctest.Wait()
+
+			messages := writer.snapshot()
+			require.Len(t, messages, 1)
+			assert.Equal(t, "QALL_SOUNDBOARD_ITEM_CREATED", messages[0].typeName)
+			assert.JSONEq(t, `{
+				"sound_id":"`+soundID.String()+`",
+				"name":"sound",
+				"creator_id":"`+creatorID.String()+`"
+			}`, messages[0].body)
+			assert.ElementsMatch(t, []string{"any"}, targetKeys(messages[0].target, fakeSession{key: "any", userID: newID()}))
+		})
+	})
+	t.Run("deleted", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			soundID := newID()
+
+			h, writer := startService(notificationDeps{})
+			defer h.Close()
+			h.Publish(hub.Message{Name: event.QallSoundboardItemDeleted, Fields: hub.Fields{
+				"sound_id": soundID,
+			}})
+			synctest.Wait()
+
+			messages := writer.snapshot()
+			require.Len(t, messages, 1)
+			assert.Equal(t, "QALL_SOUNDBOARD_ITEM_DELETED", messages[0].typeName)
+			assert.JSONEq(t, `{"sound_id":"`+soundID.String()+`"}`, messages[0].body)
+			assert.ElementsMatch(t, []string{"any"}, targetKeys(messages[0].target, fakeSession{key: "any", userID: newID()}))
+		})
+	})
+}
 
 // TestQallRoomStateChangedNotification Qall のルーム状態変更時の Notification が正しく動いているかをテストする
 func TestQallRoomStateChangedNotification(t *testing.T) {

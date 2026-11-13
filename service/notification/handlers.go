@@ -436,12 +436,13 @@ func channelReadHandler(ns *Service, ev hub.Message) {
 }
 
 func channelViewersChangedHandler(ns *Service, ev hub.Message) {
-	cid := ev.Fields["channel_id"].(uuid.UUID)
+	p := event.MustPayload[viewer.ChannelViewersChangedPayload](ev.Fields)
+	cid := p.ChannelID
 	channelViewerMulticast(ns, cid,
 		"CHANNEL_VIEWERS_CHANGED",
 		map[string]interface{}{
 			"id":      cid,
-			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.StateWithTime)),
+			"viewers": viewer.ConvertToArray(p.Viewers),
 		},
 	)
 }
@@ -492,8 +493,9 @@ func userViewStateChangedHandler(ns *Service, ev hub.Message) {
 		ChannelID uuid.UUID `json:"channelId"`
 		State     string    `json:"state"`
 	}
+	p := event.MustPayload[viewer.UserViewStateChangedPayload](ev.Fields)
 	viewStates := make([]ViewState, 0)
-	for connKey, state := range ev.Fields["view_states"].(map[string]viewer.StateWithChannel) {
+	for connKey, state := range p.ViewStates {
 		viewStates = append(viewStates, ViewState{
 			Key:       connKey,
 			ChannelID: state.ChannelID,
@@ -501,7 +503,7 @@ func userViewStateChangedHandler(ns *Service, ev hub.Message) {
 		})
 	}
 
-	uid := ev.Fields["user_id"].(uuid.UUID)
+	uid := p.UserID
 	userMulticast(ns, uid,
 		"USER_VIEWSTATE_CHANGED",
 		map[string]interface{}{
@@ -640,16 +642,17 @@ func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 		State     string `json:"state"`
 		SessionID string `json:"sessionId"`
 	}
+	p := event.MustPayload[event.UserWebRTCv3StateChangedPayload](ev.Fields)
 	sessions := make([]StateSession, 0)
-	for session, state := range ev.Fields["sessions"].(map[string]string) {
+	for session, state := range p.Sessions {
 		sessions = append(sessions, StateSession{State: state, SessionID: session})
 	}
 
 	broadcast(ns,
 		"USER_WEBRTC_STATE_CHANGED",
 		map[string]interface{}{
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"user_id":    p.UserID,
+			"channel_id": p.ChannelID,
 			"sessions":   sessions,
 		},
 	)
@@ -659,18 +662,19 @@ func qallRoomStateChangedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"QALL_ROOM_STATE_CHANGED",
 		map[string]interface{}{
-			"roomStates": ev.Fields["roomStates"].([]qall.RoomWithParticipants),
+			"roomStates": event.MustPayload[qall.QallRoomStateChangedPayload](ev.Fields).RoomStates,
 		},
 	)
 }
 
 func qallSoundboardItemCreatedHandler(ns *Service, ev hub.Message) {
+	p := event.MustPayload[event.QallSoundboardItemCreatedPayload](ev.Fields)
 	broadcast(ns,
 		"QALL_SOUNDBOARD_ITEM_CREATED",
 		map[string]interface{}{
-			"sound_id":   ev.Fields["sound_id"].(uuid.UUID),
-			"name":       ev.Fields["name"].(string),
-			"creator_id": ev.Fields["creator_id"].(uuid.UUID),
+			"sound_id":   p.SoundID,
+			"name":       p.Name,
+			"creator_id": p.CreatorID,
 		},
 	)
 }
@@ -679,7 +683,7 @@ func qallSoundboardItemDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns,
 		"QALL_SOUNDBOARD_ITEM_DELETED",
 		map[string]interface{}{
-			"sound_id": ev.Fields["sound_id"].(uuid.UUID),
+			"sound_id": event.MustPayload[event.QallSoundboardItemDeletedPayload](ev.Fields).SoundID,
 		},
 	)
 }

@@ -68,11 +68,8 @@ func (st *StampThrottler) publishMessageStampsUpdated(messageID uuid.UUID) {
 		return // ignore error
 	}
 
-	st.bus.Publish(hub.Message{
-		Name: event.MessageStampsUpdated,
-		Fields: hub.Fields{
-			"message_id": messageID,
-			"message":    msg,
-		},
+	event.Publish(st.bus, event.MessageStampsUpdatedPayload{
+		MessageID: messageID,
+		Message:   msg,
 	})
 }

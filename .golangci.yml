@@ -8,7 +8,15 @@ linters:
     - unused
     - ineffassign
     - revive
+    - forbidigo
   settings:
+    forbidigo:
+      forbid:
+        # イベントの発行は event.Publish を使い、hub.Fields を直接組み立てない
+        - pattern: ^hub\.Hub\.Publish$
+          pkg: ^github\.com/leandro-lugaresi/hub$
+          msg: use event.Publish with a typed payload instead
+      analyze-types: true
     errcheck:
       exclude-functions:
         - (*go.uber.org/zap.Logger).Sync
@@ -20,6 +28,14 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # event.Publish の実装と、hub 上の値を固定するテストでは直接発行してよい
+      - path: ^event/typed\.go$
+        linters:
+          - forbidigo
+      - path: _test\.go$
+        linters:
+          - forbidigo
 formatters:
   enable:
     - gofmt
