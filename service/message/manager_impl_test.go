@@ -108,14 +108,25 @@ func TestManager_Create(t *testing.T) {
 	t.Parallel()
 	const content = "content"
 
+	t.Run("channel lookup error", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		m, cm, _, _ := setupM(ctrl)
+
+		cid := uuid.NewV3(uuid.Nil, "channel")
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, assert.AnError)
+
+		_, err := m.Create(context.TODO(), cid, uuid.Nil, content)
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
 	t.Run("channel archived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, _, tree := setupM(ctrl)
+		m, cm, _, _ := setupM(ctrl)
 
 		cid := uuid.NewV3(uuid.Nil, "c1")
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(true, nil).Times(1)
 
 		_, err := m.Create(context.TODO(), cid, uuid.NewV3(uuid.Nil, "u1"), content)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
@@ -124,12 +135,11 @@ func TestManager_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		cid := uuid.NewV3(uuid.Nil, "c1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
 			CreateMessage(gomock.Any(), uid, cid, content).
@@ -242,7 +252,7 @@ func TestManager_Edit(t *testing.T) {
 	t.Run("channel archived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -251,8 +261,7 @@ func TestManager_Edit(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(true, nil).Times(1)
 
 		err := m.Edit(context.TODO(), id, newContent)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
@@ -261,7 +270,7 @@ func TestManager_Edit(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -270,8 +279,7 @@ func TestManager_Edit(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
 			UpdateMessage(gomock.Any(), id, newContent).
@@ -305,7 +313,7 @@ func TestManager_Delete(t *testing.T) {
 	t.Run("channel archived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -314,8 +322,7 @@ func TestManager_Delete(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(true, nil).Times(1)
 
 		err := m.Delete(context.TODO(), id)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
@@ -324,7 +331,7 @@ func TestManager_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -333,8 +340,7 @@ func TestManager_Delete(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
 			DeleteMessage(gomock.Any(), id).
@@ -368,7 +374,7 @@ func TestManager_AddStamps(t *testing.T) {
 	t.Run("channel archived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -377,8 +383,7 @@ func TestManager_AddStamps(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(true, nil).Times(1)
 
 		_, err := m.AddStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"), 1)
 		assert.EqualError(t, err, ErrChannelArchived.Error())
@@ -387,7 +392,7 @@ func TestManager_AddStamps(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -422,8 +427,7 @@ func TestManager_AddStamps(t *testing.T) {
 				},
 			}}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
 			AddStampToMessage(gomock.Any(), id, sid, uid, 1).
@@ -480,7 +484,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 	t.Run("channel archived", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -489,8 +493,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 			GetMessageByID(gomock.Any(), id).
 			Return(&model.Message{ID: id, ChannelID: cid}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(true).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(true, nil).Times(1)
 
 		err := m.RemoveStamps(context.TODO(), id, uuid.NewV3(uuid.Nil, "s1"), uuid.NewV3(uuid.Nil, "u1"))
 		assert.EqualError(t, err, ErrChannelArchived.Error())
@@ -499,7 +502,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		m, cm, repo, tree := setupM(ctrl)
+		m, cm, repo, _ := setupM(ctrl)
 
 		id := uuid.NewV3(uuid.Nil, "m1")
 		cid := uuid.NewV3(uuid.Nil, "c1")
@@ -536,8 +539,7 @@ func TestManager_RemoveStamps(t *testing.T) {
 				},
 			}}, nil).
 			Times(1)
-		cm.EXPECT().IsPublicChannel(gomock.Any(), cid).Return(true).Times(1)
-		tree.EXPECT().IsArchivedChannel(cid).Return(false).Times(1)
+		cm.EXPECT().IsArchivedChannel(gomock.Any(), cid).Return(false, nil).Times(1)
 		repo.MockMessageRepository.
 			EXPECT().
 			RemoveStampFromMessage(gomock.Any(), id, sid, uid).
