@@ -51,6 +51,10 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 	}, nil
 }
 
+func (m *manager) InvalidateCache(id uuid.UUID) {
+	m.cache.Forget(id)
+}
+
 func (m *manager) Get(ctx context.Context, id uuid.UUID) (Message, error) {
 	return m.get(ctx, id)
 }
