@@ -52,6 +52,7 @@ type Manager interface {
 	UpdateThread(ctx context.Context, id uuid.UUID, args repository.UpdateThreadArgs) error
 
 	IsChannelAccessibleToUser(ctx context.Context, userID, channelID uuid.UUID) (bool, error)
+	IsArchivedChannel(ctx context.Context, id uuid.UUID) (bool, error)
 	IsPublicChannel(ctx context.Context, id uuid.UUID) bool
 	IsThreadChannel(ctx context.Context, id uuid.UUID) (bool, error)
 

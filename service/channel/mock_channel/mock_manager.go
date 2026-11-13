@@ -230,6 +230,21 @@ func (mr *MockManagerMockRecorder) IsChannelAccessibleToUser(ctx, userID, channe
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelAccessibleToUser", reflect.TypeOf((*MockManager)(nil).IsChannelAccessibleToUser), ctx, userID, channelID)
 }
 
+// IsArchivedChannel mocks base method.
+func (m *MockManager) IsArchivedChannel(ctx context.Context, id uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsArchivedChannel", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsArchivedChannel indicates an expected call of IsArchivedChannel.
+func (mr *MockManagerMockRecorder) IsArchivedChannel(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsArchivedChannel", reflect.TypeOf((*MockManager)(nil).IsArchivedChannel), ctx, id)
+}
+
 // IsPublicChannel mocks base method.
 func (m *MockManager) IsPublicChannel(ctx context.Context, id uuid.UUID) bool {
 	m.ctrl.T.Helper()
