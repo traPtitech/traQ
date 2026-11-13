@@ -34,6 +34,8 @@ type TimelineQuery struct {
 }
 
 type Manager interface {
+	// InvalidateCache 指定したIDのメッセージのキャッシュを破棄します
+	InvalidateCache(id uuid.UUID)
 	// Get 指定したIDのメッセージを取得します
 	//
 	// 成功した場合、メッセージとnilを返します。
