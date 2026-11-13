@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -16,12 +18,28 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 const (
 	syncInterval    = 1 * time.Minute
 	syncMessageBulk = 250
+
+	imageJobReconcileLimit  = 500
+	imageJobRetention       = 7 * 24 * time.Hour
+	imageJobCleanupInterval = 24 * time.Hour
+	imageIndexJobTimeout    = 30 * time.Minute
+	imageJobSubmitTimeout   = 1 * time.Minute
 )
+
+var embeddableImageMIMETypes = map[string]struct{}{
+	"image/png":  {},
+	"image/jpeg": {},
+	"image/webp": {},
+}
+
+// errESDocumentMissing ES上でメッセージのドキュメントが既に削除されていることを表す
+var errESDocumentMissing = errors.New("message document is missing in ES")
 
 type attributes struct {
 	To             []uuid.UUID
@@ -31,19 +49,21 @@ type attributes struct {
 	HasImage       bool
 	HasVideo       bool
 	HasAudio       bool
+	// ImageFileIDs embedding-serverに送信できる画像の添付ファイルIDリスト
+	ImageFileIDs []uuid.UUID
 }
 
 // ユーザーがbotかどうかのcache
 type userCache map[uuid.UUID]bool
 
 // convertMessageCreated 新規メッセージをesへ入れる型に変換する
-func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, error) {
+func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, *attributes, error) {
 	var isBot, ok bool
 	if isBot, ok = userCache[m.UserID]; !ok {
 		// 新規ユーザー or キャッシュが存在しない
 		user, err := e.repo.GetUser(context.Background(), m.UserID, false)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		isBot = user.IsBot()
 	}
@@ -65,7 +85,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		HasImage:       attr.HasImage,
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
-	}, nil
+	}, attr, nil
 }
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
@@ -98,16 +118,31 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 			e.l.Warn(err.Error(), zap.Error(err))
 			continue
 		}
-		if strings.HasPrefix(meta.Mime, "image/") {
+		mimeType := strings.ToLower(meta.Mime)
+		if strings.HasPrefix(mimeType, "image/") {
 			attr.HasImage = true
-		} else if strings.HasPrefix(meta.Mime, "video/") {
+			if isEmbeddableImage(meta) {
+				attr.ImageFileIDs = append(attr.ImageFileIDs, attachmentID)
+			}
+		} else if strings.HasPrefix(mimeType, "video/") {
 			attr.HasVideo = true
-		} else if strings.HasPrefix(meta.Mime, "audio/") {
+		} else if strings.HasPrefix(mimeType, "audio/") {
 			attr.HasAudio = true
 		}
 	}
 
 	return attr
+}
+
+func isEmbeddableImage(meta *model.FileMeta) bool {
+	if meta.IsAnimatedImage {
+		return false
+	}
+	if meta.Size > maxEmbeddingImageSize {
+		return false
+	}
+	_, ok := embeddableImageMIMETypes[strings.ToLower(meta.Mime)]
+	return ok
 }
 
 func (e *esEngine) syncLoop(done <-chan struct{}) {
@@ -207,7 +242,21 @@ func (e *esEngine) sync() error {
 		}
 	}
 
+	e.cleanupImageJobs(context.Background())
+
+	if e.imageClient.Available() {
+		if err := e.reconcileImageJobs(context.Background()); err != nil {
+			e.l.Warn("failed to reconcile image embedding jobs", zap.Error(err))
+		}
+	}
+
 	return nil
+}
+
+// imageProcessTask 非同期画像処理のタスク
+type imageProcessTask struct {
+	MessageID uuid.UUID
+	FileID    uuid.UUID
 }
 
 func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Time, lastSynced time.Time, userCache userCache) (err error) {
@@ -218,6 +267,8 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 	if err != nil {
 		return err
 	}
+
+	var imageTasks []imageProcessTask
 
 	defer func() {
 		closeErr := bulkIndexer.Close(context.Background())
@@ -232,13 +283,27 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 
 		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, failed %v message(s), last insert %v",
 			bulkIndexer.Stats().NumIndexed, bulkIndexer.Stats().NumUpdated, bulkIndexer.Stats().NumFailed, lastInsert))
+
+		// 非同期で画像ジョブを登録する
+		if len(imageTasks) > 0 && e.imageClient.Available() {
+			go e.submitImageTasks(imageTasks)
+		}
 	}()
 
 	for _, v := range messages {
 		if v.CreatedAt.After(lastSynced) {
-			doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
+			parseResult := message.Parse(v.Text)
+			doc, attr, err := e.convertMessageCreated(v, parseResult, userCache)
 			if err != nil {
 				return err
+			}
+
+			// 画像が含まれている場合、非同期処理タスクを作成
+			for _, fileID := range attr.ImageFileIDs {
+				imageTasks = append(imageTasks, imageProcessTask{
+					MessageID: v.ID,
+					FileID:    fileID,
+				})
 			}
 
 			data, err := json.Marshal(*doc)
@@ -273,6 +338,583 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 		}
 	}
 
+	return nil
+}
+
+// submitImageTasks 画像ジョブを順次登録する
+func (e *esEngine) submitImageTasks(tasks []imageProcessTask) {
+	for _, task := range tasks {
+		if _, err := e.submitImageTask(context.Background(), task); err != nil {
+			e.l.Warn("failed to submit image job",
+				zap.Stringer("messageID", task.MessageID),
+				zap.Stringer("fileID", task.FileID),
+				zap.Error(err))
+		}
+	}
+}
+
+// submitImageTask 1画像分の埋め込みジョブを登録する
+func (e *esEngine) submitImageTask(ctx context.Context, task imageProcessTask) (uuid.UUID, error) {
+	meta, err := e.repo.GetFileMeta(ctx, task.FileID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get file meta: %w", err)
+	}
+
+	src, err := e.fs.OpenFileByKey(task.FileID.String(), model.FileTypeUserFile)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to open image: %w", err)
+	}
+	defer src.Close()
+
+	submitCtx, cancel := context.WithTimeout(ctx, imageJobSubmitTimeout)
+	defer cancel()
+
+	jobID, err := e.imageClient.SubmitImageJob(submitCtx, meta.Name, meta.Mime, src, e.imageConfig.WebhookURL)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to submit image job: %w", err)
+	}
+
+	job := &model.ImageEmbeddingJob{
+		JobID:     jobID,
+		MessageID: task.MessageID,
+		FileID:    task.FileID,
+		Status:    model.ImageEmbeddingJobPending,
+	}
+	if err := e.repo.CreateImageEmbeddingJob(ctx, job); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to save image job: %w", err)
+	}
+
+	return jobID, nil
+}
+
+// ProcessImagesForMessages バッチ用: 指定メッセージの画像を処理してインデックスを更新する
+func (e *esEngine) ProcessImagesForMessages(ctx context.Context, messages []*model.Message) error {
+	if len(messages) == 0 {
+		return nil
+	}
+
+	messageIDs := make([]uuid.UUID, 0, len(messages))
+	for _, msg := range messages {
+		messageIDs = append(messageIDs, msg.ID)
+	}
+	indexed, err := e.getIndexedImageFileIDs(ctx, messageIDs)
+	if err != nil {
+		return err
+	}
+
+	for _, msg := range messages {
+		parseResult := message.Parse(msg.Text)
+		attr := e.getAttributes(msg, parseResult)
+
+		for _, fileID := range attr.ImageFileIDs {
+			if indexed[msg.ID][fileID] {
+				continue
+			}
+
+			task := imageProcessTask{
+				MessageID: msg.ID,
+				FileID:    fileID,
+			}
+			jobID, err := e.submitImageTask(ctx, task)
+			if err != nil {
+				e.l.Warn("batch: failed to submit image task",
+					zap.Stringer("messageID", msg.ID),
+					zap.Stringer("fileID", fileID),
+					zap.Error(err))
+				continue
+			}
+
+			if err := e.waitForImageJob(ctx, jobID, imageIndexJobTimeout); err != nil {
+				e.l.Warn("batch: failed to process image job",
+					zap.Stringer("messageID", msg.ID),
+					zap.Stringer("fileID", fileID),
+					zap.Stringer("jobID", jobID),
+					zap.Error(err))
+			}
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+		}
+	}
+	return nil
+}
+
+// waitForImageJob ジョブが完了するまでポーリングする
+func (e *esEngine) waitForImageJob(ctx context.Context, jobID uuid.UUID, timeout time.Duration) error {
+	interval := e.imageConfig.JobPollInterval
+	if interval <= 0 {
+		interval = 10 * time.Second
+	}
+
+	deadline := time.Now().Add(timeout)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		status, vector, err := e.imageClient.GetJob(ctx, jobID)
+		if err == nil {
+			switch status {
+			case ImageJobCompleted:
+				return e.completeImageJob(ctx, jobID, vector)
+			case ImageJobFailed:
+				return e.failImageJob(ctx, jobID)
+			}
+		} else {
+			e.l.Debug("failed to get image job status", zap.Stringer("jobID", jobID), zap.Error(err))
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("image job timed out: %s", jobID)
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// reconcileImageJobs 未完了の画像ジョブを確認し、結果を反映する
+func (e *esEngine) reconcileImageJobs(ctx context.Context) error {
+	now := time.Now()
+	timeout := e.imageConfig.JobTimeout
+	if timeout <= 0 {
+		timeout = 6 * time.Hour
+	}
+
+	jobs, err := e.repo.GetUnfinishedImageEmbeddingJobs(ctx, imageJobReconcileLimit)
+	if err != nil {
+		return err
+	}
+
+	for _, job := range jobs {
+		status, vector, err := e.imageClient.GetJob(ctx, job.JobID)
+		if err != nil {
+			e.l.Debug("failed to get image job status", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			status = ""
+		}
+
+		switch status {
+		case ImageJobCompleted:
+			if err := e.completeImageJob(ctx, job.JobID, vector); err != nil {
+				e.l.Warn("failed to complete image job", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			} else {
+				continue
+			}
+		case ImageJobFailed:
+			if err := e.failImageJob(ctx, job.JobID); err != nil {
+				e.l.Warn("failed to mark image job as failed", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			} else {
+				continue
+			}
+		case ImageJobProcessing:
+			if job.Status != model.ImageEmbeddingJobProcessing {
+				if err := e.repo.UpdateImageEmbeddingJobStatus(ctx, job.JobID, model.ImageEmbeddingJobProcessing); err != nil {
+					e.l.Warn("failed to update image job status", zap.Stringer("jobID", job.JobID), zap.Error(err))
+				}
+			}
+		}
+
+		if now.Sub(job.CreatedAt) > timeout {
+			if err := e.repo.UpdateImageEmbeddingJobStatus(ctx, job.JobID, model.ImageEmbeddingJobFailed); err != nil {
+				e.l.Warn("failed to mark stale image job as failed", zap.Stringer("jobID", job.JobID), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// cleanupImageJobs 保持期間を過ぎた終了済みジョブを削除する
+func (e *esEngine) cleanupImageJobs(ctx context.Context) {
+	now := time.Now()
+	if now.Sub(e.lastImageCleanup) < imageJobCleanupInterval {
+		return
+	}
+	if err := e.repo.DeleteFinishedImageEmbeddingJobsBefore(ctx, now.Add(-imageJobRetention)); err != nil {
+		e.l.Warn("failed to clean up image embedding jobs", zap.Error(err))
+		return
+	}
+	e.lastImageCleanup = now
+}
+
+// HandleImageWebhook embedding-serverからの完了通知を処理する
+func (e *esEngine) HandleImageWebhook(ctx context.Context, jobID uuid.UUID) error {
+	job, err := e.repo.GetImageEmbeddingJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
+	if job.Status.IsFinished() {
+		return nil
+	}
+	if !e.imageClient.Available() {
+		return ErrImageSearchUnavailable
+	}
+
+	status, vector, err := e.imageClient.GetJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
+
+	switch status {
+	case ImageJobCompleted:
+		return e.completeImageJob(ctx, jobID, vector)
+	case ImageJobFailed:
+		return e.failImageJob(ctx, jobID)
+	case ImageJobProcessing:
+		return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobProcessing)
+	default:
+		return nil
+	}
+}
+
+func (e *esEngine) completeImageJob(ctx context.Context, jobID uuid.UUID, vector []float64) error {
+	job, err := e.repo.GetImageEmbeddingJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
+	if job.Status == model.ImageEmbeddingJobCompleted {
+		return nil
+	}
+	if err := e.applyImageVector(ctx, job, vector); err != nil {
+		if errors.Is(err, errESDocumentMissing) {
+			// メッセージが既に削除されている場合はESへの反映をスキップしてジョブを完了とする
+			e.l.Info("message document already deleted, skipping image vector update",
+				zap.Stringer("messageID", job.MessageID),
+				zap.Stringer("fileID", job.FileID),
+				zap.Stringer("jobID", job.JobID))
+			return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobCompleted)
+		}
+		return err
+	}
+	return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobCompleted)
+}
+
+func (e *esEngine) failImageJob(ctx context.Context, jobID uuid.UUID) error {
+	return e.repo.UpdateImageEmbeddingJobStatus(ctx, jobID, model.ImageEmbeddingJobFailed)
+}
+
+// applyImageVector ESのimageVectorにベクトルを追記する
+func (e *esEngine) applyImageVector(ctx context.Context, job *model.ImageEmbeddingJob, vector []float64) error {
+	entry := m{
+		"jobId":  job.JobID.String(),
+		"fileId": job.FileID.String(),
+		"vector": vector,
+	}
+	body := m{
+		"script": m{
+			"lang": "painless",
+			"source": `if (ctx._source.imageVector == null) { ctx._source.imageVector = new ArrayList(); }
+boolean found = false;
+for (def v : ctx._source.imageVector) {
+  if (v.jobId == params.entry.jobId || v.fileId == params.entry.fileId) {
+    found = true;
+    break;
+  }
+}
+if (!found) {
+  ctx._source.imageVector.add(params.entry);
+}`,
+			"params": m{"entry": entry},
+		},
+	}
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal image update: %w", err)
+	}
+
+	res, err := e.client.Update(
+		getIndexName(esMessageIndex),
+		job.MessageID.String(),
+		bytes.NewReader(data),
+		e.client.Update.WithContext(ctx),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update image data in ES: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		body, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
+		if res.StatusCode == http.StatusNotFound && isESDocumentMissingError(body) {
+			return errESDocumentMissing
+		}
+		return fmt.Errorf("ES update error for message %s: [%d] %s", job.MessageID, res.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	e.l.Info("updated image data for message",
+		zap.Stringer("messageID", job.MessageID),
+		zap.Stringer("fileID", job.FileID),
+		zap.Stringer("jobID", job.JobID))
+	return nil
+}
+
+// isESDocumentMissingError ESのエラーレスポンスがdocument_missing_exceptionかどうかを返す
+func isESDocumentMissingError(body []byte) bool {
+	var res struct {
+		Error struct {
+			Type string `json:"type"`
+		} `json:"error"`
+	}
+	return json.Unmarshal(body, &res) == nil && res.Error.Type == "document_missing_exception"
+}
+
+// getIndexedImageFileIDs ESに登録済みの画像ファイルIDをメッセージごとに取得する
+func (e *esEngine) getIndexedImageFileIDs(ctx context.Context, messageIDs []uuid.UUID) (map[uuid.UUID]map[uuid.UUID]bool, error) {
+	result := make(map[uuid.UUID]map[uuid.UUID]bool, len(messageIDs))
+	if len(messageIDs) == 0 {
+		return result, nil
+	}
+
+	ids := make([]string, 0, len(messageIDs))
+	for _, id := range messageIDs {
+		ids = append(ids, id.String())
+	}
+
+	body := m{
+		"query":   m{"ids": m{"values": ids}},
+		"_source": []string{"imageVector"},
+		"size":    len(ids),
+	}
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal query: %w", err)
+	}
+
+	sr, err := e.client.Search(
+		e.client.Search.WithContext(ctx),
+		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+		e.client.Search.WithBody(bytes.NewReader(b)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search indexed images: %w", err)
+	}
+	defer sr.Body.Close()
+	if sr.IsError() {
+		return nil, fmt.Errorf("failed to search indexed images: %s", sr.String())
+	}
+
+	var res esSearchResponse
+	if err := json.NewDecoder(sr.Body).Decode(&res); err != nil {
+		return nil, fmt.Errorf("failed to decode search response: %w", err)
+	}
+
+	for _, hit := range res.Hits.Hits {
+		messageID, err := uuid.FromString(hit.ID)
+		if err != nil {
+			continue
+		}
+		for _, vector := range hit.Source.ImageVectors {
+			fileID, err := uuid.FromString(vector.FileID)
+			if err != nil {
+				continue
+			}
+			if result[messageID] == nil {
+				result[messageID] = make(map[uuid.UUID]bool)
+			}
+			result[messageID][fileID] = true
+		}
+	}
+	return result, nil
+}
+
+// getImageMessageHits hasImage=trueのメッセージをESから取得する
+func (e *esEngine) getImageMessageHits(ctx context.Context) ([]esSearchHit, error) {
+	const scrollBatchSize = 1000
+	var allHits []esSearchHit
+	var searchAfter []any
+
+	for {
+		body := m{
+			"query":   m{"term": m{"hasImage": m{"value": true}}},
+			"size":    scrollBatchSize,
+			"sort":    []m{{"_doc": "asc"}},
+			"_source": []string{"imageVector"},
+		}
+		if searchAfter != nil {
+			body["search_after"] = searchAfter
+		}
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal query: %w", err)
+		}
+
+		sr, err := e.client.Search(
+			e.client.Search.WithContext(ctx),
+			e.client.Search.WithIndex(getIndexName(esMessageIndex)),
+			e.client.Search.WithBody(bytes.NewReader(b)),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search image messages: %w", err)
+		}
+
+		var res esSearchResponse
+		err = json.NewDecoder(sr.Body).Decode(&res)
+		sr.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode search response: %w", err)
+		}
+		if sr.IsError() {
+			return nil, fmt.Errorf("failed to search image messages: %s", sr.String())
+		}
+
+		hits := res.Hits.Hits
+		if len(hits) == 0 {
+			break
+		}
+		allHits = append(allHits, hits...)
+
+		lastHit := hits[len(hits)-1]
+		searchAfter = make([]any, len(lastHit.Sort))
+		for i, v := range lastHit.Sort {
+			searchAfter[i] = v
+		}
+
+		if len(hits) < scrollBatchSize {
+			break
+		}
+	}
+
+	return allHits, nil
+}
+
+// GetUnprocessedImageMessageIDs 画像付きだがインデックス未処理のメッセージIDを取得する
+func (e *esEngine) GetUnprocessedImageMessageIDs(ctx context.Context, retryFailed bool) ([]uuid.UUID, error) {
+	hits, err := e.getImageMessageHits(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	indexedByMessage := make(map[uuid.UUID]map[uuid.UUID]bool, len(hits))
+	messageIDs := make([]uuid.UUID, 0, len(hits))
+	for _, hit := range hits {
+		messageID, err := uuid.FromString(hit.ID)
+		if err != nil {
+			e.l.Warn("invalid message ID in ES", zap.String("id", hit.ID))
+			continue
+		}
+		messageIDs = append(messageIDs, messageID)
+		for _, vector := range hit.Source.ImageVectors {
+			fileID, err := uuid.FromString(vector.FileID)
+			if err != nil {
+				continue
+			}
+			if indexedByMessage[messageID] == nil {
+				indexedByMessage[messageID] = make(map[uuid.UUID]bool)
+			}
+			indexedByMessage[messageID][fileID] = true
+		}
+	}
+
+	const batchSize = 100
+	var unprocessed []uuid.UUID
+	for start := 0; start < len(messageIDs); start += batchSize {
+		end := start + batchSize
+		if end > len(messageIDs) {
+			end = len(messageIDs)
+		}
+		batch := messageIDs[start:end]
+
+		messages, _, err := e.repo.GetMessages(ctx, repository.MessagesQuery{
+			IDIn:           optional.From(batch),
+			Limit:          len(batch),
+			DisablePreload: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		jobs, err := e.repo.GetImageEmbeddingJobsByMessageIDs(ctx, batch)
+		if err != nil {
+			return nil, err
+		}
+		jobStatusByMessage := make(map[uuid.UUID]map[uuid.UUID]model.ImageEmbeddingJobStatus)
+		for _, job := range jobs {
+			if jobStatusByMessage[job.MessageID] == nil {
+				jobStatusByMessage[job.MessageID] = make(map[uuid.UUID]model.ImageEmbeddingJobStatus)
+			}
+			jobStatusByMessage[job.MessageID][job.FileID] = job.Status
+		}
+
+		for _, msg := range messages {
+			attr := e.getAttributes(msg, message.Parse(msg.Text))
+			if len(attr.ImageFileIDs) == 0 {
+				continue
+			}
+
+			needsProcessing := false
+			for _, fileID := range attr.ImageFileIDs {
+				if indexedByMessage[msg.ID][fileID] {
+					continue
+				}
+				// 未完了/完了済みのジョブがあれば、重複登録を避けるためスキップする。
+				// 失敗済みジョブは --retry-failed 指定時のみ再試行する。
+				if status, ok := jobStatusByMessage[msg.ID][fileID]; ok {
+					if status != model.ImageEmbeddingJobFailed || !retryFailed {
+						continue
+					}
+				}
+				needsProcessing = true
+				break
+			}
+			if needsProcessing {
+				unprocessed = append(unprocessed, msg.ID)
+			}
+		}
+	}
+
+	return unprocessed, nil
+}
+
+// ClearImageIndex 全メッセージの画像ベクトルと画像埋め込みジョブを削除する
+func (e *esEngine) ClearImageIndex(ctx context.Context) error {
+	body := m{
+		"query": m{
+			"bool": m{
+				"should": []m{
+					{"term": m{"hasImage": m{"value": true}}},
+					{"exists": m{"field": "imageVector"}},
+				},
+				"minimum_should_match": 1,
+			},
+		},
+		"script": m{
+			"source": "if (ctx._source.imageVector != null) { ctx._source.remove('imageVector'); }",
+			"lang":   "painless",
+		},
+	}
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal update_by_query body: %w", err)
+	}
+
+	res, err := e.client.UpdateByQuery(
+		[]string{getIndexName(esMessageIndex)},
+		e.client.UpdateByQuery.WithContext(ctx),
+		e.client.UpdateByQuery.WithBody(bytes.NewReader(b)),
+		e.client.UpdateByQuery.WithRefresh(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to clear image index: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("ES update_by_query error: %s", res.String())
+	}
+
+	if err := e.repo.DeleteAllImageEmbeddingJobs(ctx); err != nil {
+		return fmt.Errorf("failed to delete image embedding jobs: %w", err)
+	}
+
+	e.l.Info("cleared image index data from all messages")
 	return nil
 }
 
