@@ -153,6 +153,9 @@ func (h *Handlers) CreateThreads(c *echo.Context) error {
 		}
 	}
 
+	// TODO(refactor): スレッド作成と親メッセージのキャッシュ破棄をservice層にまとめる
+	h.MessageManager.InvalidateCache(req.ParentMessageID)
+
 	return c.JSON(http.StatusCreated, formatThreadChannel(th))
 }
 

@@ -402,6 +402,11 @@ func TestHandlers_CreateThreads(t *testing.T) {
 			parent := env.CreateChannel(t, rand)
 			parentMessageAuthor := env.CreateUser(t, rand)
 			parentMessage := env.CreateMessage(t, parentMessageAuthor.GetID(), parent.ID, "parent")
+			env.R(t).GET("/api/v3/messages/{messageId}", parentMessage.GetID()).
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().Object().Value("threadId").IsNull()
 
 			obj := env.R(t).POST(path).
 				WithCookie(session.CookieName, commonSession).
@@ -419,6 +424,12 @@ func TestHandlers_CreateThreads(t *testing.T) {
 
 			id, err := uuid.FromString(obj.Value("id").String().Raw())
 			require.NoError(t, err)
+
+			env.R(t).GET("/api/v3/messages/{messageId}", parentMessage.GetID()).
+				WithCookie(session.CookieName, commonSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().Object().Value("threadId").String().IsEqual(id.String())
 
 			ch, err := env.CM.GetChannel(ctx, id)
 			require.NoError(t, err)

@@ -1235,6 +1235,55 @@ func TestGormRepository_CreateThread(t *testing.T) {
 
 		assert.EqualValues(t, 1, threadCount)
 	})
+
+	t.Run("parent message update event", func(t *testing.T) {
+		t.Parallel()
+
+		base, _, _, user, parent := setupWithUserAndChannel(t, common, false)
+		repo := *base.(*Repository)
+		repo.hub = hub.New()
+		defer repo.hub.Close()
+
+		ctx := context.Background()
+		message := mustMakeMessage(t, &repo, user.GetID(), parent.ID)
+		oldMessage, err := repo.GetMessageByID(ctx, message.ID)
+		require.NoError(t, err)
+		sub := repo.hub.Subscribe(2, event.MessageUpdated)
+		args := model.Channel{
+			Name:      "thread",
+			ParentID:  parent.ID,
+			CreatorID: user.GetID(),
+			UpdaterID: user.GetID(),
+		}
+		thread, err := repo.CreateThread(ctx, args, model.Thread{MessageID: message.ID})
+		require.NoError(t, err)
+
+		newMessage, err := repo.GetMessageByID(ctx, message.ID)
+		require.NoError(t, err)
+
+		select {
+		case ev := <-sub.Receiver:
+			assert.Equal(t, event.MessageUpdated, ev.Name)
+			assert.Equal(t, message.ID, ev.Fields["message_id"])
+			assert.Equal(t, newMessage, ev.Fields["message"])
+			assert.Equal(t, oldMessage, ev.Fields["old_message"])
+			assert.Nil(t, ev.Fields["old_message"].(*model.Message).Thread)
+
+			updated := ev.Fields["message"].(*model.Message)
+			require.NotNil(t, updated.Thread)
+			assert.Equal(t, thread.ChannelID, updated.Thread.ChannelID)
+		default:
+			t.Fatal("parent message update event was not published")
+		}
+
+		_, err = repo.CreateThread(ctx, args, model.Thread{MessageID: message.ID})
+		require.ErrorIs(t, err, repository.ErrAlreadyExists)
+		select {
+		case ev := <-sub.Receiver:
+			t.Fatalf("unexpected event after failed thread creation: %+v", ev)
+		default:
+		}
+	})
 }
 
 func TestGormRepository_GetThreadSubscribers(t *testing.T) {

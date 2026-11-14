@@ -98,6 +98,7 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th model.Thread) (*model.Thread, error) {
 	arr := []interface{}{&ch, &th}
 	var changed []uuid.UUID
+	var oldMes, newMes model.Message
 
 	ch.ID = uuid.Must(uuid.NewV7())
 	th.ChannelID = ch.ID
@@ -105,14 +106,13 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 	ch.DeletedAt = gorm.DeletedAt{}
 
 	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Scopes(messagePreloads).First(&oldMes, "id = ?", th.MessageID).Error; err != nil {
+			return err
+		}
 		for _, v := range arr {
 			if err := tx.Create(v).Error; err != nil {
 				return err
 			}
-		}
-		var message model.Message
-		if err := tx.First(&message, "id = ?", th.MessageID).Error; err != nil {
-			return err
 		}
 
 		var parent model.Channel
@@ -121,7 +121,7 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 		}
 
 		users := set.UUID{}
-		users.Add(ch.CreatorID, message.UserID)
+		users.Add(ch.CreatorID, oldMes.UserID)
 		users.Remove(uuid.Nil)
 		for userID := range users {
 			var defaults []model.UserThreadSubscriptionDefault
@@ -161,7 +161,7 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 			}
 			changed = append(changed, userID)
 		}
-		return nil
+		return tx.Scopes(messagePreloads).First(&newMes, "id = ?", th.MessageID).Error
 	})
 
 	if err != nil {
@@ -176,6 +176,14 @@ func (repo *Repository) CreateThread(ctx context.Context, ch model.Channel, th m
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
 			"thread":     &ch,
+		},
+	})
+	repo.hub.Publish(hub.Message{
+		Name: event.MessageUpdated,
+		Fields: hub.Fields{
+			"message_id":  th.MessageID,
+			"old_message": &oldMes,
+			"message":     &newMes,
 		},
 	})
 	if len(changed) > 0 {
