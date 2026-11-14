@@ -10,6 +10,10 @@ test_db_port = "3100"
 tbls_image = "ghcr.io/k1low/tbls:v1.96.1@sha256:0d90f07aed0c423a6012d542358c10b13fcdf15a1074ceee3d73676c87cc2f79"
 # renovate:image-full-digest
 spectral_image = "index.docker.io/stoplight/spectral:6.17.1@sha256:3b05e6cd9d43375c454cc0c022e91b3285851043b05c3e738342ea3f84cde76d"
+# renovate:image-full-digest
+wslc_mariadb_image = "mariadb:10.11.19@sha256:d769e37960821dfdcf096954f6e7ac89f747e116c1bba98e48edd265dfc7deae"
+# renovate:image-full-digest
+wslc_rustfs_image = "rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b"
 
 [tasks.help]
 description = "Display this help screen"
@@ -35,9 +39,10 @@ cd ./dev/keys && go run ../bin/gen_ec_pem.go
 """
 
 [tasks.test]
-description = "Run test"
+description = "Run Go tests"
 env = { MARIADB_PORT = "{{vars.test_db_port}}" }
 run = "go test ./... -race -shuffle=on"
+run_windows = 'pwsh -NoProfile -File dev/bin/windows.ps1 test -MariaDBImage "{{vars.wslc_mariadb_image}}" -RustFSImage "{{vars.wslc_rustfs_image}}"'
 
 [tasks.up-test-db]
 description = "Make sure the test db container is running"
@@ -82,12 +87,14 @@ run = [
 ]
 
 [tasks.up]
-description = "Build and start the app containers"
+description = "Start the local development server"
 run = "docker compose up -d --build"
+run_windows = 'pwsh -NoProfile -File dev/bin/windows.ps1 serve -MariaDBImage "{{vars.wslc_mariadb_image}}"'
 
 [tasks.down]
-description = "Stop and remove app containers"
+description = "Stop and remove the local development containers"
 run = "docker compose down"
+run_windows = "pwsh -NoProfile -File dev/bin/windows.ps1 down"
 
 [tasks.seed]
 description = "Seed users, channels, messages, and stamps into the database"
