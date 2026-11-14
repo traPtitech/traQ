@@ -253,7 +253,7 @@ func (repo *Repository) GetMessages(ctx context.Context, query repository.Messag
 		tx = tx.Where("messages.user_id = ?", query.User)
 	}
 	if query.ChannelsSubscribedByUser != uuid.Nil {
-		tx = tx.Where("channels.is_forced = TRUE OR channels.id IN (SELECT s.channel_id FROM users_subscribe_channels s WHERE s.user_id = ?)", query.ChannelsSubscribedByUser)
+		tx = tx.Where("channels.id IN (?)", subscribedChannelsQuery(repo.db.WithContext(ctx), query.ChannelsSubscribedByUser))
 	}
 
 	if query.Inclusive {
@@ -501,7 +501,7 @@ func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repo
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {
-		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.WithContext(ctx).Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.V))
+		tx = tx.Where("c.id IN (?)", subscribedChannelsQuery(repo.db.WithContext(ctx), query.SubscribedByUser.V))
 	}
 
 	if query.Limit > 0 {

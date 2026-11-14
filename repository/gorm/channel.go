@@ -749,6 +749,53 @@ func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) 
 	return users, nil
 }
 
+// スレッドの継承設定を含めて未読管理以上のチャンネルを取得する。
+func subscribedChannelsQuery(tx *gorm.DB, userID uuid.UUID) *gorm.DB {
+	subscriptions := tx.Model(&model.UserSubscribeChannel{}).
+		Select("channel_id").Where("user_id = ?", userID)
+
+	// 通常チャンネルは、強制通知または購読設定があるものを対象にする。
+	channels := tx.Model(&model.Channel{}).Select("id").
+		Where("type <> ?", model.ChannelTypeThread).
+		Where("is_forced = TRUE OR id IN (?)", subscriptions)
+
+	nonInheritingThreads := tx.Model(&model.UserThreadSubscription{}).
+		Select("channel_id").Where("user_id = ? AND level <> -1", userID)
+	nonInheritingDefaults := tx.Model(&model.UserThreadSubscriptionDefault{}).
+		Select("channel_id").Where("user_id = ? AND level <> -1", userID)
+
+	defaultSubscriptions := tx.Model(&model.UserThreadSubscriptionDefault{}).
+		Select("channel_id").Where("user_id = ? AND level >= ?", userID, model.ChannelSubscribeLevelMark)
+	parentSubscriptions := tx.Model(&model.UserSubscribeChannel{}).
+		Select("channel_id").Where("user_id = ? AND (mark = TRUE OR notify = TRUE)", userID)
+	parents := tx.Model(&model.Channel{}).Select("id").
+		Where("is_forced = TRUE OR id IN (?)", parentSubscriptions)
+
+	// 1. 個別設定が未読管理以上のスレッド。
+	individual := tx.Model(&model.UserThreadSubscription{}).
+		Select("channel_id").Where("user_id = ? AND level >= ?", userID, model.ChannelSubscribeLevelMark)
+
+	// 2. 個別設定が継承で、デフォルト設定が未読管理以上のスレッド。
+	defaults := tx.Model(&model.Channel{}).Select("id").
+		Where("type = ?", model.ChannelTypeThread).
+		Where("id NOT IN (?)", nonInheritingThreads).
+		Where("parent_id IN (?)", defaultSubscriptions)
+
+	// 3. 個別・デフォルト設定がともに継承で、親が未読管理以上または強制通知のスレッド。
+	inherited := tx.Model(&model.Channel{}).Select("id").
+		Where("type = ?", model.ChannelTypeThread).
+		Where("id NOT IN (?)", nonInheritingThreads).
+		Where("parent_id NOT IN (?)", nonInheritingDefaults).
+		Where("parent_id IN (?)", parents)
+
+	// 上の3条件のいずれかを満たすスレッドと、通常チャンネルを合わせる。
+	threads := tx.Model(&model.Channel{}).Select("id").
+		Where("type = ?", model.ChannelTypeThread).
+		Where("id IN (?) OR id IN (?) OR id IN (?)", individual, defaults, inherited)
+
+	return tx.Table("((?) UNION (?)) AS subscribed_channels", channels, threads).Select("id")
+}
+
 func threadSubscriberQuery(tx *gorm.DB, threadID uuid.UUID, minimum model.ChannelSubscribeLevel) *gorm.DB {
 	parentID := tx.Model(&model.Channel{}).Select("parent_id").
 		Where("id = ? AND type = ?", threadID, model.ChannelTypeThread)
