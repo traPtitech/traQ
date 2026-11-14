@@ -836,7 +836,7 @@ paths:
               $ref: "#/components/schemas/PostStampRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif, image/svg+xml"
+                contentType: "image/png, image/jpeg, image/gif, image/webp, image/svg+xml"
         description: ""
       operationId: createStamp
       tags:
@@ -1128,7 +1128,7 @@ paths:
               $ref: "#/components/schemas/PutUserIconRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
         description: ""
       tags:
         - group
@@ -1748,6 +1748,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
             image/png:
               schema:
                 type: string
@@ -1781,7 +1785,7 @@ paths:
               $ref: "#/components/schemas/PutUserIconRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
         description: ""
       tags:
         - webhook
@@ -1802,6 +1806,10 @@ paths:
                 type: string
                 format: binary
             image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
               schema:
                 type: string
                 format: binary
@@ -1840,7 +1848,7 @@ paths:
               $ref: "#/components/schemas/PutUserIconRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
       tags:
         - user
       description: |-
@@ -1860,6 +1868,10 @@ paths:
                 type: string
                 format: binary
             image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
               schema:
                 type: string
                 format: binary
@@ -1893,7 +1905,7 @@ paths:
               $ref: "#/components/schemas/PutUserIconRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
       tags:
         - me
   /users/me/password:
@@ -2984,6 +2996,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
             image/png:
               schema:
                 type: string
@@ -3250,6 +3266,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
             image/png:
               schema:
                 type: string
@@ -3287,7 +3307,7 @@ paths:
               $ref: "#/components/schemas/PutUserIconRequest"
             encoding:
               file:
-                contentType: "image/png, image/jpeg, image/gif"
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
       tags:
         - bot
       description: |-
@@ -4037,6 +4057,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
             image/jpeg:
               schema:
                 type: string
@@ -4073,7 +4097,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+                  description: "スタンプ画像(1MBまでのpng, jpeg, gif, 静止webp)"
               required:
                 - file
         description: ""
@@ -5298,7 +5322,7 @@ components:
         file:
           type: string
           format: binary
-          description: "スタンプ画像(1MBまでのpng, jpeg, gif)"
+          description: "スタンプ画像(1MBまでのpng, jpeg, gif, 静止webp)"
       required:
         - name
         - file
@@ -6047,7 +6071,7 @@ components:
         file:
           type: string
           format: binary
-          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif)"
+          description: "アイコン画像(2MB,`Config.Imaging.MaxPixels`(default: 2560*1600)までのpng, jpeg, gif, 静止webp)"
       required:
         - file
     PutMyPasswordRequest:
