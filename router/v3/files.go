@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -117,7 +116,7 @@ func (h *Handlers) PostFile(c *echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree(ctx).GetChannelPath(ch.ID)))
+		return herror.BadRequest("this channel has been archived")
 	}
 	if ch.IsDMChannel() {
 		// アクセスコントロール設定

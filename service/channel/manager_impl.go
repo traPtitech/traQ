@@ -695,6 +695,14 @@ func (m *managerImpl) IsChannelAccessibleToUser(ctx context.Context, userID, cha
 	return channel.IsThread(), nil
 }
 
+func (m *managerImpl) IsArchivedChannel(ctx context.Context, id uuid.UUID) (bool, error) {
+	ch, err := m.GetChannel(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	return ch.IsArchived(), nil
+}
+
 func (m *managerImpl) IsPublicChannel(_ context.Context, id uuid.UUID) bool {
 	return m.T.IsChannelPresent(id)
 }

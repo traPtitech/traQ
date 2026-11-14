@@ -2744,3 +2744,103 @@ func TestManagerImpl_EditChannelSubscribers(t *testing.T) {
 		assert.ErrorIs(t, err, repoErr)
 	})
 }
+
+func TestManagerImpl_IsArchivedChannel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Public channel", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+
+		archived, err := cm.IsArchivedChannel(context.Background(), cA)
+		require.NoError(t, err)
+		assert.False(t, archived)
+
+		archived, err = cm.IsArchivedChannel(context.Background(), cABB)
+		require.NoError(t, err)
+		assert.True(t, archived)
+	})
+
+	t.Run("Thread channel", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+
+		repo.EXPECT().GetChannel(gomock.Any(), id).Return(&model.Channel{ID: id, Type: model.ChannelTypeThread, IsVisible: true}, nil)
+
+		archived, err := cm.IsArchivedChannel(context.Background(), id)
+		require.NoError(t, err)
+		assert.False(t, archived)
+	})
+
+	t.Run("Archived thread channel", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+
+		repo.EXPECT().GetChannel(gomock.Any(), id).Return(&model.Channel{ID: id, Type: model.ChannelTypeThread, IsVisible: false}, nil)
+
+		archived, err := cm.IsArchivedChannel(context.Background(), id)
+		require.NoError(t, err)
+		assert.True(t, archived)
+	})
+
+	t.Run("DM", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+
+		repo.EXPECT().GetChannel(gomock.Any(), id).Return(&model.Channel{ID: id, Type: model.ChannelTypeDM, IsVisible: true}, nil)
+
+		archived, err := cm.IsArchivedChannel(context.Background(), id)
+		require.NoError(t, err)
+		assert.False(t, archived)
+	})
+
+	t.Run("Archived DM", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		id := mustGenerateUUID()
+
+		repo.EXPECT().GetChannel(gomock.Any(), id).Return(&model.Channel{ID: id, Type: model.ChannelTypeDM, IsVisible: false}, nil)
+
+		archived, err := cm.IsArchivedChannel(context.Background(), id)
+		require.NoError(t, err)
+		assert.True(t, archived)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(nil, repository.ErrNotFound)
+
+		_, err := cm.IsArchivedChannel(context.Background(), cNotFound)
+		assert.ErrorIs(t, err, ErrChannelNotFound)
+	})
+
+	t.Run("Repository error", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mock_repository.NewMockChannelRepository(gomock.NewController(t))
+		cm := initCM(t, repo)
+		repoErr := errors.New("repository error")
+
+		repo.EXPECT().GetChannel(gomock.Any(), cNotFound).Return(nil, repoErr)
+
+		_, err := cm.IsArchivedChannel(context.Background(), cNotFound)
+		assert.ErrorIs(t, err, repoErr)
+	})
+}
