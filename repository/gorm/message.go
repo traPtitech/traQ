@@ -253,7 +253,7 @@ func (repo *Repository) GetMessages(ctx context.Context, query repository.Messag
 		tx = tx.Where("messages.user_id = ?", query.User)
 	}
 	if query.ChannelsSubscribedByUser != uuid.Nil {
-		tx = tx.Where("channels.id IN (?)", subscribedChannelsQuery(repo.db.WithContext(ctx), query.ChannelsSubscribedByUser))
+		tx = tx.Scopes(subscribedChannelsScope(query.ChannelsSubscribedByUser))
 	}
 
 	if query.Inclusive {
@@ -496,12 +496,12 @@ func (repo *Repository) GetChannelLatestMessages(ctx context.Context, query repo
 		Select("m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at").
 		Table("channel_latest_messages clm").
 		Joins("INNER JOIN messages m ON clm.message_id = m.id").
-		Joins("INNER JOIN channels c ON clm.channel_id = c.id").
-		Where("c.deleted_at IS NULL AND c.type IN ? AND m.deleted_at IS NULL", []model.ChannelType{model.ChannelTypePublic, model.ChannelTypeThread}).
+		Joins("INNER JOIN channels ON clm.channel_id = channels.id").
+		Where("channels.deleted_at IS NULL AND channels.type IN ? AND m.deleted_at IS NULL", []model.ChannelType{model.ChannelTypePublic, model.ChannelTypeThread}).
 		Order("clm.date_time DESC")
 
 	if query.SubscribedByUser.Valid {
-		tx = tx.Where("c.id IN (?)", subscribedChannelsQuery(repo.db.WithContext(ctx), query.SubscribedByUser.V))
+		tx = tx.Scopes(subscribedChannelsScope(query.SubscribedByUser.V))
 	}
 
 	if query.Limit > 0 {

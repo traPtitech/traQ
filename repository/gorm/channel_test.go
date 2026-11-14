@@ -2001,7 +2001,7 @@ func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
 	}
 }
 
-func TestGormRepository_SubscribedChannelsQuery(t *testing.T) {
+func TestGormRepository_SubscribedChannelsScope(t *testing.T) {
 	t.Parallel()
 
 	repo, _, _ := setup(t, common)
@@ -2030,7 +2030,8 @@ func TestGormRepository_SubscribedChannelsQuery(t *testing.T) {
 		require.NoError(t, repo.SetThreadSubscription(ctx, id, thread.ChannelID, threadLevel))
 
 		var channelIDs []uuid.UUID
-		require.NoError(t, subscribedChannelsQuery(getDB(repo).WithContext(ctx), id).Pluck("id", &channelIDs).Error)
+		require.NoError(t, getDB(repo).WithContext(ctx).Model(&model.Channel{}).
+			Scopes(subscribedChannelsScope(id)).Pluck("channels.id", &channelIDs).Error)
 
 		if included {
 			assert.Contains(t, channelIDs, thread.ChannelID)

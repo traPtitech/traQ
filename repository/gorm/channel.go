@@ -749,51 +749,51 @@ func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) 
 	return users, nil
 }
 
-// スレッドの継承設定を含めて未読管理以上のチャンネルを取得する。
-func subscribedChannelsQuery(tx *gorm.DB, userID uuid.UUID) *gorm.DB {
-	subscriptions := tx.Model(&model.UserSubscribeChannel{}).
-		Select("channel_id").Where("user_id = ?", userID)
+func subscribedChannelsScope(userID uuid.UUID) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		// 通常チャンネルの通知設定。
+		tx = tx.Joins(`LEFT JOIN users_subscribe_channels channel_subscription
+			ON channel_subscription.channel_id = channels.id AND channel_subscription.user_id = ?`,
+			userID)
 
-	// 通常チャンネルは、強制通知または購読設定があるものを対象にする。
-	channels := tx.Model(&model.Channel{}).Select("id").
-		Where("type <> ?", model.ChannelTypeThread).
-		Where("is_forced = TRUE OR id IN (?)", subscriptions)
+		// スレッドの通知設定
+		tx = tx.Joins(`LEFT JOIN user_thread_subscriptions thread_subscription
+			ON thread_subscription.channel_id = channels.id AND thread_subscription.user_id = ?`,
+			userID)
 
-	nonInheritingThreads := tx.Model(&model.UserThreadSubscription{}).
-		Select("channel_id").Where("user_id = ? AND level <> -1", userID)
-	nonInheritingDefaults := tx.Model(&model.UserThreadSubscriptionDefault{}).
-		Select("channel_id").Where("user_id = ? AND level <> -1", userID)
+		// スレッドのデフォルトの通知設定
+		tx = tx.Joins(`LEFT JOIN user_thread_subscription_defaults thread_default
+			ON thread_default.channel_id = channels.parent_id AND thread_default.user_id = ?`,
+			userID)
 
-	defaultSubscriptions := tx.Model(&model.UserThreadSubscriptionDefault{}).
-		Select("channel_id").Where("user_id = ? AND level >= ?", userID, model.ChannelSubscribeLevelMark)
-	parentSubscriptions := tx.Model(&model.UserSubscribeChannel{}).
-		Select("channel_id").Where("user_id = ? AND (mark = TRUE OR notify = TRUE)", userID)
-	parents := tx.Model(&model.Channel{}).Select("id").
-		Where("is_forced = TRUE OR id IN (?)", parentSubscriptions)
+		// 親チャンネルのとその通知設定。
+		tx = tx.Joins(`LEFT JOIN channels parent_channel
+			ON parent_channel.id = channels.parent_id AND parent_channel.deleted_at IS NULL`)
+		tx = tx.Joins(`LEFT JOIN users_subscribe_channels parent_subscription
+			ON parent_subscription.channel_id = parent_channel.id AND parent_subscription.user_id = ?`, userID)
 
-	// 1. 個別設定が未読管理以上のスレッド。
-	individual := tx.Model(&model.UserThreadSubscription{}).
-		Select("channel_id").Where("user_id = ? AND level >= ?", userID, model.ChannelSubscribeLevelMark)
+		// 通常チャンネル
+		channels := clause.Expr{
+			SQL:  "channels.type = ? AND (channels.is_forced = TRUE OR channel_subscription.user_id IS NOT NULL)",
+			Vars: []any{model.ChannelTypePublic},
+		}
 
-	// 2. 個別設定が継承で、デフォルト設定が未読管理以上のスレッド。
-	defaults := tx.Model(&model.Channel{}).Select("id").
-		Where("type = ?", model.ChannelTypeThread).
-		Where("id NOT IN (?)", nonInheritingThreads).
-		Where("parent_id IN (?)", defaultSubscriptions)
+		// スレッド
+		threads := clause.Expr{
+			SQL: `channels.type = ? AND COALESCE(
+				thread_subscription.level,
+				thread_default.level,
+				CASE
+					WHEN parent_channel.is_forced = TRUE OR parent_subscription.notify = TRUE THEN 2
+					WHEN parent_subscription.mark = TRUE THEN 1
+					ELSE 0
+				END
+			) >= ?`,
+			Vars: []any{model.ChannelTypeThread, model.ChannelSubscribeLevelMark},
+		}
 
-	// 3. 個別・デフォルト設定がともに継承で、親が未読管理以上または強制通知のスレッド。
-	inherited := tx.Model(&model.Channel{}).Select("id").
-		Where("type = ?", model.ChannelTypeThread).
-		Where("id NOT IN (?)", nonInheritingThreads).
-		Where("parent_id NOT IN (?)", nonInheritingDefaults).
-		Where("parent_id IN (?)", parents)
-
-	// 上の3条件のいずれかを満たすスレッドと、通常チャンネルを合わせる。
-	threads := tx.Model(&model.Channel{}).Select("id").
-		Where("type = ?", model.ChannelTypeThread).
-		Where("id IN (?) OR id IN (?) OR id IN (?)", individual, defaults, inherited)
-
-	return tx.Table("((?) UNION (?)) AS subscribed_channels", channels, threads).Select("id")
+		return tx.Where(clause.Or(clause.And(channels), clause.And(threads)))
+	}
 }
 
 func threadSubscriberQuery(tx *gorm.DB, threadID uuid.UUID, minimum model.ChannelSubscribeLevel) *gorm.DB {
