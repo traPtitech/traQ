@@ -749,6 +749,53 @@ func getThreadSubscribers(ctx context.Context, tx *gorm.DB, threadID uuid.UUID) 
 	return users, nil
 }
 
+func subscribedChannelsScope(userID uuid.UUID) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		// 通常チャンネルの通知設定。
+		tx = tx.Joins(`LEFT JOIN users_subscribe_channels channel_subscription
+			ON channel_subscription.channel_id = channels.id AND channel_subscription.user_id = ?`,
+			userID)
+
+		// スレッドの通知設定
+		tx = tx.Joins(`LEFT JOIN user_thread_subscriptions thread_subscription
+			ON thread_subscription.channel_id = channels.id AND thread_subscription.user_id = ?`,
+			userID)
+
+		// スレッドのデフォルトの通知設定
+		tx = tx.Joins(`LEFT JOIN user_thread_subscription_defaults thread_default
+			ON thread_default.channel_id = channels.parent_id AND thread_default.user_id = ?`,
+			userID)
+
+		// 親チャンネルのとその通知設定。
+		tx = tx.Joins(`LEFT JOIN channels parent_channel
+			ON parent_channel.id = channels.parent_id AND parent_channel.deleted_at IS NULL`)
+		tx = tx.Joins(`LEFT JOIN users_subscribe_channels parent_subscription
+			ON parent_subscription.channel_id = parent_channel.id AND parent_subscription.user_id = ?`, userID)
+
+		// 通常チャンネル
+		channels := clause.Expr{
+			SQL:  "channels.type = ? AND (channels.is_forced = TRUE OR channel_subscription.user_id IS NOT NULL)",
+			Vars: []any{model.ChannelTypePublic},
+		}
+
+		// スレッド
+		threads := clause.Expr{
+			SQL: `channels.type = ? AND COALESCE(
+				thread_subscription.level,
+				thread_default.level,
+				CASE
+					WHEN parent_channel.is_forced = TRUE OR parent_subscription.notify = TRUE THEN 2
+					WHEN parent_subscription.mark = TRUE THEN 1
+					ELSE 0
+				END
+			) >= ?`,
+			Vars: []any{model.ChannelTypeThread, model.ChannelSubscribeLevelMark},
+		}
+
+		return tx.Where(clause.Or(clause.And(channels), clause.And(threads)))
+	}
+}
+
 func threadSubscriberQuery(tx *gorm.DB, threadID uuid.UUID, minimum model.ChannelSubscribeLevel) *gorm.DB {
 	parentID := tx.Model(&model.Channel{}).Select("parent_id").
 		Where("id = ? AND type = ?", threadID, model.ChannelTypeThread)

@@ -237,6 +237,73 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 			messageEquals(t, latestCh1Msg, messages[0])
 		}
 	})
+	t.Run("thread subscriptions", func(t *testing.T) {
+		t.Parallel()
+
+		repo, _, require := setup(t, common)
+		ctx := context.Background()
+		user := mustMakeUser(t, repo, rand, false)
+		id := user.GetID()
+		parent := mustMakeChannel(t, repo, rand)
+		require.NoError(repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, 1))
+
+		createReply := func(t *testing.T, name string, level int) *model.Message {
+			t.Helper()
+
+			root := mustMakeMessage(t, repo, id, parent.ID)
+			thread, err := repo.CreateThread(ctx, model.Channel{
+				Name: name, ParentID: parent.ID,
+				CreatorID: id, UpdaterID: id,
+			}, model.Thread{MessageID: root.ID})
+			require.NoError(err)
+			require.NoError(repo.SetThreadSubscription(ctx, id, thread.ChannelID, level))
+
+			return mustMakeMessage(t, repo, id, thread.ChannelID)
+		}
+
+		inherited := createReply(t, "inherited", -1)
+		excluded := createReply(t, "excluded", 0)
+
+		checkMessages := func(t *testing.T, messages []*model.Message, all bool) {
+			t.Helper()
+
+			ids := make([]uuid.UUID, len(messages))
+			for i, message := range messages {
+				ids[i] = message.ID
+			}
+
+			assert.Contains(t, ids, inherited.ID)
+			if all {
+				assert.Contains(t, ids, excluded.ID)
+			} else {
+				assert.NotContains(t, ids, excluded.ID)
+			}
+		}
+
+		t.Run("GetMessages subscribed", func(t *testing.T) {
+			t.Parallel()
+			_, require := assertAndRequire(t)
+
+			messages, _, err := repo.GetMessages(ctx, repository.MessagesQuery{
+				User: id, ChannelsSubscribedByUser: id, ExcludeDMs: true, DisablePreload: true,
+			})
+			require.NoError(err)
+
+			checkMessages(t, messages, false)
+		})
+
+		t.Run("GetMessages all", func(t *testing.T) {
+			t.Parallel()
+			_, require := assertAndRequire(t)
+
+			messages, _, err := repo.GetMessages(ctx, repository.MessagesQuery{
+				User: id, ExcludeDMs: true, DisablePreload: true,
+			})
+			require.NoError(err)
+
+			checkMessages(t, messages, true)
+		})
+	})
 }
 
 func TestRepositoryImpl_SetMessageUnreads(t *testing.T) {
@@ -409,6 +476,71 @@ func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[5:])
 		}
+	})
+	t.Run("thread subscriptions", func(t *testing.T) {
+		t.Parallel()
+
+		repo, _, require := setup(t, common)
+		ctx := context.Background()
+		user := mustMakeUser(t, repo, rand, false)
+		id := user.GetID()
+		parent := mustMakeChannel(t, repo, rand)
+		require.NoError(repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, 1))
+
+		createReply := func(t *testing.T, name string, level int) *model.Message {
+			t.Helper()
+
+			root := mustMakeMessage(t, repo, id, parent.ID)
+			thread, err := repo.CreateThread(ctx, model.Channel{
+				Name: name, ParentID: parent.ID,
+				CreatorID: id, UpdaterID: id,
+			}, model.Thread{MessageID: root.ID})
+			require.NoError(err)
+			require.NoError(repo.SetThreadSubscription(ctx, id, thread.ChannelID, level))
+
+			return mustMakeMessage(t, repo, id, thread.ChannelID)
+		}
+
+		inherited := createReply(t, "inherited", -1)
+		excluded := createReply(t, "excluded", 0)
+
+		checkMessages := func(t *testing.T, messages []*model.Message, all bool) {
+			t.Helper()
+
+			ids := make([]uuid.UUID, len(messages))
+			for i, message := range messages {
+				ids[i] = message.ID
+			}
+
+			assert.Contains(t, ids, inherited.ID)
+			if all {
+				assert.Contains(t, ids, excluded.ID)
+			} else {
+				assert.NotContains(t, ids, excluded.ID)
+			}
+		}
+
+		t.Run("GetChannelLatestMessages subscribed", func(t *testing.T) {
+			t.Parallel()
+			_, require := assertAndRequire(t)
+
+			messages, err := repo.GetChannelLatestMessages(ctx, repository.ChannelLatestMessagesQuery{
+				SubscribedByUser: optional.From(id),
+			})
+			require.NoError(err)
+
+			checkMessages(t, messages, false)
+		})
+
+		t.Run("GetChannelLatestMessages all", func(t *testing.T) {
+			t.Parallel()
+			_, require := assertAndRequire(t)
+
+			messages, err := repo.GetChannelLatestMessages(ctx, repository.ChannelLatestMessagesQuery{})
+			require.NoError(err)
+
+			checkMessages(t, messages, true)
+		})
 	})
 }
 

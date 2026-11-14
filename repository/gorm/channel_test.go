@@ -2000,3 +2000,113 @@ func TestGormRepository_ChangeThreadSubscriptionEventUsers(t *testing.T) {
 	default:
 	}
 }
+
+func TestGormRepository_SubscribedChannelsScope(t *testing.T) {
+	t.Parallel()
+
+	repo, _, _ := setup(t, common)
+	ctx := context.Background()
+
+	checkSubscription := func(t *testing.T, threadLevel, defaultLevel, parentLevel int, forced, included bool) {
+		t.Helper()
+
+		user := mustMakeUser(t, repo, rand, false)
+		id := user.GetID()
+		parent := mustMakeChannel(t, repo, rand)
+		root := mustMakeMessage(t, repo, id, parent.ID)
+		thread, err := repo.CreateThread(ctx, model.Channel{
+			Name: "activity", ParentID: parent.ID,
+			CreatorID: id, UpdaterID: id,
+		}, model.Thread{MessageID: root.ID})
+		require.NoError(t, err)
+
+		_, _, err = repo.ChangeChannelSubscription(ctx, parent.ID, repository.ChangeChannelSubscriptionArgs{
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{id: model.ChannelSubscribeLevel(parentLevel)},
+		})
+		require.NoError(t, err)
+		require.NoError(t, getDB(repo).Model(parent).Update("is_forced", forced).Error)
+
+		require.NoError(t, repo.SetThreadSubscriptionDefault(ctx, id, parent.ID, defaultLevel))
+		require.NoError(t, repo.SetThreadSubscription(ctx, id, thread.ChannelID, threadLevel))
+
+		var channelIDs []uuid.UUID
+		require.NoError(t, getDB(repo).WithContext(ctx).Model(&model.Channel{}).
+			Scopes(subscribedChannelsScope(id)).Pluck("channels.id", &channelIDs).Error)
+
+		if included {
+			assert.Contains(t, channelIDs, thread.ChannelID)
+		} else {
+			assert.NotContains(t, channelIDs, thread.ChannelID)
+		}
+		if forced || parentLevel > 0 {
+			assert.Contains(t, channelIDs, parent.ID)
+		} else {
+			assert.NotContains(t, channelIDs, parent.ID)
+		}
+	}
+
+	t.Run("No stored settings", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, false, false)
+	})
+
+	t.Run("Inherit parent mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 1, false, true)
+	})
+
+	t.Run("Inherit parent notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 2, false, true)
+	})
+
+	t.Run("Inherit forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, -1, 0, true, true)
+	})
+
+	t.Run("Inherit default mark", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, 1, 0, false, true)
+	})
+
+	t.Run("Inherit default notify", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, 2, 0, false, true)
+	})
+
+	t.Run("Default none overrides parent notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, 0, 2, false, false)
+	})
+
+	t.Run("Default none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, -1, 0, 0, true, false)
+	})
+
+	t.Run("Thread none overrides default notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, 2, 2, false, false)
+	})
+
+	t.Run("Thread none overrides forced notification", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 0, -1, 0, true, false)
+	})
+
+	t.Run("Thread mark overrides default none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, 0, 0, false, true)
+	})
+
+	t.Run("Thread notify overrides default none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 2, 0, 0, false, true)
+	})
+
+	t.Run("Thread mark overrides parent none", func(t *testing.T) {
+		t.Parallel()
+		checkSubscription(t, 1, -1, 0, false, true)
+	})
+}
