@@ -4082,6 +4082,9 @@ paths:
                   description: "スタンプ画像(1MBまでのpng, jpeg, gif, 静止webp)"
               required:
                 - file
+            encoding:
+              file:
+                contentType: "image/png, image/jpeg, image/gif, image/webp"
         description: ""
   "/users/me/unread/{channelId}":
     parameters:

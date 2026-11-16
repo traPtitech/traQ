@@ -65,6 +65,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
         '404':
           description: 取得できませんでした。指定したユーザーは存在しません。
   /oauth2/authorize:

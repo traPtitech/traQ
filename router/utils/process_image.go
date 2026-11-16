@@ -2,12 +2,10 @@
 package utils
 
 import (
-	"bytes"
 	"errors"
-	"image/png"
 	"io"
+	"net/http"
 
-	"github.com/HugoSmits86/nativewebp"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
 	"github.com/sapphi-red/midec"
@@ -59,7 +57,20 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		FileType: fType,
 	}
 
-	switch fh.Header.Get(echo.HeaderContentType) {
+	contentType := fh.Header.Get(echo.HeaderContentType)
+	if contentType == "" || contentType == "application/octet-stream" {
+		var buf [512]byte
+		n, err := io.ReadFull(src, buf[:])
+		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		contentType = http.DetectContentType(buf[:n])
+	}
+
+	switch contentType {
 	case consts.MimeImagePNG, consts.MimeImageJPEG:
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
@@ -74,13 +85,13 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		}
 
 		// PNGに変換
-		var b bytes.Buffer
-		if err := png.Encode(&b, img); err != nil {
+		b, err := p.EncodePNG(img)
+		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
 
-		args.Src = bytes.NewReader(b.Bytes())
-		args.FileSize = int64(b.Len())
+		args.Src = b
+		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImagePNG
 		args.Thumbnail = img // サムネイル画像より小さいという前提
 
@@ -108,12 +119,12 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 				return uuid.Nil, herror.InternalServerError(err)
 			}
 		}
-		var b bytes.Buffer
-		if err := nativewebp.Encode(&b, img, nil); err != nil {
+		b, err := p.EncodeWebP(img)
+		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
-		args.Src = bytes.NewReader(b.Bytes())
-		args.FileSize = int64(b.Len())
+		args.Src = b
+		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImageWebP
 		args.Thumbnail = img
 	case consts.MimeImageGIF:
