@@ -7,15 +7,15 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	ch := fields["channel"].(*model.Channel)
+	ch := event.MustPayload[event.ChannelCreatedPayload](fields).Channel
 	if ch.IsPublic {
-		bots, err := ctx.GetBots(event.ChannelCreated)
+		bots, err := ctx.GetBots(botevent.ChannelCreated)
 		if err != nil {
 			return fmt.Errorf("failed to GetBots: %w", err)
 		}
@@ -29,7 +29,7 @@ func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields
 		}
 
 		if err := ctx.Multicast(
-			event.ChannelCreated,
+			botevent.ChannelCreated,
 			payload.MakeChannelCreated(datetime, ch, ctx.CM().PublicChannelTree(context.Background()).GetChannelPath(ch.ID), user),
 			bots,
 		); err != nil {

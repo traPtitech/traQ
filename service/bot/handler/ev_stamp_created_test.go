@@ -6,12 +6,11 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
-	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
@@ -21,7 +20,7 @@ func TestStampCreated(t *testing.T) {
 	b := &model.Bot{
 		ID:              uuid.NewV3(uuid.Nil, "b"),
 		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.StampCreated.String()}),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{botevent.StampCreated.String()}),
 		State:           model.BotActive,
 	}
 
@@ -47,9 +46,10 @@ func TestStampCreated(t *testing.T) {
 		}
 		et := time.Now()
 
-		expectMulticast(handlerCtx, event.StampCreated, payload.MakeStampCreated(et, stamp, user), []*model.Bot{b})
-		assert.NoError(t, StampCreated(handlerCtx, et, intevent.StampCreated, hub.Fields{
-			"stamp": stamp,
-		}))
+		expectMulticast(handlerCtx, botevent.StampCreated, payload.MakeStampCreated(et, stamp, user), []*model.Bot{b})
+		assert.NoError(t, StampCreated(handlerCtx, et, event.StampCreated, event.FieldsOf(event.StampCreatedPayload{
+			StampID: stamp.ID,
+			Stamp:   stamp,
+		})))
 	})
 }

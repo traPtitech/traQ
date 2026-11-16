@@ -1,12 +1,8 @@
 package extension
 
 import (
-	stdjson "encoding/json"
-	"io"
-
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v5"
 
 	"github.com/traPtitech/traQ/repository"
@@ -14,10 +10,11 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
-// JSONSerializer encoding/jsonの代わりにjsoniterを用いるecho.JSONSerializerの実装。
-// `?pretty` クエリが指定された場合はインデント付きの標準エンコーダを使用する。
+// JSONSerializer jsonutilを用いるecho.JSONSerializerの実装。
+// `?pretty` クエリが指定された場合はインデント付きで出力する。
 type JSONSerializer struct{}
 
 // Serialize iをJSONとしてレスポンスに書き込む。
@@ -29,36 +26,29 @@ func (JSONSerializer) Serialize(c *echo.Context, i any, indent string) error {
 		}
 	}
 	if indent != "" {
-		enc := stdjson.NewEncoder(c.Response())
-		enc.SetIndent("", indent)
-		return enc.Encode(i)
+		b, err := jsonutil.MarshalIndent(i, indent)
+		if err != nil {
+			return err
+		}
+		_, err = c.Response().Write(append(b, '\n'))
+		return err
 	}
-	return writeJSON(c.Response(), i, jsonIter.ConfigFastest)
+	return jsonutil.Encode(c.Response(), i)
 }
 
 // Deserialize リクエストボディのJSONをiにデシリアライズする。
 func (JSONSerializer) Deserialize(c *echo.Context, i any) error {
-	if err := stdjson.NewDecoder(c.Request().Body).Decode(i); err != nil {
+	if err := jsonutil.Decode(c.Request().Body, i); err != nil {
 		return echo.ErrBadRequest.Wrap(err)
 	}
 	return nil
 }
 
-// writeJSON iをjsoniterでwに書き込む（ヘッダー操作は行わない）。
-func writeJSON(w io.Writer, i interface{}, cfg jsonIter.API) error {
-	stream := cfg.BorrowStream(w)
-	defer cfg.ReturnStream(stream)
-
-	stream.WriteVal(i)
-	stream.WriteRaw("\n")
-	return stream.Flush()
-}
-
-// json codeでヘッダーを書き込んだ上でiをjsoniterで書き込む（エラーハンドラ用）。
-func json(c *echo.Context, code int, i interface{}, cfg jsonIter.API) error {
+// json codeでヘッダーを書き込んだ上でiを書き込む（エラーハンドラ用）。
+func json(c *echo.Context, code int, i interface{}) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c.Response().WriteHeader(code)
-	return writeJSON(c.Response(), i, cfg)
+	return jsonutil.Encode(c.Response(), i)
 }
 
 // Wrap repositoryとchannel.Managerをコンテキストにセットするミドルウェア

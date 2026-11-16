@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -66,19 +65,13 @@ func (repo *Repository) CreateWebhook(ctx context.Context, name, description str
 		return nil, err
 	}
 	wb.BotUser = *u
-	repo.hub.Publish(hub.Message{
-		Name: event.UserCreated,
-		Fields: hub.Fields{
-			"user_id": u.ID,
-			"user":    u,
-		},
+	event.Publish(repo.hub, event.UserCreatedPayload{
+		UserID: u.ID,
+		User:   u,
 	})
-	repo.hub.Publish(hub.Message{
-		Name: event.WebhookCreated,
-		Fields: hub.Fields{
-			"webhook_id": wb.ID,
-			"webhook":    wb,
-		},
+	event.Publish(repo.hub, event.WebhookCreatedPayload{
+		WebhookID: wb.ID,
+		Webhook:   wb,
 	})
 	return wb, nil
 }
@@ -158,19 +151,13 @@ func (repo *Repository) UpdateWebhook(ctx context.Context, id uuid.UUID, args re
 		return err
 	}
 	if userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": w.BotUserID,
-			},
+		event.Publish(repo.hub, event.UserUpdatedPayload{
+			UserID: w.BotUserID,
 		})
 	}
 	if updated || userUpdated {
-		repo.hub.Publish(hub.Message{
-			Name: event.WebhookUpdated,
-			Fields: hub.Fields{
-				"webhook_id": w.ID,
-			},
+		event.Publish(repo.hub, event.WebhookUpdatedPayload{
+			WebhookID: w.ID,
 		})
 	}
 	return nil
@@ -195,11 +182,8 @@ func (repo *Repository) DeleteWebhook(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.WebhookDeleted,
-		Fields: hub.Fields{
-			"webhook_id": id,
-		},
+	event.Publish(repo.hub, event.WebhookDeletedPayload{
+		WebhookID: id,
 	})
 	return nil
 }

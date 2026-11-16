@@ -9,9 +9,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
 )
@@ -51,8 +51,8 @@ func TestBotLeft(t *testing.T) {
 
 		et := time.Now()
 
-		expectUnicast(handlerCtx, event.Left, payload.MakeLeft(et, ch, ch.Name, u), b)
-		assert.NoError(t, BotLeft(handlerCtx, et, intevent.BotLeft, hub.Fields{
+		expectUnicast(handlerCtx, botevent.Left, payload.MakeLeft(et, ch, ch.Name, u), b)
+		assert.NoError(t, BotLeft(handlerCtx, et, event.BotLeft, hub.Fields{
 			"bot_id":     b.ID,
 			"channel_id": ch.ID,
 		}))

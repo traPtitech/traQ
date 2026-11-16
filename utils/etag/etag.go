@@ -4,16 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	jsonIter "github.com/json-iterator/go"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
-
-var JSONIter = jsonIter.Config{
-	EscapeHTML:                    false,
-	MarshalFloatWith6Digits:       true,
-	ObjectFieldMustBeSimpleString: true,
-	// ここより上はjsonIter.ConfigFastestと同様
-	SortMapKeys: true, // 順番が一致しないとEtagが一致しないのでソートを有効にする
-}.Froze()
 
 func FromBytes(b []byte) string {
 	md5Res := md5.Sum(b)
@@ -27,7 +19,8 @@ type Entity[T any] struct {
 }
 
 func NewEntity[T any](data T) (*Entity[T], error) {
-	b, err := JSONIter.Marshal(data)
+	// 順番が一致しないとEtagが一致しないが、jsonutil.Marshalはマップのキーをソートする
+	b, err := jsonutil.Marshal(data)
 	if err != nil {
 		return nil, err
 	}

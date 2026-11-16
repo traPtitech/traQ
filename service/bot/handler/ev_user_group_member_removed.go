@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
-
 	"github.com/leandro-lugaresi/hub"
 
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 )
 
 func UserGroupMemberRemoved(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
-	groupID := fields["group_id"].(uuid.UUID)
-	userID := fields["user_id"].(uuid.UUID)
-	bots, err := ctx.GetBots(event.UserGroupMemberRemoved)
+	p := event.MustPayload[event.UserGroupMemberRemovedPayload](fields)
+	groupID := p.GroupID
+	userID := p.UserID
+	bots, err := ctx.GetBots(botevent.UserGroupMemberRemoved)
 	if err != nil {
 		return fmt.Errorf("failed to GetBots: %w", err)
 	}
@@ -24,7 +24,7 @@ func UserGroupMemberRemoved(ctx Context, datetime time.Time, _ string, fields hu
 	}
 
 	if err := ctx.Multicast(
-		event.UserGroupMemberRemoved,
+		botevent.UserGroupMemberRemoved,
 		payload.MakeUserGroupMemberRemoved(datetime, groupID, userID),
 		bots,
 	); err != nil {

@@ -10,11 +10,11 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/gofrs/uuid"
-	json "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 	"github.com/traPtitech/traQ/utils/message"
 )
 
@@ -241,7 +241,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 				return err
 			}
 
-			data, err := json.Marshal(*doc)
+			data, err := jsonutil.Marshal(*doc)
 			if err != nil {
 				return err
 			}
@@ -257,7 +257,7 @@ func syncNewMessages(e *esEngine, messages []*model.Message, lastInsert time.Tim
 		} else {
 			doc := e.convertMessageUpdated(v, message.Parse(v.Text))
 
-			data, err := json.Marshal(map[string]any{"doc": *doc})
+			data, err := jsonutil.Marshal(map[string]any{"doc": *doc})
 			if err != nil {
 				return err
 			}
@@ -328,7 +328,7 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 	defer sr.Body.Close()
 
 	var res esSearchResponse
-	err = json.NewDecoder(sr.Body).Decode(&res)
+	err = jsonutil.Decode(sr.Body, &res)
 	if err != nil {
 		return time.Time{}, err
 	}

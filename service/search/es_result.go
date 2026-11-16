@@ -44,7 +44,7 @@ type esSearchHit struct {
 	Sort   []int64      `json:"sort"`
 }
 
-func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, error) {
+func (e *esEngine) parseResultFromResponse(ctx context.Context, searchRes esSearchResponse) (Result, error) {
 	totalHits := searchRes.Hits.Total.Value
 	hits := searchRes.Hits.Hits
 
@@ -57,7 +57,7 @@ func (e *esEngine) parseResultFromResponse(searchRes esSearchResponse) (Result, 
 		return uuid.Must(uuid.FromString(hit.ID))
 	})
 
-	messages, err := e.mm.GetIn(context.Background(), messageIDs)
+	messages, err := e.mm.GetIn(ctx, messageIDs)
 	if err != nil {
 		return nil, err
 	}

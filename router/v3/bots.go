@@ -8,7 +8,6 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
-	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -276,12 +275,9 @@ func (h *Handlers) GetChannelBots(c *echo.Context) error {
 func (h *Handlers) ActivateBot(c *echo.Context) error {
 	b := getParamBot(c)
 
-	h.Hub.Publish(hub.Message{
-		Name: event.BotPingRequest,
-		Fields: hub.Fields{
-			"bot_id": b.ID,
-			"bot":    b,
-		},
+	event.Publish(h.Hub, event.BotPingRequestPayload{
+		BotID: b.ID,
+		Bot:   b,
 	})
 	return c.NoContent(http.StatusAccepted)
 }

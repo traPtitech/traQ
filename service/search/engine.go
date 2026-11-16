@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -20,7 +21,7 @@ var ErrServiceUnavailable = errors.New("search service is unavailable")
 // Engine 検索エンジンインターフェイス
 type Engine interface {
 	// Do 与えられたクエリで検索を実行します
-	Do(q *Query) (Result, error)
+	Do(ctx context.Context, q *Query) (Result, error)
 	// Available 検索サービスが利用可能かどうかを返します
 	Available() bool
 	// Close 検索サービスを終了します
@@ -34,7 +35,7 @@ type Query struct {
 	Before         optional.Of[time.Time] `query:"before"`         // 以前(投稿日時)
 	In             optional.Of[uuid.UUID] `query:"in"`             // 投稿チャンネル
 	To             []uuid.UUID            `query:"to"`             // メンション先
-	From           []uuid.UUID            `query:"from"`           // 投稿者
+	From           []uuid.UUID            `query:"from"`           // 投稿者のユーザーIDまたは所属グループID
 	Citation       optional.Of[uuid.UUID] `query:"citation"`       // 引用しているメッセージ
 	Bot            optional.Of[bool]      `query:"bot"`            // 投稿者がBotか
 	HasURL         optional.Of[bool]      `query:"hasURL"`         // URLの存在

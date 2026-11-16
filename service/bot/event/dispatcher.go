@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // Dispatcher Botイベント配送機
@@ -29,11 +29,10 @@ func Multicast(d Dispatcher, ev model.BotEventType, payload interface{}, targets
 	if len(targets) == 0 {
 		return nil
 	}
-	buf, release, err := makePayloadJSON(&payload)
+	buf, err := makePayloadJSON(&payload)
 	if err != nil {
 		return err
 	}
-	defer release()
 
 	var wg sync.WaitGroup
 	done := make(map[uuid.UUID]bool, len(targets))
@@ -52,15 +51,10 @@ func Multicast(d Dispatcher, ev model.BotEventType, payload interface{}, targets
 	return nil
 }
 
-func makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
-	cfg := jsonIter.ConfigFastest
-	stream := cfg.BorrowStream(nil)
-	releaseFunc = func() { cfg.ReturnStream(stream) }
-	stream.WriteVal(payload)
-	stream.WriteRaw("\n")
-	if err = stream.Error; err != nil {
-		releaseFunc()
-		return nil, nil, err
+func makePayloadJSON(payload interface{}) ([]byte, error) {
+	b, err := jsonutil.Marshal(payload)
+	if err != nil {
+		return nil, err
 	}
-	return stream.Buffer(), releaseFunc, nil
+	return append(b, '\n'), nil
 }

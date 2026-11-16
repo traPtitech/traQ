@@ -12,7 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	botWS "github.com/traPtitech/traQ/service/bot/ws"
 	"github.com/traPtitech/traQ/service/channel"
 )
@@ -25,7 +25,7 @@ type serviceImpl struct {
 	repo       repository.Repository
 	cm         channel.Manager
 	logger     *zap.Logger
-	dispatcher event.Dispatcher
+	dispatcher botevent.Dispatcher
 	hub        *hub.Hub
 
 	sub         hub.Subscription
@@ -42,7 +42,7 @@ func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, s 
 		cm:         cm,
 		logger:     logger.Named("bot"),
 		hub:        hub,
-		dispatcher: event.NewDispatcher(logger, repo, s),
+		dispatcher: botevent.NewDispatcher(logger, repo, s),
 
 		serviceDone: make(chan struct{}),
 		hubDone:     make(chan struct{}),
@@ -124,16 +124,16 @@ func (p *serviceImpl) L() *zap.Logger {
 	return p.logger
 }
 
-func (p *serviceImpl) D() event.Dispatcher {
+func (p *serviceImpl) D() botevent.Dispatcher {
 	return p.dispatcher
 }
 
 func (p *serviceImpl) Unicast(ev model.BotEventType, payload interface{}, target *model.Bot) error {
-	return event.Unicast(p.dispatcher, ev, payload, target)
+	return botevent.Unicast(p.dispatcher, ev, payload, target)
 }
 
 func (p *serviceImpl) Multicast(ev model.BotEventType, payload interface{}, targets []*model.Bot) error {
-	return event.Multicast(p.dispatcher, ev, payload, targets)
+	return botevent.Multicast(p.dispatcher, ev, payload, targets)
 }
 
 func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {

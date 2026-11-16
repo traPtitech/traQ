@@ -13,7 +13,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 )
@@ -557,7 +557,7 @@ func TestHandlers_EditBot(t *testing.T) {
 				Endpoint:    optional.From("https://example.com"),
 				DeveloperID: optional.From(user2.GetID()),
 				SubscribeEvents: map[model.BotEventType]struct{}{
-					event.Ping: {},
+					botevent.Ping: {},
 				},
 				Bio: optional.From("Bio"),
 			}).
@@ -711,7 +711,7 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 	log := &model.BotEventLog{
 		RequestID: uuid.Must(uuid.NewV4()),
 		BotID:     bot1.ID,
-		Event:     event.Ping,
+		Event:     botevent.Ping,
 		Result:    "ng",
 		Code:      400,
 		DateTime:  time.Now(),
