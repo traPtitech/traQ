@@ -3,18 +3,17 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
-
-	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	slackOAuth2 "golang.org/x/oauth2/slack"
+	"io"
+	"net/http"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -149,7 +148,7 @@ func (p *SlackProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 			} `json:"profile"`
 		} `json:"user"`
 	}
-	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err := jsonutil.Decode(resp.Body, &data); err != nil {
 		return nil, fmt.Errorf(slackAPIRequestErrorFormat, err)
 	}
 	ui.displayName = data.User.Profile.DisplayName

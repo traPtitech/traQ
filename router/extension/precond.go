@@ -12,6 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/utils/etag"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 func scanETag(s string) (eTag string, remain string) {
@@ -193,9 +194,9 @@ func ServeJSONWithETag(c *echo.Context, i interface{}) error {
 	var b []byte
 	var err error
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		b, err = etag.JSONIter.MarshalIndent(i, "", "  ")
+		b, err = jsonutil.MarshalIndent(i, "  ")
 	} else {
-		b, err = etag.JSONIter.Marshal(i)
+		b, err = jsonutil.Marshal(i)
 	}
 	if err != nil {
 		return err
@@ -224,7 +225,7 @@ func ServeJSONWithPrecomputedETag[T any](c *echo.Context, e *etag.Entity[T]) err
 
 	// NOTE: prettyのときはETagを再計算する
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
-		b, err = etag.JSONIter.MarshalIndent(e.Value(), "", "  ")
+		b, err = jsonutil.MarshalIndent(e.Value(), "  ")
 		if err != nil {
 			return err
 		}
@@ -242,7 +243,7 @@ func ServeJSONWithPrecomputedETag[T any](c *echo.Context, e *etag.Entity[T]) err
 	}
 
 	if len(b) == 0 {
-		b, err = etag.JSONIter.Marshal(e.Value())
+		b, err = jsonutil.Marshal(e.Value())
 		if err != nil {
 			return err
 		}

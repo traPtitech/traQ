@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	json "github.com/json-iterator/go"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
 	"github.com/samber/lo"
@@ -18,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -200,7 +199,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 			Number string `json:"number"`
 		} `json:"version"`
 	}
-	err = json.NewDecoder(infoRes.Body).Decode(&r)
+	err = jsonutil.Decode(infoRes.Body, &r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Elasticsearch info: %w", err)
 	}
@@ -222,7 +221,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
-		reqBody, err := json.Marshal(esCreateIndexBody{
+		reqBody, err := jsonutil.Marshal(esCreateIndexBody{
 			Mappings: esMapping,
 			Settings: esSetting,
 		})
@@ -411,7 +410,7 @@ func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
-	b, err := json.Marshal(newSearchBody(musts))
+	b, err := jsonutil.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
 	}
@@ -433,7 +432,7 @@ func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	defer sr.Body.Close()
 
 	var res esSearchResponse
-	err = json.NewDecoder(sr.Body).Decode(&res)
+	err = jsonutil.Decode(sr.Body, &res)
 	if err != nil {
 		return nil, err
 	}
