@@ -4514,7 +4514,8 @@ paths:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
       summary: 指定したチャンネルパスを取得
-      description: 指定されたチャンネルのパスを取得します。
+      description: 指定されたチャンネルのパスを取得します。このapiの利用は現在非推奨です。
+      deprecated: true
       tags:
         - channel
       responses:
