@@ -189,23 +189,17 @@ func (vm *Manager) notifyUserViewStateChanged(userID uuid.UUID) {
 
 func (vm *Manager) publishChannelChanged(channelID uuid.UUID) {
 	channelViewers := vm.channels[channelID]
-	vm.hub.Publish(hub.Message{
-		Name: event.ChannelViewersChanged,
-		Fields: hub.Fields{
-			"channel_id": channelID,
-			"viewers":    calculateChannelViewers(channelViewers),
-		},
+	event.Publish(vm.hub, ChannelViewersChangedPayload{
+		ChannelID: channelID,
+		Viewers:   calculateChannelViewers(channelViewers),
 	})
 }
 
 func (vm *Manager) publishUserViewStateChanged(userID uuid.UUID) {
 	userViewers := vm.users[userID]
-	vm.hub.Publish(hub.Message{
-		Name: event.UserViewStateChanged,
-		Fields: hub.Fields{
-			"user_id":     userID,
-			"view_states": calculateUserViewStates(userViewers),
-		},
+	event.Publish(vm.hub, UserViewStateChangedPayload{
+		UserID:     userID,
+		ViewStates: calculateUserViewStates(userViewers),
 	})
 }
 

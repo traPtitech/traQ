@@ -10,6 +10,8 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/service/message"
 )
 
 type testItem struct {
@@ -328,6 +330,21 @@ var definedPayloads = []Payload{
 	BotPingRequestPayload{},
 	BotJoinedPayload{},
 	BotLeftPayload{},
+	UserOnlinePayload{},
+	UserOfflinePayload{},
+	UserWebRTCv3StateChangedPayload{},
+	WSConnectedPayload{},
+	WSDisconnectedPayload{},
+	BotWSConnectedPayload{},
+	BotWSDisconnectedPayload{},
+	QallSoundboardItemCreatedPayload{},
+	QallSoundboardItemDeletedPayload{},
+	// interface 型のフィールドはゼロ値 (nil) だとデコードできないため、値を入れる
+	MessageStampsUpdatedPayload{Message: fakeMessage{}},
+}
+
+type fakeMessage struct {
+	message.Message
 }
 
 // TestDefinedPayloads 定義済みのペイロード型が規約を満たし、FieldsOf で変換した値をデコードできることを確かめる

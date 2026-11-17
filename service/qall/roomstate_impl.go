@@ -48,11 +48,8 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 			})
 
 			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
+				event.Publish(r.Hub, QallRoomStateChangedPayload{
+					RoomStates: r.RoomState,
 				})
 			}
 
@@ -70,11 +67,8 @@ func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID st
 					r.RoomState[i].Participants[j].CanPublish = canPublish
 
 					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
+						event.Publish(r.Hub, QallRoomStateChangedPayload{
+							RoomStates: r.RoomState,
 						})
 					}
 
@@ -102,11 +96,8 @@ func (r *Repository) UpdateParticipant(roomID string, participant *livekit.Parti
 					}
 
 					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
+						event.Publish(r.Hub, QallRoomStateChangedPayload{
+							RoomStates: r.RoomState,
 						})
 					}
 
@@ -127,11 +118,8 @@ func (r *Repository) RemoveParticipant(roomID string, participantID string) {
 					r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
 
 					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
+						event.Publish(r.Hub, QallRoomStateChangedPayload{
+							RoomStates: r.RoomState,
 						})
 					}
 
@@ -158,11 +146,8 @@ func (r *Repository) AddRoomState(room RoomWithParticipants) {
 	r.RoomState = append(r.RoomState, room)
 
 	if r.Hub != nil {
-		r.Hub.Publish(hub.Message{
-			Name: event.QallRoomStateChanged,
-			Fields: hub.Fields{
-				"roomStates": r.RoomState,
-			},
+		event.Publish(r.Hub, QallRoomStateChangedPayload{
+			RoomStates: r.RoomState,
 		})
 	}
 }
@@ -174,11 +159,8 @@ func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 			r.RoomState[i].Metadata = &metadata.Status
 
 			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
+				event.Publish(r.Hub, QallRoomStateChangedPayload{
+					RoomStates: r.RoomState,
 				})
 			}
 
@@ -194,11 +176,8 @@ func (r *Repository) RemoveRoomState(roomID string) {
 			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
 
 			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
+				event.Publish(r.Hub, QallRoomStateChangedPayload{
+					RoomStates: r.RoomState,
 				})
 			}
 
