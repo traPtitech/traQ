@@ -9,7 +9,7 @@ import (
 	"image/draw"
 	"image/gif"
 	_ "image/jpeg" // image.Decode用
-	_ "image/png"  // image.Decode用
+	"image/png"
 	"io"
 	"math"
 	"runtime"
@@ -17,6 +17,7 @@ import (
 
 	_ "golang.org/x/image/webp" // image.Decode用
 
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/disintegration/imaging"
 	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/go-mp3"
@@ -73,6 +74,27 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 		return imaging.Fit(orig, width, height, mks2013Filter), nil
 	}
 	return orig, nil
+}
+
+func (p *defaultProcessor) EncodePNG(img image.Image) (*bytes.Reader, error) {
+	return p.encodeImage(img, png.Encode)
+}
+
+func (p *defaultProcessor) EncodeWebP(img image.Image) (*bytes.Reader, error) {
+	return p.encodeImage(img, func(w io.Writer, img image.Image) error {
+		return nativewebp.Encode(w, img, nil)
+	})
+}
+
+func (p *defaultProcessor) encodeImage(img image.Image, encode func(io.Writer, image.Image) error) (*bytes.Reader, error) {
+	_ = p.sp.Acquire(context.Background(), 1)
+	defer p.sp.Release(1)
+
+	var b bytes.Buffer
+	if err := encode(&b, img); err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b.Bytes()), nil
 }
 
 // maxGIFTotalPixelsMultiplier アニメーションGIFの(論理画面の画素数)×(フレーム数)の上限を、MaxPixelsの何倍にするか

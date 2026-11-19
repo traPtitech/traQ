@@ -2,12 +2,13 @@
 package utils
 
 import (
-	"bytes"
-	"image/png"
+	"errors"
 	"io"
+	"net/http"
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
+	"github.com/sapphi-red/midec"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
@@ -56,14 +57,27 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		FileType: fType,
 	}
 
-	switch fh.Header.Get(echo.HeaderContentType) {
+	contentType := fh.Header.Get(echo.HeaderContentType)
+	if contentType == "" || contentType == "application/octet-stream" {
+		var buf [512]byte
+		n, err := io.ReadFull(src, buf[:])
+		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		contentType = http.DetectContentType(buf[:n])
+	}
+
+	switch contentType {
 	case consts.MimeImagePNG, consts.MimeImageJPEG:
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
-			switch err {
-			case imaging.ErrInvalidImageSrc:
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				return uuid.Nil, herror.BadRequest(badImage)
-			case imaging.ErrPixelLimitExceeded:
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -71,25 +85,57 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		}
 
 		// PNGに変換
-		b := bytes.Buffer{}
-		if err := png.Encode(&b, img); err != nil {
+		b, err := p.EncodePNG(img)
+		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
 
-		args.Src = bytes.NewReader(b.Bytes())
-		args.FileSize = int64(b.Len())
+		args.Src = b
+		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImagePNG
 		args.Thumbnail = img // サムネイル画像より小さいという前提
 
+	case consts.MimeImageWebP:
+		isAnimated, err := midec.IsAnimated(src)
+		if err != nil {
+			return uuid.Nil, herror.BadRequest(badImage)
+		}
+		// TODO: アニメーションWebP対応
+		if isAnimated {
+			return uuid.Nil, herror.BadRequest("animated WebP is not supported")
+		}
+		// IsAnimatedで読み進めた分を巻き戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		img, err := p.Fit(src, maxImageSize, maxImageSize)
+		if err != nil {
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
+				return uuid.Nil, herror.BadRequest(badImage)
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
+				return uuid.Nil, herror.BadRequest(tooLargeImage)
+			default:
+				return uuid.Nil, herror.InternalServerError(err)
+			}
+		}
+		b, err := p.EncodeWebP(img)
+		if err != nil {
+			return uuid.Nil, herror.InternalServerError(err)
+		}
+		args.Src = b
+		args.FileSize = b.Size()
+		args.MimeType = consts.MimeImageWebP
+		args.Thumbnail = img
 	case consts.MimeImageGIF:
 		// リサイズ
 		b, err := p.FitAnimationGIF(src, maxImageSize, maxImageSize)
 		if err != nil {
-			switch err {
-			case imaging.ErrInvalidImageSrc:
+			switch {
+			case errors.Is(err, imaging.ErrInvalidImageSrc):
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
-			case imaging.ErrPixelLimitExceeded:
+			case errors.Is(err, imaging.ErrPixelLimitExceeded):
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				// 予期しないエラー

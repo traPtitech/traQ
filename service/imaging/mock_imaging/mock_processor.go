@@ -36,6 +36,36 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 	return m.recorder
 }
 
+// EncodePNG mocks base method.
+func (m *MockProcessor) EncodePNG(img image.Image) (*bytes.Reader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EncodePNG", img)
+	ret0, _ := ret[0].(*bytes.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EncodePNG indicates an expected call of EncodePNG.
+func (mr *MockProcessorMockRecorder) EncodePNG(img interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EncodePNG", reflect.TypeOf((*MockProcessor)(nil).EncodePNG), img)
+}
+
+// EncodeWebP mocks base method.
+func (m *MockProcessor) EncodeWebP(img image.Image) (*bytes.Reader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EncodeWebP", img)
+	ret0, _ := ret[0].(*bytes.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EncodeWebP indicates an expected call of EncodeWebP.
+func (mr *MockProcessorMockRecorder) EncodeWebP(img interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EncodeWebP", reflect.TypeOf((*MockProcessor)(nil).EncodeWebP), img)
+}
+
 // Fit mocks base method.
 func (m *MockProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, error) {
 	m.ctrl.T.Helper()
