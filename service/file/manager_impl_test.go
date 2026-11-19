@@ -156,6 +156,29 @@ func TestManagerImpl_Save(t *testing.T) {
 		}
 	})
 
+	t.Run("video cancellation does not save original", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		ip.EXPECT().VideoThumbnail(ctx, gomock.Any()).DoAndReturn(
+			func(actual context.Context, src io.Reader) (image.Image, error) {
+				_, err := io.ReadAll(src)
+				require.NoError(t, err)
+				cancel()
+				return nil, actual.Err()
+			})
+		// No storage or repository expectations: cancellation must stop Save.
+		_, err := fm.Save(ctx, SaveArgs{
+			FileName: "video.mp4", FileSize: 5, MimeType: "video/mp4",
+			FileType: model.FileTypeUserFile, Src: bytes.NewReader([]byte("video")),
+		})
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
 	t.Run("video with generated thumbnail", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -166,7 +189,13 @@ func TestManagerImpl_Save(t *testing.T) {
 		data := []byte("video data")
 		thumbnail := image.NewRGBA(image.Rect(0, 0, 16, 16))
 		thumbnail.Set(0, 0, color.RGBA{R: 0xff, A: 0xff})
-		ip.EXPECT().VideoThumbnail(gomock.Any()).Return(thumbnail, nil)
+		ip.EXPECT().VideoThumbnail(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, src io.Reader) (image.Image, error) {
+				actual, err := io.ReadAll(src)
+				require.NoError(t, err)
+				require.Equal(t, data, actual)
+				return thumbnail, nil
+			})
 
 		fs.EXPECT().SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/png", model.FileTypeThumbnail).
 			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
@@ -204,7 +233,13 @@ func TestManagerImpl_Save(t *testing.T) {
 		ip := mock_imaging.NewMockProcessor(ctrl)
 		fm := initFM(t, repo, fs, ip)
 		data := []byte("invalid video data")
-		ip.EXPECT().VideoThumbnail(gomock.Any()).Return(nil, errMock)
+		ip.EXPECT().VideoThumbnail(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, src io.Reader) (image.Image, error) {
+				actual, err := io.ReadAll(src)
+				require.NoError(t, err)
+				require.Equal(t, data, actual)
+				return nil, errMock
+			})
 
 		fs.EXPECT().SaveByKey(gomock.Any(), gomock.Any(), "video.mp4", "video/mp4", model.FileTypeUserFile).
 			DoAndReturn(func(src io.Reader, _, _, _ string, _ model.FileType) error {
@@ -267,7 +302,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
-			Thumbnail(gomock.Any()).
+			ImageThumbnail(gomock.Any()).
 			Do(func(src io.ReadSeeker) { _, _ = io.Copy(io.Discard, src) }).
 			Return(thumb, nil).
 			Times(1)
@@ -334,7 +369,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			Return(nil).
 			Times(1)
 		ip.EXPECT().
-			Thumbnail(gomock.Any()).
+			ImageThumbnail(gomock.Any()).
 			Do(func(src io.ReadSeeker) { _, _ = io.Copy(io.Discard, src) }).
 			Return(thumb, nil).
 			Times(1)

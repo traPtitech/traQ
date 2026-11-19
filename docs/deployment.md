@@ -56,6 +56,9 @@ imaging:
   # (optional) Maximum number of pixels before resizing.
   # Higher number means more memory requirement.
   maxPixels: 4096000 # 2560x1600
+  # (optional) Maximum input video pixels, checked before thumbnail decoding.
+  # Independent of maxPixels so that 4K video can be accepted.
+  videoMaxPixels: 8847360 # 4096x2160
   # (optional) Maximum imaging concurrency.
   # Higher number means more CPU / memory requirement.
   concurrency: 1

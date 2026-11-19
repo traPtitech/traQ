@@ -33,21 +33,26 @@ type defaultProcessor struct {
 }
 
 func NewProcessor(c Config) Processor {
+	if c.VideoMaxPixels == 0 {
+		c.VideoMaxPixels = 4096 * 2160
+	}
 	return &defaultProcessor{
 		c:  c,
 		sp: semaphore.NewWeighted(int64(c.Concurrency)),
 	}
 }
 
-func (p *defaultProcessor) Thumbnail(src io.ReadSeeker) (image.Image, error) {
+func (p *defaultProcessor) ImageThumbnail(src io.ReadSeeker) (image.Image, error) {
 	return p.Fit(src, p.c.ThumbnailMaxSize.X, p.c.ThumbnailMaxSize.Y)
 }
 
-func (p *defaultProcessor) VideoThumbnail(src io.Reader) (image.Image, error) {
-	_ = p.sp.Acquire(context.Background(), 1)
+func (p *defaultProcessor) VideoThumbnail(ctx context.Context, src io.Reader) (image.Image, error) {
+	if err := p.sp.Acquire(ctx, 1); err != nil {
+		return nil, err
+	}
 	defer p.sp.Release(1)
 
-	return generateVideoThumbnail(src)
+	return generateVideoThumbnail(ctx, src, p.c.VideoMaxPixels, p.c.ThumbnailMaxSize)
 }
 
 func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, error) {

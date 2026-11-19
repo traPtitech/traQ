@@ -62,6 +62,8 @@ type Config struct {
 	Imaging struct {
 		// MaxPixels 処理可能な最大画素数 (default: 2560*1600)
 		MaxPixels int `mapstructure:"maxPixels" yaml:"maxPixels"`
+		// VideoMaxPixels 動画入力の最大画素数 (default: 4096*2160)
+		VideoMaxPixels int `mapstructure:"videoMaxPixels" yaml:"videoMaxPixels"`
 		// Concurrency 処理並列数 (default: 1)
 		Concurrency int `mapstructure:"concurrency" yaml:"concurrency"`
 	} `mapstructure:"imaging" yaml:"imaging"`
@@ -278,6 +280,7 @@ func init() {
 	viper.SetDefault("allowSignUp", false)
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("imaging.maxPixels", 2560*1600)
+	viper.SetDefault("imaging.videoMaxPixels", 4096*2160)
 	viper.SetDefault("imaging.concurrency", 1)
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
@@ -494,6 +497,7 @@ func provideESEngineConfig(c *Config) search.ESEngineConfig {
 func provideImageProcessorConfig(c *Config) imaging.Config {
 	return imaging.Config{
 		MaxPixels:        c.Imaging.MaxPixels,
+		VideoMaxPixels:   c.Imaging.VideoMaxPixels,
 		Concurrency:      c.Imaging.Concurrency,
 		ThumbnailMaxSize: image.Pt(360, 480),
 	}

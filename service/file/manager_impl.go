@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"image"
 	"image/png"
@@ -75,18 +76,21 @@ func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
 	return m.canGenerateImageThumbnail(mimeType) || m.canGenerateVideoThumbnail(mimeType)
 }
 
-func (m *managerImpl) generateThumbnail(src io.ReadSeeker, mimeType string) (image.Image, error) {
+func (m *managerImpl) generateThumbnail(ctx context.Context, src io.ReadSeeker, mimeType string) (image.Image, error) {
 	switch {
 	case m.canGenerateImageThumbnail(mimeType):
-		return m.ip.Thumbnail(src)
+		return m.ip.ImageThumbnail(src)
 	case m.canGenerateVideoThumbnail(mimeType):
-		return m.ip.VideoThumbnail(src)
+		return m.ip.VideoThumbnail(ctx, src)
 	default:
 		return nil, nil
 	}
 }
 
 func (m *managerImpl) Save(ctx context.Context, args SaveArgs) (model.File, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
@@ -129,7 +133,13 @@ func (m *managerImpl) Save(ctx context.Context, args SaveArgs) (model.File, erro
 		}
 		args.Src = src
 
-		thumb, err := m.generateThumbnail(src, args.MimeType)
+		thumb, err := m.generateThumbnail(ctx, src, args.MimeType)
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
 		if err != nil {
 			m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 		} else {

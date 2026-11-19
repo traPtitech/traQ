@@ -101,7 +101,7 @@ func saveUploadImage(p imaging.Processor, c *echo.Context, m file.Manager, name 
 		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImageGIF
 
-		args.Thumbnail, err = p.Thumbnail(b)
+		args.Thumbnail, err = p.ImageThumbnail(b)
 		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}

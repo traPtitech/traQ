@@ -67,7 +67,7 @@ func TestProcessorDefault_Thumbnail(t *testing.T) {
 
 	processor, fpActual := setup()
 	defer fpActual.Close()
-	actualImg, err := processor.Thumbnail(fpActual)
+	actualImg, err := processor.ImageThumbnail(fpActual)
 	assert.Nil(t, err)
 	assertImg(t, actualImg, "test_thumbnail.png")
 }

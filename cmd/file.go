@@ -187,7 +187,7 @@ func genMissingThumbnails() *cobra.Command {
 				}
 				defer src.Close()
 
-				thumb, err := ip.Thumbnail(src)
+				thumb, err := ip.ImageThumbnail(src)
 				if err != nil {
 					return fmt.Errorf("failed to generate thumbnail: %w", err)
 				}
