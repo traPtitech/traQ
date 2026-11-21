@@ -37,7 +37,7 @@ require (
 	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/labstack/echo-opentelemetry v0.0.4
 	github.com/labstack/echo-prometheus v0.0.1
-	github.com/labstack/echo/v5 v5.4.6
+	github.com/labstack/echo/v5 v5.4.7
 	github.com/leandro-lugaresi/hub v1.1.2
 	github.com/lestrrat-go/jwx/v3 v3.4.0
 	github.com/livekit/protocol v1.53.0
