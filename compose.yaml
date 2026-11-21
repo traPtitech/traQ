@@ -48,7 +48,7 @@ services:
       - backend
 
   mysql:
-    image: mariadb:10.11.19@sha256:7d829180b5b2a9ba74f6242876ab401a0d7dd338a807e522ef92bc9698760f20
+    image: mariadb:10.11.19@sha256:e5fe75b2b9de0eb9f6f9a4d9c97272fb3a7480e389ccd487a786bab2a12cc0d7
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
