@@ -48,7 +48,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 	t.Run("attachments only", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		mgr, mmgr, repo, _ := setupM(ctrl)
+		mgr, _, repo, _ := setupM(ctrl)
 		m := mgr.(*manager)
 
 		fileID := uuid.NewV3(uuid.Nil, "f1")
@@ -56,7 +56,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		channelID := uuid.NewV3(uuid.Nil, "c1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: fileEmbed(fileID), ChannelID: channelID}
 
-		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(true, nil).Times(1)
+		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), fileID, userID).Return(true, nil).Times(1)
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), fileID).Return(&model.FileMeta{ID: fileID}, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, true, false, uuid.NewV3(uuid.Nil, "u1"))
@@ -93,14 +93,14 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		mgr, mmgr, repo, _ := setupM(ctrl)
 		m := mgr.(*manager)
 
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		channelID := uuid.NewV3(uuid.Nil, "c1")
-		channel := &model.Channel{ID: channelID, IsPublic: true}
 
 		quoteID := uuid.NewV3(uuid.Nil, "q1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: citationEmbed(quoteID)}
 
 		quoted := &model.Message{ID: quoteID, Text: "Quoted Text", ChannelID: channelID}
-		mmgr.EXPECT().GetChannel(gomock.Any(), channelID).Return(channel, nil).Times(1)
+		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(true, nil).Times(1)
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
@@ -117,14 +117,14 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		mgr, mmgr, repo, _ := setupM(ctrl)
 		m := mgr.(*manager)
 
+		userID := uuid.NewV3(uuid.Nil, "u1")
 		channelID := uuid.NewV3(uuid.Nil, "c1")
-		channel := &model.Channel{ID: channelID, IsPublic: false}
 
 		quoteID := uuid.NewV3(uuid.Nil, "q1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: citationEmbed(quoteID)}
 
 		quoted := &model.Message{ID: quoteID, Text: "Quoted Text", ChannelID: channelID}
-		mmgr.EXPECT().GetChannel(gomock.Any(), channelID).Return(channel, nil).Times(1)
+		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(false, nil).Times(1)
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
@@ -138,7 +138,6 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		m := mgr.(*manager)
 
 		channelID := uuid.NewV3(uuid.Nil, "c1")
-		channel := &model.Channel{ID: channelID, IsPublic: true}
 
 		quoteID := uuid.NewV3(uuid.Nil, "q1")
 		nestedFileID := uuid.NewV3(uuid.Nil, "f1")
@@ -146,7 +145,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: citationEmbed(quoteID)}
 		quoted := &model.Message{ID: quoteID, Text: fileEmbed(nestedFileID), ChannelID: channelID}
 
-		mmgr.EXPECT().GetChannel(gomock.Any(), channelID).Return(channel, nil).Times(1)
+		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(true, nil).Times(1)
 		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
 		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), nestedFileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), nestedFileID).Return(&model.FileMeta{ID: nestedFileID}, nil).Times(1)
