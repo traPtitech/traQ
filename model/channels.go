@@ -7,6 +7,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -188,7 +190,7 @@ type ChannelEventDetail map[string]interface{}
 
 // Value database/sql/driver.Valuer 実装
 func (ced ChannelEventDetail) Value() (driver.Value, error) {
-	return json.MarshalToString(ced)
+	return jsonutil.MarshalToString(ced)
 }
 
 // Scan database/sql.Scanner 実装
@@ -198,9 +200,9 @@ func (ced *ChannelEventDetail) Scan(src interface{}) error {
 	case nil:
 		return nil
 	case string:
-		return json.Unmarshal([]byte(s), ced)
+		return jsonutil.Unmarshal([]byte(s), ced)
 	case []byte:
-		return json.Unmarshal(s, ced)
+		return jsonutil.Unmarshal(s, ced)
 	default:
 		return errors.New("failed to scan ChannelEventDetail")
 	}

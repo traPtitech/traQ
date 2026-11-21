@@ -13,6 +13,13 @@ import (
 	"github.com/traPtitech/traQ/utils/jwt"
 )
 
+// GetMeta GET /meta
+func (h *Handlers) GetMeta(c *echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]any{
+		"canonicalOrigin": h.Origin,
+	})
+}
+
 // GetVersion GET /version
 func (h *Handlers) GetVersion(c *echo.Context) error {
 	extLogins := make([]string, 0, len(h.EnabledExternalAccountProviders))

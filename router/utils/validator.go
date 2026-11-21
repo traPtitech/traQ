@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -195,7 +195,7 @@ var IsValidBotEvents = vd.By(func(value interface{}) error {
 		return nil
 	}
 	for v := range s {
-		if !event.Types.Contains(v) {
+		if !botevent.Types.Contains(v) {
 			return errors.New("must be valid bot event type")
 		}
 	}

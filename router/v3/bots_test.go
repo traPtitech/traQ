@@ -13,7 +13,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/bot/event"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 )
@@ -358,6 +358,24 @@ func TestHandlers_GetBot(t *testing.T) {
 		obj.Value("privileged").Boolean().IsFalse()
 		obj.Value("channels").Array().Length().IsEqual(0)
 	})
+
+	t.Run("success (detail=true, revoked=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		err := env.Repository.DeleteTokenByID(t.Context(), bot1.AccessTokenID)
+		require.NoError(t, err)
+
+		obj := e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("detail", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		botEquals(t, bot1, obj)
+		obj.Value("tokens").Object().Value("accessTokenRevoked").Boolean().IsTrue()
+	})
 }
 
 func TestHandlers_EditBot(t *testing.T) {
@@ -539,7 +557,7 @@ func TestHandlers_EditBot(t *testing.T) {
 				Endpoint:    optional.From("https://example.com"),
 				DeveloperID: optional.From(user2.GetID()),
 				SubscribeEvents: map[model.BotEventType]struct{}{
-					event.Ping: {},
+					botevent.Ping: {},
 				},
 				Bio: optional.From("Bio"),
 			}).
@@ -693,7 +711,7 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 	log := &model.BotEventLog{
 		RequestID: uuid.Must(uuid.NewV4()),
 		BotID:     bot1.ID,
-		Event:     event.Ping,
+		Event:     botevent.Ping,
 		Result:    "ng",
 		Code:      400,
 		DateTime:  time.Now(),

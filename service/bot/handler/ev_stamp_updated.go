@@ -1,0 +1,43 @@
+package handler
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/leandro-lugaresi/hub"
+
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/model"
+	botevent "github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/service/bot/event/payload"
+)
+
+func StampUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
+	stamp := event.MustPayload[event.StampUpdatedPayload](fields).Stamp
+
+	bots, err := ctx.GetBots(botevent.StampUpdated)
+	if err != nil {
+		return fmt.Errorf("failed to GetBots: %w", err)
+	}
+	if len(bots) == 0 {
+		return nil
+	}
+
+	var user model.UserInfo
+	if !stamp.IsSystemStamp() {
+		user, err = ctx.R().GetUser(context.Background(), stamp.CreatorID, false)
+		if err != nil {
+			return fmt.Errorf("failed to GetUser: %w", err)
+		}
+	}
+
+	if err := ctx.Multicast(
+		botevent.StampUpdated,
+		payload.MakeStampUpdated(datetime, stamp, user),
+		bots,
+	); err != nil {
+		return fmt.Errorf("failed to multicast: %w", err)
+	}
+	return nil
+}

@@ -46,6 +46,12 @@ type UserGroupRepository interface {
 	// 存在しないグループの場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserGroup(ctx context.Context, id uuid.UUID) (*model.UserGroup, error)
+	// GetUserGroupMemberIDs 指定したグループのメンバーのUUIDを一括取得します。
+	//
+	// グループUUIDをキー、メンバーUUIDの配列を値とするマップを返します。
+	// 存在する空のグループは空配列となり、存在しないグループはマップに含まれません。
+	// DBによるエラーを返すことがあります。
+	GetUserGroupMemberIDs(ctx context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error)
 	// GetUserGroupByName 指定した名前のユーザーグループを取得します
 	//
 	// 成功した場合、ユーザーグループとnilを返します。

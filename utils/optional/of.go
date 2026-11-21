@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/guregu/null"
-	jsonIter "github.com/json-iterator/go"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 // Of nullableなjsonフィールドとして使用できます。
@@ -60,7 +61,7 @@ func (o *Of[T]) UnmarshalJSON(data []byte) error {
 		o.Valid = true
 		return nil
 	}
-	if err := jsonIter.ConfigFastest.Unmarshal(data, &o.V); err != nil {
+	if err := jsonutil.Unmarshal(data, &o.V); err != nil {
 		return err
 	}
 	o.Valid = true
@@ -70,12 +71,12 @@ func (o *Of[T]) UnmarshalJSON(data []byte) error {
 // MarshalJSON implements json.Marshaler interface.
 func (o Of[T]) MarshalJSON() ([]byte, error) {
 	if !o.Valid {
-		return jsonIter.ConfigFastest.Marshal(nil)
+		return jsonutil.Marshal(nil)
 	}
 	if m, ok := any(o.V).(json.Marshaler); ok {
 		return m.MarshalJSON()
 	}
-	return jsonIter.ConfigFastest.Marshal(o.V)
+	return jsonutil.Marshal(o.V)
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler interface.

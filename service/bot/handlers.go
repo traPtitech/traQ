@@ -5,33 +5,35 @@ import (
 
 	"github.com/leandro-lugaresi/hub"
 
-	intevent "github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/bot/handler"
 )
 
 type eventHandler func(ctx handler.Context, datetime time.Time, event string, fields hub.Fields) error
 
 var eventHandlerSet = map[string]eventHandler{
-	intevent.BotJoined:              handler.BotJoined,
-	intevent.BotLeft:                handler.BotLeft,
-	intevent.BotPingRequest:         handler.BotPingRequest,
-	intevent.MessageCreated:         handler.MessageCreated,
-	intevent.MessageDeleted:         handler.MessageDeleted,
-	intevent.MessageUpdated:         handler.MessageUpdated,
-	intevent.UserCreated:            handler.UserCreated,
-	intevent.UserActivated:          handler.UserActivated,
-	intevent.ChannelCreated:         handler.ChannelCreated,
-	intevent.ChannelTopicUpdated:    handler.ChannelTopicUpdated,
-	intevent.StampCreated:           handler.StampCreated,
-	intevent.UserTagAdded:           handler.UserTagAdded,
-	intevent.UserTagRemoved:         handler.UserTagRemoved,
-	intevent.MessageStampsUpdated:   handler.MessageStampsUpdated,
-	intevent.UserGroupCreated:       handler.UserGroupCreated,
-	intevent.UserGroupUpdated:       handler.UserGroupUpdated,
-	intevent.UserGroupDeleted:       handler.UserGroupDeleted,
-	intevent.UserGroupMemberAdded:   handler.UserGroupMemberAdded,
-	intevent.UserGroupMemberUpdated: handler.UserGroupMemberUpdated,
-	intevent.UserGroupMemberRemoved: handler.UserGroupMemberRemoved,
-	intevent.UserGroupAdminAdded:    handler.UserGroupAdminAdded,
-	intevent.UserGroupAdminRemoved:  handler.UserGroupAdminRemoved,
+	event.BotJoined:              handler.BotJoined,
+	event.BotLeft:                handler.BotLeft,
+	event.BotPingRequest:         handler.BotPingRequest,
+	event.MessageCreated:         handler.MessageCreated,
+	event.MessageDeleted:         handler.MessageDeleted,
+	event.MessageUpdated:         handler.MessageUpdated,
+	event.UserCreated:            handler.UserCreated,
+	event.UserActivated:          handler.UserActivated,
+	event.ChannelCreated:         handler.ChannelCreated,
+	event.ChannelTopicUpdated:    handler.ChannelTopicUpdated,
+	event.StampCreated:           handler.StampCreated,
+	event.StampUpdated:           handler.StampUpdated,
+	event.StampDeleted:           handler.StampDeleted,
+	event.UserTagAdded:           handler.UserTagAdded,
+	event.UserTagRemoved:         handler.UserTagRemoved,
+	event.MessageStampsUpdated:   handler.MessageStampsUpdated,
+	event.UserGroupCreated:       handler.UserGroupCreated,
+	event.UserGroupUpdated:       handler.UserGroupUpdated,
+	event.UserGroupDeleted:       handler.UserGroupDeleted,
+	event.UserGroupMemberAdded:   handler.UserGroupMemberAdded,
+	event.UserGroupMemberUpdated: handler.UserGroupMemberUpdated,
+	event.UserGroupMemberRemoved: handler.UserGroupMemberRemoved,
+	event.UserGroupAdminAdded:    handler.UserGroupAdminAdded,
+	event.UserGroupAdminRemoved:  handler.UserGroupAdminRemoved,
 }

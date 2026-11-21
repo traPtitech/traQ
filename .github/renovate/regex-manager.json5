@@ -32,7 +32,7 @@
     {
       "description": "OCI image dependencies with digest (full)",
       "fileMatch": [
-        ".+\\.ya?ml$", "(^|/)Makefile$"
+        ".+\\.ya?ml$", "(^|/)Makefile$", "(^|/)mise\\.toml$"
       ],
       "matchStrings": [
         // Example:

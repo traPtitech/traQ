@@ -3,13 +3,15 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
+
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 type JSON map[string]interface{}
 
 // Value database/sql/driver.Valuer 実装
 func (v JSON) Value() (driver.Value, error) {
-	return json.MarshalToString(v)
+	return jsonutil.MarshalToString(v)
 }
 
 // Scan database/sql.Scanner 実装
@@ -18,9 +20,9 @@ func (v *JSON) Scan(src interface{}) error {
 	case nil:
 		return nil
 	case string:
-		return json.Unmarshal([]byte(s), v)
+		return jsonutil.Unmarshal([]byte(s), v)
 	case []byte:
-		return json.Unmarshal(s, v)
+		return jsonutil.Unmarshal(s, v)
 	default:
 		return errors.New("failed to scan JSON")
 	}

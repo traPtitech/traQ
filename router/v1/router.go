@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
 
@@ -26,8 +25,6 @@ import (
 
 	"github.com/labstack/echo/v5"
 )
-
-var json = jsonIter.ConfigFastest
 
 func init() {
 	gob.Register(uuid.UUID{})

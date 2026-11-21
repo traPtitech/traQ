@@ -166,7 +166,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c *echo.Context) error {
 	}
 
 	// リダイレクトURI確認
-	if (len(code.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI) || (len(code.RedirectURI) == 0 && len(req.RedirectURI) > 0) {
+	if code.RedirectURI != req.RedirectURI {
 		return c.JSON(http.StatusUnauthorized, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 	}
 

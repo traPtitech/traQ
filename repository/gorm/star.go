@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -24,12 +23,9 @@ func (repo *Repository) AddStar(ctx context.Context, userID, channelID uuid.UUID
 			return result.Error
 		}
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelStared,
-		Fields: hub.Fields{
-			"user_id":    userID,
-			"channel_id": channelID,
-		},
+	event.Publish(repo.hub, event.ChannelStaredPayload{
+		UserID:    userID,
+		ChannelID: channelID,
 	})
 	return nil
 }
@@ -44,12 +40,9 @@ func (repo *Repository) RemoveStar(ctx context.Context, userID, channelID uuid.U
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelUnstared,
-			Fields: hub.Fields{
-				"user_id":    userID,
-				"channel_id": channelID,
-			},
+		event.Publish(repo.hub, event.ChannelUnstaredPayload{
+			UserID:    userID,
+			ChannelID: channelID,
 		})
 	}
 	return nil

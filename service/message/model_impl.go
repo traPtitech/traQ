@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	jsonIter "github.com/json-iterator/go"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -305,7 +305,7 @@ func (m *message) MarshalJSON() ([]byte, error) {
 		Stamps:    stamps,
 	}
 	m.RUnlock()
-	return jsonIter.ConfigFastest.Marshal(v)
+	return jsonutil.Marshal(v)
 }
 
 /*func (m *detailedMessage) MarshalJSON() ([]byte, error) {

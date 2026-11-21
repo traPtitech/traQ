@@ -14,6 +14,11 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
+// maxMediaCount 1つのOGPに含める画像・動画それぞれの最大数
+//
+// サイズ未指定の画像は1枚ずつ実画像を取得するため、大量の og:image を持つページで処理が詰まらないよう制限する
+const maxMediaCount = 10
+
 // MergeDefaultPageMetaAndOpenGraph OGPの結果とページのメタデータを合わせ、レスポンスの型に揃えます
 func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPageMeta) *model.Ogp {
 	result := &model.Ogp{
@@ -45,15 +50,17 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 			result.URL = og.URL
 		}
 	}
-	result.Images = make([]model.OgpMedia, len(og.Images))
-	for i, image := range og.Images {
+	images := og.Images[:min(len(og.Images), maxMediaCount)]
+	result.Images = make([]model.OgpMedia, len(images))
+	for i, image := range images {
 		result.Images[i] = toOgpMedia(image)
 	}
 	if len(og.Description) > 0 {
 		result.Description = og.Description
 	}
-	result.Videos = make([]model.OgpMedia, len(og.Videos))
-	for i, video := range og.Videos {
+	videos := og.Videos[:min(len(og.Videos), maxMediaCount)]
+	result.Videos = make([]model.OgpMedia, len(videos))
+	for i, video := range videos {
 		// Videoは仕様上ImageのFieldを包含している
 		result.Videos[i] = toOgpMedia(&image.Image{
 			URL:       video.URL,

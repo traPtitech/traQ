@@ -456,27 +456,38 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
+func TestRepositoryImpl_RemoveStampsFromMessage(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3, false)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
+	otherStamp := mustMakeStamp(t, repo, rand, uuid.Nil)
+	user2 := mustMakeUser(t, repo, rand, false)
+	user3 := mustMakeUser(t, repo, rand, false)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, stamp.ID, uuid.Nil), repository.ErrNilID.Error())
-		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, uuid.Nil, user.GetID()), repository.ErrNilID.Error())
-		assert.EqualError(t, repo.RemoveStampFromMessage(context.TODO(), uuid.Nil, stamp.ID, user.GetID()), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampsFromMessage(context.TODO(), message.ID, stamp.ID, nil), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampsFromMessage(context.TODO(), message.ID, stamp.ID, []uuid.UUID{uuid.Nil}), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampsFromMessage(context.TODO(), message.ID, uuid.Nil, []uuid.UUID{user.GetID()}), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampsFromMessage(context.TODO(), uuid.Nil, stamp.ID, []uuid.UUID{user.GetID()}), repository.ErrNilID.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
-		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
+		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user2.GetID())
+		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user3.GetID())
+		mustAddMessageStamp(t, repo, message.ID, otherStamp.ID, user2.GetID())
 
-		if assert.NoError(t, repo.RemoveStampFromMessage(context.TODO(), message.ID, stamp.ID, user.GetID())) {
-			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.MessageStamp{}).Where(&model.MessageStamp{MessageID: message.ID, StampID: stamp.ID, UserID: user.GetID()})))
+		if assert.NoError(t, repo.RemoveStampsFromMessage(context.TODO(), message.ID, stamp.ID, []uuid.UUID{user.GetID(), user2.GetID()})) {
+			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.MessageStamp{}).
+				Where("message_id = ? AND stamp_id = ? AND user_id IN (?)", message.ID, stamp.ID, []uuid.UUID{user.GetID(), user2.GetID()})))
+			assert.Equal(t, 1, count(t, getDB(repo).Model(&model.MessageStamp{}).
+				Where(&model.MessageStamp{MessageID: message.ID, StampID: stamp.ID, UserID: user3.GetID()})))
+			assert.Equal(t, 1, count(t, getDB(repo).Model(&model.MessageStamp{}).
+				Where(&model.MessageStamp{MessageID: message.ID, StampID: otherStamp.ID, UserID: user2.GetID()})))
 		}
 	})
 }

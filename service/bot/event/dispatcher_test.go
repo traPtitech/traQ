@@ -31,8 +31,7 @@ func TestUnicast(t *testing.T) {
 
 		b1 := &model.Bot{ID: uuid.NewV3(uuid.Nil, "b1")}
 		p := payload.MakePing(time.Now())
-		body, release, _ := makePayloadJSON(p)
-		defer release()
+		body, _ := makePayloadJSON(p)
 
 		d.EXPECT().
 			Send(b1, Ping, body).
@@ -65,8 +64,7 @@ func TestMulticast(t *testing.T) {
 		b3 := &model.Bot{ID: uuid.NewV3(uuid.Nil, "b3")}
 		bots := []*model.Bot{b1, b2, b1, b3}
 		p := payload.MakePing(time.Now())
-		body, release, _ := makePayloadJSON(p)
-		defer release()
+		body, _ := makePayloadJSON(p)
 
 		d.EXPECT().
 			Send(b1, Ping, body).

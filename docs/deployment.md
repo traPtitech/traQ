@@ -121,6 +121,7 @@ storage:
     endpoint: endpoint # (optional) Endpoint URL
     accessKey: accessKey # Access key
     secretKey: secretKey # Secret key
+    forcePathStyle: true # Enable for path-style S3 services such as RustFS
     cacheDir: /app/storagecache # Local directory to cache user icons, stamps, and thumbnails
   
   # Set this if type is "composite"

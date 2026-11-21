@@ -14,6 +14,7 @@ import (
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 
+	"github.com/traPtitech/traQ/utils/jsonutil"
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
@@ -31,7 +32,7 @@ type AccessScopes map[AccessScope]struct{}
 
 // SupportedAccessScopes 対応するスコープ一覧を返します
 func SupportedAccessScopes() []string {
-	return []string{"read", "write", "manage_bot", "openid", "profile"}
+	return []string{"read", "write", "manage_bot", "openid", "profile", "qall"}
 }
 
 // Value database/sql/driver.Valuer 実装
@@ -56,13 +57,13 @@ func (arr *AccessScopes) Scan(src interface{}) error {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (arr *AccessScopes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(arr.StringArray())
+	return jsonutil.Marshal(arr.StringArray())
 }
 
 // UnmarshalJSON encoding/json.Unmarshaler 実装
 func (arr *AccessScopes) UnmarshalJSON(data []byte) error {
 	var str []string
-	err := json.Unmarshal(data, &str)
+	err := jsonutil.Unmarshal(data, &str)
 	if err != nil {
 		return err
 	}

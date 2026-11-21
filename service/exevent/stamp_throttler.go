@@ -39,7 +39,22 @@ func (st *StampThrottler) run() {
 	defer st.bus.Unsubscribe(sub)
 
 	for msg := range sub.Receiver {
-		messageID, ok := msg.Fields["message_id"].(uuid.UUID)
+		var (
+			messageID uuid.UUID
+			ok        bool
+		)
+		switch msg.Name {
+		case event.MessageStamped:
+			var p event.MessageStampedPayload
+			p, ok = event.PayloadOf[event.MessageStampedPayload](msg.Fields)
+			messageID = p.MessageID
+		case event.MessageUnstamped:
+			var p event.MessageUnstampedPayload
+			p, ok = event.PayloadOf[event.MessageUnstampedPayload](msg.Fields)
+			messageID = p.MessageID
+		default:
+			panic("unexpected topic: " + msg.Name)
+		}
 		if !ok {
 			continue // ignore invalid message
 		}

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -79,13 +78,10 @@ func (repo *Repository) CreateChannel(ctx context.Context, ch model.Channel, pri
 	if err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"channel":    &ch,
-			"private":    !ch.IsPublic,
-		},
+	event.Publish(repo.hub, event.ChannelCreatedPayload{
+		ChannelID: ch.ID,
+		Channel:   &ch,
+		Private:   !ch.IsPublic,
 	})
 	return &ch, nil
 }
@@ -128,21 +124,15 @@ func (repo *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, 
 		return nil, err
 	}
 
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelUpdated,
-		Fields: hub.Fields{
-			"channel_id": channelID,
-			"private":    !ch.IsPublic,
-		},
+	event.Publish(repo.hub, event.ChannelUpdatedPayload{
+		ChannelID: channelID,
+		Private:   !ch.IsPublic,
 	})
 	if args.Topic.Valid {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelTopicUpdated,
-			Fields: hub.Fields{
-				"channel_id": channelID,
-				"topic":      args.Topic.V,
-				"updater_id": args.UpdaterID,
-			},
+		event.Publish(repo.hub, event.ChannelTopicUpdatedPayload{
+			ChannelID: channelID,
+			Topic:     args.Topic.V,
+			UpdaterID: args.UpdaterID,
 		})
 	}
 	return &ch, nil
@@ -176,12 +166,9 @@ func (repo *Repository) ArchiveChannels(ctx context.Context, ids []uuid.UUID) ([
 		return nil, err
 	}
 	for _, ch := range changed {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelUpdated,
-			Fields: hub.Fields{
-				"channel_id": ch.ID,
-				"private":    !ch.IsPublic,
-			},
+		event.Publish(repo.hub, event.ChannelUpdatedPayload{
+			ChannelID: ch.ID,
+			Private:   !ch.IsPublic,
 		})
 	}
 	return changed, nil
@@ -357,12 +344,9 @@ func (repo *Repository) ChangeChannelSubscription(ctx context.Context, channelID
 	}
 
 	if len(on) > 0 || len(off) > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelSubscribersChanged,
-			Fields: hub.Fields{
-				"channel_id":     channelID,
-				"subscriber_ids": append(on, off...),
-			},
+		event.Publish(repo.hub, event.ChannelSubscribersChangedPayload{
+			ChannelID:     channelID,
+			SubscriberIDs: append(on, off...),
 		})
 	}
 	return on, off, nil

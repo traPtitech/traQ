@@ -438,6 +438,30 @@ func (repo *TestRepository) GetUserGroup(_ context.Context, id uuid.UUID) (*mode
 	return &g, nil
 }
 
+func (repo *TestRepository) GetUserGroupMemberIDs(_ context.Context, groupIDs []uuid.UUID) (map[uuid.UUID][]uuid.UUID, error) {
+	repo.UserGroupsLock.RLock()
+	repo.UserGroupMembersLock.RLock()
+	defer repo.UserGroupsLock.RUnlock()
+	defer repo.UserGroupMembersLock.RUnlock()
+
+	members := make(map[uuid.UUID][]uuid.UUID)
+	for _, id := range groupIDs {
+		group, ok := repo.UserGroups[id]
+		if !ok {
+			continue
+		}
+		ids := make([]uuid.UUID, 0, len(group.Members)+len(repo.UserGroupMembers[id]))
+		for _, member := range group.Members {
+			ids = append(ids, member.UserID)
+		}
+		for userID := range repo.UserGroupMembers[id] {
+			ids = append(ids, userID)
+		}
+		members[id] = ids
+	}
+	return members, nil
+}
+
 func (repo *TestRepository) GetUserGroupByName(_ context.Context, name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound

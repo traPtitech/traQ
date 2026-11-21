@@ -2,18 +2,21 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/ory/dockertest/v3"
 )
 
 type s3Tester struct {
-	client *s3.Client
+	client   *s3.Client
+	endpoint string
 }
 
 func init() {
@@ -23,7 +26,7 @@ func init() {
 func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 	return func() error {
 		cfg, err := s3TestConfig(context.Background())
-		ep := fmt.Sprintf("http://localhost:%s", resource.GetPort("9000/tcp"))
+		t.endpoint = fmt.Sprintf("http://%s", resource.GetHostPort("9000/tcp"))
 
 		if err != nil {
 			return err
@@ -31,24 +34,23 @@ func (t *s3Tester) setupFunc(resource *dockertest.Resource) func() error {
 
 		t.client = s3.NewFromConfig(cfg, func(opt *s3.Options) {
 			opt.UsePathStyle = true // virtual host styleだと名前解決ができない(bucket.localhost~~になるため)
-			opt.BaseEndpoint = aws.String(ep)
+			opt.BaseEndpoint = aws.String(t.endpoint)
 		})
 
-		return minioHealthCheck(resource.GetPort("9000/tcp"))
+		// Wait for the S3 API and create the test bucket once RustFS is ready.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_, err = t.client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(bucketName)})
+		if err == nil {
+			return nil
+		}
+		var notFound *types.NotFound
+		if !errors.As(err, &notFound) {
+			return err
+		}
+		_, err = t.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)})
+		return err
 	}
-}
-
-func (t *s3Tester) setupBucket() error {
-	input := s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
-	}
-
-	_, err := t.getClient().CreateBucket(context.Background(), &input)
-	return err
-}
-
-func (t *s3Tester) teardown() error {
-	return nil
 }
 
 func (t *s3Tester) getClient() *s3.Client {
@@ -58,21 +60,8 @@ func (t *s3Tester) getClient() *s3.Client {
 func s3TestConfig(ctx context.Context) (aws.Config, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("ap-northeast-1"),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("ROOT", "PASSWORD", "")),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(s3AccessKey, s3SecretKey, "")),
 	)
 
 	return cfg, err
-}
-
-func minioHealthCheck(host string) error {
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%s/minio/health/live", host))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("health check failed: %s", resp.Status)
-	}
-
-	return nil
 }

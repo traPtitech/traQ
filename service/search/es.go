@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	json "github.com/json-iterator/go"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofrs/uuid"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/jsonutil"
 )
 
 const (
@@ -199,7 +199,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 			Number string `json:"number"`
 		} `json:"version"`
 	}
-	err = json.NewDecoder(infoRes.Body).Decode(&r)
+	err = jsonutil.Decode(infoRes.Body, &r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Elasticsearch info: %w", err)
 	}
@@ -221,7 +221,7 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 
 	// indexが存在しなかったら作成
 	if existsRes.StatusCode == http.StatusNotFound {
-		reqBody, err := json.Marshal(esCreateIndexBody{
+		reqBody, err := jsonutil.Marshal(esCreateIndexBody{
 			Mappings: esMapping,
 			Settings: esSetting,
 		})
@@ -297,7 +297,7 @@ type termQueryParameter struct {
 	Value any `json:"value,omitempty"`
 }
 
-func (e *esEngine) Do(q *Query) (Result, error) {
+func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
 	var musts []searchQuery
@@ -352,18 +352,25 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if len(q.From) > 0 {
-		orQueries := make([]searchQuery, 0, len(q.From))
-		for _, fromID := range q.From {
-			orQueries = append(orQueries, searchQuery{"term": termQuery{"userId": termQueryParameter{Value: fromID}}})
+		fromIDs := lo.Uniq(q.From)
+		groupMembers, err := e.repo.GetUserGroupMemberIDs(ctx, fromIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user group members for from: %w", err)
+		}
+		userIDs := make([]uuid.UUID, 0, len(q.From))
+		for _, fromID := range fromIDs {
+			if members, ok := groupMembers[fromID]; ok {
+				userIDs = append(userIDs, members...)
+			} else {
+				userIDs = append(userIDs, fromID)
+			}
 		}
 
-		sq := searchQuery{"bool": boolQuery{Should: orQueries}}
-		if len(q.From) == 1 {
-			// OR検索が不要
-			sq = orQueries[0]
+		if len(userIDs) == 0 {
+			musts = append(musts, searchQuery{"match_none": m{}})
+		} else {
+			musts = append(musts, searchQuery{"terms": m{"userId": lo.Uniq(userIDs)}})
 		}
-
-		musts = append(musts, sq)
 	}
 
 	if q.Citation.Valid {
@@ -392,7 +399,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, searchQuery{"term": termQuery{"hasAudio": termQueryParameter{Value: q.HasAudio}}})
 	}
 
-	limit, offset := 20, 0
+	limit, offset := DefaultLimit, 0
 	if q.Limit.Valid {
 		limit = q.Limit.V
 	}
@@ -403,12 +410,13 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
 	sort := q.GetSortKey()
 
-	b, err := json.Marshal(newSearchBody(musts))
+	b, err := jsonutil.Marshal(newSearchBody(musts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal search query: %w", err)
 	}
 
 	sr, err := e.client.Search(
+		e.client.Search.WithContext(ctx),
 		e.client.Search.WithIndex(getIndexName(esMessageIndex)),
 		e.client.Search.WithBody(bytes.NewBuffer(b)),
 		e.client.Search.WithSort(sort),
@@ -424,13 +432,13 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	defer sr.Body.Close()
 
 	var res esSearchResponse
-	err = json.NewDecoder(sr.Body).Decode(&res)
+	err = jsonutil.Decode(sr.Body, &res)
 	if err != nil {
 		return nil, err
 	}
 
 	e.l.Debug("search result", zap.Reflect("hits", res.Hits))
-	return e.parseResultFromResponse(res)
+	return e.parseResultFromResponse(ctx, res)
 }
 
 func (e *esEngine) Available() bool {

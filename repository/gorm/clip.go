@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -31,13 +30,10 @@ func (repo *Repository) CreateClipFolder(ctx context.Context, userID uuid.UUID, 
 	if err := repo.db.WithContext(ctx).Create(clipFolder).Error; err != nil {
 		return nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ClipFolderCreated,
-		Fields: hub.Fields{
-			"user_id":        clipFolder.OwnerID,
-			"clip_folder_id": clipFolder.ID,
-			"clip_folder":    clipFolder,
-		},
+	event.Publish(repo.hub, event.ClipFolderCreatedPayload{
+		UserID:       clipFolder.OwnerID,
+		ClipFolderID: clipFolder.ID,
+		ClipFolder:   clipFolder,
 	})
 
 	return clipFolder, nil
@@ -83,14 +79,11 @@ func (repo *Repository) UpdateClipFolder(ctx context.Context, folderID uuid.UUID
 		return err
 	}
 	if ok {
-		repo.hub.Publish(hub.Message{
-			Name: event.ClipFolderUpdated,
-			Fields: hub.Fields{
-				"user_id":         oldFolder.OwnerID,
-				"clip_folder_id":  folderID,
-				"old_clip_folder": &oldFolder,
-				"clip_folder":     &newFolder,
-			},
+		event.Publish(repo.hub, event.ClipFolderUpdatedPayload{
+			UserID:        oldFolder.OwnerID,
+			ClipFolderID:  folderID,
+			OldClipFolder: &oldFolder,
+			ClipFolder:    &newFolder,
 		})
 	}
 	return nil
@@ -115,13 +108,10 @@ func (repo *Repository) DeleteClipFolder(ctx context.Context, folderID uuid.UUID
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ClipFolderDeleted,
-		Fields: hub.Fields{
-			"user_id":        cf.OwnerID,
-			"clip_folder_id": folderID,
-			"clip_folder":    &cf,
-		},
+	event.Publish(repo.hub, event.ClipFolderDeletedPayload{
+		UserID:       cf.OwnerID,
+		ClipFolderID: folderID,
+		ClipFolder:   &cf,
 	})
 	return nil
 }
@@ -150,14 +140,11 @@ func (repo *Repository) DeleteClipFolderMessage(ctx context.Context, folderID, m
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ClipFolderMessageDeleted,
-		Fields: hub.Fields{
-			"user_id":                cf.OwnerID,
-			"clip_folder_id":         cf.ID,
-			"clip_folder_message_id": messageID,
-			"clip_folder_message":    &cfm,
-		},
+	event.Publish(repo.hub, event.ClipFolderMessageDeletedPayload{
+		UserID:              cf.OwnerID,
+		ClipFolderID:        cf.ID,
+		ClipFolderMessageID: messageID,
+		ClipFolderMessage:   &cfm,
 	})
 	return nil
 }
@@ -197,14 +184,11 @@ func (repo *Repository) AddClipFolderMessage(ctx context.Context, folderID, mess
 		return cfm, err
 	}
 
-	repo.hub.Publish(hub.Message{
-		Name: event.ClipFolderMessageAdded,
-		Fields: hub.Fields{
-			"user_id":                cf.OwnerID,
-			"clip_folder_id":         cf.ID,
-			"clip_folder_message_id": messageID,
-			"clip_folder_message":    cfm,
-		},
+	event.Publish(repo.hub, event.ClipFolderMessageAddedPayload{
+		UserID:              cf.OwnerID,
+		ClipFolderID:        cf.ID,
+		ClipFolderMessageID: messageID,
+		ClipFolderMessage:   cfm,
 	})
 
 	return cfm, nil

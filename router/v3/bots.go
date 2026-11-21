@@ -8,7 +8,6 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
-	"github.com/leandro-lugaresi/hub"
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -114,14 +113,9 @@ func (h *Handlers) GetBot(c *echo.Context) error {
 			return herror.Forbidden()
 		}
 
-		t, err := h.Repo.GetTokenByID(c.Request().Context(), b.AccessTokenID)
+		t, err := h.Repo.GetTokenByIDWithDeleted(c.Request().Context(), b.AccessTokenID)
 		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				return herror.HTTPError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
-			default:
-				return herror.InternalServerError(err)
-			}
+			return herror.InternalServerError(err)
 		}
 
 		ids, err := h.Repo.GetParticipatingChannelIDsByBot(c.Request().Context(), b.ID)
@@ -281,12 +275,9 @@ func (h *Handlers) GetChannelBots(c *echo.Context) error {
 func (h *Handlers) ActivateBot(c *echo.Context) error {
 	b := getParamBot(c)
 
-	h.Hub.Publish(hub.Message{
-		Name: event.BotPingRequest,
-		Fields: hub.Fields{
-			"bot_id": b.ID,
-			"bot":    b,
-		},
+	event.Publish(h.Hub, event.BotPingRequestPayload{
+		BotID: b.ID,
+		Bot:   b,
 	})
 	return c.NoContent(http.StatusAccepted)
 }

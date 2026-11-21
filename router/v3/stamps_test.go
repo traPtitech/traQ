@@ -194,6 +194,8 @@ func TestHandlers_EditStamp(t *testing.T) {
 	stamp2 := env.CreateStamp(t, user2.GetID(), rand)
 	stamp3 := env.CreateStamp(t, user.GetID(), rand)
 	env.CreateStamp(t, user2.GetID(), "409_conflict")
+	deleted := env.CreateStamp(t, user2.GetID(), "409_conflict_deleted")
+	require.NoError(t, env.Repository.DeleteStamp(t.Context(), deleted.ID))
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -271,6 +273,16 @@ func TestHandlers_EditStamp(t *testing.T) {
 		e.PATCH(path, stamp3.ID).
 			WithCookie(session.CookieName, s).
 			WithJSON(&PatchStampRequest{Name: optional.From("409_conflict")}).
+			Expect().
+			Status(http.StatusConflict)
+	})
+
+	t.Run("conflict with deleted", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, stamp3.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchStampRequest{Name: optional.From("409_conflict_deleted")}).
 			Expect().
 			Status(http.StatusConflict)
 	})

@@ -28,7 +28,9 @@ func (h *Handlers) GetOgp(c *echo.Context) error {
 
 	if res == nil {
 		return c.JSON(http.StatusOK, model.Ogp{
-			Type: "empty",
+			Type:   "empty",
+			Images: []model.OgpMedia{},
+			Videos: []model.OgpMedia{},
 		})
 	}
 	return c.JSON(http.StatusOK, res)

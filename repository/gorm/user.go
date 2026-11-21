@@ -101,12 +101,9 @@ func (r *userRepository) CreateUser(ctx context.Context, args repository.CreateU
 	if err != nil {
 		return nil, err
 	}
-	r.hub.Publish(hub.Message{
-		Name: event.UserCreated,
-		Fields: hub.Fields{
-			"user_id": user.ID,
-			"user":    user,
-		},
+	event.Publish(r.hub, event.UserCreatedPayload{
+		UserID: user.ID,
+		User:   user,
 	})
 	return user, nil
 }
@@ -299,6 +296,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, args repo
 		return nil // パスワードのみの変更の時はUserUpdatedイベントを発生させない
 	}
 	if args.LastOnline.Valid && count == 1 {
+		r.forgetCache(id)
 		return nil // 最終オンライン日時のみの更新の時はUserUpdatedイベントを発生させない
 	}
 	if !changed {
@@ -308,27 +306,18 @@ func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, args repo
 	r.forgetCache(id)
 	switch {
 	case args.IconFileID.Valid && count == 1:
-		r.hub.Publish(hub.Message{
-			Name: event.UserIconUpdated,
-			Fields: hub.Fields{
-				"user_id": id,
-				"file_id": args.IconFileID.V,
-			},
+		event.Publish(r.hub, event.UserIconUpdatedPayload{
+			UserID: id,
+			FileID: args.IconFileID.V,
 		})
 	case activate:
-		r.hub.Publish(hub.Message{
-			Name: event.UserActivated,
-			Fields: hub.Fields{
-				"user": &u,
-			},
+		event.Publish(r.hub, event.UserActivatedPayload{
+			User: &u,
 		})
 		fallthrough
 	default:
-		r.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": id,
-			},
+		event.Publish(r.hub, event.UserUpdatedPayload{
+			UserID: id,
 		})
 	}
 	return nil

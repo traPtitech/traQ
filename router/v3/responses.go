@@ -210,8 +210,9 @@ func formatBots(bs []*model.Bot) []*Bot {
 }
 
 type BotTokens struct {
-	VerificationToken string `json:"verificationToken"`
-	AccessToken       string `json:"accessToken"`
+	VerificationToken  string `json:"verificationToken"`
+	AccessToken        string `json:"accessToken"`
+	AccessTokenRevoked bool   `json:"accessTokenRevoked"`
 }
 
 type BotDetail struct {
@@ -242,8 +243,9 @@ func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *
 		CreatedAt:       b.CreatedAt,
 		UpdatedAt:       b.UpdatedAt,
 		Tokens: BotTokens{
-			VerificationToken: b.VerificationToken,
-			AccessToken:       t.AccessToken,
+			VerificationToken:  b.VerificationToken,
+			AccessToken:        t.AccessToken,
+			AccessTokenRevoked: t.DeletedAt.Valid,
 		},
 		Endpoint:   b.PostURL,
 		Privileged: b.Privileged,
