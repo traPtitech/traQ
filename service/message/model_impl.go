@@ -21,24 +21,6 @@ type message struct {
 	sync.RWMutex
 }
 
-/*type detailedMessage struct {
-	Model *model.DetailedMessage
-
-	stampMap      map[uuid.UUID]map[uuid.UUID]model.MessageStamp
-	stampMapDirty bool
-
-	sync.RWMutex
-}*/
-
-type quotedMessage struct {
-	Model *model.QuotedMessage
-
-	stampMap      map[uuid.UUID]map[uuid.UUID]model.MessageStamp
-	stampMapDirty bool
-
-	sync.RWMutex
-}
-
 func (m *message) GetID() uuid.UUID {
 	m.RLock()
 	defer m.RUnlock()
