@@ -5,7 +5,7 @@ go 1.27
 toolchain go1.27.4
 
 require (
-	cloud.google.com/go/profiler v0.7.0
+	cloud.google.com/go/profiler v0.7.1
 	firebase.google.com/go/v4 v4.20.0
 	github.com/MicahParks/jwkset v0.12.0
 	github.com/NYTimes/gziphandler v1.1.1

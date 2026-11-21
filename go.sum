@@ -48,8 +48,8 @@ cloud.google.com/go/longrunning v1.3.0 h1:lZ6c8SJJBmILp/Wnr3vGnBLa0q+cYfSHRCcUfV
 cloud.google.com/go/longrunning v1.3.0/go.mod h1:wpgLxCn+UA3/TZ1bj/fW39mfDpwVlMPu1xKJyoMt7V0=
 cloud.google.com/go/monitoring v1.30.0 h1:r/d+JUbyKmJ8b07iznuKfzVzrIXTWxHQ3lBRm3x2LlY=
 cloud.google.com/go/monitoring v1.30.0/go.mod h1:htlUR0QWVMrjFzZmN4LGnMAve9xB/eduwjmINxVZ8RM=
-cloud.google.com/go/profiler v0.7.0 h1:sF6lj71YwX0yzYsVS+hLxmD3QwPcrVHBYKWhf3qvvZI=
-cloud.google.com/go/profiler v0.7.0/go.mod h1:72lOLpraSuQPiDIML5u5KzMjioUa7fMZpRgomniIz0I=
+cloud.google.com/go/profiler v0.7.1 h1:KEVmw1a1EYU+E4hlqkGrD0q4IR4wba8oTpk/TrntmlA=
+cloud.google.com/go/profiler v0.7.1/go.mod h1:c037+rDVeyZHfH71jjsEWz4YpTi07LODGAj9RsZFqnw=
 cloud.google.com/go/pubsub v1.0.1/go.mod h1:R0Gpsv3s54REJCy4fxDixWD93lHJMoZTyQ2kNxGRt3I=
 cloud.google.com/go/pubsub v1.1.0/go.mod h1:EwwdRX2sKPjnvnqCa270oGRyludottCI76h+R3AArQw=
 cloud.google.com/go/pubsub v1.2.0/go.mod h1:jhfEVHT8odbXTkndysNHCcx0awwzvfOlguIAii9o8iA=
