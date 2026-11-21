@@ -12,7 +12,7 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/channel"
+	channel "github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils"
 	messageParser "github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -82,7 +82,7 @@ func (m *manager) buildQuotedMessage(ctx context.Context, mm *model.Message, inc
 				}
 				attachmentsResult = append(attachmentsResult, attachment)
 			} else {
-				return nil, err
+				return nil, ErrNotFound
 			}
 		}
 	}
@@ -111,7 +111,7 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 					}
 					attachmentsResult = append(attachmentsResult, attachment)
 				} else {
-					return nil, err
+					return nil, ErrNotFound
 				}
 			}
 		}
@@ -123,7 +123,12 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 				return nil, err
 			}
 			for _, quote := range quotes {
-				if quote.Channel.IsPublic {
+				cid := quote.ChannelID
+				auth, err := m.CM.IsChannelAccessibleToUser(ctx, uid, cid)
+				if err != nil {
+					return nil, err
+				}
+				if auth {
 					qm, err := m.buildQuotedMessage(ctx, quote, includeAttachments, uid)
 					if err != nil {
 						return nil, err
@@ -153,7 +158,7 @@ func (m *manager) GetIn(ctx context.Context, ids []uuid.UUID) ([]Message, error)
 	return ret, nil
 }
 
-func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error) {
+func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery, requesterID uuid.UUID) (Timeline, error) {
 	q := repository.MessagesQuery{
 		User:                     query.User,
 		Channel:                  query.Channel,
@@ -175,7 +180,7 @@ func (m *manager) GetTimeline(ctx context.Context, query TimelineQuery) (Timelin
 	}
 	records := make([]*model.DetailedMessage, len(messages))
 	for i, mm := range messages {
-		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes, query.User)
+		mod, err := m.buildDetailedMessage(ctx, mm, query.IncludeAttachments, query.IncludeQuotes, requesterID)
 		if err != nil {
 			return nil, err
 		}

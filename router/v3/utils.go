@@ -156,7 +156,8 @@ func (q *MessagesQuery) convertU(uid uuid.UUID) message.TimelineQuery {
 
 func serveMessages(c *echo.Context, mm message.Manager, query message.TimelineQuery) error {
 	ctx := c.Request().Context()
-	timeline, err := mm.GetTimeline(ctx, query)
+	userID := getRequestUserID(c)
+	timeline, err := mm.GetTimeline(ctx, query, userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
