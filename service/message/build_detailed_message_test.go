@@ -101,7 +101,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		quoted := &model.Message{ID: quoteID, Text: "Quoted Text", ChannelID: channelID}
 		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(true, nil).Times(1)
-		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
+		repo.MockMessageRepository.EXPECT().GetMessageByID(gomock.Any(), quoteID).Return(quoted, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
 		assert.Nil(t, result.Attachments)
@@ -125,7 +125,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 
 		quoted := &model.Message{ID: quoteID, Text: "Quoted Text", ChannelID: channelID}
 		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(false, nil).Times(1)
-		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
+		repo.MockMessageRepository.EXPECT().GetMessageByID(gomock.Any(), quoteID).Return(quoted, nil).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
 		assert.Nil(t, result)
@@ -146,7 +146,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		quoted := &model.Message{ID: quoteID, Text: fileEmbed(nestedFileID), ChannelID: channelID}
 
 		mmgr.EXPECT().IsChannelAccessibleToUser(gomock.Any(), userID, channelID).Return(true, nil).Times(1)
-		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return([]*model.Message{quoted}, false, nil).Times(1)
+		repo.MockMessageRepository.EXPECT().GetMessageByID(gomock.Any(), quoteID).Return(quoted, nil).Times(1)
 		repo.MockFileRepository.EXPECT().IsFileAccessible(gomock.Any(), nestedFileID, userID).Return(true, nil).AnyTimes()
 		repo.MockFileRepository.EXPECT().GetFileMeta(gomock.Any(), nestedFileID).Return(&model.FileMeta{ID: nestedFileID}, nil).Times(1)
 
@@ -167,7 +167,7 @@ func TestManager_buildDetailedMessage(t *testing.T) {
 		quoteID := uuid.NewV3(uuid.Nil, "q1")
 		mm := &model.Message{ID: uuid.NewV3(uuid.Nil, "m1"), Text: citationEmbed(quoteID)}
 
-		repo.MockMessageRepository.EXPECT().GetMessages(gomock.Any(), gomock.Any()).Return(nil, false, errors.New("db error")).Times(1)
+		repo.MockMessageRepository.EXPECT().GetMessageByID(gomock.Any(), quoteID).Return(nil, errors.New("db error")).Times(1)
 
 		result, _ := m.buildDetailedMessage(context.TODO(), mm, false, true, uuid.NewV3(uuid.Nil, "u1"))
 		assert.Nil(t, result)
