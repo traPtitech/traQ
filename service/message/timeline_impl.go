@@ -127,13 +127,48 @@ func (m *timelineMessage) MarshalJSON() ([]byte, error) {
 		Stamps      []model.MessageStamp   `json:"stamps"`
 		ThreadID    optional.Of[uuid.UUID] `json:"threadId"` // TODO
 		Attachments []*FileInfo            `json:"attachments"`
-		Quotes      []*quotedMessage       `json:"quotes"`
+		Quotes      []*objectWithPreload   `json:"quotes"`
 	}
 	var v interface{}
 	if m.preloaded {
-		quotes := make([]*quotedMessage, len(m.Model.Quotes))
+		quotes := make([]*objectWithPreload, len(m.Model.Quotes))
 		for i, q := range m.Model.Quotes {
-			quotes[i] = &quotedMessage{Model: q}
+			tmp := q.Attachments
+			fairuinfo := make([]*FileInfo, len(tmp))
+			for i, tempu := range tmp {
+				samuneiru := make([]FileInfoThumbnail, len(tempu.Thumbnails))
+				for j, tn := range tempu.Thumbnails {
+					samuneiru[j] = FileInfoThumbnail{
+						Type:   tn.Type.String(),
+						Mime:   tn.Mime,
+						Width:  tn.Width,
+						Height: tn.Height,
+					}
+				}
+				fairuinfo[i] = &FileInfo{
+					ID:              tempu.ID,
+					Name:            tempu.Name,
+					Mime:            tempu.Mime,
+					Size:            tempu.Size,
+					MD5:             tempu.Hash,
+					IsAnimatedImage: tempu.IsAnimatedImage,
+					CreatedAt:       tempu.CreatedAt,
+					ChannelID:       tempu.ChannelID,
+					UploaderID:      tempu.CreatorID,
+					Thumbnails:      samuneiru,
+				}
+			}
+			quotes[i] = &objectWithPreload{
+				object: object{
+					ID:        m.Model.ID,
+					UserID:    m.Model.UserID,
+					ChannelID: m.Model.ChannelID,
+					Content:   m.Model.Text,
+					CreatedAt: m.Model.CreatedAt,
+					UpdatedAt: m.Model.UpdatedAt,
+				},
+				Attachments: fairuinfo,
+			}
 		}
 		tmp := m.Model.Attachments
 		fairuinfo := make([]*FileInfo, len(tmp))
