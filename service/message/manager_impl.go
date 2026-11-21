@@ -117,12 +117,12 @@ func (m *manager) buildDetailedMessage(ctx context.Context, mm *model.Message, i
 		}
 		if includeQuotes {
 			citationResult = []*model.QuotedMessage{}
-			var err error
-			quotes, _, err := m.R.GetMessages(ctx, repository.MessagesQuery{IDIn: optional.From((parseResult.Citation))})
-			if err != nil {
-				return nil, err
-			}
-			for _, quote := range quotes {
+			citations := parseResult.Citation
+			for _, citation := range citations {
+				quote, err := m.R.GetMessageByID(ctx, citation)
+				if err != nil {
+					return nil, err
+				}
 				cid := quote.ChannelID
 				auth, err := m.CM.IsChannelAccessibleToUser(ctx, uid, cid)
 				if err != nil {
