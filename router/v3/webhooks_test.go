@@ -419,7 +419,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch2.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch2.ID}, wh.GetBotUserID())
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]
@@ -438,7 +438,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch.ID})
+		tl, err := env.MM.GetTimeline(context.TODO(), message.TimelineQuery{Channel: ch.ID}, wh.GetBotUserID())
 		require.NoError(t, err)
 		if assert.Len(t, tl.Records(), 1) {
 			m := tl.Records()[0]

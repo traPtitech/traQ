@@ -11,6 +11,7 @@ type Repo struct {
 	*mock_repository.MockChannelRepository
 	*mock_repository.MockMessageRepository
 	*mock_repository.MockPinRepository
+	*mock_repository.MockFileRepository
 	*mock_repository.MockUserRepository
 	testutils.EmptyTestRepository
 }
@@ -20,6 +21,7 @@ func NewMockRepo(ctrl *gomock.Controller) *Repo {
 		MockChannelRepository: mock_repository.NewMockChannelRepository(ctrl),
 		MockMessageRepository: mock_repository.NewMockMessageRepository(ctrl),
 		MockPinRepository:     mock_repository.NewMockPinRepository(ctrl),
+		MockFileRepository:    mock_repository.NewMockFileRepository(ctrl),
 		MockUserRepository:    mock_repository.NewMockUserRepository(ctrl),
 	}
 }

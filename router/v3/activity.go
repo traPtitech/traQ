@@ -61,7 +61,7 @@ func (h *Handlers) GetActivityTimeline(c *echo.Context) error {
 			query.ChannelsSubscribedByUser = userID
 		}
 
-		timeline, err := h.MessageManager.GetTimeline(ctx, query)
+		timeline, err := h.MessageManager.GetTimeline(ctx, query, userID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
