@@ -41,7 +41,7 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.2
 	github.com/lestrrat-go/jwx/v3 v3.4.0
 	github.com/livekit/protocol v1.54.2
-	github.com/livekit/server-sdk-go/v2 v2.19.0
+	github.com/livekit/server-sdk-go/v2 v2.20.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-identicon v0.0.1
 	github.com/motoki317/go-waveform v0.0.3
@@ -188,7 +188,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
-	github.com/klauspost/compress v1.20.1 // indirect
+	github.com/klauspost/compress v1.20.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -196,7 +196,7 @@ require (
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.3.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
-	github.com/livekit/mediatransportutil v0.0.0-20260821083140-f234b534b095 // indirect
+	github.com/livekit/mediatransportutil v0.0.0-20261116220501-6af81419a977 // indirect
 	github.com/livekit/psrpc v0.8.2 // indirect
 	github.com/magefile/mage v1.17.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -246,7 +246,7 @@ require (
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/sirupsen/logrus v1.10.1 // indirect
+	github.com/sirupsen/logrus v1.10.2 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
