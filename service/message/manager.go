@@ -32,6 +32,8 @@ type TimelineQuery struct {
 	Asc                      bool
 	ExcludeDMs               bool
 	DisablePreload           bool
+	IncludeAttachments       bool
+	IncludeQuotes            bool
 }
 
 type Manager interface {
@@ -52,7 +54,7 @@ type Manager interface {
 	//
 	// 成功した場合、タイムラインとnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetTimeline(ctx context.Context, query TimelineQuery) (Timeline, error)
+	GetTimeline(ctx context.Context, query TimelineQuery, requesterID uuid.UUID) (Timeline, error)
 	// Create メッセージを作成します
 	//
 	// 成功した場合、メッセージとnilを返します。

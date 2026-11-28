@@ -105,12 +105,14 @@ func getParamClipFolder(c *echo.Context) *model.ClipFolder {
 }
 
 type MessagesQuery struct {
-	Limit     int                    `query:"limit"`
-	Offset    int                    `query:"offset"`
-	Since     optional.Of[time.Time] `query:"since"`
-	Until     optional.Of[time.Time] `query:"until"`
-	Inclusive bool                   `query:"inclusive"`
-	Order     string                 `query:"order"`
+	Limit              int                    `query:"limit"`
+	Offset             int                    `query:"offset"`
+	Since              optional.Of[time.Time] `query:"since"`
+	Until              optional.Of[time.Time] `query:"until"`
+	Inclusive          bool                   `query:"inclusive"`
+	Order              string                 `query:"order"`
+	IncludeAttachments bool                   `query:"include-attachments"`
+	IncludeQuotes      bool                   `query:"include-quotes"`
 }
 
 func (q *MessagesQuery) bind(c *echo.Context) error {
@@ -129,12 +131,14 @@ func (q *MessagesQuery) Validate() error {
 
 func (q *MessagesQuery) convert() message.TimelineQuery {
 	return message.TimelineQuery{
-		Since:     q.Since,
-		Until:     q.Until,
-		Inclusive: q.Inclusive,
-		Limit:     q.Limit,
-		Offset:    q.Offset,
-		Asc:       strings.ToLower(q.Order) == "asc",
+		Since:              q.Since,
+		Until:              q.Until,
+		Inclusive:          q.Inclusive,
+		Limit:              q.Limit,
+		Offset:             q.Offset,
+		Asc:                strings.ToLower(q.Order) == "asc",
+		IncludeAttachments: q.IncludeAttachments,
+		IncludeQuotes:      q.IncludeQuotes,
 	}
 }
 
@@ -152,7 +156,8 @@ func (q *MessagesQuery) convertU(uid uuid.UUID) message.TimelineQuery {
 
 func serveMessages(c *echo.Context, mm message.Manager, query message.TimelineQuery) error {
 	ctx := c.Request().Context()
-	timeline, err := mm.GetTimeline(ctx, query)
+	userID := getRequestUserID(c)
+	timeline, err := mm.GetTimeline(ctx, query, userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

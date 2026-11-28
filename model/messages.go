@@ -23,6 +23,18 @@ type Message struct {
 	Pin     *Pin           `gorm:"constraint:pins_message_id_messages_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
+type DetailedMessage struct {
+	Message
+	Attachments []*FileMeta
+	Quotes      []*QuotedMessage
+}
+
+type QuotedMessage struct {
+	Message
+
+	Attachments []*FileMeta
+}
+
 // TableName DBの名前を指定するメソッド
 func (m Message) TableName() string {
 	return "messages"
