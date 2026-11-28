@@ -170,7 +170,6 @@ func TestRepository_AddParticipantToRoomState(t *testing.T) {
 		// テスト実行
 		repo.AddParticipantToRoomState(room, participant)
 
-		// 検証 - traQ が知らないルーム (再起動中に作られたものなど) はルームごと追加される
 		assert.Equal(t, 2, len(repo.RoomState))
 		assert.Equal(t, 0, len(repo.RoomState[0].Participants))
 		assert.Equal(t, otherRoomID, repo.RoomState[1].RoomID)

@@ -18,9 +18,6 @@ import (
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
 
 // Repository はRoomStateManagerインターフェースの実装
-//
-// RoomState は LiveKit の Webhook と API リクエストから並行して更新されるため、
-// 読み書きはすべて mu を通して行う。外へ返す値は内部状態と共有しないようにコピーする。
 type Repository struct {
 	LiveKitHost string
 	APIKey      string
@@ -39,17 +36,11 @@ func (r *Repository) GetState() []RoomWithParticipants {
 }
 
 // InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
-//
-// traQ はルーム状態をメモリ上にしか持たないため、再起動直後は LiveKit から読み直さないと
-// 通話中のルームが空として扱われてしまう。
 func (r *Repository) InitializeRoomState(ctx context.Context) error {
 	return r.GetRoomsWithParticipantsByLiveKitServerAndSave(ctx)
 }
 
 // AddParticipantToRoomState ルーム状態に参加者を追加
-//
-// ルームが状態に存在しない場合 (traQ の再起動中に作成された場合など) はルームごと追加する。
-// 同じ Identity の参加者が既にいる場合 (Webhook の再送など) は上書きする。
 func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo) {
 	if room == nil || participant == nil {
 		return
@@ -150,8 +141,6 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.
 }
 
 // AddRoomState ルーム状態を追加
-//
-// 既に同じルームがある場合は何もしない (参加者を消してしまわないように)
 func (r *Repository) AddRoomState(room RoomWithParticipants) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -214,8 +203,6 @@ func (r *Repository) GetParticipantsByLiveKitServer(ctx context.Context, roomID 
 }
 
 // GetRoomsWithParticipantsByLiveKitServer LiveKitサーバーからルーム状態と参加者一覧を取得
-//
-// traQ のチャンネルIDではない名前のルームは無視する。
 func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context) ([]RoomWithParticipants, error) {
 	roomResp, err := r.GetRoomsByLiveKitServer(ctx)
 	if err != nil {
@@ -248,8 +235,6 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 }
 
 // GetRoomState ルーム状態を取得
-//
-// 返り値は内部状態のコピーなので、変更しても状態には反映されない。
 func (r *Repository) GetRoomState(roomID string) *RoomWithParticipants {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -262,14 +247,12 @@ func (r *Repository) GetRoomState(roomID string) *RoomWithParticipants {
 	return &room
 }
 
-// indexOfRoom roomIDのルームの添字を返す。存在しなければ -1 (mu を取得した状態で呼ぶこと)
 func (r *Repository) indexOfRoom(roomID string) int {
 	return slices.IndexFunc(r.RoomState, func(room RoomWithParticipants) bool {
 		return room.RoomID.String() == roomID
 	})
 }
 
-// publishLocked 現在の状態を QallRoomStateChanged イベントとして配信する (mu を取得した状態で呼ぶこと)
 func (r *Repository) publishLocked() {
 	if r.Hub == nil {
 		return
@@ -282,7 +265,6 @@ func (r *Repository) publishLocked() {
 	})
 }
 
-// participantFromLiveKit LiveKit の参加者情報を Participant に変換する
 func participantFromLiveKit(p *livekit.ParticipantInfo) Participant {
 	attributes := maps.Clone(p.Attributes)
 	if attributes == nil {
@@ -297,7 +279,6 @@ func participantFromLiveKit(p *livekit.ParticipantInfo) Participant {
 	}
 }
 
-// RoomStateFromLiveKit LiveKit のルームのメタデータから、参加者のいないルームの状態を作る
 func RoomStateFromLiveKit(roomID uuid.UUID, rawMetadata string) RoomWithParticipants {
 	metadata := ParseMetadata(rawMetadata)
 	return RoomWithParticipants{
@@ -309,7 +290,6 @@ func RoomStateFromLiveKit(roomID uuid.UUID, rawMetadata string) RoomWithParticip
 	}
 }
 
-// ParseMetadata ルームのメタデータ (JSON) を解釈する。空や不正な値の場合はゼロ値を返す
 func ParseMetadata(raw string) Metadata {
 	var metadata Metadata
 	if raw == "" {

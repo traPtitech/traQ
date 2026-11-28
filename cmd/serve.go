@@ -158,8 +158,6 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
-			// Qall のルーム状態はメモリ上にしかないため、起動時に LiveKit から読み込む
-			// (読み込まないと、再起動前から続いている通話が存在しないものとして扱われる)
 			if c.LiveKit.Host != "" {
 				func() {
 					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

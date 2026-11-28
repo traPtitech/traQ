@@ -35,7 +35,6 @@ func TestParticipantFromLiveKit(t *testing.T) {
 	require.NotNil(t, p.Attributes)
 	assert.Empty(t, *p.Attributes)
 
-	// 権限情報が無い場合は発言不可として扱う
 	p = participantFromLiveKit(&livekit.ParticipantInfo{Identity: "user_2"})
 	assert.False(t, p.CanPublish)
 }
@@ -88,7 +87,6 @@ func TestRepository_AddRoomState_KeepsParticipants(t *testing.T) {
 	roomID := uuid.Must(uuid.NewV4())
 	r.AddParticipantToRoomState(&livekit.Room{Name: roomID.String()}, &livekit.ParticipantInfo{Identity: "a"})
 
-	// 既にあるルームを追加し直しても参加者は消えない
 	r.AddRoomState(RoomWithParticipants{RoomID: roomID})
 	state := r.GetState()
 	require.Len(t, state, 1)

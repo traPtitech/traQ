@@ -17,14 +17,9 @@ type Metadata struct {
 	// webinarかどうか
 	IsWebinar bool `json:"isWebinar"`
 
-	// Publishers ウェビナーで発言権限 (= 管理権限) を持つユーザーのID
-	//
-	// 参加者単位ではなくユーザー単位で持つので、抜けて入り直しても権限は残る。
-	// LiveKit のルームのメタデータに保存されるので、traQ を再起動しても残る。
 	Publishers []uuid.UUID `json:"publishers,omitempty"`
 }
 
-// IsPublisher ユーザーがウェビナーで発言権限 (= 管理権限) を持っているかどうか
 func (m Metadata) IsPublisher(userID uuid.UUID) bool {
 	return slices.Contains(m.Publishers, userID)
 }
@@ -47,7 +42,6 @@ type Participant struct {
 	Name string `json:"name"`
 }
 
-// RoomMetadata ルームの状態から LiveKit のルームに保存するメタデータを作る
 func (r RoomWithParticipants) RoomMetadata() Metadata {
 	status := ""
 	if r.Metadata != nil {
@@ -60,11 +54,6 @@ func (r RoomWithParticipants) RoomMetadata() Metadata {
 	}
 }
 
-// CanPublish ユーザーがこのルームで発言できるかどうか
-//
-// ウェビナーでなければ誰でも発言できる。ウェビナーでは発言権限を持つユーザーだけが発言できる。
-// 発言権限を持つユーザーが記録されていない (この仕組みより前に作られた) ルームでは、
-// 既に発言権限付きで参加しているかどうかで判断する。
 func (r RoomWithParticipants) CanPublish(userID uuid.UUID) bool {
 	if !r.IsWebinar {
 		return true
@@ -86,7 +75,6 @@ type RoomWithParticipants struct {
 	Metadata     *string       `json:"metadata,omitempty"`
 	Participants []Participant `json:"participants"`
 
-	// Publishers ウェビナーで発言権限 (= 管理権限) を持つユーザーのID
 	Publishers []uuid.UUID `json:"-"`
 
 	// RoomID ルームのID
@@ -116,7 +104,7 @@ type RoomStateManager interface {
 	// AddRoomState ルーム状態を追加
 	AddRoomState(room RoomWithParticipants)
 
-	// UpdateRoomMetadata ルームのメタデータ (ステータスと発言権限を持つユーザー) を更新
+	// UpdateRoomMetadata ルームのメタデータを更新
 	UpdateRoomMetadata(roomID string, metadata Metadata)
 
 	// RemoveRoomState ルーム状態を削除

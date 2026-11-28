@@ -72,7 +72,6 @@ func TestHandlers_GetQallEndpoints(t *testing.T) {
 	})
 }
 
-// silentWav sampleRate Hz・モノラル・16bit の無音の WAV を返す
 func silentWav(t *testing.T, seconds int) []byte {
 	t.Helper()
 	const sampleRate = 8000
@@ -85,8 +84,8 @@ func silentWav(t *testing.T, seconds int) []byte {
 	write(uint32(36 + dataSize))
 	buf.WriteString("WAVEfmt ")
 	write(uint32(16))
-	write(uint16(1)) // PCM
-	write(uint16(1)) // mono
+	write(uint16(1))
+	write(uint16(1))
 	write(uint32(sampleRate))
 	write(uint32(sampleRate * 2))
 	write(uint16(2))
@@ -151,7 +150,6 @@ func TestHandlers_CreateSoundboardItem(t *testing.T) {
 		obj.Value("soundName").IsEqual("spec")
 		obj.Value("creatorId").IsEqual(user.GetID().String())
 		obj.Value("stampId").IsNull()
-		// 後方互換のフィールド
 		obj.Value("id").IsEqual(soundID)
 		obj.Value("name").IsEqual("spec")
 	})
@@ -163,7 +161,6 @@ func TestHandlers_CreateSoundboardItem(t *testing.T) {
 		soundID := wavHeader(req, "file", silentWav(t, 1)).
 			WithFormField("name", "legacy").
 			WithFormField("stampId", stamp.ID.String()).
-			// 作成者は指定しても無視され、リクエストしたユーザーになる
 			WithFormField("creatorId", other.GetID().String()).
 			Expect().
 			Status(http.StatusOK).
@@ -267,7 +264,6 @@ func TestHandlers_PlaySoundboardItem(t *testing.T) {
 			Status(http.StatusForbidden)
 	})
 
-	// テスト環境のストレージは署名付き URL を発行できないので、参加者の確認を通過したところで 500 になる
 	for _, field := range []string{"roomName", "roomId"} {
 		t.Run("accepts "+field, func(t *testing.T) {
 			t.Parallel()
@@ -283,12 +279,10 @@ func TestHandlers_PlaySoundboardItem(t *testing.T) {
 func TestParseRoomParticipantsUpdate(t *testing.T) {
 	t.Parallel()
 
-	// API 定義の形 (配列)
 	users, err := parseRoomParticipantsUpdate([]byte(`[{"users":[{"userId":"a","canPublish":true}]},{"users":[{"userId":"b","canPublish":false}]}]`))
 	require.NoError(t, err)
 	require.Equal(t, []roomParticipantUpdate{{UserID: "a", CanPublish: true}, {UserID: "b", CanPublish: false}}, users)
 
-	// 以前の実装の形 (オブジェクト)
 	users, err = parseRoomParticipantsUpdate([]byte(`{"users":[{"userId":"a","canPublish":true}]}`))
 	require.NoError(t, err)
 	require.Equal(t, []roomParticipantUpdate{{UserID: "a", CanPublish: true}}, users)

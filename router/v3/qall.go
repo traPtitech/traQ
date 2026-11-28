@@ -35,25 +35,18 @@ func (h *Handlers) GetQallEndpoints(c *echo.Context) error {
 	})
 }
 
-// soundboardItemResponse サウンドボードアイテムのレスポンス
-//
-// API 定義のフィールド (soundId / soundName) に加えて、
-// 以前の実装が返していた id / name も後方互換のために返す
 type soundboardItemResponse struct {
 	SoundID   uuid.UUID  `json:"soundId"`
 	SoundName string     `json:"soundName"`
 	StampID   *uuid.UUID `json:"stampId"`
 	CreatorID uuid.UUID  `json:"creatorId"`
 
-	// Deprecated: soundId を使う
-	ID uuid.UUID `json:"id"`
-	// Deprecated: soundName を使う
-	Name string `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 func formatSoundboardItem(item *model.SoundboardItem) soundboardItemResponse {
 	var stampID *uuid.UUID
-	// 以前はスタンプ未指定でも uuid.Nil が保存されていたので、それも未指定として扱う
 	if item.StampID != nil && *item.StampID != uuid.Nil {
 		id := *item.StampID
 		stampID = &id
@@ -81,10 +74,8 @@ func (h *Handlers) GetSoundboardItems(c *echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// soundboardItemNameMaxLength サウンド名の最大文字数 (DB のカラム長)
 const soundboardItemNameMaxLength = 32
 
-// firstFormFile 指定した名前のうち、最初に見つかったフォームのファイルを返す
 func firstFormFile(c *echo.Context, names ...string) (multipart.File, *multipart.FileHeader, error) {
 	var lastErr error
 	for _, name := range names {
@@ -97,7 +88,6 @@ func firstFormFile(c *echo.Context, names ...string) (multipart.File, *multipart
 	return nil, nil, lastErr
 }
 
-// firstFormValue 指定した名前のうち、最初に空でない値を返す
 func firstFormValue(c *echo.Context, names ...string) string {
 	for _, name := range names {
 		if v := strings.TrimSpace(c.FormValue(name)); v != "" {
@@ -115,10 +105,6 @@ var soundboardExtensionTypes = map[string]string{
 	".oga":  "audio/ogg",
 }
 
-// soundboardContentType アップロードされた音声ファイルの MIME タイプを決める
-//
-// クライアントによっては application/octet-stream で送ってくるので、
-// その場合はファイル名の拡張子、次にファイルの中身から推定する
 func soundboardContentType(src multipart.File, header *multipart.FileHeader) (string, error) {
 	if mimeType, _, err := mime.ParseMediaType(header.Header.Get(echo.HeaderContentType)); err == nil &&
 		mimeType != "" && mimeType != echo.MIMEOctetStream {
@@ -147,10 +133,6 @@ func soundboardContentType(src multipart.File, header *multipart.FileHeader) (st
 }
 
 // CreateSoundboardItem POST /qall/soundboard
-//
-// API 定義のフィールド (audio / soundName / stampId) に加えて、
-// 以前の実装が受け付けていた file / name も後方互換のために受け付ける。
-// 作成者は常にリクエストしたユーザーになる (以前の creatorId フィールドは無視する)。
 func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
 	src, uploadedFile, err := firstFormFile(c, "audio", "file")
 	if err != nil {
@@ -197,9 +179,6 @@ func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]uuid.UUID{"soundId": soundID})
 }
 
-// isRoomParticipant ユーザーがルームに参加しているかどうか
-//
-// traQ が持つルーム状態で見つからなければ、取りこぼし (Webhook の欠落など) に備えて LiveKit に問い合わせる
 func (h *Handlers) isRoomParticipant(ctx context.Context, roomID uuid.UUID, userID uuid.UUID) (bool, error) {
 	if roomState := h.QallRepo.GetRoomState(roomID.String()); roomState != nil {
 		for _, participant := range roomState.Participants {
@@ -214,7 +193,6 @@ func (h *Handlers) isRoomParticipant(ctx context.Context, roomID uuid.UUID, user
 	}
 	resp, err := h.QallRepo.GetParticipantsByLiveKitServer(ctx, roomID.String())
 	if err != nil {
-		// ルームが存在しない場合は参加していないものとして扱う
 		var twErr twirp.Error
 		if errors.As(err, &twErr) && twErr.Code() == twirp.NotFound {
 			return false, nil
@@ -230,8 +208,6 @@ func (h *Handlers) isRoomParticipant(ctx context.Context, roomID uuid.UUID, user
 }
 
 // PlaySoundboardItem POST /qall/soundboard/play
-//
-// API 定義のフィールド (roomName) に加えて、以前の実装が受け付けていた roomId も後方互換のために受け付ける
 func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	var req struct {
 		SoundID  string `json:"soundId"`
@@ -259,7 +235,6 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
 	defer cancel()
 
-	// サウンドが存在するか確認
 	items, err := h.Repo.GetAllSoundboardItems(ctx)
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -268,7 +243,6 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 		return herror.NotFound("sound not found")
 	}
 
-	// ルームに参加しているか確認
 	userID := getRequestUserID(c)
 	isParticipant, err := h.isRoomParticipant(ctx, roomID, userID)
 	if err != nil {
@@ -277,12 +251,10 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	if !isParticipant {
 		return herror.Forbidden("you are not a participant of the room")
 	}
-	// ウェビナーで発言権限のない人がサウンドボードで音を流せないようにする
 	if roomState := h.QallRepo.GetRoomState(roomID.String()); roomState != nil && !roomState.CanPublish(userID) {
 		return herror.Forbidden("you are not allowed to speak in this webinar")
 	}
 
-	// S3ファイルキー = soundId として署名付きURL生成
 	audioURL, err := h.Soundboard.GetURL(soundID)
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -293,8 +265,6 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 
 	ingressClient := lksdk.NewIngressClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 
-	// 同じ音を同時に鳴らしても前の再生が切断されないように、再生ごとに別の Identity を使う
-	// ("soundboard-" で始まることはクライアントがサウンドボードの参加者を見分けるのに使う)
 	ingReq := &livekit.CreateIngressRequest{
 		InputType:           livekit.IngressInput_URL_INPUT,
 		Name:                "soundboard-ingress",
@@ -340,10 +310,6 @@ func (h *Handlers) GetRoomMetadata(c *echo.Context, roomID uuid.UUID) error {
 	return c.JSON(http.StatusOK, roomState.Metadata)
 }
 
-// fullParticipantPermission LiveKit の参加者の権限
-//
-// UpdateParticipant の Permission は部分更新ではなく丸ごと置き換えになるので、
-// 発言権限以外 (音声の受信・データ送信・メタデータ更新) も必ず指定する
 func fullParticipantPermission(canPublish bool) *livekit.ParticipantPermission {
 	return &livekit.ParticipantPermission{
 		CanSubscribe:      true,
@@ -353,7 +319,6 @@ func fullParticipantPermission(canPublish bool) *livekit.ParticipantPermission {
 	}
 }
 
-// updateLiveKitRoomMetadata LiveKit のルームのメタデータを更新する
 func (h *Handlers) updateLiveKitRoomMetadata(ctx context.Context, roomID uuid.UUID, metadata qall.Metadata) error {
 	raw, err := json.Marshal(metadata)
 	if err != nil {
@@ -368,8 +333,6 @@ func (h *Handlers) updateLiveKitRoomMetadata(ctx context.Context, roomID uuid.UU
 }
 
 // PatchRoomMetadata PATCH /qall/rooms/:roomID/metadata
-//
-// ルームのステータス (自由入力の文字列) を更新する。ウェビナーかどうかや発言権限を持つユーザーは変えない
 func (h *Handlers) PatchRoomMetadata(c *echo.Context) error {
 	var req struct {
 		Metadata string `json:"metadata"`
@@ -404,7 +367,6 @@ func (h *Handlers) PatchRoomMetadata(c *echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// roomParticipantUpdate 発言権限の変更
 type roomParticipantUpdate struct {
 	UserID     string `json:"userId"`
 	CanPublish bool   `json:"canPublish"`
@@ -414,9 +376,6 @@ type roomParticipantsUpdateRequest struct {
 	Users []roomParticipantUpdate `json:"users"`
 }
 
-// parseRoomParticipantsUpdate 発言権限の変更リクエストを読む
-//
-// API 定義では `[{"users": [...]}]` (配列)、以前の実装は `{"users": [...]}` を受け付けていたので両方読む
 func parseRoomParticipantsUpdate(body []byte) ([]roomParticipantUpdate, error) {
 	var list []roomParticipantsUpdateRequest
 	if err := json.Unmarshal(body, &list); err == nil {
@@ -440,9 +399,6 @@ type roomParticipantResult struct {
 }
 
 // PatchRoomParticipants PATCH /qall/rooms/:roomID/participants
-//
-// ウェビナーで、発言権限 (= 管理権限) をユーザーに付与・剥奪する。発言権限を持つユーザーだけが変更できる。
-// 権限はユーザー単位で、ルームのメタデータに保存する。参加中の端末には LiveKit の権限もすぐ反映する。
 func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
@@ -474,8 +430,6 @@ func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 		return herror.Forbidden("you are not allowed to update participants")
 	}
 
-	// 新しい発言権限を持つユーザーの一覧を作る
-	// (以前のルームで一覧が空なら、今発言権限付きで参加しているユーザーから始める)
 	publishers := slices.Clone(roomState.Publishers)
 	if len(publishers) == 0 {
 		for _, p := range roomState.Participants {
@@ -511,7 +465,6 @@ func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
 	}
 	h.QallRepo.UpdateRoomMetadata(roomID.String(), metadata)
 
-	// 参加中の端末の権限を変える
 	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 	results := make([]roomParticipantResult, 0, len(targets))
 	for _, target := range targets {
@@ -560,7 +513,6 @@ func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 	isWebinar := c.QueryParam("isWebinar") == "true"
 	userID := getRequestUserID(c)
 
-	// ルームが無ければ作る。ウェビナーとして作る場合は、作った人だけが発言権限 (= 管理権限) を持つ
 	roomState := h.QallRepo.GetRoomState(roomID.String())
 	if roomState == nil {
 		metadata := qall.Metadata{IsWebinar: isWebinar}
@@ -572,7 +524,6 @@ func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 			return herror.InternalServerError(err)
 		}
 		lkclient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
-		// 既にルームがある (同時に作ろうとした、traQ が知らなかった) 場合は既存のルームが返る
 		created, err := lkclient.CreateRoom(ctx, &livekit.CreateRoomRequest{
 			Name:     room,
 			Metadata: string(metadataStr),
