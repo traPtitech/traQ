@@ -202,6 +202,41 @@ func TestESEngine_Do_Context(t *testing.T) {
 	}
 }
 
+func TestESEngine_LastInsertedUpdated(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name       string
+		statusCode int
+		body       string
+		wantErr    bool
+	}{
+		{"closed index", http.StatusBadRequest, `{"error":{"type":"index_closed_exception"},"status":400}`, true},
+		{"empty index", http.StatusOK, `{"hits":{"hits":[]}}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client, err := elasticsearch.NewClient(elasticsearch.Config{
+				Transport: searchTestTransport(func(*http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: tc.statusCode,
+						Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+						Body:       io.NopCloser(strings.NewReader(tc.body)),
+					}, nil
+				}),
+			})
+			require.NoError(t, err)
+			engine := &esEngine{client: client}
+			lastUpdated, err := engine.lastInsertedUpdated()
+			if tc.wantErr {
+				require.ErrorContains(t, err, "400")
+				return
+			}
+			require.NoError(t, err)
+			assert.True(t, lastUpdated.IsZero())
+		})
+	}
+}
+
 type searchTestRepository struct {
 	repository.Repository
 	groups       map[uuid.UUID]*model.UserGroup

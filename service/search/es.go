@@ -107,6 +107,9 @@ var esMapping = m{
 		"text": m{
 			"type":     "text",
 			"analyzer": "sudachi_analyzer",
+			"fields": m{
+				"literal": m{"type": "text", "analyzer": "literal_analyzer"},
+			},
 		},
 		"createdAt": m{
 			"type":   "date",
@@ -145,6 +148,7 @@ var esSetting = m{
 	"index": m{
 		"analysis": m{
 			"tokenizer": m{
+				"literal_tokenizer": m{"type": "ngram", "min_gram": 1, "max_gram": 1},
 				"sudachi_tokenizer": m{
 					"type": "sudachi_tokenizer",
 				},
@@ -156,6 +160,7 @@ var esSetting = m{
 				},
 			},
 			"analyzer": m{
+				"literal_analyzer": m{"type": "custom", "tokenizer": "literal_tokenizer"},
 				"sudachi_analyzer": m{
 					"tokenizer": "sudachi_tokenizer",
 					"type":      "custom",
@@ -274,9 +279,11 @@ func newSearchBody(andQueries []searchQuery) searchBody {
 }
 
 type simpleQueryString struct {
-	Query           string   `json:"query"`
-	Fields          []string `json:"fields"`
-	DefaultOperator string   `json:"default_operator"`
+	Query            string   `json:"query"`
+	Fields           []string `json:"fields"`
+	DefaultOperator  string   `json:"default_operator"`
+	QuoteFieldSuffix string   `json:"quote_field_suffix,omitempty"`
+	Flags            string   `json:"flags,omitempty"`
 }
 
 type boolQuery struct {
@@ -303,13 +310,22 @@ func (e *esEngine) Do(ctx context.Context, q *Query) (Result, error) {
 	var musts []searchQuery
 
 	if q.Word.Valid {
+		word := q.Word.V
 		body := simpleQueryString{
-			Query:           q.Word.V,
+			Query:           word,
 			Fields:          []string{"text"},
 			DefaultOperator: "AND",
 		}
+		if strings.ContainsRune(word, '"') {
+			body.Query = rewriteLiteralQuoteQuery(word)
+			body.QuoteFieldSuffix = ".literal"
+			body.Flags = simpleQueryFlagsWithoutNear
+		}
 
-		musts = append(musts, searchQuery{"simple_query_string": body})
+		// 空の引用符などを取り除いて検索語がなくなったら、本文の条件を加えない。
+		if body.Query == word || strings.TrimSpace(body.Query) != "" {
+			musts = append(musts, searchQuery{"simple_query_string": body})
+		}
 	}
 
 	switch {

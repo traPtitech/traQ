@@ -326,6 +326,9 @@ func (e *esEngine) lastInsertedUpdated() (time.Time, error) {
 		return time.Time{}, err
 	}
 	defer sr.Body.Close()
+	if sr.IsError() {
+		return time.Time{}, fmt.Errorf("failed to get latest message update time: HTTP %d", sr.StatusCode)
+	}
 
 	var res esSearchResponse
 	err = jsonutil.Decode(sr.Body, &res)
