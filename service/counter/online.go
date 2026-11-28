@@ -40,16 +40,16 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 		for e := range hub.Subscribe(8, event.WSConnected, event.WSDisconnected, event.BotWSConnected, event.BotWSDisconnected).Receiver {
 			switch e.Topic() {
 			case event.WSConnected:
-				oc.inc(e.Fields["user_id"].(uuid.UUID), "user")
+				oc.inc(event.MustPayload[event.WSConnectedPayload](e.Fields).UserID, "user")
 				wsConnectionCounter.WithLabelValues("user").Inc()
 			case event.BotWSConnected:
-				oc.inc(e.Fields["user_id"].(uuid.UUID), "bot")
+				oc.inc(event.MustPayload[event.BotWSConnectedPayload](e.Fields).UserID, "bot")
 				wsConnectionCounter.WithLabelValues("bot").Inc()
 			case event.WSDisconnected:
-				oc.dec(e.Fields["user_id"].(uuid.UUID), "user")
+				oc.dec(event.MustPayload[event.WSDisconnectedPayload](e.Fields).UserID, "user")
 				wsConnectionCounter.WithLabelValues("user").Dec()
 			case event.BotWSDisconnected:
-				oc.dec(e.Fields["user_id"].(uuid.UUID), "bot")
+				oc.dec(event.MustPayload[event.BotWSDisconnectedPayload](e.Fields).UserID, "bot")
 				wsConnectionCounter.WithLabelValues("bot").Dec()
 			}
 		}
@@ -72,12 +72,9 @@ func (oc *OnlineCounter) inc(userID uuid.UUID, userType string) (toOnline bool) 
 	toOnline = c.inc()
 	if toOnline {
 		onlineUsersCounter.WithLabelValues(userType).Inc()
-		oc.hub.Publish(hub.Message{
-			Name: event.UserOnline,
-			Fields: hub.Fields{
-				"user_id":  userID,
-				"datetime": c.getLastUpdated(),
-			},
+		event.Publish(oc.hub, event.UserOnlinePayload{
+			UserID:   userID,
+			Datetime: c.getLastUpdated(),
 		})
 	}
 	return
@@ -96,12 +93,9 @@ func (oc *OnlineCounter) dec(userID uuid.UUID, userType string) (toOffline bool)
 	toOffline = c.dec()
 	if toOffline {
 		onlineUsersCounter.WithLabelValues(userType).Dec()
-		oc.hub.Publish(hub.Message{
-			Name: event.UserOffline,
-			Fields: hub.Fields{
-				"user_id":  userID,
-				"datetime": c.getLastUpdated(),
-			},
+		event.Publish(oc.hub, event.UserOfflinePayload{
+			UserID:   userID,
+			Datetime: c.getLastUpdated(),
 		})
 	}
 	return
