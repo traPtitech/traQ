@@ -32,6 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/qall"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
@@ -124,6 +125,8 @@ func TestMain(m *testing.M) {
 			ThumbnailMaxSize: image.Pt(360, 480),
 		})
 		env.FM, _ = file.InitFileManager(repo, storage.NewInMemoryFileStorage(), env.IP, l.Named("FM"))
+		env.Soundboard, _ = qall.NewSoundboardManager(repo, storage.NewInMemoryFileStorage(), l.Named("soundboard"), env.Hub)
+		env.QallRepo = qall.NewRoomStateManager("", "", "", nil)
 
 		// テスト用サーバー作成
 		e := echo.New()
@@ -143,6 +146,8 @@ func TestMain(m *testing.M) {
 			ChannelManager: env.CM,
 			MessageManager: env.MM,
 			FileManager:    env.FM,
+			Soundboard:     env.Soundboard,
+			QallRepo:       env.QallRepo,
 			Logger:         l,
 			Imaging:        env.IP,
 			Config: Config{
@@ -185,6 +190,8 @@ type Env struct {
 	SE         search.Engine
 	Hub        *hub.Hub
 	SessStore  session.Store
+	Soundboard qall.Soundboard
+	QallRepo   qall.RoomStateManager
 }
 
 // Setup テストセットアップ

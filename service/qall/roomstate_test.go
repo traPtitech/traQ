@@ -170,9 +170,10 @@ func TestRepository_AddParticipantToRoomState(t *testing.T) {
 		// テスト実行
 		repo.AddParticipantToRoomState(room, participant)
 
-		// 検証 - 何も変わらないはず
-		assert.Equal(t, 1, len(repo.RoomState))
+		assert.Equal(t, 2, len(repo.RoomState))
 		assert.Equal(t, 0, len(repo.RoomState[0].Participants))
+		assert.Equal(t, otherRoomID, repo.RoomState[1].RoomID)
+		assert.Equal(t, 1, len(repo.RoomState[1].Participants))
 	})
 }
 

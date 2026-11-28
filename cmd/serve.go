@@ -158,6 +158,18 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
+			if c.LiveKit.Host != "" {
+				func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancel()
+					if err := server.SS.QallRoomStateManager.InitializeRoomState(ctx); err != nil {
+						logger.Warn("failed to load qall room states from livekit", zap.Error(err))
+					} else {
+						logger.Info("qall room states were loaded from livekit")
+					}
+				}()
+			}
+
 			serveCtx, serveCancel := context.WithCancel(context.Background())
 			server.routerCancel = serveCancel
 			server.routerStopped = make(chan struct{})

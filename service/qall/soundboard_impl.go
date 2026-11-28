@@ -44,9 +44,8 @@ func (m *soundboardManager) SaveSoundboardItem(ctx context.Context, soundID uuid
 	}
 
 	// ファイルの秒数をチェック
-	if err := checkAudioDuration(b, contentType, 30); err != nil {
-		m.l.Error("failed to check audio duration", zap.Error(err))
-		return err
+	if err := checkAudioDuration(b, contentType, MaxSoundboardDurationSeconds); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidSoundboardAudio, err)
 	}
 
 	// ファイルを保存
@@ -128,7 +127,7 @@ func checkAudioDuration(fileBytes []byte, contentType string, maxSeconds float64
 		}
 		return nil
 
-	case "audio/wav", "audio/x-wav":
+	case "audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave":
 		dur, err := getWavDuration(fileBytes)
 		if err != nil {
 			return fmt.Errorf("wav decode error: %w", err)

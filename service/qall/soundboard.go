@@ -2,11 +2,16 @@ package qall
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 )
+
+var ErrInvalidSoundboardAudio = errors.New("invalid soundboard audio")
+
+const MaxSoundboardDurationSeconds = 30
 
 type Soundboard interface {
 	// SaveSoundboardItem サウンドボードアイテムを保存します

@@ -3,7 +3,9 @@ package qall
 import (
 	"context"
 	"encoding/json/v2"
+	"maps"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -13,6 +15,8 @@ import (
 	"github.com/traPtitech/traQ/event"
 )
 
+var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
+
 // Repository はRoomStateManagerインターフェースの実装
 type Repository struct {
 	LiveKitHost string
@@ -20,125 +24,104 @@ type Repository struct {
 	APISecret   string
 	RoomState   []RoomWithParticipants
 	Hub         *hub.Hub
+
+	mu sync.RWMutex
 }
 
 // GetState 現在のルーム状態を取得
 func (r *Repository) GetState() []RoomWithParticipants {
-	return r.RoomState
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return cloneRoomStates(r.RoomState)
 }
 
 // InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
-func (r *Repository) InitializeRoomState() error {
-	roomWithParticipants, err := r.GetRoomsWithParticipantsByLiveKitServer(context.Background())
-	r.RoomState = roomWithParticipants
-	return err
+func (r *Repository) InitializeRoomState(ctx context.Context) error {
+	return r.GetRoomsWithParticipantsByLiveKitServerAndSave(ctx)
 }
 
 // AddParticipantToRoomState ルーム状態に参加者を追加
 func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == room.Name {
-			t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-			r.RoomState[i].Participants = append(r.RoomState[i].Participants, Participant{
-				Identity:   participant.Identity,
-				JoinedAt:   t,
-				Name:       participant.Name,
-				Attributes: &participant.Attributes,
-				CanPublish: participant.Permission.CanPublish,
-			})
-
-			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
-				})
-			}
-
-			break
-		}
+	if room == nil || participant == nil {
+		return
 	}
+	p := participantFromLiveKit(participant)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	i := r.indexOfRoom(room.Name)
+	if i < 0 {
+		roomID, err := uuid.FromString(room.Name)
+		if err != nil {
+			return
+		}
+		r.RoomState = append(r.RoomState, RoomStateFromLiveKit(roomID, room.Metadata))
+		i = len(r.RoomState) - 1
+	}
+
+	participants := r.RoomState[i].Participants
+	if j := slices.IndexFunc(participants, func(q Participant) bool { return q.Identity == p.Identity }); j >= 0 {
+		participants[j] = p
+	} else {
+		r.RoomState[i].Participants = append(participants, p)
+	}
+	r.publishLocked()
 }
 
 // UpdateParticipantCanPublish 参加者の発言権限を更新
 func (r *Repository) UpdateParticipantCanPublish(roomID string, participantID string, canPublish bool) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			for j, participant := range roomState.Participants {
-				if participant.Identity == participantID {
-					r.RoomState[i].Participants[j].CanPublish = canPublish
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
-						})
-					}
-
-					break
-				}
-			}
-			break
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return
+	}
+	for j, participant := range r.RoomState[i].Participants {
+		if participant.Identity == participantID {
+			r.RoomState[i].Participants[j].CanPublish = canPublish
+			r.publishLocked()
+			return
 		}
 	}
 }
 
 // UpdateParticipant 参加者情報を更新
 func (r *Repository) UpdateParticipant(roomID string, participant *livekit.ParticipantInfo) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			for j, p := range roomState.Participants {
-				if p.Identity == participant.Identity {
-					t := time.Unix(participant.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-					r.RoomState[i].Participants[j] = Participant{
-						Identity:   participant.Identity,
-						JoinedAt:   t,
-						Name:       participant.Name,
-						Attributes: &participant.Attributes,
-						CanPublish: participant.Permission.CanPublish,
-					}
+	if participant == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
-						})
-					}
-
-					break
-				}
-			}
-			break
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return
+	}
+	for j, p := range r.RoomState[i].Participants {
+		if p.Identity == participant.Identity {
+			r.RoomState[i].Participants[j] = participantFromLiveKit(participant)
+			r.publishLocked()
+			return
 		}
 	}
 }
 
 // RemoveParticipant ルームから参加者を削除
 func (r *Repository) RemoveParticipant(roomID string, participantID string) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			for j, participant := range roomState.Participants {
-				if participant.Identity == participantID {
-					r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-					if r.Hub != nil {
-						r.Hub.Publish(hub.Message{
-							Name: event.QallRoomStateChanged,
-							Fields: hub.Fields{
-								"roomStates": r.RoomState,
-							},
-						})
-					}
-
-					break
-				}
-			}
-			break
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return
+	}
+	for j, participant := range r.RoomState[i].Participants {
+		if participant.Identity == participantID {
+			r.RoomState[i].Participants = slices.Delete(r.RoomState[i].Participants, j, j+1)
+			r.publishLocked()
+			return
 		}
 	}
 }
@@ -149,62 +132,55 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServerAndSave(ctx context.
 	if err != nil {
 		return err
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.RoomState = roomWithParticipants
+	r.publishLocked()
 	return nil
 }
 
 // AddRoomState ルーム状態を追加
 func (r *Repository) AddRoomState(room RoomWithParticipants) {
-	r.RoomState = append(r.RoomState, room)
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	if r.Hub != nil {
-		r.Hub.Publish(hub.Message{
-			Name: event.QallRoomStateChanged,
-			Fields: hub.Fields{
-				"roomStates": r.RoomState,
-			},
-		})
+	if r.indexOfRoom(room.RoomID.String()) >= 0 {
+		return
 	}
+	if room.Participants == nil {
+		room.Participants = []Participant{}
+	}
+	r.RoomState = append(r.RoomState, room)
+	r.publishLocked()
 }
 
 // UpdateRoomMetadata ルームのメタデータを更新
 func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			r.RoomState[i].Metadata = &metadata.Status
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
-				})
-			}
-
-			break
-		}
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return
 	}
+	status := metadata.Status
+	r.RoomState[i].Metadata = &status
+	r.RoomState[i].Publishers = slices.Clone(metadata.Publishers)
+	r.publishLocked()
 }
 
 // RemoveRoomState ルーム状態を削除
 func (r *Repository) RemoveRoomState(roomID string) {
-	for i, roomState := range r.RoomState {
-		if roomState.RoomID.String() == roomID {
-			r.RoomState = append(r.RoomState[:i], r.RoomState[i+1:]...)
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-			if r.Hub != nil {
-				r.Hub.Publish(hub.Message{
-					Name: event.QallRoomStateChanged,
-					Fields: hub.Fields{
-						"roomStates": r.RoomState,
-					},
-				})
-			}
-
-			break
-		}
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return
 	}
+	r.RoomState = slices.Delete(r.RoomState, i, i+1)
+	r.publishLocked()
 }
 
 // NewLiveKitRoomServiceClient LiveKitルームサービスクライアントを作成
@@ -233,42 +209,26 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 		return nil, err
 	}
 
-	var roomWithParticipants []RoomWithParticipants
+	roomWithParticipants := make([]RoomWithParticipants, 0, len(roomResp.Rooms))
 	for _, rm := range roomResp.Rooms {
+		roomID, err := uuid.FromString(rm.Name)
+		if err != nil {
+			continue
+		}
+
 		partResp, err := r.GetParticipantsByLiveKitServer(ctx, rm.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		var Participants []Participant
+		participants := make([]Participant, 0, len(partResp.Participants))
 		for _, p := range partResp.Participants {
-			t := time.Unix(p.JoinedAt, 0).In(time.FixedZone("Asia/Tokyo", 9*60*60))
-			Participants = append(Participants, Participant{
-				Identity:   p.Identity,
-				JoinedAt:   t,
-				Name:       p.Name,
-				Attributes: &p.Attributes,
-			})
+			participants = append(participants, participantFromLiveKit(p))
 		}
 
-		roomID, err := uuid.FromString(rm.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		var metadata *Metadata
-		// rm.MetadataをJSON文字列としてunmarshalする
-		err = json.Unmarshal([]byte(rm.Metadata), &metadata)
-		if err != nil {
-			return nil, err
-		}
-
-		roomWithParticipants = append(roomWithParticipants, RoomWithParticipants{
-			Metadata:     &metadata.Status,
-			IsWebinar:    metadata.IsWebinar,
-			RoomID:       roomID,
-			Participants: Participants,
-		})
+		room := RoomStateFromLiveKit(roomID, rm.Metadata)
+		room.Participants = participants
+		roomWithParticipants = append(roomWithParticipants, room)
 	}
 
 	return roomWithParticipants, nil
@@ -276,12 +236,95 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 
 // GetRoomState ルーム状態を取得
 func (r *Repository) GetRoomState(roomID string) *RoomWithParticipants {
-	for i := range r.RoomState {
-		if r.RoomState[i].RoomID.String() == roomID {
-			return &r.RoomState[i]
-		}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	i := r.indexOfRoom(roomID)
+	if i < 0 {
+		return nil
 	}
-	return nil
+	room := cloneRoomState(r.RoomState[i])
+	return &room
+}
+
+func (r *Repository) indexOfRoom(roomID string) int {
+	return slices.IndexFunc(r.RoomState, func(room RoomWithParticipants) bool {
+		return room.RoomID.String() == roomID
+	})
+}
+
+func (r *Repository) publishLocked() {
+	if r.Hub == nil {
+		return
+	}
+	r.Hub.Publish(hub.Message{
+		Name: event.QallRoomStateChanged,
+		Fields: hub.Fields{
+			"roomStates": cloneRoomStates(r.RoomState),
+		},
+	})
+}
+
+func participantFromLiveKit(p *livekit.ParticipantInfo) Participant {
+	attributes := maps.Clone(p.Attributes)
+	if attributes == nil {
+		attributes = map[string]string{}
+	}
+	return Participant{
+		Identity:   p.Identity,
+		JoinedAt:   time.Unix(p.JoinedAt, 0).In(jst),
+		Name:       p.Name,
+		Attributes: &attributes,
+		CanPublish: p.GetPermission().GetCanPublish(),
+	}
+}
+
+func RoomStateFromLiveKit(roomID uuid.UUID, rawMetadata string) RoomWithParticipants {
+	metadata := ParseMetadata(rawMetadata)
+	return RoomWithParticipants{
+		IsWebinar:    metadata.IsWebinar,
+		Metadata:     &metadata.Status,
+		RoomID:       roomID,
+		Participants: []Participant{},
+		Publishers:   metadata.Publishers,
+	}
+}
+
+func ParseMetadata(raw string) Metadata {
+	var metadata Metadata
+	if raw == "" {
+		return metadata
+	}
+	if err := json.Unmarshal([]byte(raw), &metadata); err != nil {
+		return Metadata{}
+	}
+	return metadata
+}
+
+func cloneRoomStates(rooms []RoomWithParticipants) []RoomWithParticipants {
+	res := make([]RoomWithParticipants, len(rooms))
+	for i, room := range rooms {
+		res[i] = cloneRoomState(room)
+	}
+	return res
+}
+
+func cloneRoomState(room RoomWithParticipants) RoomWithParticipants {
+	if room.Metadata != nil {
+		metadata := *room.Metadata
+		room.Metadata = &metadata
+	}
+	participants := make([]Participant, len(room.Participants))
+	for i, p := range room.Participants {
+		if p.Attributes != nil {
+			attributes := maps.Clone(*p.Attributes)
+			p.Attributes = &attributes
+		}
+		participants[i] = p
+	}
+	room.Participants = participants
+	room.Publishers = slices.Clone(room.Publishers)
+	return room
 }
 
 // NewRoomStateManager は新しいRoomStateManagerを作成する

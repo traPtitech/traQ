@@ -2,6 +2,7 @@ package qall
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,6 +16,12 @@ type Metadata struct {
 
 	// webinarかどうか
 	IsWebinar bool `json:"isWebinar"`
+
+	Publishers []uuid.UUID `json:"publishers,omitempty"`
+}
+
+func (m Metadata) IsPublisher(userID uuid.UUID) bool {
+	return slices.Contains(m.Publishers, userID)
 }
 
 // Participant ルーム内の参加者一覧
@@ -35,6 +42,30 @@ type Participant struct {
 	Name string `json:"name"`
 }
 
+func (r RoomWithParticipants) RoomMetadata() Metadata {
+	status := ""
+	if r.Metadata != nil {
+		status = *r.Metadata
+	}
+	return Metadata{
+		Status:     status,
+		IsWebinar:  r.IsWebinar,
+		Publishers: slices.Clone(r.Publishers),
+	}
+}
+
+func (r RoomWithParticipants) CanPublish(userID uuid.UUID) bool {
+	if !r.IsWebinar {
+		return true
+	}
+	if len(r.Publishers) > 0 {
+		return slices.Contains(r.Publishers, userID)
+	}
+	return slices.ContainsFunc(r.Participants, func(p Participant) bool {
+		return p.Name == userID.String() && p.CanPublish
+	})
+}
+
 // RoomWithParticipants defines model for RoomWithParticipants.
 type RoomWithParticipants struct {
 	// IsWebinar ウェビナールームかどうか
@@ -44,6 +75,8 @@ type RoomWithParticipants struct {
 	Metadata     *string       `json:"metadata,omitempty"`
 	Participants []Participant `json:"participants"`
 
+	Publishers []uuid.UUID `json:"-"`
+
 	// RoomID ルームのID
 	RoomID uuid.UUID `json:"roomId"`
 }
@@ -51,7 +84,7 @@ type RoomWithParticipants struct {
 // RoomStateManager はQallルーム状態を管理するインターフェース
 type RoomStateManager interface {
 	// InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
-	InitializeRoomState() error
+	InitializeRoomState(ctx context.Context) error
 
 	// AddParticipantToRoomState ルーム状態に参加者を追加
 	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)
