@@ -352,3 +352,29 @@ func TestHandlers_PatchRoomParticipants(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 }
+
+func TestHandlers_PlaySoundboardItem_Webinar(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/qall/soundboard/play"
+	env := Setup(t, common1)
+	owner := env.CreateUser(t, rand)
+	listener := env.CreateUser(t, rand)
+
+	soundID := uuid.Must(uuid.NewV7())
+	require.NoError(t, env.Repository.CreateSoundboardItem(context.TODO(), repository.CreateSoundboardItemArgs{
+		SoundID:   soundID,
+		SoundName: "webinar",
+		CreatorID: owner.GetID(),
+	}))
+
+	roomID := uuid.Must(uuid.NewV4())
+	room := &livekit.Room{Name: roomID.String(), Metadata: `{"isWebinar":true,"publishers":["` + owner.GetID().String() + `"]}`}
+	env.QallRepo.AddParticipantToRoomState(room, &livekit.ParticipantInfo{Identity: listener.GetID().String() + "_" + uuid.Must(uuid.NewV7()).String(), Name: listener.GetID().String()})
+
+	env.R(t).POST(path).
+		WithCookie(session.CookieName, env.S(t, listener.GetID())).
+		WithJSON(map[string]string{"soundId": soundID.String(), "roomName": roomID.String()}).
+		Expect().
+		Status(http.StatusForbidden)
+}

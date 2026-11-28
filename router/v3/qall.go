@@ -277,6 +277,10 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	if !isParticipant {
 		return herror.Forbidden("you are not a participant of the room")
 	}
+	// ウェビナーで発言権限のない人がサウンドボードで音を流せないようにする
+	if roomState := h.QallRepo.GetRoomState(roomID.String()); roomState != nil && !roomState.CanPublish(userID) {
+		return herror.Forbidden("you are not allowed to speak in this webinar")
+	}
 
 	// S3ファイルキー = soundId として署名付きURL生成
 	audioURL, err := h.Soundboard.GetURL(soundID)
