@@ -17,9 +17,9 @@ func newTestRepository() *Repository {
 func TestParseMetadata(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, Metadata{}, parseMetadata(""))
-	assert.Equal(t, Metadata{}, parseMetadata("not json"))
-	assert.Equal(t, Metadata{Status: "hello", IsWebinar: true}, parseMetadata(`{"status":"hello","isWebinar":true}`))
+	assert.Equal(t, Metadata{}, ParseMetadata(""))
+	assert.Equal(t, Metadata{}, ParseMetadata("not json"))
+	assert.Equal(t, Metadata{Status: "hello", IsWebinar: true}, ParseMetadata(`{"status":"hello","isWebinar":true}`))
 }
 
 func TestParticipantFromLiveKit(t *testing.T) {
@@ -156,4 +156,75 @@ func TestRepository_ConcurrentAccess(t *testing.T) {
 	state := r.GetRoomState(roomID.String())
 	require.NotNil(t, state)
 	assert.Len(t, state.Participants, 50)
+}
+
+func TestRoomWithParticipants_CanPublish(t *testing.T) {
+	t.Parallel()
+
+	owner := uuid.Must(uuid.NewV4())
+	listener := uuid.Must(uuid.NewV4())
+
+	t.Run("everyone can publish outside webinars", func(t *testing.T) {
+		t.Parallel()
+		room := RoomWithParticipants{IsWebinar: false}
+		assert.True(t, room.CanPublish(listener))
+	})
+
+	t.Run("only publishers can publish in webinars", func(t *testing.T) {
+		t.Parallel()
+		room := RoomWithParticipants{IsWebinar: true, Publishers: []uuid.UUID{owner}}
+		assert.True(t, room.CanPublish(owner))
+		assert.False(t, room.CanPublish(listener))
+	})
+
+	t.Run("publishers keep the permission after leaving", func(t *testing.T) {
+		t.Parallel()
+		room := RoomWithParticipants{IsWebinar: true, Publishers: []uuid.UUID{owner}, Participants: []Participant{}}
+		assert.True(t, room.CanPublish(owner))
+	})
+
+	t.Run("older webinars fall back to the participants", func(t *testing.T) {
+		t.Parallel()
+		room := RoomWithParticipants{
+			IsWebinar: true,
+			Participants: []Participant{
+				{Name: owner.String(), CanPublish: true},
+				{Name: listener.String(), CanPublish: false},
+			},
+		}
+		assert.True(t, room.CanPublish(owner))
+		assert.False(t, room.CanPublish(listener))
+	})
+}
+
+func TestRoomStateFromLiveKit(t *testing.T) {
+	t.Parallel()
+
+	roomID := uuid.Must(uuid.NewV4())
+	owner := uuid.Must(uuid.NewV4())
+	room := RoomStateFromLiveKit(roomID, `{"status":"hi","isWebinar":true,"publishers":["`+owner.String()+`"]}`)
+
+	assert.Equal(t, roomID, room.RoomID)
+	assert.True(t, room.IsWebinar)
+	require.NotNil(t, room.Metadata)
+	assert.Equal(t, "hi", *room.Metadata)
+	assert.Equal(t, []uuid.UUID{owner}, room.Publishers)
+	assert.Equal(t, Metadata{Status: "hi", IsWebinar: true, Publishers: []uuid.UUID{owner}}, room.RoomMetadata())
+}
+
+func TestRepository_UpdateRoomMetadataKeepsPublishers(t *testing.T) {
+	t.Parallel()
+
+	r := newTestRepository()
+	roomID := uuid.Must(uuid.NewV4())
+	owner := uuid.Must(uuid.NewV4())
+	r.AddRoomState(RoomStateFromLiveKit(roomID, `{"isWebinar":true,"publishers":["`+owner.String()+`"]}`))
+
+	other := uuid.Must(uuid.NewV4())
+	r.UpdateRoomMetadata(roomID.String(), Metadata{Status: "s", IsWebinar: true, Publishers: []uuid.UUID{owner, other}})
+
+	room := r.GetRoomState(roomID.String())
+	require.NotNil(t, room)
+	assert.Equal(t, []uuid.UUID{owner, other}, room.Publishers)
+	assert.Equal(t, "s", *room.Metadata)
 }

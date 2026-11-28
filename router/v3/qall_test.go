@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/qall"
 )
 
 func TestHandlers_GetQallEndpoints(t *testing.T) {
@@ -277,4 +278,77 @@ func TestHandlers_PlaySoundboardItem(t *testing.T) {
 				Status(http.StatusInternalServerError)
 		})
 	}
+}
+
+func TestParseRoomParticipantsUpdate(t *testing.T) {
+	t.Parallel()
+
+	// API 定義の形 (配列)
+	users, err := parseRoomParticipantsUpdate([]byte(`[{"users":[{"userId":"a","canPublish":true}]},{"users":[{"userId":"b","canPublish":false}]}]`))
+	require.NoError(t, err)
+	require.Equal(t, []roomParticipantUpdate{{UserID: "a", CanPublish: true}, {UserID: "b", CanPublish: false}}, users)
+
+	// 以前の実装の形 (オブジェクト)
+	users, err = parseRoomParticipantsUpdate([]byte(`{"users":[{"userId":"a","canPublish":true}]}`))
+	require.NoError(t, err)
+	require.Equal(t, []roomParticipantUpdate{{UserID: "a", CanPublish: true}}, users)
+
+	_, err = parseRoomParticipantsUpdate([]byte(`"nope"`))
+	require.Error(t, err)
+}
+
+func TestHandlers_PatchRoomParticipants(t *testing.T) {
+	t.Parallel()
+
+	env := Setup(t, common1)
+	owner := env.CreateUser(t, rand)
+	listener := env.CreateUser(t, rand)
+	ownerSession := env.S(t, owner.GetID())
+	listenerSession := env.S(t, listener.GetID())
+
+	webinarID := uuid.Must(uuid.NewV4())
+	env.QallRepo.AddRoomState(qall.RoomStateFromLiveKit(webinarID, `{"isWebinar":true,"publishers":["`+owner.GetID().String()+`"]}`))
+	normalID := uuid.Must(uuid.NewV4())
+	env.QallRepo.AddRoomState(qall.RoomStateFromLiveKit(normalID, `{"isWebinar":false}`))
+
+	path := func(roomID uuid.UUID) string { return "/api/v3/qall/rooms/" + roomID.String() + "/participants" }
+	body := func(userID uuid.UUID, canPublish bool) any {
+		return []map[string]any{{"users": []map[string]any{{"userId": userID.String(), "canPublish": canPublish}}}}
+	}
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		env.R(t).PATCH(path(uuid.Must(uuid.NewV4()))).
+			WithCookie(session.CookieName, ownerSession).
+			WithJSON(body(listener.GetID(), true)).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("bad request (not a webinar)", func(t *testing.T) {
+		t.Parallel()
+		env.R(t).PATCH(path(normalID)).
+			WithCookie(session.CookieName, ownerSession).
+			WithJSON(body(listener.GetID(), true)).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("forbidden (listener)", func(t *testing.T) {
+		t.Parallel()
+		env.R(t).PATCH(path(webinarID)).
+			WithCookie(session.CookieName, listenerSession).
+			WithJSON(body(listener.GetID(), true)).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request (removing the last publisher)", func(t *testing.T) {
+		t.Parallel()
+		env.R(t).PATCH(path(webinarID)).
+			WithCookie(session.CookieName, ownerSession).
+			WithJSON(body(owner.GetID(), false)).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
 }

@@ -336,7 +336,36 @@ func (h *Handlers) GetRoomMetadata(c *echo.Context, roomID uuid.UUID) error {
 	return c.JSON(http.StatusOK, roomState.Metadata)
 }
 
+// fullParticipantPermission LiveKit の参加者の権限
+//
+// UpdateParticipant の Permission は部分更新ではなく丸ごと置き換えになるので、
+// 発言権限以外 (音声の受信・データ送信・メタデータ更新) も必ず指定する
+func fullParticipantPermission(canPublish bool) *livekit.ParticipantPermission {
+	return &livekit.ParticipantPermission{
+		CanSubscribe:      true,
+		CanPublish:        canPublish,
+		CanPublishData:    true,
+		CanUpdateMetadata: true,
+	}
+}
+
+// updateLiveKitRoomMetadata LiveKit のルームのメタデータを更新する
+func (h *Handlers) updateLiveKitRoomMetadata(ctx context.Context, roomID uuid.UUID, metadata qall.Metadata) error {
+	raw, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	_, err = lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret).
+		UpdateRoomMetadata(ctx, &livekit.UpdateRoomMetadataRequest{
+			Room:     roomID.String(),
+			Metadata: string(raw),
+		})
+	return err
+}
+
 // PatchRoomMetadata PATCH /qall/rooms/:roomID/metadata
+//
+// ルームのステータス (自由入力の文字列) を更新する。ウェビナーかどうかや発言権限を持つユーザーは変えない
 func (h *Handlers) PatchRoomMetadata(c *echo.Context) error {
 	var req struct {
 		Metadata string `json:"metadata"`
@@ -350,132 +379,160 @@ func (h *Handlers) PatchRoomMetadata(c *echo.Context) error {
 		return herror.BadRequest("invalid room ID")
 	}
 
-	userID := getRequestUserID(c)
-
-	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
-	// Find the room
 	targetRoom := h.QallRepo.GetRoomState(roomID.String())
-
 	if targetRoom == nil {
 		return herror.NotFound("room not found")
 	}
 
 	// Verify user is a participant
-	isParticipant := false
-	for _, participant := range targetRoom.Participants {
-		if participant.Name == userID.String() {
-			isParticipant = true
-			break
-		}
-	}
-
-	if !isParticipant {
+	userID := getRequestUserID(c)
+	if !slices.ContainsFunc(targetRoom.Participants, func(p qall.Participant) bool { return p.Name == userID.String() }) {
 		return herror.Forbidden("you are not a participant of the room")
 	}
 
-	// Update metadata
-	metadata := qall.Metadata{
-		Status:    req.Metadata,
-		IsWebinar: targetRoom.IsWebinar,
-	}
-
-	_, err = livekitClient.UpdateRoomMetadata(c.Request().Context(), &livekit.UpdateRoomMetadataRequest{
-		Room:     roomID.String(),
-		Metadata: req.Metadata,
-	})
-	if err != nil {
+	metadata := targetRoom.RoomMetadata()
+	metadata.Status = req.Metadata
+	if err := h.updateLiveKitRoomMetadata(c.Request().Context(), roomID, metadata); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	h.QallRepo.UpdateRoomMetadata(roomID.String(), metadata)
-	return herror.NotFound("room not found")
+	return c.NoContent(http.StatusOK)
 }
 
-// PatchRoomParticipants DELETE /qall/rooms/:roomID/participants
+// roomParticipantUpdate 発言権限の変更
+type roomParticipantUpdate struct {
+	UserID     string `json:"userId"`
+	CanPublish bool   `json:"canPublish"`
+}
+
+type roomParticipantsUpdateRequest struct {
+	Users []roomParticipantUpdate `json:"users"`
+}
+
+// parseRoomParticipantsUpdate 発言権限の変更リクエストを読む
+//
+// API 定義では `[{"users": [...]}]` (配列)、以前の実装は `{"users": [...]}` を受け付けていたので両方読む
+func parseRoomParticipantsUpdate(body []byte) ([]roomParticipantUpdate, error) {
+	var list []roomParticipantsUpdateRequest
+	if err := json.Unmarshal(body, &list); err == nil {
+		var users []roomParticipantUpdate
+		for _, req := range list {
+			users = append(users, req.Users...)
+		}
+		return users, nil
+	}
+	var req roomParticipantsUpdateRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	return req.Users, nil
+}
+
+type roomParticipantResult struct {
+	ParticipantID string `json:"participantId"`
+	Status        string `json:"status"`
+	ErrorMessage  string `json:"errorMessage,omitempty"`
+}
+
+// PatchRoomParticipants PATCH /qall/rooms/:roomID/participants
+//
+// ウェビナーで、発言権限 (= 管理権限) をユーザーに付与・剥奪する。発言権限を持つユーザーだけが変更できる。
+// 権限はユーザー単位で、ルームのメタデータに保存する。参加中の端末には LiveKit の権限もすぐ反映する。
 func (h *Handlers) PatchRoomParticipants(c *echo.Context) error {
-	type RoomParticipantUpdate struct {
-		UserID     string `json:"userId"`
-		CanPublish bool   `json:"canPublish"`
-	}
-
-	type RoomParticipantsUpdateRequest struct {
-		Users []RoomParticipantUpdate `json:"users"`
-	}
-
-	var req RoomParticipantsUpdateRequest
-	var succeedUsers []string
-	var failedUsers = map[string]string{}
-	if err := c.Bind(&req); err != nil {
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
 		return herror.BadRequest(err)
 	}
+	updates, err := parseRoomParticipantsUpdate(body)
+	if err != nil {
+		return herror.BadRequest("invalid request body")
+	}
+	if len(updates) == 0 {
+		return herror.BadRequest("users are required")
+	}
 
-	userID := getRequestUserID(c)
 	roomID, err := uuid.FromString(c.Param("roomID"))
 	if err != nil {
 		return herror.BadRequest("invalid room ID")
 	}
 
-	// ルームが存在するか確認
 	roomState := h.QallRepo.GetRoomState(roomID.String())
 	if roomState == nil {
 		return herror.NotFound("room not found")
 	}
-
-	// userがcanPublishかどうかを確認
-	canPublish := false
-	for _, participant := range roomState.Participants {
-		if participant.Name == userID.String() {
-			canPublish = participant.CanPublish
-			break
-		}
+	if !roomState.IsWebinar {
+		return herror.BadRequest("speaking permissions can only be changed in a webinar")
 	}
-	if !canPublish {
+
+	userID := getRequestUserID(c)
+	if !roomState.CanPublish(userID) {
 		return herror.Forbidden("you are not allowed to update participants")
 	}
 
-	// Update participants
-	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
-	for _, participant := range req.Users {
-		for _, roomParticipant := range roomState.Participants {
-			if roomParticipant.Name == participant.UserID {
-				_, err := livekitClient.UpdateParticipant(c.Request().Context(), &livekit.UpdateParticipantRequest{
-					Room:     roomID.String(),
-					Identity: roomParticipant.Identity,
-					Permission: &livekit.ParticipantPermission{
-						CanPublish: participant.CanPublish,
-					},
-				})
-				if err != nil {
-					failedUsers[participant.UserID] = err.Error()
-				} else {
-					succeedUsers = append(succeedUsers, participant.UserID)
-					h.QallRepo.UpdateParticipantCanPublish(roomID.String(), roomParticipant.Identity, participant.CanPublish)
-				}
+	// 新しい発言権限を持つユーザーの一覧を作る
+	// (以前のルームで一覧が空なら、今発言権限付きで参加しているユーザーから始める)
+	publishers := slices.Clone(roomState.Publishers)
+	if len(publishers) == 0 {
+		for _, p := range roomState.Participants {
+			if id, err := uuid.FromString(p.Name); err == nil && p.CanPublish && !slices.Contains(publishers, id) {
+				publishers = append(publishers, id)
 			}
 		}
 	}
-
-	response := make([]map[string]string, 0)
-
-	// Add successful participants
-	for _, id := range succeedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "success",
-		})
+	targets := make([]uuid.UUID, 0, len(updates))
+	for _, u := range updates {
+		target, err := uuid.FromString(u.UserID)
+		if err != nil {
+			return herror.BadRequest("invalid user ID")
+		}
+		targets = append(targets, target)
+		if u.CanPublish {
+			if !slices.Contains(publishers, target) {
+				publishers = append(publishers, target)
+			}
+		} else {
+			publishers = slices.DeleteFunc(publishers, func(id uuid.UUID) bool { return id == target })
+		}
+	}
+	if len(publishers) == 0 {
+		return herror.BadRequest("at least one user must keep the speaking permission")
 	}
 
-	// Add failed participants
-	for _, id := range failedUsers {
-		response = append(response, map[string]string{
-			"participantId": id,
-			"status":        "failed",
-			"error":         failedUsers[id],
-		})
+	ctx := c.Request().Context()
+	metadata := roomState.RoomMetadata()
+	metadata.Publishers = publishers
+	if err := h.updateLiveKitRoomMetadata(ctx, roomID, metadata); err != nil {
+		return herror.InternalServerError(err)
+	}
+	h.QallRepo.UpdateRoomMetadata(roomID.String(), metadata)
+
+	// 参加中の端末の権限を変える
+	livekitClient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
+	results := make([]roomParticipantResult, 0, len(targets))
+	for _, target := range targets {
+		canPublish := metadata.IsPublisher(target)
+		result := roomParticipantResult{ParticipantID: target.String(), Status: "success"}
+		for _, p := range roomState.Participants {
+			if p.Name != target.String() {
+				continue
+			}
+			_, err := livekitClient.UpdateParticipant(ctx, &livekit.UpdateParticipantRequest{
+				Room:       roomID.String(),
+				Identity:   p.Identity,
+				Permission: fullParticipantPermission(canPublish),
+			})
+			if err != nil {
+				result.Status = "error"
+				result.ErrorMessage = err.Error()
+				continue
+			}
+			h.QallRepo.UpdateParticipantCanPublish(roomID.String(), p.Identity, canPublish)
+		}
+		results = append(results, result)
 	}
 
-	return c.JSON(http.StatusOK, response)
-
+	return c.JSON(http.StatusOK, map[string]any{"results": results})
 }
 
 // GetLiveKitToken GET /qall/token
@@ -497,29 +554,32 @@ func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 	}
 
 	isWebinar := c.QueryParam("isWebinar") == "true"
-
 	userID := getRequestUserID(c)
 
-	// 6-2) ルームが存在するか確認
+	// ルームが無ければ作る。ウェビナーとして作る場合は、作った人だけが発言権限 (= 管理権限) を持つ
 	roomState := h.QallRepo.GetRoomState(roomID.String())
-
-	// ルームが存在して、webinar=true の場合はCanPublish=false
-	isExistingRoom := roomState != nil
-	if isExistingRoom && roomState.IsWebinar {
-		isWebinar = true
-	}
-
-	// 7) VideoGrant にルーム名、CanPublishData=true を設定
-	// ルームが存在しない場合はCanPublish=true
-	// ルームが存在して、webinar=true の場合はCanPublish=false
-	// ただし、自分がすでに参加していてCanPublish=true の場合はCanPublish=true
-	isAlreadyCanPublish := false
-	if roomState != nil {
-		for _, participant := range roomState.Participants {
-			if participant.Name == userID.String() {
-				isAlreadyCanPublish = participant.CanPublish
-				break
-			}
+	if roomState == nil {
+		metadata := qall.Metadata{IsWebinar: isWebinar}
+		if isWebinar {
+			metadata.Publishers = []uuid.UUID{userID}
+		}
+		metadataStr, err := json.Marshal(metadata)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		lkclient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
+		// 既にルームがある (同時に作ろうとした、traQ が知らなかった) 場合は既存のルームが返る
+		created, err := lkclient.CreateRoom(ctx, &livekit.CreateRoomRequest{
+			Name:     room,
+			Metadata: string(metadataStr),
+		})
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		h.QallRepo.AddRoomState(qall.RoomStateFromLiveKit(roomID, created.Metadata))
+		roomState = h.QallRepo.GetRoomState(roomID.String())
+		if roomState == nil {
+			return herror.InternalServerError(errors.New("failed to create the room state"))
 		}
 	}
 
@@ -527,9 +587,9 @@ func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 	grant := &auth.VideoGrant{
 		RoomJoin:             true,
 		Room:                 room,
-		CanPublish:           func(b bool) *bool { return &b }((!isWebinar || !isExistingRoom) || isAlreadyCanPublish),
-		CanPublishData:       func(b bool) *bool { return &b }(true),
-		CanUpdateOwnMetadata: func(b bool) *bool { return &b }(true),
+		CanPublish:           new(roomState.CanPublish(userID)),
+		CanPublishData:       new(true),
+		CanUpdateOwnMetadata: new(true),
 	}
 	randomUUID, err := uuid.NewV7()
 	if err != nil {
@@ -546,36 +606,7 @@ func (h *Handlers) GetLiveKitToken(c *echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if !isExistingRoom {
-		metadata := qall.Metadata{
-			Status:    "",
-			IsWebinar: isWebinar,
-		}
-		metadataStr, err := json.Marshal(metadata)
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-		lkclient := lksdk.NewRoomServiceClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
-		_, err = lkclient.CreateRoom(c.Request().Context(), &livekit.CreateRoomRequest{
-			Name:     room,
-			Metadata: string(metadataStr),
-		})
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-		// ルームが存在しない場合は新規作成
-		emptyMetadata := ""
-		roomWithParticipants := qall.RoomWithParticipants{
-			IsWebinar:    isWebinar,
-			Metadata:     &emptyMetadata,
-			RoomID:       roomID,
-			Participants: []qall.Participant{},
-		}
-		h.QallRepo.AddRoomState(roomWithParticipants)
-	}
-
 	return c.JSON(http.StatusOK, map[string]string{"token": livekitToken})
-
 }
 
 // LiveKitWebhook POST /qall/webhook

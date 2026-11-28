@@ -65,13 +65,7 @@ func (r *Repository) AddParticipantToRoomState(room *livekit.Room, participant *
 		if err != nil {
 			return
 		}
-		metadata := parseMetadata(room.Metadata)
-		r.RoomState = append(r.RoomState, RoomWithParticipants{
-			IsWebinar:    metadata.IsWebinar,
-			Metadata:     &metadata.Status,
-			RoomID:       roomID,
-			Participants: []Participant{},
-		})
+		r.RoomState = append(r.RoomState, RoomStateFromLiveKit(roomID, room.Metadata))
 		i = len(r.RoomState) - 1
 	}
 
@@ -183,6 +177,7 @@ func (r *Repository) UpdateRoomMetadata(roomID string, metadata Metadata) {
 	}
 	status := metadata.Status
 	r.RoomState[i].Metadata = &status
+	r.RoomState[i].Publishers = slices.Clone(metadata.Publishers)
 	r.publishLocked()
 }
 
@@ -244,13 +239,9 @@ func (r *Repository) GetRoomsWithParticipantsByLiveKitServer(ctx context.Context
 			participants = append(participants, participantFromLiveKit(p))
 		}
 
-		metadata := parseMetadata(rm.Metadata)
-		roomWithParticipants = append(roomWithParticipants, RoomWithParticipants{
-			Metadata:     &metadata.Status,
-			IsWebinar:    metadata.IsWebinar,
-			RoomID:       roomID,
-			Participants: participants,
-		})
+		room := RoomStateFromLiveKit(roomID, rm.Metadata)
+		room.Participants = participants
+		roomWithParticipants = append(roomWithParticipants, room)
 	}
 
 	return roomWithParticipants, nil
@@ -306,8 +297,20 @@ func participantFromLiveKit(p *livekit.ParticipantInfo) Participant {
 	}
 }
 
-// parseMetadata ルームのメタデータ (JSON) を解釈する。空や不正な値の場合はゼロ値を返す
-func parseMetadata(raw string) Metadata {
+// RoomStateFromLiveKit LiveKit のルームのメタデータから、参加者のいないルームの状態を作る
+func RoomStateFromLiveKit(roomID uuid.UUID, rawMetadata string) RoomWithParticipants {
+	metadata := ParseMetadata(rawMetadata)
+	return RoomWithParticipants{
+		IsWebinar:    metadata.IsWebinar,
+		Metadata:     &metadata.Status,
+		RoomID:       roomID,
+		Participants: []Participant{},
+		Publishers:   metadata.Publishers,
+	}
+}
+
+// ParseMetadata ルームのメタデータ (JSON) を解釈する。空や不正な値の場合はゼロ値を返す
+func ParseMetadata(raw string) Metadata {
 	var metadata Metadata
 	if raw == "" {
 		return metadata
@@ -340,6 +343,7 @@ func cloneRoomState(room RoomWithParticipants) RoomWithParticipants {
 		participants[i] = p
 	}
 	room.Participants = participants
+	room.Publishers = slices.Clone(room.Publishers)
 	return room
 }
 

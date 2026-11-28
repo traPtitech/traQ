@@ -2,6 +2,7 @@ package qall
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -15,6 +16,17 @@ type Metadata struct {
 
 	// webinarかどうか
 	IsWebinar bool `json:"isWebinar"`
+
+	// Publishers ウェビナーで発言権限 (= 管理権限) を持つユーザーのID
+	//
+	// 参加者単位ではなくユーザー単位で持つので、抜けて入り直しても権限は残る。
+	// LiveKit のルームのメタデータに保存されるので、traQ を再起動しても残る。
+	Publishers []uuid.UUID `json:"publishers,omitempty"`
+}
+
+// IsPublisher ユーザーがウェビナーで発言権限 (= 管理権限) を持っているかどうか
+func (m Metadata) IsPublisher(userID uuid.UUID) bool {
+	return slices.Contains(m.Publishers, userID)
 }
 
 // Participant ルーム内の参加者一覧
@@ -35,6 +47,36 @@ type Participant struct {
 	Name string `json:"name"`
 }
 
+// RoomMetadata ルームの状態から LiveKit のルームに保存するメタデータを作る
+func (r RoomWithParticipants) RoomMetadata() Metadata {
+	status := ""
+	if r.Metadata != nil {
+		status = *r.Metadata
+	}
+	return Metadata{
+		Status:     status,
+		IsWebinar:  r.IsWebinar,
+		Publishers: slices.Clone(r.Publishers),
+	}
+}
+
+// CanPublish ユーザーがこのルームで発言できるかどうか
+//
+// ウェビナーでなければ誰でも発言できる。ウェビナーでは発言権限を持つユーザーだけが発言できる。
+// 発言権限を持つユーザーが記録されていない (この仕組みより前に作られた) ルームでは、
+// 既に発言権限付きで参加しているかどうかで判断する。
+func (r RoomWithParticipants) CanPublish(userID uuid.UUID) bool {
+	if !r.IsWebinar {
+		return true
+	}
+	if len(r.Publishers) > 0 {
+		return slices.Contains(r.Publishers, userID)
+	}
+	return slices.ContainsFunc(r.Participants, func(p Participant) bool {
+		return p.Name == userID.String() && p.CanPublish
+	})
+}
+
 // RoomWithParticipants defines model for RoomWithParticipants.
 type RoomWithParticipants struct {
 	// IsWebinar ウェビナールームかどうか
@@ -43,6 +85,9 @@ type RoomWithParticipants struct {
 	// Metadata ルームに関連付けられたカスタム属性
 	Metadata     *string       `json:"metadata,omitempty"`
 	Participants []Participant `json:"participants"`
+
+	// Publishers ウェビナーで発言権限 (= 管理権限) を持つユーザーのID
+	Publishers []uuid.UUID `json:"-"`
 
 	// RoomID ルームのID
 	RoomID uuid.UUID `json:"roomId"`
@@ -71,7 +116,7 @@ type RoomStateManager interface {
 	// AddRoomState ルーム状態を追加
 	AddRoomState(room RoomWithParticipants)
 
-	// UpdateRoomMetadata ルームのメタデータを更新
+	// UpdateRoomMetadata ルームのメタデータ (ステータスと発言権限を持つユーザー) を更新
 	UpdateRoomMetadata(roomID string, metadata Metadata)
 
 	// RemoveRoomState ルーム状態を削除
