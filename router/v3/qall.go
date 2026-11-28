@@ -3,9 +3,17 @@ package v3
 import (
 	"context"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
+	"io"
+	"mime"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"slices"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v5"
@@ -16,6 +24,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/qall"
+	"github.com/twitchtv/twirp"
 	"go.uber.org/zap"
 )
 
@@ -26,43 +35,208 @@ func (h *Handlers) GetQallEndpoints(c *echo.Context) error {
 	})
 }
 
+// soundboardItemResponse サウンドボードアイテムのレスポンス
+//
+// API 定義のフィールド (soundId / soundName) に加えて、
+// 以前の実装が返していた id / name も後方互換のために返す
+type soundboardItemResponse struct {
+	SoundID   uuid.UUID  `json:"soundId"`
+	SoundName string     `json:"soundName"`
+	StampID   *uuid.UUID `json:"stampId"`
+	CreatorID uuid.UUID  `json:"creatorId"`
+
+	// Deprecated: soundId を使う
+	ID uuid.UUID `json:"id"`
+	// Deprecated: soundName を使う
+	Name string `json:"name"`
+}
+
+func formatSoundboardItem(item *model.SoundboardItem) soundboardItemResponse {
+	var stampID *uuid.UUID
+	// 以前はスタンプ未指定でも uuid.Nil が保存されていたので、それも未指定として扱う
+	if item.StampID != nil && *item.StampID != uuid.Nil {
+		id := *item.StampID
+		stampID = &id
+	}
+	return soundboardItemResponse{
+		SoundID:   item.ID,
+		SoundName: item.Name,
+		StampID:   stampID,
+		CreatorID: item.CreatorID,
+		ID:        item.ID,
+		Name:      item.Name,
+	}
+}
+
 // GetSoundboardItems GET /qall/soundboard
 func (h *Handlers) GetSoundboardItems(c *echo.Context) error {
 	items, err := h.Repo.GetAllSoundboardItems(c.Request().Context())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, items)
+	res := make([]soundboardItemResponse, len(items))
+	for i, item := range items {
+		res[i] = formatSoundboardItem(item)
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+// soundboardItemNameMaxLength サウンド名の最大文字数 (DB のカラム長)
+const soundboardItemNameMaxLength = 32
+
+// firstFormFile 指定した名前のうち、最初に見つかったフォームのファイルを返す
+func firstFormFile(c *echo.Context, names ...string) (multipart.File, *multipart.FileHeader, error) {
+	var lastErr error
+	for _, name := range names {
+		src, header, err := c.Request().FormFile(name)
+		if err == nil {
+			return src, header, nil
+		}
+		lastErr = err
+	}
+	return nil, nil, lastErr
+}
+
+// firstFormValue 指定した名前のうち、最初に空でない値を返す
+func firstFormValue(c *echo.Context, names ...string) string {
+	for _, name := range names {
+		if v := strings.TrimSpace(c.FormValue(name)); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+var soundboardExtensionTypes = map[string]string{
+	".mp3":  "audio/mpeg",
+	".wav":  "audio/wav",
+	".wave": "audio/wav",
+	".ogg":  "audio/ogg",
+	".oga":  "audio/ogg",
+}
+
+// soundboardContentType アップロードされた音声ファイルの MIME タイプを決める
+//
+// クライアントによっては application/octet-stream で送ってくるので、
+// その場合はファイル名の拡張子、次にファイルの中身から推定する
+func soundboardContentType(src multipart.File, header *multipart.FileHeader) (string, error) {
+	if mimeType, _, err := mime.ParseMediaType(header.Header.Get(echo.HeaderContentType)); err == nil &&
+		mimeType != "" && mimeType != echo.MIMEOctetStream {
+		return mimeType, nil
+	}
+	if mimeType, ok := soundboardExtensionTypes[strings.ToLower(filepath.Ext(header.Filename))]; ok {
+		return mimeType, nil
+	}
+
+	head := make([]byte, 512)
+	n, err := io.ReadFull(src, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	if _, err := src.Seek(0, io.SeekStart); err != nil {
+		return "", err
+	}
+	switch detected := http.DetectContentType(head[:n]); detected {
+	case "audio/wave":
+		return "audio/wav", nil
+	case "application/ogg":
+		return "audio/ogg", nil
+	default:
+		return detected, nil
+	}
 }
 
 // CreateSoundboardItem POST /qall/soundboard
+//
+// API 定義のフィールド (audio / soundName / stampId) に加えて、
+// 以前の実装が受け付けていた file / name も後方互換のために受け付ける。
+// 作成者は常にリクエストしたユーザーになる (以前の creatorId フィールドは無視する)。
 func (h *Handlers) CreateSoundboardItem(c *echo.Context) error {
-	src, uploadedFile, err := c.Request().FormFile("file")
+	src, uploadedFile, err := firstFormFile(c, "audio", "file")
 	if err != nil {
-		return herror.BadRequest(err)
+		return herror.BadRequest("audio file is required")
 	}
 	defer src.Close()
 	if uploadedFile.Size == 0 {
 		return herror.BadRequest("non-empty file is required")
 	}
 
-	mimeType := uploadedFile.Header.Get(echo.HeaderContentType)
-	soundName := c.FormValue("name")
-	creatorID := uuid.FromStringOrNil(c.FormValue("creatorId"))
-	stampID := uuid.FromStringOrNil(c.FormValue("stampId"))
+	soundName := firstFormValue(c, "soundName", "name")
+	if soundName == "" {
+		return herror.BadRequest("soundName is required")
+	}
+	if utf8.RuneCountInString(soundName) > soundboardItemNameMaxLength {
+		return herror.BadRequest(fmt.Sprintf("soundName must be at most %d characters", soundboardItemNameMaxLength))
+	}
 
-	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), uuid.Must(uuid.NewV7()), soundName, mimeType, model.FileTypeSoundboardItem, src, &stampID, creatorID); err != nil {
+	var stampID *uuid.UUID
+	if raw := firstFormValue(c, "stampId"); raw != "" {
+		id, err := uuid.FromString(raw)
+		if err != nil {
+			return herror.BadRequest("invalid stampId")
+		}
+		if id != uuid.Nil {
+			stampID = &id
+		}
+	}
+
+	mimeType, err := soundboardContentType(src, uploadedFile)
+	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	soundID := uuid.Must(uuid.NewV7())
+	creatorID := getRequestUserID(c)
+	if err := h.Soundboard.SaveSoundboardItem(c.Request().Context(), soundID, soundName, mimeType, model.FileTypeSoundboardItem, src, stampID, creatorID); err != nil {
+		if errors.Is(err, qall.ErrInvalidSoundboardAudio) {
+			return herror.BadRequest(err.Error())
+		}
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]uuid.UUID{"soundId": soundID})
+}
+
+// isRoomParticipant ユーザーがルームに参加しているかどうか
+//
+// traQ が持つルーム状態で見つからなければ、取りこぼし (Webhook の欠落など) に備えて LiveKit に問い合わせる
+func (h *Handlers) isRoomParticipant(ctx context.Context, roomID uuid.UUID, userID uuid.UUID) (bool, error) {
+	if roomState := h.QallRepo.GetRoomState(roomID.String()); roomState != nil {
+		for _, participant := range roomState.Participants {
+			if participant.Name == userID.String() {
+				return true, nil
+			}
+		}
+	}
+
+	if h.LiveKitHost == "" {
+		return false, nil
+	}
+	resp, err := h.QallRepo.GetParticipantsByLiveKitServer(ctx, roomID.String())
+	if err != nil {
+		// ルームが存在しない場合は参加していないものとして扱う
+		var twErr twirp.Error
+		if errors.As(err, &twErr) && twErr.Code() == twirp.NotFound {
+			return false, nil
+		}
+		return false, err
+	}
+	for _, participant := range resp.Participants {
+		if participant.Name == userID.String() {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // PlaySoundboardItem POST /qall/soundboard/play
+//
+// API 定義のフィールド (roomName) に加えて、以前の実装が受け付けていた roomId も後方互換のために受け付ける
 func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 	var req struct {
-		SoundID string `json:"soundId"`
-		RoomID  string `json:"roomId"`
+		SoundID  string `json:"soundId"`
+		RoomName string `json:"roomName"`
+		RoomID   string `json:"roomId"`
 	}
 	if err := c.Bind(&req); err != nil {
 		return herror.BadRequest(err)
@@ -73,56 +247,56 @@ func (h *Handlers) PlaySoundboardItem(c *echo.Context) error {
 		return herror.BadRequest("invalid sound ID")
 	}
 
-	roomID, err := uuid.FromString(req.RoomID)
+	rawRoomID := req.RoomName
+	if rawRoomID == "" {
+		rawRoomID = req.RoomID
+	}
+	roomID, err := uuid.FromString(rawRoomID)
 	if err != nil {
 		return herror.BadRequest("invalid room ID")
 	}
 
-	userID := getRequestUserID(c)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
+	defer cancel()
 
-	// 2)
-	//    ここで "ユーザが roomName に参加しているか" を確認
-	//    もし参加していないなら 400や403を返す
-
-	// 2-1) ルームが存在するか確認
-	roomState := h.QallRepo.GetRoomState(roomID.String())
-	if roomState == nil {
-		return herror.NotFound("room not found")
+	// サウンドが存在するか確認
+	items, err := h.Repo.GetAllSoundboardItems(ctx)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if !slices.ContainsFunc(items, func(item *model.SoundboardItem) bool { return item.ID == soundID }) {
+		return herror.NotFound("sound not found")
 	}
 
-	// 2-2) ルームに参加しているか確認
-	isParticipant := false
-	for _, participant := range roomState.Participants {
-		if participant.Name == userID.String() {
-			isParticipant = true
-			break
-		}
+	// ルームに参加しているか確認
+	userID := getRequestUserID(c)
+	isParticipant, err := h.isRoomParticipant(ctx, roomID, userID)
+	if err != nil {
+		return herror.InternalServerError(err)
 	}
 	if !isParticipant {
 		return herror.Forbidden("you are not a participant of the room")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// 3) S3ファイルキー = soundId として署名付きURL生成
+	// S3ファイルキー = soundId として署名付きURL生成
 	audioURL, err := h.Soundboard.GetURL(soundID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
+	if audioURL == "" {
+		return herror.InternalServerError(errors.New("soundboard is not available with the current file storage"))
+	}
 
-	// 4) Ingressクライアント
 	ingressClient := lksdk.NewIngressClient(h.LiveKitHost, h.LiveKitAPIKey, h.LiveKitAPISecret)
 
-	// 5) Ingress リクエスト作成
+	// 同じ音を同時に鳴らしても前の再生が切断されないように、再生ごとに別の Identity を使う
+	// ("soundboard-" で始まることはクライアントがサウンドボードの参加者を見分けるのに使う)
 	ingReq := &livekit.CreateIngressRequest{
-		InputType: livekit.IngressInput_URL_INPUT,
-		// ここでは SFU内の participantIdentity等をどう扱うかは任意
-		// たとえば "soundboard-user" など固定でOK
+		InputType:           livekit.IngressInput_URL_INPUT,
 		Name:                "soundboard-ingress",
-		RoomName:            req.RoomID,
-		ParticipantIdentity: "soundboard-" + req.SoundID,
-		ParticipantName:     "Soundboard " + req.SoundID,
+		RoomName:            roomID.String(),
+		ParticipantIdentity: "soundboard-" + uuid.Must(uuid.NewV7()).String(),
+		ParticipantName:     "Soundboard " + soundID.String(),
 		Url:                 audioURL,
 	}
 

@@ -51,7 +51,7 @@ type RoomWithParticipants struct {
 // RoomStateManager はQallルーム状態を管理するインターフェース
 type RoomStateManager interface {
 	// InitializeRoomState LiveKit APIから現在のルーム状態を取得 (初期化時に利用)
-	InitializeRoomState() error
+	InitializeRoomState(ctx context.Context) error
 
 	// AddParticipantToRoomState ルーム状態に参加者を追加
 	AddParticipantToRoomState(room *livekit.Room, participant *livekit.ParticipantInfo)

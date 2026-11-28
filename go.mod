@@ -57,6 +57,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
+	github.com/twitchtv/twirp v8.1.3+incompatible
 	github.com/zitadel/oidc/v3 v3.53.0
 	go.opentelemetry.io/contrib/bridges/prometheus v0.72.0
 	go.opentelemetry.io/contrib/exporters/autoexport v0.72.0
@@ -251,7 +252,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.8.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.40.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect

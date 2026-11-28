@@ -4713,9 +4713,10 @@ paths:
     post:
       summary: サウンドボード用の短い音声ファイルをアップロード
       description: >
-        15秒程度の短い音声ファイルを multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
+        30秒以内の短い音声ファイル (mp3 / wav / ogg) を multipart/form-data で送信し、S3(互換ストレージ)にアップロードします。
         クライアントは「soundName」というフィールドを送信し、それをDBに保存して関連付けを行います。
         また、サーバ側で soundId を自動生成し、S3のファイル名に使用します。
+        作成者はリクエストしたユーザーになります。
       operationId: postSoundboard
       tags:
         - qall
@@ -4733,7 +4734,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/soundboardUploadResponse"
         "400":
-          description: ファイルが提供されていない等
+          description: ファイルやサウンド名が提供されていない、音声の形式が非対応、30秒を超えている等
         "500":
           description: アップロードエラーなどのサーバエラー
 
@@ -4761,9 +4762,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/soundboardPlayResponse"
         "400":
-          description: パラメータ不足 or ユーザが部屋にいない等
+          description: パラメータ不足
         "401":
           description: 認証エラー
+        "403":
+          description: ユーザが部屋にいない
+        "404":
+          description: サウンドが存在しない
         "500":
           description: Ingress作成失敗などのサーバエラー
 
@@ -7985,7 +7990,9 @@ components:
           description: ユーザが指定した表示用のサウンド名
         stampId:
           type: string
-          description: 任意のスタンプID等、サウンドに紐づく拡張情報
+          format: uuid
+          nullable: true
+          description: アイコンのスタンプID。未設定の場合は null
         creatorId:
           type: string
           description: 作成者のユーザID
@@ -8114,7 +8121,7 @@ components:
         audio:
           type: string
           format: binary
-          description: アップロードする音声ファイル(20秒以内)
+          description: アップロードする音声ファイル(30秒以内、mp3 / wav / ogg)
         soundName:
           type: string
           description: ユーザが自由につけるサウンド名
